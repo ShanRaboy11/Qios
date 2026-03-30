@@ -102,8 +102,8 @@ Format:
 Examples:
 
 - `feat(auth): implement login with JWT - Raboy`
-- `fix(ui): resolve navbar bug - Lim`
-- `docs(readme): update setup instructions - Mactual`
+- `fix(ui): resolve navbar bug - Eupinado`
+- `docs(readme): update setup instructions - Alegrid`
 
 Rules:
 

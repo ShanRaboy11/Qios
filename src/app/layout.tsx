@@ -25,8 +25,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${figtree.variable} ${inter.variable} font-[family-name:var(--font-inter)] antialiased`}>
+    <html lang="en" suppressHydrationWarning>
+      <body
+        suppressHydrationWarning
+        className={`${figtree.variable} ${inter.variable} font-[family-name:var(--font-inter)] antialiased`}
+      >
         {children}
       </body>
     </html>

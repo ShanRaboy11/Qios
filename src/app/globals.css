@@ -3,16 +3,91 @@
 @tailwind utilities;
 
 :root {
-  --bg: #f6f8f4;
-  --surface: #ffffff;
-  --ink: #1d2618;
-  --muted: #5d7749;
-  --ring: #96b47d;
+  --color-brand-primary: #ffc670;
+  --color-brand-secondary: #ffd77a;
+  --color-brand-accent: #ff5269;
+  --color-bg-primary: #fff9ef;
+
+  --color-text-primary: #2d2d2d;
+  --color-text-secondary: #707070;
+  --color-text-tertiary: #ffffff;
+
+  --color-warning-primary: #ec1313;
+  --color-warning-secondary: #fff0f0;
+
+  --color-success-primary: #1fad66;
+  --color-success-secondary: #e0fad6;
 }
 
 body {
-  background:
-    radial-gradient(circle at top left, rgba(150, 180, 125, 0.2), transparent 45%),
-    linear-gradient(135deg, #f6f8f4 0%, #eef3ea 100%);
-  color: var(--ink);
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-family: var(--font-inter), sans-serif;
+}
+
+h1,
+.h1 {
+  font-family: var(--font-figtree), sans-serif;
+  font-size: 48px;
+  line-height: 125%;
+  font-weight: 700;
+}
+
+h2,
+.h2 {
+  font-family: var(--font-figtree), sans-serif;
+  font-size: 39px;
+  line-height: 125%;
+  font-weight: 600;
+}
+
+h3,
+.h3 {
+  font-family: var(--font-figtree), sans-serif;
+  font-size: 31px;
+  line-height: 125%;
+  font-weight: 500;
+}
+
+h4,
+.h4 {
+  font-family: var(--font-figtree), sans-serif;
+  font-size: 25px;
+  line-height: 125%;
+  font-weight: 400;
+}
+
+.b1 {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 16px;
+  line-height: 125%;
+  font-weight: 400;
+}
+
+.b2 {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 16px;
+  line-height: 125%;
+  font-weight: 500;
+}
+
+.b3 {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 16px;
+  line-height: 125%;
+  font-weight: 600;
+}
+
+.b4 {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 12.8px;
+  line-height: 125%;
+  font-weight: 400;
+}
+
+.b5 {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 10.2px;
+  line-height: 125%;
+  font-weight: 400;
 }
