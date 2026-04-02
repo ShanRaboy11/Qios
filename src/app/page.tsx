@@ -1,6 +1,7 @@
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
-import { Plus } from "lucide-react";
+import { Toggle } from "@/components/atoms/Toggle";
+import { Plus, Lock } from "lucide-react";
 
 export default function HomePage() {
   const icon = <Plus className="w-4 h-4" strokeWidth={2.5} />;
@@ -171,6 +172,60 @@ export default function HomePage() {
           className="border-brand-primary shadow-[0_0_0_2px_rgba(255,198,112,0.15)]" 
         />
       </div>
+
+      {/* Toggle Switches */}
+      <div className="w-full max-w-2xl mt-16 mb-8">
+        <h1 className="h1 text-text-primary mb-2">Toggle Switches</h1>
+        <p className="b1 text-text-secondary">
+          Try clicking these interactive toggle switches below! They perfectly map to your grid columns (Default, With Icon, With Text).
+        </p>
+      </div>
+
+      <div className="border border-dashed border-purple-300 p-10 flex flex-col gap-10 w-full max-w-3xl rounded-[24px]">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 justify-items-center">
+          
+          {/* Default Column */}
+          <div className="flex flex-col gap-6 items-center">
+            <h3 className="h4 text-text-primary mb-2">Default</h3>
+            <div className="flex gap-4">
+              <Toggle defaultIsOn={true} />
+              <Toggle defaultIsOn={false} />
+            </div>
+            <div className="flex gap-4">
+              <Toggle variant="accent" defaultIsOn={true} />
+              <Toggle variant="accent" defaultIsOn={false} />
+            </div>
+          </div>
+
+          {/* With Icon Column */}
+          <div className="flex flex-col gap-6 items-center">
+            <h3 className="h4 text-text-primary mb-2">With Icon</h3>
+            <div className="flex gap-4">
+              <Toggle defaultIsOn={true} icon={<Lock className="w-3 h-3" strokeWidth={3} />} />
+              <Toggle defaultIsOn={false} icon={<Lock className="w-3 h-3" strokeWidth={3} />} />
+            </div>
+            <div className="flex gap-4">
+              <Toggle variant="accent" defaultIsOn={true} icon={<Lock className="w-3 h-3" strokeWidth={3} />} />
+              <Toggle variant="accent" defaultIsOn={false} icon={<Lock className="w-3 h-3" strokeWidth={3} />} />
+            </div>
+          </div>
+
+          {/* With Text Column */}
+          <div className="flex flex-col gap-6 items-center">
+            <h3 className="h4 text-text-primary mb-2">With Text</h3>
+            <div className="flex gap-4">
+              <Toggle defaultIsOn={true} showText />
+              <Toggle defaultIsOn={false} showText />
+            </div>
+            <div className="flex gap-4">
+              <Toggle variant="accent" defaultIsOn={true} showText />
+              <Toggle variant="accent" defaultIsOn={false} showText />
+            </div>
+          </div>
+
+        </div>
+      </div>
+
     </main>
   );
 }
