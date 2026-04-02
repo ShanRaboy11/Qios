@@ -1,4 +1,5 @@
 import { Button } from "@/components/atoms/Button";
+import { Input } from "@/components/atoms/Input";
 import { Plus } from "lucide-react";
 
 export default function HomePage() {
@@ -132,6 +133,43 @@ export default function HomePage() {
             </Button>
           </div>
         </div>
+      </div>
+
+      <div className="w-full max-w-2xl mt-16 mb-8">
+        <h1 className="h1 text-text-primary mb-2">Text Inputs</h1>
+        <p className="b1 text-text-secondary">
+          Below are the requested Text Input states: Inactive, Active, Error, Inactive (Center), and Active (Center).
+        </p>
+      </div>
+
+      <div className="border border-dashed border-purple-300 p-10 flex flex-col gap-8 w-full max-w-sm rounded-[24px]">
+        {/* 1. Inactive Left */}
+        <Input placeholder="Email Address" />
+
+        {/* 2. Active Left (Simulating focus) */}
+        <Input 
+          defaultValue="Email Address" 
+          className="border-brand-primary shadow-[0_0_0_2px_rgba(255,198,112,0.15)]" 
+        />
+
+        {/* 3. Error */}
+        <Input 
+          defaultValue="Email Address" 
+          isError 
+        />
+
+        {/* 4. Inactive Center */}
+        <Input 
+          placeholder="Email Address" 
+          align="center" 
+        />
+
+        {/* 5. Active Center (Simulating focus) */}
+        <Input 
+          defaultValue="Email Address" 
+          align="center" 
+          className="border-brand-primary shadow-[0_0_0_2px_rgba(255,198,112,0.15)]" 
+        />
       </div>
     </main>
   );
