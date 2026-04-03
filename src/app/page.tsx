@@ -1,10 +1,12 @@
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
 import { Toggle } from "@/components/atoms/Toggle";
+import { Badge } from "@/components/atoms/Badges";
 import { Plus, Lock } from "lucide-react";
 
 export default function HomePage() {
   const icon = <Plus className="w-4 h-4" strokeWidth={2.5} />;
+  const badgeIcon = <Plus className="w-3 h-3" />;
 
   return (
     <main className="flex min-h-screen bg-white p-10 flex-col items-center">
@@ -139,37 +141,23 @@ export default function HomePage() {
       <div className="w-full max-w-2xl mt-16 mb-8">
         <h1 className="h1 text-text-primary mb-2">Text Inputs</h1>
         <p className="b1 text-text-secondary">
-          Below are the requested Text Input states: Inactive, Active, Error, Inactive (Center), and Active (Center).
+          Below are the requested Text Input states: Inactive, Active, Error,
+          Inactive (Center), and Active (Center).
         </p>
       </div>
 
       <div className="border border-dashed border-purple-300 p-10 flex flex-col gap-8 w-full max-w-sm rounded-[24px]">
-        {/* 1. Inactive Left */}
         <Input placeholder="Email Address" />
-
-        {/* 2. Active Left (Simulating focus) */}
-        <Input 
-          defaultValue="Email Address" 
-          className="border-brand-primary shadow-[0_0_0_2px_rgba(255,198,112,0.15)]" 
+        <Input
+          defaultValue="Email Address"
+          className="border-brand-primary shadow-[0_0_0_2px_rgba(255,198,112,0.15)]"
         />
-
-        {/* 3. Error */}
-        <Input 
-          defaultValue="Email Address" 
-          isError 
-        />
-
-        {/* 4. Inactive Center */}
-        <Input 
-          placeholder="Email Address" 
-          align="center" 
-        />
-
-        {/* 5. Active Center (Simulating focus) */}
-        <Input 
-          defaultValue="Email Address" 
-          align="center" 
-          className="border-brand-primary shadow-[0_0_0_2px_rgba(255,198,112,0.15)]" 
+        <Input defaultValue="Email Address" isError />
+        <Input placeholder="Email Address" align="center" />
+        <Input
+          defaultValue="Email Address"
+          align="center"
+          className="border-brand-primary shadow-[0_0_0_2px_rgba(255,198,112,0.15)]"
         />
       </div>
 
@@ -177,14 +165,13 @@ export default function HomePage() {
       <div className="w-full max-w-2xl mt-16 mb-8">
         <h1 className="h1 text-text-primary mb-2">Toggle Switches</h1>
         <p className="b1 text-text-secondary">
-          Try clicking these interactive toggle switches below! They perfectly map to your grid columns (Default, With Icon, With Text).
+          Try clicking these interactive toggle switches below! They perfectly
+          map to your grid columns.
         </p>
       </div>
 
       <div className="border border-dashed border-purple-300 p-10 flex flex-col gap-10 w-full max-w-3xl rounded-[24px]">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10 justify-items-center">
-          
-          {/* Default Column */}
           <div className="flex flex-col gap-6 items-center">
             <h3 className="h4 text-text-primary mb-2">Default</h3>
             <div className="flex gap-4">
@@ -197,20 +184,32 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* With Icon Column */}
           <div className="flex flex-col gap-6 items-center">
             <h3 className="h4 text-text-primary mb-2">With Icon</h3>
             <div className="flex gap-4">
-              <Toggle defaultIsOn={true} icon={<Lock className="w-3 h-3" strokeWidth={3} />} />
-              <Toggle defaultIsOn={false} icon={<Lock className="w-3 h-3" strokeWidth={3} />} />
+              <Toggle
+                defaultIsOn={true}
+                icon={<Lock className="w-3 h-3" strokeWidth={3} />}
+              />
+              <Toggle
+                defaultIsOn={false}
+                icon={<Lock className="w-3 h-3" strokeWidth={3} />}
+              />
             </div>
             <div className="flex gap-4">
-              <Toggle variant="accent" defaultIsOn={true} icon={<Lock className="w-3 h-3" strokeWidth={3} />} />
-              <Toggle variant="accent" defaultIsOn={false} icon={<Lock className="w-3 h-3" strokeWidth={3} />} />
+              <Toggle
+                variant="accent"
+                defaultIsOn={true}
+                icon={<Lock className="w-3 h-3" strokeWidth={3} />}
+              />
+              <Toggle
+                variant="accent"
+                defaultIsOn={false}
+                icon={<Lock className="w-3 h-3" strokeWidth={3} />}
+              />
             </div>
           </div>
 
-          {/* With Text Column */}
           <div className="flex flex-col gap-6 items-center">
             <h3 className="h4 text-text-primary mb-2">With Text</h3>
             <div className="flex gap-4">
@@ -222,10 +221,70 @@ export default function HomePage() {
               <Toggle variant="accent" defaultIsOn={false} showText />
             </div>
           </div>
-
         </div>
       </div>
 
+      {/* Badges Section */}
+      <div className="w-full max-w-2xl mt-16 mb-8">
+        <h1 className="h1 text-text-primary mb-2">Badges</h1>
+        <p className="b1 text-text-secondary">
+          Organizational tags using your brand colors. These include solid,
+          subtle, and outline variants.
+        </p>
+      </div>
+
+      <div className="border border-dashed border-purple-300 p-10 flex flex-col gap-12 w-full max-w-4xl rounded-[24px]">
+        {/* Main Badge Grid */}
+        <div className="grid grid-cols-4 gap-8">
+          {["primary", "accent", "success", "error"].map((color) => (
+            <div key={color} className="flex flex-col gap-4 items-center">
+              <Badge color={color as any} variant="subtle">
+                Text
+              </Badge>
+              <Badge color={color as any} variant="outline">
+                Text
+              </Badge>
+              <Badge color={color as any} variant="solid">
+                Text
+              </Badge>
+            </div>
+          ))}
+        </div>
+
+        <hr className="border-gray-200" />
+
+        {/* Badges with Icons (Bottom Left Figma Reference) */}
+        <div className="flex flex-col gap-4 items-start">
+          <h3 className="h4 text-text-primary mb-2">With Icons</h3>
+          <div className="flex gap-4">
+            <Badge
+              color="error"
+              variant="outline"
+              leftIcon={badgeIcon}
+              rightIcon={badgeIcon}
+            >
+              Text
+            </Badge>
+            <Badge
+              color="success"
+              variant="outline"
+              leftIcon={badgeIcon}
+              rightIcon={badgeIcon}
+            >
+              Text
+            </Badge>
+            <Badge
+              color="primary"
+              variant="outline"
+              shape="rounded"
+              leftIcon={badgeIcon}
+              rightIcon={badgeIcon}
+            >
+              Text
+            </Badge>
+          </div>
+        </div>
+      </div>
     </main>
   );
 }

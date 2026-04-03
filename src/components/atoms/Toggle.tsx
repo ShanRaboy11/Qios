@@ -18,8 +18,8 @@ export interface ToggleProps {
 
 /*example usage
 <Toggle variant="accent" defaultIsOn={true} />
-<Toggle defaultIsOn={false} icon={<Lock className="w-3 h-3" strokeWidth={3} />} />
-<Toggle defaultIsOn={true} showText />
+<Toggle defaultIsOn={true} icon={<Lock className="w-3 h-3" strokeWidth={3} />} />
+<Toggle variant="accent" defaultIsOn={true} showText />
 */
 
 export const Toggle = ({
@@ -67,6 +67,13 @@ export const Toggle = ({
     accent: "text-brand-accent",
   };
 
+  const ringColors = {
+    primary:
+      "ring-transparent ring-offset-transparent focus:ring-brand-primary/80 focus:ring-offset-white",
+    accent:
+      "ring-transparent ring-offset-transparent focus:ring-brand-accent/80 focus:ring-offset-white",
+  };
+
   return (
     <button
       type="button"
@@ -75,8 +82,9 @@ export const Toggle = ({
       disabled={disabled}
       onClick={handleToggle}
       className={cn(
-        "relative inline-flex h-8 w-16 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 ring-brand-primary cursor-pointer hover:shadow-sm",
+        "relative inline-flex h-8 w-16 items-center rounded-full outline-none ring-0 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 cursor-pointer hover:shadow-sm",
         trackColors[variant],
+        ringColors[variant],
         disabled && "opacity-50 cursor-not-allowed",
         className,
       )}
