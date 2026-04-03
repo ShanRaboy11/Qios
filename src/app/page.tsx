@@ -4,11 +4,36 @@ import { Toggle } from "@/components/atoms/Toggle";
 import { Badge } from "@/components/atoms/Badge";
 import { Checkbox } from "@/components/atoms/Checkbox";
 import { Radio } from "@/components/atoms/Radio";
-import { Plus, Lock } from "lucide-react";
+import { QuantityStepper } from "@/components/molecules/QuantityStepper";
+import { FeatureToggle } from "@/components/molecules/FeatureToggle";
+import { FormField } from "@/components/molecules/FormField";
+import { ContactNumberInput } from "@/components/molecules/ContactNumber";
+import { Dropdown } from "@/components/molecules/Dropdown";
+import { StepperBar } from "@/components/molecules/StepperBar";
+import {
+  Plus,
+  Lock,
+  Calendar,
+  Mail,
+  User,
+  Package,
+  Settings,
+} from "lucide-react";
 
 export default function HomePage() {
   const icon = <Plus className="w-4 h-4" strokeWidth={2.5} />;
   const badgeIcon = <Plus className="w-3 h-3" />;
+  const fruitOptions = [
+    { label: "Apple", value: "apple" },
+    { label: "Banana", value: "banana" },
+    { label: "Orange", value: "orange" },
+  ];
+  const businessSteps = [
+    { id: 1, label: "Business Information", icon: <User size={20} /> },
+    { id: 2, label: "Authentication Credentials", icon: <Lock size={20} /> },
+    { id: 3, label: "Subscription Package", icon: <Package size={20} /> },
+    { id: 4, label: "Feature Configuration", icon: <Settings size={20} /> },
+  ];
 
   return (
     <main className="flex min-h-screen bg-white p-10 flex-col items-center">
@@ -21,7 +46,6 @@ export default function HomePage() {
           states (Default -&gt; Hover -&gt; Active).
         </p>
       </div>
-
       <div className="border border-dashed border-purple-300 p-10 flex flex-col gap-10 w-full max-w-2xl rounded-2xl">
         {/* Pills */}
         <div>
@@ -152,7 +176,6 @@ export default function HomePage() {
           </div>
         </div>
       </div>
-
       <div className="w-full max-w-2xl mt-16 mb-8">
         <h1 className="h1 text-text-primary mb-2">Text Inputs</h1>
         <p className="b1 text-text-secondary">
@@ -160,7 +183,6 @@ export default function HomePage() {
           Inactive (Center), and Active (Center).
         </p>
       </div>
-
       <div className="border border-dashed border-purple-300 p-10 flex flex-col gap-8 w-full max-w-sm rounded-[24px]">
         <Input placeholder="Email Address" />
         <Input
@@ -175,7 +197,6 @@ export default function HomePage() {
           className="border-brand-primary shadow-[0_0_0_2px_rgba(255,198,112,0.15)]"
         />
       </div>
-
       {/* Toggle Switches */}
       <div className="w-full max-w-2xl mt-16 mb-8">
         <h1 className="h1 text-text-primary mb-2">Toggle Switches</h1>
@@ -184,7 +205,6 @@ export default function HomePage() {
           map to your grid columns.
         </p>
       </div>
-
       <div className="border border-dashed border-purple-300 p-10 flex flex-col gap-10 w-full max-w-3xl rounded-[24px]">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10 justify-items-center">
           <div className="flex flex-col gap-6 items-center">
@@ -238,7 +258,6 @@ export default function HomePage() {
           </div>
         </div>
       </div>
-
       {/* Badges Section */}
       <div className="w-full max-w-2xl mt-16 mb-8">
         <h1 className="h1 text-text-primary mb-2">Badges</h1>
@@ -247,7 +266,6 @@ export default function HomePage() {
           subtle, and outline variants.
         </p>
       </div>
-
       <div className="border border-dashed border-purple-300 p-10 flex flex-col gap-12 w-full max-w-4xl rounded-[24px]">
         {/* Main Badge Grid */}
         <div className="grid grid-cols-4 gap-8">
@@ -320,9 +338,7 @@ export default function HomePage() {
           <Radio name="no-label-demo" defaultChecked={true} />
         </div>
       </div>
-
       <hr className="border-gray-200" />
-
       {/* Checkboxes Section */}
       <div className="space-y-6">
         <h2 className="h1">Checkboxes</h2>
@@ -356,6 +372,84 @@ export default function HomePage() {
           />
         </div>
       </div>
+      <div className="p-10 space-y-4">
+        <h2 className="h2">Steppers</h2>
+
+        <QuantityStepper variant="accent" initialValue={1} />
+
+        <QuantityStepper variant="primary" initialValue={5} />
+
+        <QuantityStepper variant="outline" initialValue={1} />
+      </div>
+      <div className="max-w-md space-y-2">
+        <FeatureToggle
+          label="Authentication"
+          description="Enable two-factor authentication for security"
+          defaultChecked={true}
+        />
+
+        <FeatureToggle
+          label="Push Notifications"
+          description="Receive alerts for vehicle access events"
+          defaultChecked={false}
+        />
+
+        {/* Disabled state for locked features */}
+        <FeatureToggle
+          label="Auto-Archive Logs"
+          description="Requires Premium Subscription"
+          disabled={true}
+        />
+      </div>
+      <div className="p-10 space-y-10 max-w-xl">
+        <h1 className="h1">Input Forms</h1>
+
+        {/* Row 1: Inactive / Default */}
+        <FormField
+          label="Email Address"
+          placeholder="Email Address"
+          supportiveText="Supportive text"
+          leftIcon={<Calendar size={20} />} // Matches your Figma icon
+          rightIcon={<Calendar size={20} />}
+        />
+
+        {/* Row 2: Active (Focus state is automatic) */}
+        <FormField
+          label="Email Address"
+          defaultValue="Email Address"
+          supportiveText="Supportive text"
+          leftIcon={<Calendar size={20} />}
+          rightIcon={<Calendar size={20} />}
+        />
+
+        {/* Row 3: Error State */}
+        <FormField
+          label="Email Address"
+          defaultValue="Email Address"
+          isError={true}
+          supportiveText="Supportive text"
+          leftIcon={<Mail size={20} className="text-warning-primary" />}
+          rightIcon={<Mail size={20} className="text-warning-primary" />}
+        />
+        <Dropdown
+          label="Select Fruit"
+          options={fruitOptions}
+          supportiveText="Please choose one"
+        />
+        {/* Row 4: Password Field */}
+        <FormField
+          label="Password"
+          type="password"
+          placeholder="Enter your password"
+        />
+        {/* Row 5: Contact Number */}
+        <ContactNumberInput
+          label="Contact Number"
+          supportiveText="Supportive text"
+        />
+      </div>
+      ;
+      <StepperBar steps={businessSteps} currentStep={2} />
     </main>
   );
 }
