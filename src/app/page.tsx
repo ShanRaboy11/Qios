@@ -136,6 +136,19 @@ export default function HomePage() {
             >
               Ghost Button
             </Button>
+            <div className="flex items-center gap-3">
+              {/* The Stepper Minus Button */}
+              <Button variant="warning" shape="rounded" size="icon">
+                <Plus size={10} />
+              </Button>
+
+              <span className="b1 font-bold">1</span>
+
+              {/* The Stepper Plus Button */}
+              <Button variant="accent" shape="rounded" size="icon">
+                <Plus size={10} />
+              </Button>
+            </div>
           </div>
         </div>
       </div>
