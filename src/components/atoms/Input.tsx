@@ -6,12 +6,6 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
   align?: "left" | "center";
 }
 
-/*example usage
-
-<Input placeholder="Email Address" />
-<Input defaultValue="Email Address" isError />
-<Input placeholder="Email Address" align="center" />
-*/
 export const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ({ className, isError, align = "left", ...props }, ref) => {
     return (
@@ -34,3 +28,9 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
 );
 
 Input.displayName = "Input";
+
+/*example usage
+<Input placeholder="Email Address" />
+<Input defaultValue="Email Address" isError />
+<Input placeholder="Email Address" align="center" />
+*/

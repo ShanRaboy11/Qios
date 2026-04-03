@@ -16,12 +16,6 @@ export interface ToggleProps {
   disabled?: boolean;
 }
 
-/*example usage
-<Toggle variant="accent" defaultIsOn={true} />
-<Toggle defaultIsOn={true} icon={<Lock className="w-3 h-3" strokeWidth={3} />} />
-<Toggle variant="accent" defaultIsOn={true} showText />
-*/
-
 export const Toggle = ({
   isOn: controlledIsOn,
   defaultIsOn = false,
@@ -135,3 +129,9 @@ export const Toggle = ({
     </button>
   );
 };
+
+/*example usage
+<Toggle variant="accent" defaultIsOn={true} />
+<Toggle defaultIsOn={true} icon={<Lock className="w-3 h-3" strokeWidth={3} />} />
+<Toggle variant="accent" defaultIsOn={true} showText />
+*/

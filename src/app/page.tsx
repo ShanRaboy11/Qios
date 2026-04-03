@@ -1,7 +1,9 @@
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
 import { Toggle } from "@/components/atoms/Toggle";
-import { Badge } from "@/components/atoms/Badges";
+import { Badge } from "@/components/atoms/Badge";
+import { Checkbox } from "@/components/atoms/Checkbox";
+import { Radio } from "@/components/atoms/Radio";
 import { Plus, Lock } from "lucide-react";
 
 export default function HomePage() {
@@ -283,6 +285,62 @@ export default function HomePage() {
               Text
             </Badge>
           </div>
+        </div>
+      </div>
+      {/* Radios Section (Top Row) */}
+      <div className="space-y-6">
+        <h2 className="h1">Radios</h2>
+
+        {/* Row 1: Default/Checked with Label */}
+        <div className="flex gap-10 items-center p-6 border border-dashed border-purple-200 rounded-lg">
+          {/* Change children to label prop to avoid nesting errors */}
+          <Radio name="demo" label="Selected" defaultChecked />
+          <Radio name="demo" label="Unselected" />
+          <Radio name="plan" label="Basic" />
+
+          <Radio name="plan" label="Premium" variant="accent" />
+        </div>
+
+        {/* Row 2: Default/Checked NO Label */}
+        <div className="flex gap-10 items-center p-6 border border-dashed border-purple-200 rounded-lg max-w-sm">
+          <Radio name="no-label-demo" defaultChecked={false} />
+          <Radio name="no-label-demo" defaultChecked={true} />
+        </div>
+      </div>
+
+      <hr className="border-gray-200" />
+
+      {/* Checkboxes Section */}
+      <div className="space-y-6">
+        <h2 className="h1">Checkboxes</h2>
+
+        {/* Row 3: Default/Checked with Label */}
+        <div className="flex gap-10 items-center p-6 border border-dashed border-purple-200 rounded-lg">
+          {/* Change children to label prop here too */}
+          <Checkbox label="Accept terms" />
+
+          <Checkbox label="Subscribe" variant="accent" />
+
+          <Checkbox label="Partial" indeterminate />
+        </div>
+
+        {/* Row 4: Complex Grid */}
+        <div className="flex gap-10 items-center p-6 border border-dashed border-purple-200 rounded-lg max-w-4xl">
+          <Checkbox defaultChecked={false} />
+          <Checkbox defaultChecked={true} />
+
+          {/* Replicate specific Figma colors */}
+          <Checkbox
+            defaultChecked={true}
+            className="[&_span]:peer-checked:border-brand-secondary [&_span]:peer-checked:bg-brand-secondary"
+          />
+
+          <Checkbox indeterminate />
+
+          <Checkbox
+            indeterminate
+            className="[&_span]:peer-indeterminate:border-brand-secondary [&_span]:peer-indeterminate:bg-brand-secondary"
+          />
         </div>
       </div>
     </main>

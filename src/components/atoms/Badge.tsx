@@ -82,3 +82,8 @@ export const Badge = ({
     </div>
   );
 };
+
+/*example usage
+<Badge color="error" variant="outline" leftIcon={badgeIcon} rightIcon={badgeIcon}>Text</Badge>
+<Badge color="success" variant="outline" leftIcon={badgeIcon} rightIcon={badgeIcon}>Text</Badge> 
+*/

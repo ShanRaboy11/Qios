@@ -18,21 +18,6 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   rightIcon?: React.ReactNode;
 }
 
-/*example usage
-  <Button
-    variant="primary"
-    shape="rounded"
-    leftIcon={icon}
-    rightIcon={icon}
-  >
-  <Button
-    variant="accent"
-    shape="pill"
-    leftIcon={icon}
-    rightIcon={icon}
-  >
-*/
-
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   (
     {
@@ -96,3 +81,18 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 );
 
 Button.displayName = "Button";
+
+/*example usage
+  <Button
+    variant="primary"
+    shape="rounded"
+    leftIcon={icon}
+    rightIcon={icon}
+  >
+  <Button
+    variant="accent"
+    shape="pill"
+    leftIcon={icon}
+    rightIcon={icon}
+  >
+*/
