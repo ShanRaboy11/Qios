@@ -1,3 +1,5 @@
+"use client";
+
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
 import { Toggle } from "@/components/atoms/Toggle";
@@ -13,6 +15,12 @@ import { StepperBar } from "@/components/molecules/StepperBar";
 import { OrderHeader } from "@/components/molecules/OrderHeader";
 import { EditableItemList } from "@/components/molecules/EditableItem";
 import { PriceSummary } from "@/components/molecules/PriceSummary";
+import { SearchFilterBar } from "@/components/molecules/SearchFilterBar";
+import { ModifierRow } from "@/components/molecules/ModifierRow";
+import { UserItem } from "@/components/molecules/UserItem";
+import { ActivityItem } from "@/components/molecules/EmployeeActivity";
+import { ChatBubble } from "@/components/molecules/ChatBubble";
+import { ItemCustomization } from "@/components/molecules/OrderCustomization";
 import {
   Plus,
   Lock,
@@ -22,6 +30,7 @@ import {
   Package,
   Settings,
 } from "lucide-react";
+import React, { useState } from "react";
 
 export default function HomePage() {
   const icon = <Plus className="w-4 h-4" strokeWidth={2.5} />;
@@ -31,11 +40,41 @@ export default function HomePage() {
     { label: "Banana", value: "banana" },
     { label: "Orange", value: "orange" },
   ];
+  const [showFilters, setShowFilters] = useState(false);
   const businessSteps = [
     { id: 1, label: "Business Information", icon: <User size={20} /> },
     { id: 2, label: "Authentication Credentials", icon: <Lock size={20} /> },
     { id: 3, label: "Subscription Package", icon: <Package size={20} /> },
     { id: 4, label: "Feature Configuration", icon: <Settings size={20} /> },
+  ];
+  const users = [
+    { name: "Juan dela Cruz", id: "USR-10001", variant: "primary" as const },
+    { name: "Juan dela Cruz", id: "USR-10001", variant: "purple" as const },
+    { name: "Juan dela Cruz", id: "USR-10001", variant: "green" as const },
+    { name: "Juan dela Cruz", id: "USR-10001", variant: "blue" as const },
+  ];
+  const activities = [
+    {
+      employeeName: "Maria",
+      action: "Completed Order",
+      orderId: "8821",
+      timestamp: "Just now",
+      status: "completed" as const,
+    },
+    {
+      employeeName: "Maria",
+      action: "Processing Order",
+      orderId: "8821",
+      timestamp: "Just now",
+      status: "processing" as const,
+    },
+    {
+      employeeName: "Maria",
+      action: "Cancelled Order",
+      orderId: "8821",
+      timestamp: "Just now",
+      status: "cancelled" as const,
+    },
   ];
   const foodItems = [
     {
@@ -232,6 +271,7 @@ export default function HomePage() {
           status="validated"
           statusLabel="Validated - ready for payment"
         />
+        {/*<EditableItemList items={foodItems} />*/}
         <PriceSummary subtotal={400} taxRate={0.085} />
       </div>
       <div className="w-full max-w-2xl mt-16 mb-8">
@@ -316,6 +356,115 @@ export default function HomePage() {
           </div>
         </div>
       </div>
+      <div className="relative">
+        <SearchFilterBar onFilterClick={() => setShowFilters(!showFilters)} />
+
+        {showFilters && (
+          <div className="absolute right-0 mt-2 w-64 z-50">
+            {/* Reuse your Dropdown Option styling from image_146f7d.png */}
+            <div className="bg-white border-2 border-[#E5E5E5] rounded-2xl shadow-xl overflow-hidden">
+              <div className="p-4 b5 font-bold text-text-tertiary border-b border-[#E5E5E5]">
+                FILTER BY STATUS
+              </div>
+              <button className="w-full text-left p-4 hover:bg-slate-50 b2">
+                Active Tenants
+              </button>
+              <button className="w-full text-left p-4 hover:bg-slate-50 b2">
+                Pending Approval
+              </button>
+              <button className="w-full text-left p-4 hover:bg-slate-50 b2 text-error">
+                Suspended
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+      <div className="w-full max-w-md flex flex-col gap-3 p-4 bg-white rounded-2xl border-2 border-[#E5E5E5]">
+        <h3 className="h4 font-bold text-text-primary mb-1">
+          Select Spiciness
+        </h3>
+
+        {/* Radio Group Example */}
+        <ModifierRow
+          type="radio"
+          name="spiciness"
+          title="Mild"
+          description="Gentle kick, great for sensitive palates"
+          priceTag="Free"
+        />
+
+        <ModifierRow
+          type="radio"
+          name="spiciness"
+          title="Hot"
+          description="A bold heat for spice lovers"
+          priceTag="Free"
+        />
+
+        <div className="h-[1px] bg-[#E5E5E5] my-2" />
+
+        <h3 className="h4 font-bold text-text-primary mb-1">Add-ons</h3>
+
+        {/* Checkbox Group Example */}
+        <ModifierRow
+          type="checkbox"
+          title="Extra Tofu"
+          description="Pan-fried crispy tofu cubes"
+          priceTag="+₱35.00"
+        />
+      </div>
+      <section className="w-full p-6 bg-white rounded-2xl border-2 border-[#E5E5E5]">
+        <h2 className="h2 mb-6">User</h2>
+
+        {/* Responsive Grid: 1 column on mobile, 2 on tablet/small desktop */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-6">
+          {users.map((user, index) => (
+            <UserItem
+              key={index}
+              name={user.name}
+              id={user.id}
+              variant={user.variant}
+            />
+          ))}
+        </div>
+      </section>
+      <section className="w-full max-w-xl p-6 bg-white rounded-2xl border-2 border-[#E5E5E5]">
+        <h2 className="h2 mb-4">Employee Activity</h2>
+
+        <div className="flex flex-col">
+          {activities.map((item, index) => (
+            <ActivityItem key={index} {...item} />
+          ))}
+        </div>
+      </section>
+      <section className="w-full h-full flex flex-col p-4 sm:p-6 bg-slate-50 overflow-y-auto">
+        <ChatBubble
+          role="system"
+          message="hello system message"
+          timestamp="7:20"
+        />
+
+        <ChatBubble
+          role="customer"
+          message="yes po opo im a customer heh"
+          timestamp="7:20"
+          isRead={true}
+        />
+
+        {/* Quick Tag Pills (Seen in image_5db54a.png) */}
+        <div className="flex gap-2 mt-4">
+          <span className="px-3 py-1 bg-white border border-[#E5E5E5] rounded-lg text-text-tertiary b5">
+            Tags
+          </span>
+        </div>
+      </section>
+      <ItemCustomization
+        name="Chicken Adobo"
+        description="Slow-cooked in vinegar, soy, & garlic"
+        price={145.0}
+        badge="Bestseller"
+        image="/images/adobo-bowl.png" // Path to your asset
+      />
       {/* Badges Section */}
       <div className="w-full max-w-2xl mt-16 mb-8">
         <h1 className="h1 text-text-primary mb-2">Badges</h1>
