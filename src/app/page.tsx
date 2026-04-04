@@ -10,6 +10,9 @@ import { FormField } from "@/components/molecules/FormField";
 import { ContactNumberInput } from "@/components/molecules/ContactNumber";
 import { Dropdown } from "@/components/molecules/Dropdown";
 import { StepperBar } from "@/components/molecules/StepperBar";
+import { OrderHeader } from "@/components/molecules/OrderHeader";
+import { EditableItemList } from "@/components/molecules/EditableItem";
+import { PriceSummary } from "@/components/molecules/PriceSummary";
 import {
   Plus,
   Lock,
@@ -33,6 +36,32 @@ export default function HomePage() {
     { id: 2, label: "Authentication Credentials", icon: <Lock size={20} /> },
     { id: 3, label: "Subscription Package", icon: <Package size={20} /> },
     { id: 4, label: "Feature Configuration", icon: <Settings size={20} /> },
+  ];
+  const foodItems = [
+    {
+      id: "1",
+      name: "Pad Thai Noodles",
+      customization: "Extra Spicy",
+      price: 100,
+      quantity: 1,
+      badgeColorType: "error",
+    },
+    {
+      id: "2",
+      name: "Green Curry Bowl",
+      customization: "Gluten - Free",
+      price: 100,
+      quantity: 1,
+      badgeColorType: "success",
+    },
+    {
+      id: "3",
+      name: "Mango Sticky Rice",
+      customization: "Extra Coconut Drizzle",
+      price: 100,
+      quantity: 1,
+      badgeColorType: "secondary",
+    },
   ];
 
   return (
@@ -175,6 +204,35 @@ export default function HomePage() {
             </div>
           </div>
         </div>
+      </div>
+      <div className="space-y-4 max-w-4xl p-6">
+        {/* Validated State */}
+        <OrderHeader
+          orderId="ORD-2847"
+          tableName="Table 12"
+          timestamp="Today, 7:34 PM"
+          status="validated"
+          statusLabel="Validated - ready for payment"
+        />
+
+        {/* Voided State */}
+        <OrderHeader
+          orderId="ORD-2847"
+          tableName="Table 12"
+          timestamp="Today, 7:34 PM"
+          status="voided"
+          statusLabel="Voided - order cancelled"
+        />
+      </div>
+      <div className="max-w-md mx-auto">
+        <OrderHeader
+          orderId="2847"
+          tableName="Table 12"
+          timestamp="Today, 7:34 PM"
+          status="validated"
+          statusLabel="Validated - ready for payment"
+        />
+        <PriceSummary subtotal={400} taxRate={0.085} />
       </div>
       <div className="w-full max-w-2xl mt-16 mb-8">
         <h1 className="h1 text-text-primary mb-2">Text Inputs</h1>

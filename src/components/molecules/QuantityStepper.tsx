@@ -50,7 +50,7 @@ export const QuantityStepper = ({
         disabled={value <= minValue}
         type="button"
       >
-        <Minus className="w-4 h-4 stroke-[3px]" />
+        <Minus className="w-2 h-2 stroke-[3px]" />
       </Button>
 
       <span className="b1 min-w-[20px] text-center font-bold text-text-primary select-none">
@@ -64,7 +64,7 @@ export const QuantityStepper = ({
         disabled={value >= maxValue}
         type="button"
       >
-        <Plus className="w-4 h-4 stroke-[3px]" />
+        <Plus className="w-2 h-2 stroke-[3px]" />
       </Button>
     </div>
   );

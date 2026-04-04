@@ -3,7 +3,13 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 
-export type BadgeColor = "primary" | "accent" | "success" | "error";
+export type BadgeColor =
+  | "primary"
+  | "accent"
+  | "success"
+  | "error"
+  | "info"
+  | "secondary";
 export type BadgeVariant = "solid" | "subtle" | "outline";
 export type BadgeShape = "pill" | "rounded";
 
@@ -45,6 +51,16 @@ const badgeStyles = {
     subtle: "bg-warning-secondary text-warning-primary",
     outline:
       "bg-warning-secondary border border-warning-primary text-warning-primary",
+  },
+  info: {
+    solid: "bg-[#3B82F6] text-white backdrop-blur-sm",
+    subtle: "bg-[#3B82F6]/10 text-[#3B82F6]",
+    outline: "bg-[#3B82F6]/10 border border-[#3B82F6] text-[#3B82F6]",
+  },
+  secondary: {
+    solid: "bg-[#8B5CF6] text-white backdrop-blur-sm",
+    subtle: "bg-[#8B5CF6]/10 text-[#8B5CF6]",
+    outline: "bg-[#8B5CF6]/10 border border-[#8B5CF6] text-[#8B5CF6]",
   },
 };
 
