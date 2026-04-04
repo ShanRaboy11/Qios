@@ -21,6 +21,8 @@ import { UserItem } from "@/components/molecules/UserItem";
 import { ActivityItem } from "@/components/molecules/EmployeeActivity";
 import { ChatBubble } from "@/components/molecules/ChatBubble";
 import { ItemCustomization } from "@/components/molecules/OrderCustomization";
+import { KPICard } from "@/components/molecules/KPICard";
+import { InsightLink } from "@/components/molecules/InsightLink";
 import {
   Plus,
   Lock,
@@ -29,6 +31,7 @@ import {
   User,
   Package,
   Settings,
+  ChevronRight,
 } from "lucide-react";
 import React, { useState } from "react";
 
@@ -105,6 +108,90 @@ export default function HomePage() {
 
   return (
     <main className="flex min-h-screen bg-white p-10 flex-col items-center">
+      <section className="w-full h-full p-6 md:p-10 bg-slate-50 overflow-y-auto">
+        <h1 className="h1 text-text-primary mb-12">Dashboard</h1>
+
+        {/* 1. KPI Section: Responsive Grid Layout */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+          <div className="flex flex-col gap-6 w-full">
+            <KPICard
+              icon={<Lock size={24} />}
+              type="sales"
+              title="Total Sales"
+              value="$48,988,078"
+              percentageChange={35}
+              color="primary"
+            />
+            <KPICard
+              type="sales"
+              title="Total Sales"
+              value="$48,988,078"
+              percentageChange={35}
+              color="secondary"
+            />
+            <KPICard
+              type="sales"
+              title="Total Sales"
+              value="$48,988,078"
+              percentageChange={-35}
+              color="accent"
+            />
+          </div>
+
+          <div className="flex flex-col gap-6 w-full">
+            <KPICard
+              icon={<Lock size={24} />}
+              type="profit"
+              title="Profit"
+              value="$8,458,798"
+              percentageChange={35}
+              variant="outlined"
+              description="vs Last Month"
+              onViewAll={() => console.log("View Profit Details")}
+            />
+            <KPICard
+              type="profit"
+              title="Profit"
+              value="$8,458,798"
+              percentageChange={-35}
+              variant="outlined"
+              description="vs Last Month"
+              onViewAll={() => console.log("View Loss Details")}
+            />
+          </div>
+        </div>
+
+        {/* 2. Insights Section (Bottom Links) */}
+        <div className="w-full max-w-2xl bg-white border-2 border-[#E5E5E5] rounded-2xl p-6 flex flex-col gap-5">
+          {/* A simple filter bar to complete the look (cite: image_11.png) */}
+          <InsightLink
+            type="selling"
+            title="Top Selling Products"
+            color="primary"
+          />
+          <InsightLink
+            icon={<Lock size={24} />}
+            type="selling"
+            title="Top Selling Products"
+            options={["Today", "This Week", "This Month"]}
+            selectedOption="Today"
+            onOptionChange={(value) => console.log("Selected:", value)}
+            color="primary"
+          />
+          <InsightLink
+            icon={<Lock size={24} />}
+            type="info"
+            title="Overall Information"
+            color="secondary"
+          />
+          <InsightLink
+            type="stock"
+            title="Low Stock Products"
+            onViewAll={() => console.log("Low Stock")}
+            color="accent"
+          />
+        </div>
+      </section>
       <div className="w-full max-w-2xl mb-8">
         <h1 className="h1 text-text-primary mb-2">
           Buttons are used for links and CTA
