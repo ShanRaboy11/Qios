@@ -30,6 +30,10 @@ const config: Config = {
           primary: "#1FAD66",
           secondary: "#E0FAD6"
         }
+      },
+      fontFamily: {
+        figtree: ["var(--font-figtree)", "sans-serif"],
+        inter: ["var(--font-inter)", "sans-serif"]
       }
     }
   },
