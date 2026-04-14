@@ -823,3 +823,59 @@ JOIN public.inventory_items  ii ON ii.id = lsa.inventory_item_id
 WHERE lsa.is_resolved = false
   AND lsa.tenant_id = (auth.jwt() ->> 'tenant_id')::uuid  -- F10
 ORDER BY lsa.created_at DESC;
+-- =============================================================================
+-- SECTION 9: AUTH HOOKS & INITIAL PROFILE GENERATION (Restored Gaps)
+-- =============================================================================
+
+-- 9a. Generate user profile cleanly on Supabase Auth Signup, bypassing RLS securely
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger AS $`$
+BEGIN
+  INSERT INTO public.profiles (id, tenant_id, full_name, role)
+  VALUES (
+    new.id,
+    (new.raw_user_meta_data->>'tenant_id')::uuid,
+    COALESCE(new.raw_user_meta_data->>'full_name', ''),
+    COALESCE((new.raw_user_meta_data->>'role')::profile_role_enum, 'employee'::profile_role_enum)
+  );
+  RETURN new;
+END;
+$`$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- 9b. Supabase Custom JWT Claim Hook to inject tenant_id and role 
+-- Without this, (auth.jwt() ->> 'tenant_id') will always be NULL in Supabase!
+CREATE OR REPLACE FUNCTION public.custom_access_token_hook(event jsonb)
+RETURNS jsonb
+LANGUAGE plpgsql
+STABLE
+AS $`$
+DECLARE
+    claims jsonb;
+    user_role public.profile_role_enum;
+    user_tenant_id uuid;
+BEGIN
+    SELECT role, tenant_id INTO user_role, user_tenant_id
+    FROM public.profiles
+    WHERE id = (event->>'user_id')::uuid;
+
+    claims := event->'claims';
+
+    IF user_role IS NOT NULL THEN
+        claims := jsonb_set(claims, '{tenant_id}', to_jsonb(user_tenant_id));
+        claims := jsonb_set(claims, '{role}', to_jsonb(user_role));
+    END IF;
+
+    event := jsonb_set(event, '{claims}', claims);
+    RETURN event;
+END;
+$`$;
+
+-- Ensure the auth system can actually execute the hook
+GRANT EXECUTE ON FUNCTION public.custom_access_token_hook TO supabase_auth_admin;
+REVOKE EXECUTE ON FUNCTION public.custom_access_token_hook FROM authenticated, anon, public;
+
