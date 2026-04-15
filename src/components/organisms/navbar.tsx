@@ -1,53 +1,69 @@
+"use client";
+
 import React from "react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/atoms/Button";
 import { ArrowRight } from "lucide-react";
 
-const Navbar = () => {
+interface NavbarProps {
+  variant?: "filled" | "transparent";
+  className?: string;
+}
+
+const NavLink = ({
+  href,
+  children,
+  active,
+}: {
+  href: string;
+  children: React.ReactNode;
+  active?: boolean;
+}) => (
+  <a
+    href={href}
+    className={cn(
+      "font-inter font-medium text-[18px] transition-colors duration-200 hover:text-brand-accent",
+      active ? "text-brand-accent" : "text-text-primary",
+    )}
+  >
+    {children}
+  </a>
+);
+
+export const Navbar = ({ variant = "filled", className }: NavbarProps) => {
   return (
     <nav
-      className="flex items-center justify-between mx-auto"
-      style={{
-        width: "1439px",
-        padding: "10px 79px",
-        background: "#FFF9EF",
-        fontFamily: "Inter, sans-serif", // Standard clean sans-serif matching the UI
-      }}
+      className={cn(
+        "flex items-center justify-between w-full max-w-[1439px] mx-auto px-[79px] py-[10px]",
+        variant === "filled" ? "bg-bg-primary" : "bg-transparent",
+        className,
+      )}
     >
-      {/* Logo Section */}
+      {/* Logo Atom */}
       <div className="flex items-center">
-        <span className="text-[36px] font-bold tracking-tight leading-none bg-gradient-to-br from-[#FF5E7B] via-[#FF8C8C] to-[#FFB783] bg-clip-text text-transparent">
+        <span className="text-[36px] font-bold tracking-tight leading-none bg-gradient-to-br from-[#FF5E7B] via-brand-accent to-brand-primary bg-clip-text text-transparent font-inter">
           Qios
         </span>
       </div>
 
-      {/* Navigation Links */}
+      {/* Nav Links Molecule */}
       <div className="flex items-center gap-[60px]">
-        <a
-          href="#home"
-          className="text-[#FF5B79] text-[18px] font-medium transition-opacity hover:opacity-80"
-        >
+        <NavLink href="#home" active>
           Home
-        </a>
-        <a
-          href="#services"
-          className="text-[#2D2D2D] text-[18px] font-medium transition-colors hover:text-[#FF5B79]"
-        >
-          Services
-        </a>
-        <a
-          href="#contact"
-          className="text-[#2D2D2D] text-[18px] font-medium transition-colors hover:text-[#FF5B79]"
-        >
-          Contact
-        </a>
+        </NavLink>
+        <NavLink href="#services">Services</NavLink>
+        <NavLink href="#contact">Contact</NavLink>
       </div>
 
-      {/* CTA Button */}
-      <button className="flex items-center gap-2 px-7 py-3 rounded-full bg-gradient-to-r from-[#FF5B79] to-[#FF758C] text-white font-semibold text-[16px] shadow-sm hover:opacity-90 transition-all active:scale-95">
+      {/* Button Atom Instance */}
+      <Button
+        variant="accent"
+        shape="pill"
+        rightIcon={<ArrowRight size={18} strokeWidth={2.5} />}
+        className="px-[28px] py-[12px]" // Fine-tuning to match Figma's specific button scale
+      >
         Get Started
-        <ArrowRight size={18} strokeWidth={2.5} />
-      </button>
+      </Button>
     </nav>
   );
 };
-
-export default Navbar;

@@ -23,6 +23,7 @@ import { ChatBubble } from "@/components/molecules/ChatBubble";
 import { ItemCustomization } from "@/components/molecules/OrderCustomization";
 import { KPICard } from "@/components/molecules/KPICard";
 import { InsightLink } from "@/components/molecules/InsightLink";
+import { Navbar } from "@/components/organisms/navbar";
 import {
   Plus,
   Lock,
@@ -108,6 +109,31 @@ export default function HomePage() {
 
   return (
     <main className="flex min-h-screen bg-white p-10 flex-col items-center">
+      {/* NAVBAR DEMONSTRATION SECTION */}
+      <section className="w-full space-y-10 py-10 bg-slate-100">
+        <div className="px-10">
+          <h2 className="h2 mb-4">Navigation Bar Variants</h2>
+          <p className="b1 text-text-secondary mb-8">
+            Atomic instances of the Navbar: Filled (Brand BG) and Transparent.
+          </p>
+        </div>
+
+        {/* Instance 1: Filled */}
+        <div className="space-y-2">
+          <p className="px-10 text-xs font-mono text-slate-400">
+            Variant: Filled (bg-bg-primary)
+          </p>
+          <Navbar variant="filled" />
+        </div>
+
+        {/* Instance 2: Transparent */}
+        <div className="space-y-2 bg-white py-4 border-y border-slate-200">
+          <p className="px-10 text-xs font-mono text-slate-400">
+            Variant: Transparent
+          </p>
+          <Navbar variant="transparent" />
+        </div>
+      </section>
       <section className="w-full h-full p-6 md:p-10 bg-slate-50 overflow-y-auto">
         <h1 className="h1 text-text-primary mb-12">Dashboard</h1>
 
