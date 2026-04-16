@@ -6,12 +6,9 @@ import { cn } from "@/lib/utils";
 export const Footer = () => {
   return (
     <footer
-      className="relative w-full max-w-full overflow-x-hidden overflow-y-hidden bg-white transition-all duration-300
-      /* Desktop Height */
+      className="relative w-full max-w-full overflow-hidden bg-white transition-all duration-300
       xl:h-[376px] 
-      /* Adjust to taller height earlier (at lg/1024px instead of md) to prevent iPad overlap */
       lg:h-[570px] 
-      /* Mobile/Tablet Height */
       h-[570px]"
     >
       <div
@@ -32,8 +29,7 @@ export const Footer = () => {
         }}
       />
 
-      {/* Qios Background Text - Placement Unchanged */}
-      <div className="absolute -left-10 -bottom-36 z-2 pointer-events-none select-none overflow-visible">
+      <div className="absolute -left-10 md:-left-8 lg:-left-10 -bottom-36 md:-bottom-32 lg:-bottom-36 z-2 pointer-events-none select-none overflow-hidden">
         <h1
           className="font-ibrand"
           style={{
@@ -52,20 +48,14 @@ export const Footer = () => {
         </h1>
       </div>
 
-      {/* Content Container */}
       <div
         className={cn(
           "relative z-10 w-full h-full flex flex-col px-[25px] md:px-[79px] py-12 transition-all duration-300",
-          // Phone & Tablet: Centered items (Triggered earlier by using lg for the end-alignment)
-          "items-center justify-center gap-16",
-          // iPad/Desktop (lg: 1024px): Move to right alignment earlier to avoid overlap
-          "lg:items-end lg:justify-start lg:gap-8",
-          // Desktop (xl): Standard spacing
+          "items-end justify-start gap-8",
           "xl:justify-between xl:items-end",
         )}
       >
-        {/* Connect Section */}
-        <div className="flex flex-col items-center lg:items-end gap-6 mt-4 shrink-0">
+        <div className="flex flex-col items-end gap-6 mt-4 shrink-0">
           <h2
             className="text-text-primary font-figtree whitespace-nowrap"
             style={{
@@ -156,9 +146,8 @@ export const Footer = () => {
           </div>
         </div>
 
-        {/* All Rights Reserved */}
         <div
-          className="text-text-primary font-inter shrink-0 text-center lg:text-right"
+          className="text-text-primary font-inter shrink-0 text-right"
           style={{
             fontSize: "20px",
             fontWeight: 400,
