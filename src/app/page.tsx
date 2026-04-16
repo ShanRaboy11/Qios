@@ -23,6 +23,7 @@ import { ChatBubble } from "@/components/molecules/ChatBubble";
 import { ItemCustomization } from "@/components/molecules/OrderCustomization";
 import { KPICard } from "@/components/molecules/KPICard";
 import { InsightLink } from "@/components/molecules/InsightLink";
+import { Navbar } from "@/components/organisms/navbar";
 import {
   Plus,
   Lock,
@@ -107,8 +108,14 @@ export default function HomePage() {
   ];
 
   return (
-    <main className="flex min-h-screen bg-white p-10 flex-col items-center">
-      <section className="w-full h-full p-6 md:p-10 bg-slate-50 overflow-y-auto">
+    <main className="flex min-h-screen bg-white flex-col items-center w-full">
+      <div className="px-10 py-10">
+        <h1 className="h1 text-text-primary">Navbar</h1>
+      </div>
+      <Navbar variant="filled" />
+      <div className="h-12" />
+      <Navbar variant="transparent" />
+      <section className="w-full p-6 md:p-10 bg-slate-50 mt-12">
         <h1 className="h1 text-text-primary mb-12">Dashboard</h1>
 
         {/* 1. KPI Section: Responsive Grid Layout */}
