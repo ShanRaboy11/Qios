@@ -29,11 +29,10 @@ export const Footer = () => {
         }}
       />
 
-      <div className="absolute -left-10 md:-left-8 lg:-left-10 -bottom-36 md:-bottom-32 lg:-bottom-36 z-2 pointer-events-none select-none overflow-hidden">
+      <div className="absolute -left-6 md:-left-8 lg:-left-10 -bottom-20 md:-bottom-32 lg:-bottom-36 z-2 pointer-events-none select-none overflow-hidden">
         <h1
-          className="font-ibrand"
+          className="font-ibrand text-[min(50vw,500px)] md:text-[min(45vw,500px)]"
           style={{
-            fontSize: "min(45vw, 500px)",
             fontWeight: 400,
             lineHeight: "1",
             background:
@@ -51,11 +50,11 @@ export const Footer = () => {
       <div
         className={cn(
           "relative z-10 w-full h-full flex flex-col px-[25px] md:px-[79px] py-12 transition-all duration-300",
-          "items-end justify-start gap-8",
+          "items-center md:items-end justify-start gap-8",
           "xl:justify-between xl:items-end",
         )}
       >
-        <div className="flex flex-col items-end gap-6 mt-4 shrink-0">
+        <div className="flex flex-col items-center md:items-end gap-6 mt-4 shrink-0">
           <h2
             className="text-text-primary font-figtree whitespace-nowrap"
             style={{
@@ -147,7 +146,7 @@ export const Footer = () => {
         </div>
 
         <div
-          className="text-text-primary font-inter shrink-0 text-right"
+          className="text-text-primary font-inter shrink-0 text-center md:text-right mt-6 md:mt-0"
           style={{
             fontSize: "20px",
             fontWeight: 400,
