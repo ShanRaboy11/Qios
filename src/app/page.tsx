@@ -1,5 +1,6 @@
 "use client";
 
+import MenuCatalog, { MenuItemData } from "@/components/organisms/MenuCatalog";
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
 import { Toggle } from "@/components/atoms/Toggle";
@@ -105,11 +106,27 @@ export default function HomePage() {
       badgeColorType: "secondary",
     },
   ];
+  
+  const MOCK_DATA: MenuItemData[] = Array(10).fill(null).map((_, i) => ({
+  id: `${i}`,
+  name: "Spicy seasoned seafood noodles",
+  price: 2.29,
+  category: "Snacks",
+  available: true,
+  imageUrl: "https://placehold.co/400x400/ffa500/ffffff?text=Food",
+}));
+
+// Adding some items for other categories
+const CATALOG_ITEMS: MenuItemData[] = [...MOCK_DATA,
+    { id: "11", name: "Beef Pares Meal", price: 150, category: "Meal", available: true, imageUrl: "https://placehold.co/400" },
+    { id: "12", name: "Vegan Salad", price: 120, category: "Vegan", available: true, imageUrl: "https://placehold.co/400" },
+];
 
   return (
     <main className="flex min-h-screen bg-white p-10 flex-col items-center">
       <section className="w-full h-full p-6 md:p-10 bg-slate-50 overflow-y-auto">
         <h1 className="h1 text-text-primary mb-12">Dashboard</h1>
+
 
         {/* 1. KPI Section: Responsive Grid Layout */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
@@ -159,6 +176,10 @@ export default function HomePage() {
               onViewAll={() => console.log("View Loss Details")}
             />
           </div>
+        </div>
+
+        <div className="w-full mb-12">
+          <MenuCatalog initialItems={CATALOG_ITEMS} />
         </div>
 
         {/* 2. Insights Section (Bottom Links) */}
@@ -747,3 +768,5 @@ export default function HomePage() {
     </main>
   );
 }
+
+
