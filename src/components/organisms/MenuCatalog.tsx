@@ -17,51 +17,58 @@ export interface MenuItemData {
 }
 
 const CATEGORIES: { label: Category; icon: React.ReactNode }[] = [
-  { label: "Snacks", icon: <Pizza size={20} /> },
-  { label: "Meal", icon: <Utensils size={20} /> },
-  { label: "Vegan", icon: <Leaf size={20} /> },
-  { label: "Dessert", icon: <Cake size={20} /> },
-  { label: "Drinks", icon: <Coffee size={20} /> },
+  { label: "Snacks", icon: <Pizza size={24} /> },
+  { label: "Meal", icon: <Utensils size={24} /> },
+  { label: "Vegan", icon: <Leaf size={24} /> },
+  { label: "Dessert", icon: <Cake size={24} /> },
+  { label: "Drinks", icon: <Coffee size={24} /> },
 ];
 
-/**
- * NAMED EXPORT: MenuItem
- * Updated with Hover Effects
- */
 export const MenuItem = ({ item }: { item: MenuItemData }) => {
   return (
-    <div className="relative group pt-12 w-full cursor-pointer">
-      {/* Floating Circular Image - Hovers up on group hover */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 z-20 transition-transform duration-300 group-hover:-translate-y-2">
-        <div className="w-28 h-28 rounded-full border-4 border-white shadow-lg overflow-hidden bg-stone-200">
-          <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+    <div className="w-48 h-64 relative group transition-all duration-300 ease-out hover:-translate-y-2">
+      {/* The Card Body */}
+      <div className="w-48 h-56 px-4 pt-24 pb-5 left-0 top-[34px] absolute bg-[#ffd77a] rounded-2xl inline-flex flex-col justify-start items-start gap-2.5 shadow-sm group-hover:shadow-xl transition-shadow border border-[#ffc670]/20">
+        <div className="w-40 h-24 relative">
+          <div className="w-40 left-0 top-[0.50px] absolute inline-flex flex-col justify-start items-start gap-1.5">
+            <div className="self-stretch justify-start b3 text-[#2d2d2d] line-clamp-2 min-h-[40px]">
+              {item.name}
+            </div>
+            
+            <div className="self-stretch flex flex-col justify-center items-start gap-1">
+              <div className="text-center justify-start text-[#ff5269] b2 font-bold">
+                Php {item.price.toFixed(2)}
+              </div>
+              <div className="text-center justify-start text-[#707070] b5 font-medium uppercase">
+                {item.available ? "Available" : "Sold Out"}
+              </div>
+            </div>
+          </div>
+
+          {/* Action Button*/}
+          <div className="w-6 h-6 left-[132px] top-[68px] absolute">
+            <button 
+              disabled={!item.available}
+              className="w-6 h-6 left-0 top-0 absolute bg-[#ff5269] rounded-[5px] flex items-center justify-center text-white hover:opacity-90 transition-all active:scale-90 disabled:bg-gray-400"
+            >
+              <Plus size={14} strokeWidth={3} />
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Card Body - Glows and lifts on hover */}
-      <div className="bg-[#FDE68A] rounded-[24px] pt-20 pb-5 px-5 flex flex-col h-full transition-all duration-300 border border-orange-300/30 group-hover:shadow-xl group-hover:bg-[#fde047] group-hover:border-orange-400">
-        <h3 className="text-zinc-800 text-[14px] font-bold leading-tight mb-1 min-h-[35px] line-clamp-2">
-          {item.name}
-        </h3>
-        <p className="text-[#F43F5E] font-extrabold text-base">Php {item.price.toFixed(2)}</p>
-        
-        <div className="flex justify-between items-center mt-3">
-          <span className="text-[10px] text-neutral-500 font-semibold uppercase tracking-tighter">
-            {item.available ? "Available" : "Sold Out"}
-          </span>
-          {/* Button also reacts to card hover */}
-          <button className="w-8 h-8 bg-[#F43F5E] rounded-lg text-white flex items-center justify-center shadow-md transition-all group-hover:scale-110 active:scale-95">
-            <Plus size={18} strokeWidth={3} />
-          </button>
-        </div>
+      {/*The Image Circle */}
+      <div className="w-32 h-32 left-[32px] top-0 absolute bg-stone-300 rounded-full border-4 border-white shadow-md overflow-hidden z-10">
+        <img 
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
+          src={item.imageUrl} 
+          alt={item.name} 
+        />
       </div>
     </div>
   );
 };
 
-/**
- * DEFAULT EXPORT: MenuCatalog
- */
 export default function MenuCatalog({ initialItems }: { initialItems: MenuItemData[] }) {
   const [query, setQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<Category>("Snacks");
@@ -77,16 +84,13 @@ export default function MenuCatalog({ initialItems }: { initialItems: MenuItemDa
   return (
     <div className="w-full min-h-screen bg-[#FFF7ED] flex flex-col font-['Inter']">
       
-      {/* 1. FIXED TOP SEARCH SECTION */}
       <div className="px-6 md:px-24 pt-10 pb-6 bg-[#FFF7ED]">
         <SearchFilterBar onSearch={setQuery} />
       </div>
 
-      {/* 2. MAIN CATALOG AREA */}
       <div className="px-6 md:px-24 pb-12">
         <div className="w-full bg-white rounded-[40px] shadow-sm border border-orange-100 overflow-hidden">
           
-          {/* Header Section (Amber Area with Tabs) */}
           <div className="bg-[#FDE68A] p-8 pb-14">
             <div className="flex gap-6 overflow-x-auto pb-2 scrollbar-hide">
               {CATEGORIES.map((cat) => (
@@ -114,7 +118,6 @@ export default function MenuCatalog({ initialItems }: { initialItems: MenuItemDa
             </div>
           </div>
 
-          {/* List Section (White area that overlaps the amber) */}
           <div className="p-8 md:p-12 -mt-10 bg-white rounded-t-[40px] min-h-[600px] border-t border-orange-100">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-x-6 gap-y-12">
               {filteredItems.map((item) => (
@@ -122,7 +125,6 @@ export default function MenuCatalog({ initialItems }: { initialItems: MenuItemDa
               ))}
             </div>
 
-            {/* Empty State */}
             {filteredItems.length === 0 && (
               <div className="flex flex-col items-center justify-center h-80 text-orange-900/30">
                 <p className="text-xl font-bold uppercase">No {activeCategory} found</p>
