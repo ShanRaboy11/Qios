@@ -24,6 +24,8 @@ import { ChatBubble } from "@/components/molecules/ChatBubble";
 import { ItemCustomization } from "@/components/molecules/OrderCustomization";
 import { KPICard } from "@/components/molecules/KPICard";
 import { InsightLink } from "@/components/molecules/InsightLink";
+import { Navbar } from "@/components/organisms/navbar";
+import { Footer } from "@/components/organisms/footer";
 import {
   Plus,
   Lock,
@@ -123,12 +125,18 @@ const CATALOG_ITEMS: MenuItemData[] = [...MOCK_DATA,
 ];
 
   return (
-    <main className="flex min-h-screen bg-white p-10 flex-col items-center">
-      <section className="w-full h-full p-6 md:p-10 bg-slate-50 overflow-y-auto">
+    <main className="flex min-h-screen bg-white flex-col items-center w-full overflow-x-hidden">
+      <div className="px-10 py-10">
+        <h1 className="h1 text-text-primary">Navbar</h1>
+      </div>
+      <Navbar variant="filled" />
+      <div className="h-12" />
+      <Navbar variant="transparent" />
+      <section className="w-full p-6 md:p-10 bg-slate-50 mt-12">
         <h1 className="h1 text-text-primary mb-12">Dashboard</h1>
 
-
         {/* 1. KPI Section: Responsive Grid Layout */}
+=======
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
           <div className="flex flex-col gap-6 w-full">
             <KPICard
@@ -183,8 +191,8 @@ const CATALOG_ITEMS: MenuItemData[] = [...MOCK_DATA,
         </div>
 
         {/* 2. Insights Section (Bottom Links) */}
+=======
         <div className="w-full max-w-2xl bg-white border-2 border-[#E5E5E5] rounded-2xl p-6 flex flex-col gap-5">
-          {/* A simple filter bar to complete the look (cite: image_11.png) */}
           <InsightLink
             type="selling"
             title="Top Selling Products"
@@ -469,7 +477,6 @@ const CATALOG_ITEMS: MenuItemData[] = [...MOCK_DATA,
 
         {showFilters && (
           <div className="absolute right-0 mt-2 w-64 z-50">
-            {/* Reuse your Dropdown Option styling from image_146f7d.png */}
             <div className="bg-white border-2 border-[#E5E5E5] rounded-2xl shadow-xl overflow-hidden">
               <div className="p-4 b5 font-bold text-text-tertiary border-b border-[#E5E5E5]">
                 FILTER BY STATUS
@@ -559,7 +566,7 @@ const CATALOG_ITEMS: MenuItemData[] = [...MOCK_DATA,
           isRead={true}
         />
 
-        {/* Quick Tag Pills (Seen in image_5db54a.png) */}
+        {/* Quick Tag Pills */}
         <div className="flex gap-2 mt-4">
           <span className="px-3 py-1 bg-white border border-[#E5E5E5] rounded-lg text-text-tertiary b5">
             Tags
@@ -601,7 +608,7 @@ const CATALOG_ITEMS: MenuItemData[] = [...MOCK_DATA,
 
         <hr className="border-gray-200" />
 
-        {/* Badges with Icons (Bottom Left Figma Reference) */}
+        {/* Badges with Icons */}
         <div className="flex flex-col gap-4 items-start">
           <h3 className="h4 text-text-primary mb-2">With Icons</h3>
           <div className="flex gap-4">
@@ -639,7 +646,6 @@ const CATALOG_ITEMS: MenuItemData[] = [...MOCK_DATA,
 
         {/* Row 1: Default/Checked with Label */}
         <div className="flex gap-10 items-center p-6 border border-dashed border-purple-200 rounded-lg">
-          {/* Change children to label prop to avoid nesting errors */}
           <Radio name="demo" label="Selected" defaultChecked />
           <Radio name="demo" label="Unselected" />
           <Radio name="plan" label="Basic" />
@@ -660,7 +666,6 @@ const CATALOG_ITEMS: MenuItemData[] = [...MOCK_DATA,
 
         {/* Row 3: Default/Checked with Label */}
         <div className="flex gap-10 items-center p-6 border border-dashed border-purple-200 rounded-lg">
-          {/* Change children to label prop here too */}
           <Checkbox label="Accept terms" />
 
           <Checkbox label="Subscribe" variant="accent" />
@@ -673,7 +678,6 @@ const CATALOG_ITEMS: MenuItemData[] = [...MOCK_DATA,
           <Checkbox defaultChecked={false} />
           <Checkbox defaultChecked={true} />
 
-          {/* Replicate specific Figma colors */}
           <Checkbox
             defaultChecked={true}
             className="[&_span]:peer-checked:border-brand-secondary [&_span]:peer-checked:bg-brand-secondary"
@@ -724,7 +728,7 @@ const CATALOG_ITEMS: MenuItemData[] = [...MOCK_DATA,
           label="Email Address"
           placeholder="Email Address"
           supportiveText="Supportive text"
-          leftIcon={<Calendar size={20} />} // Matches your Figma icon
+          leftIcon={<Calendar size={20} />}
           rightIcon={<Calendar size={20} />}
         />
 
@@ -765,6 +769,7 @@ const CATALOG_ITEMS: MenuItemData[] = [...MOCK_DATA,
       </div>
       ;
       <StepperBar steps={businessSteps} currentStep={2} />
+      <Footer />
     </main>
   );
 }
