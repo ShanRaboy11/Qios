@@ -111,13 +111,13 @@ export default function HomePage() {
 
   return (
     <main className="flex min-h-screen bg-white flex-col items-center w-full overflow-x-hidden">
+      <Hero />
       <div className="px-10 py-10">
         <h1 className="h1 text-text-primary">Navbar</h1>
       </div>
       <Navbar variant="filled" />
       <div className="h-12" />
       <Navbar variant="transparent" />
-      <Hero />
       <section className="w-full p-6 md:p-10 bg-slate-50 mt-12">
         <h1 className="h1 text-text-primary mb-12">Dashboard</h1>
 
