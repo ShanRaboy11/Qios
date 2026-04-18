@@ -25,6 +25,7 @@ import { KPICard } from "@/components/molecules/KPICard";
 import { InsightLink } from "@/components/molecules/InsightLink";
 import { Navbar } from "@/components/organisms/navbar";
 import { Footer } from "@/components/organisms/footer";
+import { Hero } from "@/components/organisms/hero";
 import {
   Plus,
   Lock,
@@ -116,6 +117,7 @@ export default function HomePage() {
       <Navbar variant="filled" />
       <div className="h-12" />
       <Navbar variant="transparent" />
+      <Hero />
       <section className="w-full p-6 md:p-10 bg-slate-50 mt-12">
         <h1 className="h1 text-text-primary mb-12">Dashboard</h1>
 
@@ -743,7 +745,7 @@ export default function HomePage() {
           supportiveText="Supportive text"
         />
       </div>
-      ;
+
       <StepperBar steps={businessSteps} currentStep={2} />
       <Footer />
     </main>
