@@ -15,7 +15,7 @@ export const Hero = () => {
     <section className="w-full max-w-[1440px] h-[900px] bg-text-tertiary flex items-center justify-start mx-auto relative overflow-visible">
       {/* contents */}
       <div
-        className="absolute left-[-150px] top-[46%] -translate-y-1/2 z-[70] flex flex-col justify-between"
+        className="absolute left-[-150px] top-[48%] -translate-y-1/2 z-[70] flex flex-col justify-between"
         style={{ width: "369px", height: "371px" }}
       >
         <div className="flex flex-col">
@@ -48,7 +48,37 @@ export const Hero = () => {
         </div>
       </div>
 
-      {/* vactors */}
+      {/* ipad mockup div */}
+
+      <div className="absolute z-[65]" style={{ left: "480px", top: "110px" }}>
+        <img src="ipad.svg" alt="iPad Mockup" className="relative z-10" />
+        <div
+          className="absolute z-20 overflow-hidden"
+          style={{
+            top: "99px",
+            left: "47px",
+            width: "706.635px",
+            height: "489.599px",
+            transform: "rotate(-3.781deg)",
+            transformOrigin: "top left",
+            borderRadius: "20px",
+          }}
+        >
+          <img
+            src="ipad-dashboard.svg"
+            alt="Dashboard Content"
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              objectPosition: "top",
+              backgroundColor: "lightgray",
+            }}
+          />
+        </div>
+      </div>
+
+      {/* vectors */}
       <div
         className="relative shrink-0 opacity-50 -ml-[400px] overflow-visible"
         style={{
