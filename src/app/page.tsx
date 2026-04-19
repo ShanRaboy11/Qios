@@ -28,7 +28,6 @@ import { Navbar } from "@/components/organisms/navbar";
 import { Footer } from "@/components/organisms/footer";
 import TenantManagement from "@/components/organisms/TenantManagement"; 
 import FeatureSection from "@/components/organisms/feature";
-import TenantManagement from "@/components/organisms/TenantManagement"; 
 import {
   Plus,
   Lock,
