@@ -49,7 +49,6 @@ export const Hero = () => {
       </div>
 
       {/* ipad mockup div */}
-
       <div className="absolute z-[65]" style={{ left: "480px", top: "110px" }}>
         <img src="ipad.svg" alt="iPad Mockup" className="relative z-10" />
 
@@ -73,12 +72,10 @@ export const Hero = () => {
               height: "100%",
               objectFit: "cover",
               objectPosition: "top",
-              backgroundColor: "lightgray",
+              backgroundColor: "white",
             }}
           />
         </div>
-
-        {/* Phone Shadows - Moved outside overflow-hidden and placed on top */}
 
         <div
           style={{
@@ -88,9 +85,9 @@ export const Hero = () => {
             transform: "rotate(-8.906deg)",
             borderRadius: "300px",
             background: "rgba(145, 101, 107, 0.27)",
-            filter: "blur(50px)",
+            filter: "blur(75px)",
             bottom: "50px",
-            right: "220px",
+            right: "210px",
             zIndex: 30,
           }}
         />
@@ -102,12 +99,53 @@ export const Hero = () => {
             transform: "rotate(-8.906deg)",
             borderRadius: "300px",
             background: "rgba(145, 101, 107, 0.27)",
-            filter: "blur(50px)",
+            filter: "blur(20px)",
             bottom: "90px",
-            right: "240px",
+            right: "230px",
             zIndex: 30,
           }}
         />
+      </div>
+
+      {/* phone mockup */}
+      <div
+        className="absolute z-[80]"
+        style={{
+          left: "1110px",
+          top: "220px",
+          width: "450px",
+          height: "612px",
+        }}
+      >
+        <img
+          src="phone.svg"
+          alt="Phone Mockup"
+          style={{ width: "100%", height: "100%" }}
+        />
+        <div
+          className="absolute z-20 overflow-hidden"
+          style={{
+            top: "47px",
+            left: "96px",
+            width: "211px",
+            height: "456px",
+            transform: "rotate(11.817deg)",
+            transformOrigin: "top left",
+            borderRadius: "20px",
+          }}
+        >
+          <img
+            src="phone-dashboard.svg"
+            alt="Phone Dashboard Content"
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              objectPosition: "top",
+              backgroundColor: "white",
+            }}
+          />
+        </div>
       </div>
 
       {/* vectors */}
