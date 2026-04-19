@@ -25,6 +25,7 @@ import { KPICard } from "@/components/molecules/KPICard";
 import { InsightLink } from "@/components/molecules/InsightLink";
 import { Navbar } from "@/components/organisms/navbar";
 import { Footer } from "@/components/organisms/footer";
+import FeatureSection from "@/components/organisms/feature";
 import {
   Plus,
   Lock,
@@ -745,6 +746,7 @@ export default function HomePage() {
       </div>
       ;
       <StepperBar steps={businessSteps} currentStep={2} />
+      <FeatureSection />
       <Footer />
     </main>
   );
