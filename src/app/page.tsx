@@ -136,7 +136,6 @@ const CATALOG_ITEMS: MenuItemData[] = [...MOCK_DATA,
         <h1 className="h1 text-text-primary mb-12">Dashboard</h1>
 
         {/* 1. KPI Section: Responsive Grid Layout */}
-=======
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
           <div className="flex flex-col gap-6 w-full">
             <KPICard
@@ -191,7 +190,6 @@ const CATALOG_ITEMS: MenuItemData[] = [...MOCK_DATA,
         </div>
 
         {/* 2. Insights Section (Bottom Links) */}
-=======
         <div className="w-full max-w-2xl bg-white border-2 border-[#E5E5E5] rounded-2xl p-6 flex flex-col gap-5">
           <InsightLink
             type="selling"
