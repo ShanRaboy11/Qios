@@ -1,4 +1,5 @@
 import React from "react";
+import { Button } from "@/components/atoms/Button";
 
 export const Hero = () => {
   const vectorStyle =
@@ -12,7 +13,42 @@ export const Hero = () => {
 
   return (
     <section className="w-full max-w-[1440px] h-[900px] bg-text-tertiary flex items-center justify-start mx-auto relative overflow-visible">
-      {/* vectors */}
+      {/* contents */}
+      <div
+        className="absolute left-[-150px] top-[46%] -translate-y-1/2 z-[70] flex flex-col justify-between"
+        style={{ width: "369px", height: "371px" }}
+      >
+        <div className="flex flex-col">
+          <p className="b3 text-brand-primary mb-3" style={{ width: "359px" }}>
+            THE FUTURE OF CEBU F&B
+          </p>
+          <h1
+            className="h1 bg-clip-text text-transparent mb-4"
+            style={{ ...gradientHeaderStyle, width: "369px" }}
+          >
+            No Kiosk Hardware, Just Smarter Orders
+          </h1>
+          <p
+            className="b1 text-text-primary"
+            style={{ width: "359px", height: "88px" }}
+          >
+            Reduce counter congestion with AI-powered QR ordering and real-time
+            inventory control. Save thousands on hardware costs.
+          </p>
+        </div>
+
+        <div className="flex gap-4">
+          <Button variant="accent">Schedule a Demo</Button>
+          <Button
+            variant="outline"
+            className="border-brand-accent text-brand-accent hover:bg-brand-accent/10"
+          >
+            Learn More
+          </Button>
+        </div>
+      </div>
+
+      {/* vactors */}
       <div
         className="relative shrink-0 opacity-50 -ml-[400px] overflow-visible"
         style={{
@@ -85,7 +121,7 @@ export const Hero = () => {
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
-            d="M-217.833 12.7109C-301.926 60.1152 -256.814 154.813 -212.615 216.391C-158.226 292.261 -88.9627 367.971 -81.0063 450.878C-72.6605 538.336 -91.715 673.212 -36.0202 760.204C3.33499 821.719 99.876 882.912 198.175 894.246C261.769 901.514 324.212 876.421 377.868 859.238C439.852 839.48 593.829 902.144 634.883 866.572C697.134 812.655 689.719 742.251 680.179 682.479C671.028 624.613 642.076 568.892 595.659 517.444C578.717 498.56 558.772 482.075 541.859 464.271C527.927 449.552 516.983 433.9 511.258 415.024C502.016 384.479 490.84 356.261 476.273 328.537C464.318 305.814 450.894 284.001 433.646 261.163C425.751 250.66 415.196 239.559 403.15 226.916C374.306 196.776 330.97 164.784 276.512 133.285C208.247 93.9367 141.102 58.0478 72.7066 27.796C-27.8525 -16.8105 -146.545 -27.4381 -217.833 12.7109Z"
+            d="M-217.833 12.7109C-301.926 60.1152 -256.814 154.813 -212.615 216.391C-158.226 292.261 -88.9627 367.971 -81.0063 450.878C-72.6605 538.336 -91.715 673.212 -36.0202 760.204C3.33499 821.719 99.876 882.912 198.175 894.246C261.769 901.514 324.212 876.421 377.868 859.238C439.852 839.48 593.829 902.144 634.883 866.572C697.134 812.655 689.719 742.251 680.179 682.479C671.028 624.613 642.076 568.892 595.659 517.444C578.717 498.56 558.772 482.075 541.859 464.271C527.927 449.552 516.983 433.9 511.258 415.024C502.016 384.479 490.84 356.261 476.273 328.537C464.318 305.814 433.646 261.163C425.751 250.66 415.196 239.559 403.15 226.916C374.306 196.776 330.97 164.784 276.512 133.285C208.247 93.9367 141.102 58.0478 72.7066 27.796C-27.8525 -16.8105 -146.545 -27.4381 -217.833 12.7109Z"
             stroke="#FFC670"
             strokeOpacity="0.2"
             strokeWidth="3"
