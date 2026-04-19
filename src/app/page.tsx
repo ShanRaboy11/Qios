@@ -115,13 +115,13 @@ export default function HomePage() {
   price: 2.29,
   category: "Snacks",
   available: true,
-  imageUrl: "https://placehold.co/400x400/ffa500/ffffff?text=Food",
+  imageUrl: "https://placehold.co/150x136",
 }));
 
 // Adding some items for other categories
 const CATALOG_ITEMS: MenuItemData[] = [...MOCK_DATA,
-    { id: "11", name: "Beef Pares Meal", price: 150, category: "Meal", available: true, imageUrl: "https://placehold.co/400" },
-    { id: "12", name: "Vegan Salad", price: 120, category: "Vegan", available: true, imageUrl: "https://placehold.co/400" },
+    { id: "11", name: "Beef Pares Meal", price: 150, category: "Meal", available: true, imageUrl: "https://placehold.co/150x136" },
+    { id: "12", name: "Vegan Salad", price: 120, category: "Vegan", available: true, imageUrl: "https://placehold.co/150x136" },
 ];
 
   return (
