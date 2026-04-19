@@ -1,5 +1,6 @@
 import React from "react";
 import { Button } from "@/components/atoms/Button";
+import { Navbar } from "@/components/organisms/navbar";
 
 export const Hero = () => {
   const vectorStyle =
@@ -13,6 +14,12 @@ export const Hero = () => {
 
   return (
     <section className="w-full max-w-[1440px] h-[900px] bg-text-tertiary flex items-center justify-start mx-auto relative overflow-visible">
+      <div className="absolute top-8 left-1/2 -translate-x-1/2 w-[100vw] flex justify-center z-[100]">
+        <div className="w-full">
+          <Navbar variant="transparent" />
+        </div>
+      </div>
+
       {/* contents */}
       <div
         className="absolute left-[-150px] top-[48%] -translate-y-1/2 z-[70] flex flex-col justify-between"
