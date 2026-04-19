@@ -26,6 +26,7 @@ import { InsightLink } from "@/components/molecules/InsightLink";
 import MenuCatalog, { MenuItemData } from "@/components/organisms/MenuCatalog";
 import { Navbar } from "@/components/organisms/navbar";
 import { Footer } from "@/components/organisms/footer";
+import TenantManagement from "@/components/organisms/TenantManagement"; 
 import {
   Plus,
   Lock,
@@ -186,6 +187,10 @@ const CATALOG_ITEMS: MenuItemData[] = [...MOCK_DATA,
 
         <div className="w-full mb-12">
           <MenuCatalog initialItems={CATALOG_ITEMS} />
+        </div>
+
+        <div className="min-h-screen bg-[#FFF7ED] py-10 px-6"> 
+          <TenantManagement />
         </div>
 
         <div className="w-full max-w-2xl bg-white border-2 border-[#E5E5E5] rounded-2xl p-6 flex flex-col gap-5">
