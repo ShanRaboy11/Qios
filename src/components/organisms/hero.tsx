@@ -28,7 +28,6 @@ export const Hero = () => {
             strokeWidth="3"
           />
         </svg>
-
         <svg
           className={vectorStyle}
           style={{ width: "1032.697px", height: "805.617px" }}
@@ -43,7 +42,6 @@ export const Hero = () => {
             strokeWidth="3"
           />
         </svg>
-
         <svg
           className={vectorStyle}
           style={{ width: "1025.141px", height: "824.734px" }}
@@ -58,7 +56,6 @@ export const Hero = () => {
             strokeWidth="3"
           />
         </svg>
-
         <svg
           className={vectorStyle}
           style={{ width: "1020.906px", height: "845.754px" }}
@@ -73,7 +70,6 @@ export const Hero = () => {
             strokeWidth="3"
           />
         </svg>
-
         <svg
           className={vectorStyle}
           style={{ width: "1022.19px", height: "868.434px" }}
@@ -88,7 +84,6 @@ export const Hero = () => {
             strokeWidth="3"
           />
         </svg>
-
         <svg
           className={vectorStyle}
           style={{ width: "1032.116px", height: "892.45px" }}
@@ -103,7 +98,6 @@ export const Hero = () => {
             strokeWidth="3"
           />
         </svg>
-
         <svg
           className={vectorStyle}
           style={{ width: "1057.114px", height: "917.508px" }}
@@ -118,7 +112,6 @@ export const Hero = () => {
             strokeWidth="3"
           />
         </svg>
-
         <svg
           className={vectorStyle}
           style={{ width: "1091.294px", height: "943.52px" }}
@@ -127,13 +120,12 @@ export const Hero = () => {
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
-            d="M-247.915 -21.1954C-345.134 33.6236 -292.923 143.141 -241.789 214.329C-178.751 302.063 -98.7105 389.584 -89.6582 485.45C-79.9947 586.578 -138.302 704.134 -73.8687 804.861C-28.4866 875.979 82.5834 932.073 196.305 945.072C249.276 951.126 301.921 944.114 350.969 935.417C416.27 923.778 501.442 925.284 551.227 896.882C633.951 849.517 679.672 783.718 708.74 716.407C736.135 653.117 738.842 589.651 714.6 529.864C705.71 508.177 693.223 487.45 678.448 466.854C666.405 450.195 653.305 433.512 639.179 416.517C614.536 386.76 582.402 358.889 542.509 332.581C510.936 311.73 477.358 292.512 442.582 273.156C427.473 264.767 409.448 255.36 389.333 244.342C347.247 221.309 294.253 192.916 235.294 158.354C173.07 121.852 108.749 79.8206 42.9029 31.2465C-34.3957 -25.886 -155.87 -73.177 -247.915 -21.1954Z"
+            d="M-247.915 -21.1954C-345.134 33.6236 -292.923 143.141 -241.789 214.329C-178.751 302.063 -98.7105 389.584 -89.6582 485.45C-79.9947 586.578 -138.302 704.134 -73.8687 804.861C-28.4866 875.979 82.5834 932.073 196.305 945.072C249.276 951.126 301.921 944.114 350.969 935.417C416.27 923.778 501.442 925.284 551.227 896.882C633.951 849.517 679.672 783.718 708.74 716.407C736.135 653.117 738.842 589.651 714.6 529.864C705.71 508.177 693.223 487.45 678.448 466.854C663.405 450.195 653.305 433.512 639.179 416.517C614.536 386.76 582.402 358.889 542.509 332.581C510.936 311.73 477.358 292.512 442.582 273.156C427.473 264.767 409.448 255.36 389.333 244.342C347.247 221.309 294.253 192.916 235.294 158.354C173.07 121.852 108.749 79.8206 42.9029 31.2465C-34.3957 -25.886 -155.87 -73.177 -247.915 -21.1954Z"
             stroke="#FFC670"
             strokeOpacity="0.2"
             strokeWidth="3"
           />
         </svg>
-
         <svg
           className={vectorStyle}
           style={{ width: "1131.397px", height: "969.879px" }}
@@ -259,6 +251,71 @@ export const Hero = () => {
             top: "0px",
           }}
         />
+      </div>
+
+      <style>
+        {`
+      @keyframes infinite-scroll {
+        0% { transform: translateX(0); }
+        100% { transform: translateX(-50%); }
+      }
+      .animate-infinite-scroll {
+        display: flex;
+        width: max-content;
+        animation: infinite-scroll 25s linear infinite;
+      }
+    `}
+      </style>
+      <div
+        className="absolute bottom-12 right-[-150px] w-[950px] overflow-hidden z-[60] bg-transparent pointer-events-none"
+        style={{
+          maskImage:
+            "linear-gradient(to right, transparent, black 15%, black 85%, transparent)",
+          WebkitMaskImage:
+            "linear-gradient(to right, transparent, black 15%, black 85%, transparent)",
+        }}
+      >
+        <div className="animate-infinite-scroll gap-16 items-center pr-16">
+          {[...Array(2)].map((_, i) => (
+            <React.Fragment key={i}>
+              <img
+                src="https://upload.wikimedia.org/wikipedia/en/d/d3/Starbucks_Corporation_Logo_2011.svg"
+                alt="Starbucks"
+                className="h-16 w-auto object-contain shrink-0"
+              />
+              <img
+                src="https://upload.wikimedia.org/wikipedia/commons/3/36/McDonald%27s_Golden_Arches.svg"
+                alt="McDonald's"
+                className="h-12 w-auto object-contain shrink-0"
+              />
+              <img
+                src="https://upload.wikimedia.org/wikipedia/en/3/32/Wendy%27s_full_logo_2012.svg"
+                alt="Wendy's"
+                className="h-12 w-auto object-contain shrink-0"
+              />
+              <img
+                src="https://upload.wikimedia.org/wikipedia/commons/c/cc/Burger_King_2020.svg"
+                alt="Burger King"
+                className="h-12 w-auto object-contain shrink-0"
+              />
+              <img
+                src="https://upload.wikimedia.org/wikipedia/commons/5/5c/Subway_2016_logo.svg"
+                alt="Subway"
+                className="h-8 w-auto object-contain shrink-0"
+              />
+              <img
+                src="https://upload.wikimedia.org/wikipedia/commons/0/02/Chick-fil-A_Logo.svg"
+                alt="Chick-fil-A"
+                className="h-8 w-auto object-contain shrink-0"
+              />
+              <img
+                src="https://upload.wikimedia.org/wikipedia/commons/3/3e/Domino%27s_pizza_logo.svg"
+                alt="Domino's"
+                className="h-12 w-auto object-contain shrink-0"
+              />
+            </React.Fragment>
+          ))}
+        </div>
       </div>
     </section>
   );
