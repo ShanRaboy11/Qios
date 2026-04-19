@@ -120,7 +120,7 @@ export default function MenuCatalog({ initialItems }: { initialItems: MenuItemDa
           className="h-[52px] px-4 md:px-6 flex items-center gap-2 bg-white border-2 border-[#E5E5E5] rounded-2xl hover:bg-slate-50 active:scale-95 transition-all group shrink-0"
         >
           <SlidersHorizontal size={18} className="text-[#707070] group-hover:text-[#ffc670]" />
-          <span className="hidden sm:inline-block text-sm md:text-base font-bold text-[#707070] group-hover:text-[#2d2d2d]">Filters</span>
+          <span className="hidden sm:inline-block text-sm md:text-base font-medium text-[#707070] group-hover:text-[#2d2d2d]">Filters</span>
         </button>
       </div>
 

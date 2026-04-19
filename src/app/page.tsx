@@ -185,13 +185,20 @@ const CATALOG_ITEMS: MenuItemData[] = [...MOCK_DATA,
           </div>
         </div>
 
+      {/*Menu Catalog Section*/}
         <div className="w-full mb-12">
           <MenuCatalog initialItems={CATALOG_ITEMS} />
         </div>
 
-        <div className="min-h-screen bg-[#FFF7ED] py-10 px-6"> 
-          <TenantManagement />
-        </div>
+      {/* Tenant Management Directory */}
+        <main className="min-h-screen bg-[#FFF7ED] py-16 px-6">
+          <div className="max-w-[966px] mx-auto">
+            <h1 className="text-[40px] font-bold text-gray-900 mb-12 leading-tight">
+                Tenant Management Directory
+            </h1>        
+            <TenantManagement />
+          </div>
+        </main>
 
         <div className="w-full max-w-2xl bg-white border-2 border-[#E5E5E5] rounded-2xl p-6 flex flex-col gap-5">
           <InsightLink
