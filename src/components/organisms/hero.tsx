@@ -41,7 +41,7 @@ export const Hero = () => {
           <Button variant="accent">Schedule a Demo</Button>
           <Button
             variant="outline"
-            className="border-brand-accent text-brand-accent hover:bg-brand-accent/10"
+            className="border-brand-accent text-brand-accent hover:bg-brand-accent hover:border-brand-accent hover:text-white"
           >
             Learn More
           </Button>
