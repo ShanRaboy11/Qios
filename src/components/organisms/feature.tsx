@@ -55,11 +55,11 @@ function IconBox({ children }: { children: React.ReactNode }) {
   );
 }
 
-function Card({ children, wide }: { children: React.ReactNode; wide?: boolean }) {
+function Card({ children, wide }: { children: React.ReactNode; wide?: string }) {
   return (
     <div className={`bg-white rounded-2xl p-6 border border-black/[0.06] relative overflow-hidden
       hover:shadow-[0_12px_36px_rgba(255,82,105,0.1),0_2px_8px_rgba(0,0,0,0.05)]
-      hover:-translate-y-0.5 transition-all duration-200 ${wide}`}>
+      hover:-translate-y-0.5 transition-all duration-200 ${wide || ''}`}>
       <div className="absolute inset-0 pointer-events-none bg-gradient-to-br from-brand-primary/5 to-transparent" />
       <div className="relative z-10">{children}</div>
     </div>

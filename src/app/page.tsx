@@ -25,6 +25,7 @@ import { KPICard } from "@/components/molecules/KPICard";
 import { InsightLink } from "@/components/molecules/InsightLink";
 import { Navbar } from "@/components/organisms/navbar";
 import { Footer } from "@/components/organisms/footer";
+import TenantManagement from "@/components/organisms/TenantManagement"; 
 import FeatureSection from "@/components/organisms/feature";
 import {
   Plus,
