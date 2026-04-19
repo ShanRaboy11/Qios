@@ -23,6 +23,7 @@ import { ChatBubble } from "@/components/molecules/ChatBubble";
 import { ItemCustomization } from "@/components/molecules/OrderCustomization";
 import { KPICard } from "@/components/molecules/KPICard";
 import { InsightLink } from "@/components/molecules/InsightLink";
+import MenuCatalog, { MenuItemData } from "@/components/organisms/MenuCatalog";
 import { Navbar } from "@/components/organisms/navbar";
 import { Footer } from "@/components/organisms/footer";
 import {
@@ -108,6 +109,21 @@ export default function HomePage() {
     },
   ];
 
+  const MOCK_DATA: MenuItemData[] = Array(10).fill(null).map((_, i) => ({
+  id: `${i}`,
+  name: "Spicy seasoned seafood noodles",
+  price: 2.29,
+  category: "Snacks",
+  available: true,
+  imageUrl: "https://placehold.co/150x136",
+}));
+
+// Adding some items for other categories
+const CATALOG_ITEMS: MenuItemData[] = [...MOCK_DATA,
+    { id: "11", name: "Beef Pares Meal", price: 150, category: "Meal", available: true, imageUrl: "https://placehold.co/150x136" },
+    { id: "12", name: "Vegan Salad", price: 120, category: "Vegan", available: true, imageUrl: "https://placehold.co/150x136" },
+];
+
   return (
     <main className="flex min-h-screen bg-white flex-col items-center w-full overflow-x-hidden">
       <div className="px-10 py-10">
@@ -166,6 +182,10 @@ export default function HomePage() {
               onViewAll={() => console.log("View Loss Details")}
             />
           </div>
+        </div>
+
+        <div className="w-full mb-12">
+          <MenuCatalog initialItems={CATALOG_ITEMS} />
         </div>
 
         <div className="w-full max-w-2xl bg-white border-2 border-[#E5E5E5] rounded-2xl p-6 flex flex-col gap-5">
