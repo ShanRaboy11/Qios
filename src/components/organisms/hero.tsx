@@ -52,6 +52,7 @@ export const Hero = () => {
 
       <div className="absolute z-[65]" style={{ left: "480px", top: "110px" }}>
         <img src="ipad.svg" alt="iPad Mockup" className="relative z-10" />
+
         <div
           className="absolute z-20 overflow-hidden"
           style={{
@@ -76,6 +77,37 @@ export const Hero = () => {
             }}
           />
         </div>
+
+        {/* Phone Shadows - Moved outside overflow-hidden and placed on top */}
+
+        <div
+          style={{
+            position: "absolute",
+            width: "112.027px",
+            height: "381.789px",
+            transform: "rotate(-8.906deg)",
+            borderRadius: "300px",
+            background: "rgba(145, 101, 107, 0.27)",
+            filter: "blur(50px)",
+            bottom: "50px",
+            right: "220px",
+            zIndex: 30,
+          }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            width: "70.998px",
+            height: "241.96px",
+            transform: "rotate(-8.906deg)",
+            borderRadius: "300px",
+            background: "rgba(145, 101, 107, 0.27)",
+            filter: "blur(50px)",
+            bottom: "90px",
+            right: "240px",
+            zIndex: 30,
+          }}
+        />
       </div>
 
       {/* vectors */}
