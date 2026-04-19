@@ -1,7 +1,7 @@
 export function ChatbotLogo({ size = 180 }: { size?: number }) {
   const h = Math.round(size * 1.2);
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col items-center group cursor-pointer">
       <style>{`
         @keyframes botFloat {
           0%,100% { transform: translateY(0px); }
@@ -11,10 +11,52 @@ export function ChatbotLogo({ size = 180 }: { size?: number }) {
           0%,100% { transform: scaleX(1);    opacity: 0.9; }
           50%      { transform: scaleX(0.5); opacity: 0.3; }
         }
+        @keyframes gentleWiggle {
+          0%   { transform: rotate(0deg)    translateX(0px); }
+          20%  { transform: rotate(-2.5deg) translateX(-2px); }
+          40%  { transform: rotate(2.5deg)  translateX(2px); }
+          60%  { transform: rotate(-2deg)   translateX(-1px); }
+          80%  { transform: rotate(1.5deg)  translateX(1px); }
+          100% { transform: rotate(0deg)    translateX(0px); }
+        }
+        @keyframes idleBlink {
+          0%,47%,53%,100% { ry: 9px; }
+          49%,51%         { ry: 1.2px; }
+        }
+        @keyframes tickleEyes {
+          0%,20%   { ry: 9px; }
+          35%,65%  { ry: 1.2px; }
+          80%,100% { ry: 9px; }
+        }
+        @keyframes blushIn {
+          0%,20%   { opacity: 0; }
+          40%,70%  { opacity: 1; }
+          90%,100% { opacity: 0; }
+        }
+        @keyframes starPop {
+          0%,20%   { transform: scale(0) rotate(0deg);  opacity: 0; }
+          35%,55%  { transform: scale(1) rotate(15deg); opacity: 1; }
+          75%,100% { transform: scale(0) rotate(30deg); opacity: 0; }
+        }
+
+        .bot-float { animation: botFloat 3.5s ease-in-out infinite; transform-origin: bottom center; }
+        .group:hover .bot-float { animation: gentleWiggle 0.8s ease-in-out 2; }
+
+        .eye-left, .eye-right { animation: idleBlink 4s ease-in-out infinite; }
+        .group:hover .eye-left,
+        .group:hover .eye-right { animation: tickleEyes 1.6s ease-in-out forwards; }
+
+        .blush { opacity: 0; }
+        .group:hover .blush { animation: blushIn 1.6s ease-in-out forwards; }
+
+        .star { transform-origin: center; opacity: 0; }
+        .group:hover .star-1 { animation: starPop 1.65s 0.1s  ease-in-out forwards; }
+        .group:hover .star-2 { animation: starPop 1.65s 0.25s ease-in-out forwards; }
+
+        .shadow-el { animation: shadowSync 3.5s ease-in-out infinite; transform-origin: center; }
       `}</style>
 
-      {/* Robot */}
-      <div style={{ animation: 'botFloat 3.5s ease-in-out infinite', transformOrigin: 'bottom center' }}>
+      <div className="bot-float">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 245 300"
           width={size} height={h} style={{ display: 'block', overflow: 'visible' }}>
 
@@ -22,21 +64,20 @@ export function ChatbotLogo({ size = 180 }: { size?: number }) {
           <rect x="65" y="99" width="115" height="38" rx="19" fill="#1a1a1a"/>
 
           <g transform="translate(95,118)">
-            <ellipse cx="0" cy="0" rx="9" ry="9" fill="#e8405a">
-              <animateTransform attributeName="transform" type="scale"
-                values="1 1;1 1;1 1;1 1;1 1;1 1;1 1;1 0.08;1 1;1 1;1 1;1 1;1 1;1 1;1 1;1 1;1 1;1 0.08;1 1;1 1;1 1"
-                keyTimes="0;.05;.1;.15;.2;.25;.3;.34;.38;.43;.48;.53;.58;.63;.68;.73;.78;.82;.86;.92;1"
-                dur="5s" repeatCount="indefinite" additive="sum"/>
-            </ellipse>
+            <ellipse className="eye-left" cx="0" cy="0" rx="9" ry="9" fill="#e8405a"/>
+          </g>
+          <g transform="translate(150,118)">
+            <ellipse className="eye-right" cx="0" cy="0" rx="9" ry="9" fill="#e8405a"/>
           </g>
 
-          <g transform="translate(150,118)">
-            <ellipse cx="0" cy="0" rx="9" ry="9" fill="#e8405a">
-              <animateTransform attributeName="transform" type="scale"
-                values="1 1;1 1;1 1;1 1;1 1;1 1;1 1;1 0.08;1 1;1 1;1 1;1 1;1 1;1 1;1 1;1 1;1 1;1 0.08;1 1;1 1;1 1"
-                keyTimes="0;.05;.1;.15;.2;.25;.3;.34;.38;.43;.48;.53;.58;.63;.68;.73;.78;.82;.85;.92;1"
-                dur="5s" repeatCount="indefinite" additive="sum"/>
-            </ellipse>
+          <ellipse className="blush" cx="52"  cy="132" rx="16" ry="8" fill="#f4a0b0" opacity="0.45"/>
+          <ellipse className="blush" cx="193" cy="132" rx="16" ry="8" fill="#f4a0b0" opacity="0.45"/>
+
+          <g className="star star-1" style={{ transformOrigin: '40px 85px' }}>
+            <text x="40" y="90" textAnchor="middle" fontSize="18" fill="#fbbf24">✦</text>
+          </g>
+          <g className="star star-2" style={{ transformOrigin: '205px 82px' }}>
+            <text x="205" y="87" textAnchor="middle" fontSize="13" fill="#e8405a">✦</text>
           </g>
 
           <g transform="translate(12,190) scale(0.898)">
@@ -49,15 +90,12 @@ export function ChatbotLogo({ size = 180 }: { size?: number }) {
         </svg>
       </div>
 
-      {/* Shadow — fully outside the robot div so it never overlaps the tail */}
-      <div style={{
+      <div className="shadow-el" style={{
         width: size * 0.9,
         height: 24,
         marginTop: 10,
         borderRadius: '50%',
         background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 40%, rgba(0,0,0,0.1) 65%, transparent 80%)',
-        animation: 'shadowSync 3.5s ease-in-out infinite',
-        transformOrigin: 'center',
       }}/>
     </div>
   );
