@@ -1,6 +1,5 @@
 "use client";
 
-import MenuCatalog, { MenuItemData } from "@/components/organisms/MenuCatalog";
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
 import { Toggle } from "@/components/atoms/Toggle";
@@ -108,21 +107,6 @@ export default function HomePage() {
       badgeColorType: "secondary",
     },
   ];
-  
-  const MOCK_DATA: MenuItemData[] = Array(10).fill(null).map((_, i) => ({
-  id: `${i}`,
-  name: "Spicy seasoned seafood noodles",
-  price: 2.29,
-  category: "Snacks",
-  available: true,
-  imageUrl: "https://placehold.co/150x136",
-}));
-
-// Adding some items for other categories
-const CATALOG_ITEMS: MenuItemData[] = [...MOCK_DATA,
-    { id: "11", name: "Beef Pares Meal", price: 150, category: "Meal", available: true, imageUrl: "https://placehold.co/150x136" },
-    { id: "12", name: "Vegan Salad", price: 120, category: "Vegan", available: true, imageUrl: "https://placehold.co/150x136" },
-];
 
   return (
     <main className="flex min-h-screen bg-white flex-col items-center w-full overflow-x-hidden">
@@ -135,7 +119,6 @@ const CATALOG_ITEMS: MenuItemData[] = [...MOCK_DATA,
       <section className="w-full p-6 md:p-10 bg-slate-50 mt-12">
         <h1 className="h1 text-text-primary mb-12">Dashboard</h1>
 
-        {/* 1. KPI Section: Responsive Grid Layout */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
           <div className="flex flex-col gap-6 w-full">
             <KPICard
@@ -185,11 +168,6 @@ const CATALOG_ITEMS: MenuItemData[] = [...MOCK_DATA,
           </div>
         </div>
 
-        <div className="w-full mb-12">
-          <MenuCatalog initialItems={CATALOG_ITEMS} />
-        </div>
-
-        {/* 2. Insights Section (Bottom Links) */}
         <div className="w-full max-w-2xl bg-white border-2 border-[#E5E5E5] rounded-2xl p-6 flex flex-col gap-5">
           <InsightLink
             type="selling"
@@ -771,5 +749,3 @@ const CATALOG_ITEMS: MenuItemData[] = [...MOCK_DATA,
     </main>
   );
 }
-
-
