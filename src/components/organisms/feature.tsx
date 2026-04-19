@@ -7,8 +7,6 @@ const features = [
   {
     icon: (
       <div className="relative flex items-center justify-center w-[24px] h-[24px]">
-        <span className="absolute -inset-1.5 rounded-[10px] border border-brand-accent animate-ping opacity-40" />
-        <span className="absolute -inset-3 rounded-[14px] border border-brand-primary animate-ping opacity-20 [animation-delay:0.55s]" />
         <QrCode className="w-[24px] h-[24px]" style={{ color: 'var(--color-brand-accent)' }} />
       </div>
     ),
@@ -57,9 +55,31 @@ function IconBox({ children }: { children: React.ReactNode }) {
 
 function Card({ children, wide }: { children: React.ReactNode; wide?: string }) {
   return (
-    <div className={`bg-white rounded-2xl p-6 border border-black/[0.06] relative overflow-hidden
-      hover:shadow-[0_12px_36px_rgba(255,82,105,0.1),0_2px_8px_rgba(0,0,0,0.05)]
-      hover:-translate-y-0.5 transition-all duration-200 ${wide || ''}`}>
+    <div className={`bg-white rounded-2xl p-6 border relative overflow-hidden
+      hover:-translate-y-1 transition-all duration-300 group ${wide || ''}`}
+      style={{
+        borderColor: 'color-mix(in srgb, var(--color-brand-primary) 20%, var(--color-brand-accent) 20%)',
+        boxShadow: `
+          0 0 0 1px color-mix(in srgb, var(--color-brand-primary) 12%, var(--color-brand-accent) 8%),
+          0 4px 20px color-mix(in srgb, var(--color-brand-primary) 6%, transparent),
+          0 1px 4px rgba(0,0,0,0.04)
+        `
+      }}
+      onMouseEnter={e => {
+        (e.currentTarget as HTMLDivElement).style.boxShadow = `
+          0 0 0 1px color-mix(in srgb, var(--color-brand-primary) 18%, var(--color-brand-accent) 12%),
+          0 8px 30px color-mix(in srgb, var(--color-brand-primary) 22%, transparent),
+          0 4px 12px color-mix(in srgb, var(--color-brand-accent) 14%, transparent),
+          0 2px 6px rgba(0,0,0,0.06)
+        `;
+      }}
+      onMouseLeave={e => {
+        (e.currentTarget as HTMLDivElement).style.boxShadow = `
+          0 0 0 1px color-mix(in srgb, var(--color-brand-primary) 12%, var(--color-brand-accent) 8%),
+          0 4px 20px color-mix(in srgb, var(--color-brand-primary) 6%, transparent),
+          0 1px 4px rgba(0,0,0,0.04)
+        `;
+      }}>
       <div className="absolute inset-0 pointer-events-none bg-gradient-to-br from-brand-primary/5 to-transparent" />
       <div className="relative z-10">{children}</div>
     </div>
@@ -79,7 +99,7 @@ export default function FeatureSection() {
       <div className="max-w-6xl mx-auto space-y-8 relative z-10">
 
         {/* Header */}
-        <div className="max-w-lg space-y-3 max-w-[85%]">
+        <div className="max-w-lg space-y-3 max-w-[95%]">
           <h2 className="h1 text-text-primary leading-tight tracking-tight w-full">
             Hardware-Free QR Kiosk.
           </h2>
