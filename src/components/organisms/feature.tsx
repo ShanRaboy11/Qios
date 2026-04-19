@@ -4,27 +4,34 @@ import Image from 'next/image';
 
 const features = [
   {
-    icon: <QrCode className="w-6 h-6 text-brand-accent" />,
+    icon: <QrCode className="w-12 h-12 text-brand-accent" />,
     title: "Scan. Order. Done.",
     description: "Customers access the full digital menu on their own device — no download, no login, no friction. A unique QR captures their order ID and timestamp for staff to retrieve instantly."
   },
   {
-    icon: <Timer className="w-6 h-6 text-brand-accent" />,
+    icon: <img src="/svg/Stock.svg" alt="Stock" className="w-12 h-12" />,
     title: "Stock That Watches Itself.",
     description: "Toggle between simple unit-count tracking or a measurement-based recipe matrix that auto-deducts ingredients."
   },
   {
-    icon: <Hand className="w-6 h-6 text-brand-accent" />,
+    icon: <img src="/svg/Hand.svg" alt="Hand" className="w-12 h-12" />,
     title: "Built for How People Order.",
     description: "Customers browse, pick modifiers, select sizes, and watch their total update live — all from a website."
   },
   {
-    icon: <BarChart3 className="w-6 h-6 text-brand-accent" />,
+    icon: (
+      <div className="flex items-end gap-1.5 h-12">
+        <div className="w-3 h-5 bg-rose-200 rounded-md"></div>
+        <div className="w-3 h-9 relative bg-rose-500 rounded-md"></div>
+        <div className="w-3 h-6 bg-orange-200 rounded-md"></div>
+        <div className="w-3 h-4 bg-rose-200 rounded-md"></div>
+      </div>
+    ),
     title: "See Every Shift, Clearly.",
     description: "Track order velocity, prep times, and staff productivity on one real-time dashboard."
   },
   {
-    icon: <ShieldCheck className="w-6 h-6 text-brand-accent" />,
+    icon: <img src="/svg/Shield.svg" alt="Shield" className="w-12 h-12" />,
     title: "Validate. Process. Close.",
     description: "Employees scan customer QR orders, confirm payment, and log every transaction in real time."
   }
@@ -97,25 +104,10 @@ export default function FeatureSection() {
             </button>
           </div>
           
-          <div className="relative w-56 h-56 md:w-72 md:h-72 lg:w-[28rem] lg:h-[28rem] flex-shrink-0 z-10">
-            {/* The root logo parts overlaid logically */}
+          <div className="relative w-56 h-56 md:w-72 md:h-72 lg:w-[28rem] lg:h-[28rem] flex-shrink-0 z-10 flex items-center justify-center">
             <Image 
-              src="/svg/Body.svg" 
-              alt="AI Message Bubble Body" 
-              fill
-              className="object-contain"
-              priority
-            />
-             <Image 
-              src="/svg/Ellipse1.svg" 
-              alt="AI Eyes Mask" 
-              fill
-              className="object-contain"
-              priority
-            />
-             <Image 
-              src="/svg/Ellipse2.svg" 
-              alt="AI Chat Dots" 
+              src="/images/chatbot.png" 
+              alt="AI Concierge Chatbot" 
               fill
               className="object-contain"
               priority
