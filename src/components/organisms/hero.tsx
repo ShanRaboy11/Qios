@@ -4,8 +4,15 @@ export const Hero = () => {
   const vectorStyle =
     "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rotate-[6.521deg] overflow-visible";
 
+  const gradientHeaderStyle = {
+    background: "linear-gradient(250deg, #FFD77A 15.53%, #FF5269 84.47%)",
+    WebkitBackgroundClip: "text",
+    WebkitTextFillColor: "transparent",
+  };
+
   return (
     <section className="w-full max-w-[1440px] h-[900px] bg-text-tertiary flex items-center justify-start mx-auto relative overflow-visible">
+      {/* vectors */}
       <div
         className="relative shrink-0 opacity-50 -ml-[400px] overflow-visible"
         style={{
@@ -141,7 +148,7 @@ export const Hero = () => {
           />
         </svg>
       </div>
-
+      {/* blushes */}
       <div
         className="absolute pointer-events-none overflow-visible"
         style={{
@@ -188,9 +195,9 @@ export const Hero = () => {
         />
         <div
           style={{
-            width: "425px",
-            height: "425px",
-            borderRadius: "425px",
+            width: "450px",
+            height: "450px",
+            borderRadius: "450px",
             background: "#FFE6BF",
             position: "absolute",
             left: "-206px",
@@ -207,13 +214,13 @@ export const Hero = () => {
           }}
         >
           <svg
-            width="154"
+            width="155"
             height="115"
-            viewBox="0 0 154 115"
+            viewBox="0 0 155 115"
             fill="none"
             className="w-full h-full"
           >
-            <circle cx="59.5" cy="94.5" r="94.5" fill="#FFBEC7" />
+            <circle cx="70.5" cy="70.5" r="100.5" fill="#FFBEC7" />
           </svg>
         </div>
         <div
@@ -252,7 +259,6 @@ export const Hero = () => {
           }}
         />
       </div>
-
       <style>
         {`
       @keyframes infinite-scroll {
@@ -266,6 +272,42 @@ export const Hero = () => {
       }
     `}
       </style>
+      {/* analytics */}
+      <div className="absolute bottom-12 left-[-150px] z-[60] inline-flex items-center gap-[25px]">
+        <div className="flex flex-col items-start gap-[4px] w-[129px]">
+          <h2
+            className="font-figtree text-[39px] font-semibold leading-normal bg-clip-text text-transparent"
+            style={gradientHeaderStyle}
+          >
+            50+
+          </h2>
+          <p className="text-text-primary font-inter text-[16px] font-normal leading-normal">
+            Cebu F&B establishments
+          </p>
+        </div>
+        <div className="flex flex-col items-start gap-[4px] w-[142px]">
+          <h2
+            className="font-figtree text-[39px] font-semibold leading-normal bg-clip-text text-transparent"
+            style={gradientHeaderStyle}
+          >
+            40%
+          </h2>
+          <p className="text-text-primary font-inter text-[16px] font-normal leading-normal">
+            average reduction in wait times
+          </p>
+        </div>
+        <div className="flex flex-col items-start gap-[4px] w-[142px]">
+          <h2
+            className="font-figtree text-[39px] font-semibold leading-normal bg-clip-text text-transparent"
+            style={gradientHeaderStyle}
+          >
+            ₱50K+
+          </h2>
+          <p className="text-text-primary font-inter text-[16px] font-normal leading-normal">
+            saved on hardware costs
+          </p>
+        </div>
+      </div>
       <div
         className="absolute bottom-12 right-[-150px] w-[950px] overflow-hidden z-[60] bg-transparent pointer-events-none"
         style={{
