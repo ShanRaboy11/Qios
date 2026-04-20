@@ -1,8 +1,7 @@
+"use client";
+
 import { useState } from "react";
 import { Button } from "@/components/atoms/Button";
-
-const qrCodeSrc =
-  "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=example";
 
 export const QrScanner = (): JSX.Element => {
   const [orderId, setOrderId] = useState<string>("");
@@ -23,6 +22,7 @@ export const QrScanner = (): JSX.Element => {
     <div className="inline-flex gap-2.5 px-10 py-[55px] bg-background rounded-[30px] items-center justify-center relative">
       <div className="flex flex-col w-[578px] items-end relative">
         <Button
+          type="button"
           onClick={handleClose}
           aria-label="Close"
           variant="ghost"
@@ -34,11 +34,91 @@ export const QrScanner = (): JSX.Element => {
             <h2 className="relative self-stretch mt-[-1.00px] font-headers-h2 font-[number:var(--headers-h2-font-weight)] text-text-primary text-[length:var(--headers-h2-font-size)] text-center tracking-[var(--headers-h2-letter-spacing)] leading-[var(--headers-h2-line-height)] [font-style:var(--headers-h2-font-style)]">
               Scan QR Code
             </h2>
-            <img
-              className="relative self-stretch w-full h-[250px] object-cover"
-              alt="Qr code"
-              src={qrCodeSrc}
-            />
+            <svg
+              className="relative self-stretch w-full h-[250px]"
+              viewBox="0 0 250 250"
+              fill="none"
+              aria-label="QR code placeholder"
+            >
+              <rect width="250" height="250" fill="#f5f5f5" rx="8" />
+              {/* QR border squares */}
+              <rect
+                x="20"
+                y="20"
+                width="70"
+                height="70"
+                rx="4"
+                stroke="#2d2d2d"
+                strokeWidth="6"
+                fill="none"
+              />
+              <rect
+                x="35"
+                y="35"
+                width="40"
+                height="40"
+                rx="2"
+                fill="#2d2d2d"
+              />
+              <rect
+                x="160"
+                y="20"
+                width="70"
+                height="70"
+                rx="4"
+                stroke="#2d2d2d"
+                strokeWidth="6"
+                fill="none"
+              />
+              <rect
+                x="175"
+                y="35"
+                width="40"
+                height="40"
+                rx="2"
+                fill="#2d2d2d"
+              />
+              <rect
+                x="20"
+                y="160"
+                width="70"
+                height="70"
+                rx="4"
+                stroke="#2d2d2d"
+                strokeWidth="6"
+                fill="none"
+              />
+              <rect
+                x="35"
+                y="175"
+                width="40"
+                height="40"
+                rx="2"
+                fill="#2d2d2d"
+              />
+              {/* Data dots */}
+              <rect x="110" y="20" width="10" height="10" fill="#2d2d2d" />
+              <rect x="125" y="20" width="10" height="10" fill="#2d2d2d" />
+              <rect x="140" y="20" width="10" height="10" fill="#2d2d2d" />
+              <rect x="110" y="35" width="10" height="10" fill="#2d2d2d" />
+              <rect x="140" y="35" width="10" height="10" fill="#2d2d2d" />
+              <rect x="110" y="110" width="10" height="10" fill="#2d2d2d" />
+              <rect x="125" y="110" width="10" height="10" fill="#2d2d2d" />
+              <rect x="160" y="110" width="10" height="10" fill="#2d2d2d" />
+              <rect x="175" y="110" width="10" height="10" fill="#2d2d2d" />
+              <rect x="190" y="110" width="10" height="10" fill="#2d2d2d" />
+              <rect x="110" y="125" width="10" height="10" fill="#2d2d2d" />
+              <rect x="140" y="125" width="10" height="10" fill="#2d2d2d" />
+              <rect x="160" y="125" width="10" height="10" fill="#2d2d2d" />
+              <rect x="110" y="140" width="10" height="10" fill="#2d2d2d" />
+              <rect x="125" y="140" width="10" height="10" fill="#2d2d2d" />
+              <rect x="175" y="140" width="10" height="10" fill="#2d2d2d" />
+              <rect x="160" y="160" width="10" height="10" fill="#2d2d2d" />
+              <rect x="175" y="175" width="10" height="10" fill="#2d2d2d" />
+              <rect x="190" y="160" width="10" height="10" fill="#2d2d2d" />
+              <rect x="160" y="190" width="10" height="10" fill="#2d2d2d" />
+              <rect x="190" y="190" width="10" height="10" fill="#2d2d2d" />
+            </svg>
           </div>
           <div className="flex flex-col items-center gap-[42px] relative self-stretch w-full flex-[0_0_auto]">
             <div className="flex items-center gap-4 relative self-stretch w-full flex-[0_0_auto]">
@@ -65,6 +145,7 @@ export const QrScanner = (): JSX.Element => {
                     />
                   </div>
                   <Button
+                    type="button"
                     onClick={handleSearchOrder}
                     aria-label="Search"
                     variant="ghost"
@@ -75,6 +156,7 @@ export const QrScanner = (): JSX.Element => {
               </div>
               <div className="inline-flex items-center gap-5 relative flex-[0_0_auto]">
                 <Button
+                  type="button"
                   onClick={handleScanQR}
                   variant="outline"
                   shape="rounded"
@@ -84,6 +166,7 @@ export const QrScanner = (): JSX.Element => {
                   Scan QR
                 </Button>
                 <Button
+                  type="button"
                   onClick={handleSearchOrder}
                   variant="primary"
                   shape="rounded"
