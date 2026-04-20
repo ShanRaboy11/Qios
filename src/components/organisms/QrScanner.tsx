@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import icons8QrCode801 from "./icons8-qr-code-80-1.png";
+import { QrCode } from "lucide-react";
 
 export const QrScanner = (): JSX.Element => {
   const [orderId, setOrderId] = useState<string>("");
@@ -31,11 +31,9 @@ export const QrScanner = (): JSX.Element => {
             <h2 className="relative self-stretch mt-[-1.00px] font-headers-h2 font-[number:var(--headers-h2-font-weight)] text-text-primary text-[length:var(--headers-h2-font-size)] text-center tracking-[var(--headers-h2-letter-spacing)] leading-[var(--headers-h2-line-height)] [font-style:var(--headers-h2-font-style)]">
               Scan QR Code
             </h2>
-            <img
-              className="relative self-stretch w-full h-[250px] object-cover"
-              alt="Qr code"
-              src={icons8QrCode801.src}
-            />
+            <div className="flex items-center justify-center relative self-stretch w-full h-[250px] bg-slate-50 rounded-2xl border-2 border-dashed border-[#e5e5e5]">
+              <QrCode size={120} className="text-text-secondary opacity-50" />
+            </div>
           </div>
           <div className="flex flex-col items-center gap-[42px] relative self-stretch w-full flex-[0_0_auto]">
             <div className="flex items-center gap-4 relative self-stretch w-full flex-[0_0_auto]">

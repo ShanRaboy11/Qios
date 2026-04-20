@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Navbar } from "@/components/organisms/navbar";
-import FeatureSection from "@/components/organisms/Feature";
+import FeatureSection from "@/components/organisms/FeatureSection";
 import { Footer } from "@/components/organisms/footer";
 
 export default function HomePage() {
