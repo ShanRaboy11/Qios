@@ -1,7 +1,7 @@
 import React from "react";
-import { KitchenPreparationDashboard } from "@/components/organisms/KitchenPreparationDashboard";
+import KitchenPreparationDashboard from "@/components/organisms/KitchenPreparationDashboard";
 
-export default function KitchenDashboardPage({ params }: { params: { id: string } }) {
+export default function KitchenDashboardPage({ params }: { params: Promise<{ id: string }> }) {
   return (
     <main className="min-h-screen bg-bg-primary">
       <div className="max-w-7xl mx-auto py-8">

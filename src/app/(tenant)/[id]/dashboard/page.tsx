@@ -1,7 +1,7 @@
 import React from "react";
 import { LiveActivityFeed } from "@/components/organisms/LiveActivityFeed";
 
-export default function TenantDashboardPage({ params }: { params: { id: string } }) {
+export default function TenantDashboardPage({ params }: { params: Promise<{ id: string }> }) {
   return (
     <main className="min-h-screen bg-bg-primary">
       <div className="max-w-7xl mx-auto py-8">

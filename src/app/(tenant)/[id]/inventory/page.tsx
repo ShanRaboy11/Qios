@@ -1,7 +1,7 @@
 import React from "react";
-import { IngredientsInventory } from "@/components/organisms/IngredientsInventory";
+import IngredientsInventory from "@/components/organisms/IngredientsInventory";
 
-export default function TenantInventoryPage({ params }: { params: { id: string } }) {
+export default function TenantInventoryPage({ params }: { params: Promise<{ id: string }> }) {
   return (
     <main className="min-h-screen bg-bg-primary">
       <div className="max-w-7xl mx-auto py-8">

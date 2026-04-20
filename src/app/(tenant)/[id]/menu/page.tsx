@@ -1,7 +1,7 @@
 import React from "react";
-import { MenuInventory } from "@/components/organisms/MenuInventory";
+import MenuInventory from "@/components/organisms/MenuInventory";
 
-export default function TenantMenuInventoryPage({ params }: { params: { id: string } }) {
+export default function TenantMenuInventoryPage({ params }: { params: Promise<{ id: string }> }) {
   return (
     <main className="min-h-screen bg-bg-primary">
       <div className="max-w-7xl mx-auto py-8">
