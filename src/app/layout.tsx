@@ -23,6 +23,9 @@ const ibrand = localFont({
 export const metadata: Metadata = {
   title: "Qios",
   description: "Multi-tenant F&B kiosk platform for Cebu establishments",
+  icons: {
+    icon: "/svg/Qios_Icon.svg",
+  },
 };
 
 export default function RootLayout({
