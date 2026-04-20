@@ -3,7 +3,7 @@
 import React from "react";
 
 const imgRectangle6389 =
-  "https://www.figma.com/api/mcp/asset/77ef3629-5786-414d-b1ea-156ca5525126";
+  "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96' viewBox='0 0 96 96' fill='none'%3E%3Crect width='96' height='96' rx='12' fill='%23F3F4F6'/%3E%3Cpath d='M24 62L38 48L50 58L60 46L72 62V72H24V62Z' fill='%23D1D5DB'/%3E%3Ccircle cx='35' cy='34' r='7' fill='%23D1D5DB'/%3E%3C/svg%3E";
 
 const svgPaths = {
   p33726f0:
