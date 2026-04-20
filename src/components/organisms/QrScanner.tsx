@@ -1,5 +1,8 @@
 import { useState } from "react";
-import icons8QrCode801 from "./icons8-qr-code-80-1.png";
+import { Button } from "@/components/atoms/Button";
+
+const qrCodeSrc =
+  "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=example";
 
 export const QrScanner = (): JSX.Element => {
   const [orderId, setOrderId] = useState<string>("");
@@ -19,10 +22,12 @@ export const QrScanner = (): JSX.Element => {
   return (
     <div className="inline-flex gap-2.5 px-10 py-[55px] bg-background rounded-[30px] items-center justify-center relative">
       <div className="flex flex-col w-[578px] items-end relative">
-        <button
+        <Button
           onClick={handleClose}
           aria-label="Close"
-          className="all-[unset] box-border relative w-[30px] h-[30px] aspect-[1] bg-[url(/fi-rr-cross-small.svg)] bg-[100%_100%] cursor-pointer"
+          variant="ghost"
+          size="icon"
+          className="w-[30px] h-[30px] bg-[url(/fi-rr-cross-small.svg)] bg-[100%_100%]"
         />
         <div className="flex flex-col items-center gap-[59px] relative self-stretch w-full flex-[0_0_auto]">
           <div className="flex flex-col w-[258px] items-center gap-[59px] relative flex-[0_0_auto]">
@@ -32,7 +37,7 @@ export const QrScanner = (): JSX.Element => {
             <img
               className="relative self-stretch w-full h-[250px] object-cover"
               alt="Qr code"
-              src={icons8QrCode801.src}
+              src={qrCodeSrc}
             />
           </div>
           <div className="flex flex-col items-center gap-[42px] relative self-stretch w-full flex-[0_0_auto]">
@@ -59,34 +64,34 @@ export const QrScanner = (): JSX.Element => {
                       className="relative w-fit mt-[-1.00px] mr-[-6.00px] font-body-b2 font-[number:var(--body-b2-font-weight)] text-[#707070cc] text-[length:var(--body-b2-font-size)] tracking-[var(--body-b2-letter-spacing)] leading-[var(--body-b2-line-height)] whitespace-nowrap [font-style:var(--body-b2-font-style)] bg-transparent border-0 outline-none appearance-none placeholder:text-[#707070cc]"
                     />
                   </div>
-                  <button
+                  <Button
                     onClick={handleSearchOrder}
                     aria-label="Search"
-                    className="all-[unset] box-border relative w-5 h-5 aspect-[1] bg-[url(/fi-rr-search-alt.svg)] bg-[100%_100%] cursor-pointer"
+                    variant="ghost"
+                    size="icon"
+                    className="w-5 h-5 bg-[url(/fi-rr-search-alt.svg)] bg-[100%_100%]"
                   />
                 </div>
               </div>
               <div className="inline-flex items-center gap-5 relative flex-[0_0_auto]">
-                <button
+                <Button
                   onClick={handleScanQR}
-                  className="all-[unset] box-border flex w-[221px] h-[59px] p-4 rounded-xl overflow-hidden border-2 border-solid border-primary items-center justify-center relative cursor-pointer"
+                  variant="outline"
+                  shape="rounded"
+                  size="lg"
+                  className="w-[221px] h-[59px]"
                 >
-                  <div className="inline-flex items-start gap-2 px-4 py-0 relative flex-[0_0_auto]">
-                    <span className="relative w-fit mt-[-1.00px] font-body-b2 font-[number:var(--body-b2-font-weight)] text-primary text-[length:var(--body-b2-font-size)] tracking-[var(--body-b2-letter-spacing)] leading-[var(--body-b2-line-height)] whitespace-nowrap [font-style:var(--body-b2-font-style)]">
-                      Scan QR
-                    </span>
-                  </div>
-                </button>
-                <button
+                  Scan QR
+                </Button>
+                <Button
                   onClick={handleSearchOrder}
-                  className="all-[unset] box-border flex w-[221px] h-[59px] items-center justify-center p-4 relative bg-secondary rounded-xl overflow-hidden cursor-pointer"
+                  variant="primary"
+                  shape="rounded"
+                  size="lg"
+                  className="w-[221px] h-[59px]"
                 >
-                  <div className="inline-flex items-start gap-2 px-4 py-0 relative flex-[0_0_auto]">
-                    <span className="relative w-fit mt-[-1.00px] font-body-b2 font-[number:var(--body-b2-font-weight)] text-text-primary text-[length:var(--body-b2-font-size)] tracking-[var(--body-b2-letter-spacing)] leading-[var(--body-b2-line-height)] whitespace-nowrap [font-style:var(--body-b2-font-style)]">
-                      Search Order
-                    </span>
-                  </div>
-                </button>
+                  Search Order
+                </Button>
               </div>
             </div>
           </div>
