@@ -28,6 +28,7 @@ import { Navbar } from "@/components/organisms/navbar";
 import { Footer } from "@/components/organisms/footer";
 import TenantManagement from "@/components/organisms/TenantManagement"; 
 import FeatureSection from "@/components/organisms/feature";
+import { SystemActivity } from "@/components/organisms/SystemActivity";
 import {
   Plus,
   Lock,
@@ -779,6 +780,7 @@ const CATALOG_ITEMS: MenuItemData[] = [...MOCK_DATA,
       ;
       <StepperBar steps={businessSteps} currentStep={2} />
       <FeatureSection />
+      <SystemActivity />
       <Footer />
     </main>
   );
