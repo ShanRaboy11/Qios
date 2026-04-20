@@ -237,7 +237,7 @@ function IngredientCard({ data }: { data: IngredientCardData }) {
       {/* Thumbnail */}
       <div className="shrink-0 size-[50px] rounded-[12px] overflow-hidden">
         <img
-          alt=""
+          alt={`${data.name} thumbnail`}
           className="w-full h-full object-cover"
           src={imgRectangle6389}
         />
