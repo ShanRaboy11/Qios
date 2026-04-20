@@ -86,7 +86,7 @@ function InfoBanner() {
 }
 
 /* ─── Tabs + Search row (inside cream area) ──────────────────── */
-function SearchFilterBar() {
+export function SearchFilterBar() {
   return (
     <div className="flex items-center justify-end gap-3 w-full">
       <div className="relative bg-white border border-[#e5e7eb] rounded-2xl h-[51px] flex items-center px-5 gap-3 w-[340px]">
