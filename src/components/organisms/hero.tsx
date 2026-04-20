@@ -20,11 +20,120 @@ export const Hero = () => {
         </div>
       </div>
 
-      {/* layout wrapper for responsive screens */}
+      {/* Combined Tablet & Desktop Mockups wrapper ensuring identical 1:1 layering & aspect ratio */}
+      <div
+        className="hidden md:block absolute z-[65] pointer-events-none xl:pointer-events-auto origin-top-left
+        md:top-[100px] md:left-[390px] md:scale-[0.42]
+        lg:top-[110px] lg:left-[450px] lg:scale-[0.52]
+        xl:top-[110px] xl:left-[480px] xl:scale-100"
+      >
+        <div className="relative w-[1100px] h-[800px]">
+          {/* iPad Mockup */}
+          <div className="absolute top-0 left-0">
+            <img src="ipad.svg" alt="iPad Mockup" className="relative z-10" />
+
+            <div
+              className="absolute z-20 overflow-hidden"
+              style={{
+                top: "99px",
+                left: "47px",
+                width: "706.635px",
+                height: "489.599px",
+                transform: "rotate(-3.781deg)",
+                transformOrigin: "top left",
+                borderRadius: "20px",
+              }}
+            >
+              <img
+                src="ipad-dashboard.svg"
+                alt="Dashboard Content"
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  objectPosition: "top",
+                  backgroundColor: "white",
+                }}
+              />
+            </div>
+
+            <div
+              style={{
+                position: "absolute",
+                width: "112.027px",
+                height: "381.789px",
+                transform: "rotate(-8.906deg)",
+                borderRadius: "300px",
+                background: "rgba(145, 101, 107, 0.27)",
+                filter: "blur(75px)",
+                bottom: "50px",
+                right: "210px",
+                zIndex: 30,
+              }}
+            />
+            <div
+              style={{
+                position: "absolute",
+                width: "70.998px",
+                height: "241.96px",
+                transform: "rotate(-8.906deg)",
+                borderRadius: "300px",
+                background: "rgba(145, 101, 107, 0.27)",
+                filter: "blur(20px)",
+                bottom: "90px",
+                right: "230px",
+                zIndex: 30,
+              }}
+            />
+          </div>
+
+          {/* Phone Mockup overlay */}
+          <div
+            className="absolute z-[80]"
+            style={{
+              left: "630px",
+              top: "110px",
+              width: "450px",
+              height: "612px",
+            }}
+          >
+            <img
+              src="phone.svg"
+              alt="Phone Mockup"
+              style={{ width: "100%", height: "100%" }}
+            />
+            <div
+              className="absolute z-20 overflow-hidden"
+              style={{
+                top: "47px",
+                left: "96px",
+                width: "211px",
+                height: "456px",
+                transform: "rotate(11.817deg)",
+                transformOrigin: "top left",
+                borderRadius: "20px",
+              }}
+            >
+              <img
+                src="phone-dashboard.svg"
+                alt="Phone Dashboard Content"
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  objectPosition: "top",
+                  backgroundColor: "white",
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="w-full flex flex-col md:grid md:grid-cols-[max-content_1fr] gap-y-16 md:gap-x-8 lg:gap-x-12 px-6 md:px-12 xl:px-0 xl:contents mt-32 md:mt-40 xl:mt-0 relative z-[70] items-center md:items-start">
         {/* contents */}
-        <div className="col-start-1 row-start-1 flex justify-center md:justify-start xl:contents">
-          <div className="relative xl:absolute left-auto xl:left-[-150px] top-auto xl:top-[48%] translate-y-0 xl:-translate-y-1/2 z-[70] flex flex-col justify-between w-full max-w-[400px] md:max-w-none md:w-[369px] xl:w-[369px] h-auto xl:h-[371px] items-center text-center md:items-start md:text-left">
+        <div className="col-start-1 row-start-1 flex justify-center md:justify-start xl:contents md:pl-4 lg:pl-8 xl:pl-0">
+          <div className="relative xl:absolute left-auto xl:left-[-150px] top-auto xl:top-[48%] translate-y-0 xl:-translate-y-1/2 z-[70] flex flex-col justify-between w-full max-w-[400px] md:max-w-none md:w-[369px] xl:w-[369px] h-auto xl:h-[371px] items-center text-center md:items-start md:text-left transform md:-translate-y-8 lg:-translate-y-12 xl:translate-y-0">
             <div className="flex flex-col items-center md:items-start">
               <p className="b3 text-brand-primary mb-3 w-full md:w-[359px] xl:w-[359px]">
                 THE FUTURE OF CEBU F&B
@@ -53,142 +162,42 @@ export const Hero = () => {
           </div>
         </div>
 
-        {/* mockups */}
-        <div className="hidden md:flex xl:contents col-start-2 row-start-1 justify-start items-center w-full">
-          <div className="relative xl:absolute w-0 xl:w-auto z-[65] top-auto xl:top-[110px] left-0 xl:left-[480px] scale-[0.35] lg:scale-[0.50] xl:scale-100 origin-left xl:origin-top-left pointer-events-none xl:pointer-events-auto flex">
-            <div className="relative">
-              <img src="ipad.svg" alt="iPad Mockup" className="relative z-10" />
-
-              <div
-                className="absolute z-20 overflow-hidden"
-                style={{
-                  top: "99px",
-                  left: "47px",
-                  width: "706.635px",
-                  height: "489.599px",
-                  transform: "rotate(-3.781deg)",
-                  transformOrigin: "top left",
-                  borderRadius: "20px",
-                }}
-              >
-                <img
-                  src="ipad-dashboard.svg"
-                  alt="Dashboard Content"
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                    objectPosition: "top",
-                    backgroundColor: "white",
-                  }}
-                />
-              </div>
-
-              <div
-                style={{
-                  position: "absolute",
-                  width: "112.027px",
-                  height: "381.789px",
-                  transform: "rotate(-8.906deg)",
-                  borderRadius: "300px",
-                  background: "rgba(145, 101, 107, 0.27)",
-                  filter: "blur(75px)",
-                  bottom: "50px",
-                  right: "210px",
-                  zIndex: 30,
-                }}
-              />
-              <div
-                style={{
-                  position: "absolute",
-                  width: "70.998px",
-                  height: "241.96px",
-                  transform: "rotate(-8.906deg)",
-                  borderRadius: "300px",
-                  background: "rgba(145, 101, 107, 0.27)",
-                  filter: "blur(20px)",
-                  bottom: "90px",
-                  right: "230px",
-                  zIndex: 30,
-                }}
-              />
-            </div>
-
-            <div
-              className="hidden md:block xl:hidden absolute z-[80]"
-              style={{
-                left: "630px",
-                top: "110px",
-                width: "450px",
-                height: "612px",
-              }}
-            >
-              <img
-                src="phone.svg"
-                alt="Phone Mockup"
-                style={{ width: "100%", height: "100%" }}
-              />
-              <div
-                className="absolute z-20 overflow-hidden"
-                style={{
-                  top: "47px",
-                  left: "96px",
-                  width: "211px",
-                  height: "456px",
-                  transform: "rotate(11.817deg)",
-                  transformOrigin: "top left",
-                  borderRadius: "20px",
-                }}
-              >
-                <img
-                  src="phone-dashboard.svg"
-                  alt="Phone Dashboard Content"
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                    objectPosition: "top",
-                    backgroundColor: "white",
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* hidden spacer to maintain grid layout for mockups space */}
+        <div className="hidden md:block xl:contents col-start-2 row-start-1 w-full" />
 
         {/* analytics */}
-        <div className="col-start-1 row-start-2 flex justify-center md:justify-start xl:contents">
-          <div className="relative xl:absolute bottom-auto xl:bottom-12 left-auto xl:left-[-150px] z-[60] flex flex-row flex-wrap md:flex-nowrap items-center justify-center md:justify-start gap-8 md:gap-[25px] w-full md:w-max xl:w-auto">
-            <div className="flex flex-col items-center md:items-start text-center md:text-left gap-[4px] w-[120px] md:w-[129px] xl:w-[129px]">
+        <div className="col-start-1 row-start-2 flex justify-center md:justify-start xl:contents md:pl-2 lg:pl-6 xl:pl-0">
+          <div className="relative xl:absolute bottom-auto xl:bottom-12 left-auto xl:left-[-150px] z-[60] flex flex-row flex-wrap md:flex-nowrap items-center justify-center md:justify-start gap-8 md:gap-4 lg:gap-6 xl:gap-[25px] w-full md:w-max xl:w-auto md:ml-2 lg:ml-4 xl:ml-0 md:mr-4 lg:mr-8 xl:mr-0">
+            <div className="flex flex-col items-center md:items-start text-center md:text-left gap-[4px] w-[120px] md:w-[95px] lg:w-[110px] xl:w-[129px]">
               <h2
-                className="font-figtree text-[39px] font-semibold leading-normal bg-clip-text text-transparent"
+                className="font-figtree text-[39px] md:text-[30px] lg:text-[34px] xl:text-[39px] font-semibold leading-normal bg-clip-text text-transparent"
                 style={gradientHeaderStyle}
               >
                 50+
               </h2>
-              <p className="text-text-primary font-inter text-[16px] font-normal leading-normal">
+              <p className="text-text-primary font-inter text-[16px] md:text-[12px] lg:text-[14px] xl:text-[16px] font-normal leading-normal">
                 Cebu F&B establishments
               </p>
             </div>
-            <div className="flex flex-col items-center md:items-start text-center md:text-left gap-[4px] w-[130px] md:w-[142px] xl:w-[142px]">
+            <div className="flex flex-col items-center md:items-start text-center md:text-left gap-[4px] w-[130px] md:w-[105px] lg:w-[120px] xl:w-[142px]">
               <h2
-                className="font-figtree text-[39px] font-semibold leading-normal bg-clip-text text-transparent"
+                className="font-figtree text-[39px] md:text-[30px] lg:text-[34px] xl:text-[39px] font-semibold leading-normal bg-clip-text text-transparent"
                 style={gradientHeaderStyle}
               >
                 40%
               </h2>
-              <p className="text-text-primary font-inter text-[16px] font-normal leading-normal">
+              <p className="text-text-primary font-inter text-[16px] md:text-[12px] lg:text-[14px] xl:text-[16px] font-normal leading-normal">
                 average reduction in wait times
               </p>
             </div>
-            <div className="flex flex-col items-center md:items-start text-center md:text-left gap-[4px] w-[130px] md:w-[142px] xl:w-[142px]">
+            <div className="flex flex-col items-center md:items-start text-center md:text-left gap-[4px] w-[130px] md:w-[105px] lg:w-[120px] xl:w-[142px]">
               <h2
-                className="font-figtree text-[39px] font-semibold leading-normal bg-clip-text text-transparent"
+                className="font-figtree text-[39px] md:text-[30px] lg:text-[34px] xl:text-[39px] font-semibold leading-normal bg-clip-text text-transparent"
                 style={gradientHeaderStyle}
               >
                 ₱50K+
               </h2>
-              <p className="text-text-primary font-inter text-[16px] font-normal leading-normal">
+              <p className="text-text-primary font-inter text-[16px] md:text-[12px] lg:text-[14px] xl:text-[16px] font-normal leading-normal">
                 saved on hardware costs
               </p>
             </div>
@@ -198,7 +207,7 @@ export const Hero = () => {
         {/* logo carousels */}
         <div className="col-start-2 row-start-2 flex justify-center md:justify-start xl:contents w-full overflow-hidden md:overflow-visible">
           <div
-            className="relative xl:absolute bottom-auto xl:bottom-12 right-auto xl:right-[-150px] w-full md:w-[150%] xl:w-[950px] overflow-hidden z-[60] bg-transparent pointer-events-none mt-4 md:mt-0 md:-ml-0 lg:ml-4 md:scale-[0.7] lg:scale-[0.9] md:origin-left xl:scale-100 xl:origin-center"
+            className="relative xl:absolute bottom-auto xl:bottom-12 right-auto xl:right-[-150px] w-full md:w-[320px] lg:w-[460px] xl:w-[950px] overflow-hidden z-[60] bg-transparent pointer-events-none mt-4 md:mt-0 md:mr-2 lg:mr-6 xl:mr-0"
             style={{
               maskImage:
                 "linear-gradient(to right, transparent, black 15%, black 85%, transparent)",
@@ -251,47 +260,6 @@ export const Hero = () => {
         </div>
       </div>
 
-      <div
-        className="hidden xl:block absolute z-[80]"
-        style={{
-          left: "1110px",
-          top: "220px",
-          width: "450px",
-          height: "612px",
-        }}
-      >
-        <img
-          src="phone.svg"
-          alt="Phone Mockup"
-          style={{ width: "100%", height: "100%" }}
-        />
-        <div
-          className="absolute z-20 overflow-hidden"
-          style={{
-            top: "47px",
-            left: "96px",
-            width: "211px",
-            height: "456px",
-            transform: "rotate(11.817deg)",
-            transformOrigin: "top left",
-            borderRadius: "20px",
-          }}
-        >
-          <img
-            src="phone-dashboard.svg"
-            alt="Phone Dashboard Content"
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              objectPosition: "top",
-              backgroundColor: "white",
-            }}
-          />
-        </div>
-      </div>
-
-      {/* vectors */}
       <div
         className="relative shrink-0 opacity-50 -ml-[400px] overflow-visible"
         style={{
@@ -428,7 +396,6 @@ export const Hero = () => {
         </svg>
       </div>
 
-      {/* blushes */}
       <div
         className="absolute pointer-events-none overflow-visible"
         style={{

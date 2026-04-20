@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import { Navbar } from "@/components/organisms/navbar";
 import FeatureSection from "@/components/organisms/FeatureSection";
 import { ProblemSolution } from "@/components/organisms/ProblemnSolution";
 import { Footer } from "@/components/organisms/footer";
