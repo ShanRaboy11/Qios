@@ -13,110 +13,246 @@ export const Hero = () => {
   };
 
   return (
-    <section className="w-full max-w-[1440px] h-[900px] bg-text-tertiary flex items-center justify-start mx-auto relative overflow-visible">
+    <section className="w-full max-w-[1440px] min-h-screen xl:min-h-0 h-auto xl:h-[900px] pb-24 xl:pb-0 bg-text-tertiary flex items-center justify-start mx-auto relative overflow-hidden xl:overflow-visible">
       <div className="absolute top-8 left-1/2 -translate-x-1/2 w-[100vw] flex justify-center z-[100]">
         <div className="w-full">
           <Navbar variant="transparent" />
         </div>
       </div>
 
-      {/* contents */}
-      <div
-        className="absolute left-[-150px] top-[48%] -translate-y-1/2 z-[70] flex flex-col justify-between"
-        style={{ width: "369px", height: "371px" }}
-      >
-        <div className="flex flex-col">
-          <p className="b3 text-brand-primary mb-3" style={{ width: "359px" }}>
-            THE FUTURE OF CEBU F&B
-          </p>
-          <h1
-            className="h1 bg-clip-text text-transparent mb-4"
-            style={{ ...gradientHeaderStyle, width: "369px" }}
-          >
-            No Kiosk Hardware, Just Smarter Orders
-          </h1>
-          <p
-            className="b1 text-text-primary"
-            style={{ width: "359px", height: "88px" }}
-          >
-            Reduce counter congestion with AI-powered QR ordering and real-time
-            inventory control. Save thousands on hardware costs.
-          </p>
+      {/* layout wrapper for responsive screens */}
+      <div className="w-full flex flex-col md:grid md:grid-cols-[max-content_1fr] gap-y-16 md:gap-x-8 lg:gap-x-12 px-6 md:px-12 xl:px-0 xl:contents mt-32 md:mt-40 xl:mt-0 relative z-[70] items-center md:items-start">
+        {/* contents */}
+        <div className="col-start-1 row-start-1 flex justify-center md:justify-start xl:contents">
+          <div className="relative xl:absolute left-auto xl:left-[-150px] top-auto xl:top-[48%] translate-y-0 xl:-translate-y-1/2 z-[70] flex flex-col justify-between w-full max-w-[400px] md:max-w-none md:w-[369px] xl:w-[369px] h-auto xl:h-[371px] items-center text-center md:items-start md:text-left">
+            <div className="flex flex-col items-center md:items-start">
+              <p className="b3 text-brand-primary mb-3 w-full md:w-[359px] xl:w-[359px]">
+                THE FUTURE OF CEBU F&B
+              </p>
+              <h1
+                className="h1 bg-clip-text text-transparent mb-4 w-full md:w-[369px] xl:w-[369px]"
+                style={gradientHeaderStyle}
+              >
+                No Kiosk Hardware, Just Smarter Orders
+              </h1>
+              <p className="b1 text-text-primary w-full md:w-[359px] xl:w-[359px] h-auto xl:h-[88px]">
+                Reduce counter congestion with AI-powered QR ordering and
+                real-time inventory control. Save thousands on hardware costs.
+              </p>
+            </div>
+
+            <div className="flex gap-4 mt-8 xl:mt-0">
+              <Button variant="accent">Schedule a Demo</Button>
+              <Button
+                variant="outline"
+                className="border-brand-accent text-brand-accent hover:bg-brand-accent hover:border-brand-accent hover:text-white"
+              >
+                Learn More
+              </Button>
+            </div>
+          </div>
         </div>
 
-        <div className="flex gap-4">
-          <Button variant="accent">Schedule a Demo</Button>
-          <Button
-            variant="outline"
-            className="border-brand-accent text-brand-accent hover:bg-brand-accent hover:border-brand-accent hover:text-white"
-          >
-            Learn More
-          </Button>
+        {/* mockups */}
+        <div className="hidden md:flex xl:contents col-start-2 row-start-1 justify-start items-center w-full">
+          <div className="relative xl:absolute w-0 xl:w-auto z-[65] top-auto xl:top-[110px] left-0 xl:left-[480px] scale-[0.35] lg:scale-[0.50] xl:scale-100 origin-left xl:origin-top-left pointer-events-none xl:pointer-events-auto flex">
+            <div className="relative">
+              <img src="ipad.svg" alt="iPad Mockup" className="relative z-10" />
+
+              <div
+                className="absolute z-20 overflow-hidden"
+                style={{
+                  top: "99px",
+                  left: "47px",
+                  width: "706.635px",
+                  height: "489.599px",
+                  transform: "rotate(-3.781deg)",
+                  transformOrigin: "top left",
+                  borderRadius: "20px",
+                }}
+              >
+                <img
+                  src="ipad-dashboard.svg"
+                  alt="Dashboard Content"
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    objectPosition: "top",
+                    backgroundColor: "white",
+                  }}
+                />
+              </div>
+
+              <div
+                style={{
+                  position: "absolute",
+                  width: "112.027px",
+                  height: "381.789px",
+                  transform: "rotate(-8.906deg)",
+                  borderRadius: "300px",
+                  background: "rgba(145, 101, 107, 0.27)",
+                  filter: "blur(75px)",
+                  bottom: "50px",
+                  right: "210px",
+                  zIndex: 30,
+                }}
+              />
+              <div
+                style={{
+                  position: "absolute",
+                  width: "70.998px",
+                  height: "241.96px",
+                  transform: "rotate(-8.906deg)",
+                  borderRadius: "300px",
+                  background: "rgba(145, 101, 107, 0.27)",
+                  filter: "blur(20px)",
+                  bottom: "90px",
+                  right: "230px",
+                  zIndex: 30,
+                }}
+              />
+            </div>
+
+            <div
+              className="hidden md:block xl:hidden absolute z-[80]"
+              style={{
+                left: "630px",
+                top: "110px",
+                width: "450px",
+                height: "612px",
+              }}
+            >
+              <img
+                src="phone.svg"
+                alt="Phone Mockup"
+                style={{ width: "100%", height: "100%" }}
+              />
+              <div
+                className="absolute z-20 overflow-hidden"
+                style={{
+                  top: "47px",
+                  left: "96px",
+                  width: "211px",
+                  height: "456px",
+                  transform: "rotate(11.817deg)",
+                  transformOrigin: "top left",
+                  borderRadius: "20px",
+                }}
+              >
+                <img
+                  src="phone-dashboard.svg"
+                  alt="Phone Dashboard Content"
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    objectPosition: "top",
+                    backgroundColor: "white",
+                  }}
+                />
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
 
-      {/* ipad mockup div */}
-      <div className="absolute z-[65]" style={{ left: "480px", top: "110px" }}>
-        <img src="ipad.svg" alt="iPad Mockup" className="relative z-10" />
+        {/* analytics */}
+        <div className="col-start-1 row-start-2 flex justify-center md:justify-start xl:contents">
+          <div className="relative xl:absolute bottom-auto xl:bottom-12 left-auto xl:left-[-150px] z-[60] flex flex-row flex-wrap md:flex-nowrap items-center justify-center md:justify-start gap-8 md:gap-[25px] w-full md:w-max xl:w-auto">
+            <div className="flex flex-col items-center md:items-start text-center md:text-left gap-[4px] w-[120px] md:w-[129px] xl:w-[129px]">
+              <h2
+                className="font-figtree text-[39px] font-semibold leading-normal bg-clip-text text-transparent"
+                style={gradientHeaderStyle}
+              >
+                50+
+              </h2>
+              <p className="text-text-primary font-inter text-[16px] font-normal leading-normal">
+                Cebu F&B establishments
+              </p>
+            </div>
+            <div className="flex flex-col items-center md:items-start text-center md:text-left gap-[4px] w-[130px] md:w-[142px] xl:w-[142px]">
+              <h2
+                className="font-figtree text-[39px] font-semibold leading-normal bg-clip-text text-transparent"
+                style={gradientHeaderStyle}
+              >
+                40%
+              </h2>
+              <p className="text-text-primary font-inter text-[16px] font-normal leading-normal">
+                average reduction in wait times
+              </p>
+            </div>
+            <div className="flex flex-col items-center md:items-start text-center md:text-left gap-[4px] w-[130px] md:w-[142px] xl:w-[142px]">
+              <h2
+                className="font-figtree text-[39px] font-semibold leading-normal bg-clip-text text-transparent"
+                style={gradientHeaderStyle}
+              >
+                ₱50K+
+              </h2>
+              <p className="text-text-primary font-inter text-[16px] font-normal leading-normal">
+                saved on hardware costs
+              </p>
+            </div>
+          </div>
+        </div>
 
-        <div
-          className="absolute z-20 overflow-hidden"
-          style={{
-            top: "99px",
-            left: "47px",
-            width: "706.635px",
-            height: "489.599px",
-            transform: "rotate(-3.781deg)",
-            transformOrigin: "top left",
-            borderRadius: "20px",
-          }}
-        >
-          <img
-            src="ipad-dashboard.svg"
-            alt="Dashboard Content"
+        {/* logo carousels */}
+        <div className="col-start-2 row-start-2 flex justify-center md:justify-start xl:contents w-full overflow-hidden md:overflow-visible">
+          <div
+            className="relative xl:absolute bottom-auto xl:bottom-12 right-auto xl:right-[-150px] w-full md:w-[150%] xl:w-[950px] overflow-hidden z-[60] bg-transparent pointer-events-none mt-4 md:mt-0 md:-ml-0 lg:ml-4 md:scale-[0.7] lg:scale-[0.9] md:origin-left xl:scale-100 xl:origin-center"
             style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              objectPosition: "top",
-              backgroundColor: "white",
+              maskImage:
+                "linear-gradient(to right, transparent, black 15%, black 85%, transparent)",
+              WebkitMaskImage:
+                "linear-gradient(to right, transparent, black 15%, black 85%, transparent)",
             }}
-          />
+          >
+            <div className="animate-infinite-scroll gap-8 md:gap-16 items-center pr-8 md:pr-16">
+              {[...Array(2)].map((_, i) => (
+                <React.Fragment key={i}>
+                  <img
+                    src="https://upload.wikimedia.org/wikipedia/en/d/d3/Starbucks_Corporation_Logo_2011.svg"
+                    alt="Starbucks"
+                    className="h-10 md:h-16 w-auto object-contain shrink-0"
+                  />
+                  <img
+                    src="https://upload.wikimedia.org/wikipedia/commons/3/36/McDonald%27s_Golden_Arches.svg"
+                    alt="McDonald's"
+                    className="h-8 md:h-12 w-auto object-contain shrink-0"
+                  />
+                  <img
+                    src="https://upload.wikimedia.org/wikipedia/en/3/32/Wendy%27s_full_logo_2012.svg"
+                    alt="Wendy's"
+                    className="h-8 md:h-12 w-auto object-contain shrink-0"
+                  />
+                  <img
+                    src="https://upload.wikimedia.org/wikipedia/commons/c/cc/Burger_King_2020.svg"
+                    alt="Burger King"
+                    className="h-8 md:h-12 w-auto object-contain shrink-0"
+                  />
+                  <img
+                    src="https://upload.wikimedia.org/wikipedia/commons/5/5c/Subway_2016_logo.svg"
+                    alt="Subway"
+                    className="h-6 md:h-8 w-auto object-contain shrink-0"
+                  />
+                  <img
+                    src="https://upload.wikimedia.org/wikipedia/commons/0/02/Chick-fil-A_Logo.svg"
+                    alt="Chick-fil-A"
+                    className="h-6 md:h-8 w-auto object-contain shrink-0"
+                  />
+                  <img
+                    src="https://upload.wikimedia.org/wikipedia/commons/3/3e/Domino%27s_pizza_logo.svg"
+                    alt="Domino's"
+                    className="h-8 md:h-12 w-auto object-contain shrink-0"
+                  />
+                </React.Fragment>
+              ))}
+            </div>
+          </div>
         </div>
-
-        <div
-          style={{
-            position: "absolute",
-            width: "112.027px",
-            height: "381.789px",
-            transform: "rotate(-8.906deg)",
-            borderRadius: "300px",
-            background: "rgba(145, 101, 107, 0.27)",
-            filter: "blur(75px)",
-            bottom: "50px",
-            right: "210px",
-            zIndex: 30,
-          }}
-        />
-        <div
-          style={{
-            position: "absolute",
-            width: "70.998px",
-            height: "241.96px",
-            transform: "rotate(-8.906deg)",
-            borderRadius: "300px",
-            background: "rgba(145, 101, 107, 0.27)",
-            filter: "blur(20px)",
-            bottom: "90px",
-            right: "230px",
-            zIndex: 30,
-          }}
-        />
       </div>
 
-      {/* phone mockup */}
       <div
-        className="absolute z-[80]"
+        className="hidden xl:block absolute z-[80]"
         style={{
           left: "1110px",
           top: "220px",
@@ -228,7 +364,7 @@ export const Hero = () => {
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
-            d="M-217.833 12.7109C-301.926 60.1152 -256.814 154.813 -212.615 216.391C-158.226 292.261 -88.9627 367.971 -81.0063 450.878C-72.6605 538.336 -91.715 673.212 -36.0202 760.204C3.33499 821.719 99.876 882.912 198.175 894.246C261.769 901.514 324.212 876.421 377.868 859.238C439.852 839.48 593.829 902.144 634.883 866.572C697.134 812.655 689.719 742.251 680.179 682.479C671.028 624.613 642.076 568.892 595.659 517.444C578.717 498.56 558.772 482.075 541.859 464.271C527.927 449.552 516.983 433.9 511.258 415.024C502.016 384.479 490.84 356.261 476.273 328.537C464.318 305.814 433.646 261.163C425.751 250.66 415.196 239.559 403.15 226.916C374.306 196.776 330.97 164.784 276.512 133.285C208.247 93.9367 141.102 58.0478 72.7066 27.796C-27.8525 -16.8105 -146.545 -27.4381 -217.833 12.7109Z"
+            d="M-217.833 12.7109C-301.926 60.1152 -256.814 154.813 -212.615 216.391C-158.226 292.261 -88.9627 367.971 -81.0063 450.878C-72.6605 538.336 -91.715 673.212 -36.0202 760.204C3.33499 821.719 99.876 882.912 198.175 894.246C261.769 901.514 324.212 876.421 377.868 859.238C439.852 839.48 593.829 902.144 634.883 866.572C697.134 812.655 689.719 742.251 680.179 682.479C671.028 624.613 642.076 568.892 595.659 517.444C578.717 498.56 558.772 482.075 541.859 464.271C527.927 449.552 516.983 433.9 511.258 415.024C502.016 384.479 490.84 356.261 476.273 328.537C464.318 305.814 433.646 261.163 425.751 250.66 415.196 239.559 403.15 226.916C374.306 196.776 330.97 164.784 276.512 133.285C208.247 93.9367 141.102 58.0478 72.7066 27.796C-27.8525 -16.8105 -146.545 -27.4381 -217.833 12.7109Z"
             stroke="#FFC670"
             strokeOpacity="0.2"
             strokeWidth="3"
@@ -291,6 +427,7 @@ export const Hero = () => {
           />
         </svg>
       </div>
+
       {/* blushes */}
       <div
         className="absolute pointer-events-none overflow-visible"
@@ -402,6 +539,7 @@ export const Hero = () => {
           }}
         />
       </div>
+
       <style>
         {`
       @keyframes infinite-scroll {
@@ -415,93 +553,6 @@ export const Hero = () => {
       }
     `}
       </style>
-      {/* analytics */}
-      <div className="absolute bottom-12 left-[-150px] z-[60] inline-flex items-center gap-[25px]">
-        <div className="flex flex-col items-start gap-[4px] w-[129px]">
-          <h2
-            className="font-figtree text-[39px] font-semibold leading-normal bg-clip-text text-transparent"
-            style={gradientHeaderStyle}
-          >
-            50+
-          </h2>
-          <p className="text-text-primary font-inter text-[16px] font-normal leading-normal">
-            Cebu F&B establishments
-          </p>
-        </div>
-        <div className="flex flex-col items-start gap-[4px] w-[142px]">
-          <h2
-            className="font-figtree text-[39px] font-semibold leading-normal bg-clip-text text-transparent"
-            style={gradientHeaderStyle}
-          >
-            40%
-          </h2>
-          <p className="text-text-primary font-inter text-[16px] font-normal leading-normal">
-            average reduction in wait times
-          </p>
-        </div>
-        <div className="flex flex-col items-start gap-[4px] w-[142px]">
-          <h2
-            className="font-figtree text-[39px] font-semibold leading-normal bg-clip-text text-transparent"
-            style={gradientHeaderStyle}
-          >
-            ₱50K+
-          </h2>
-          <p className="text-text-primary font-inter text-[16px] font-normal leading-normal">
-            saved on hardware costs
-          </p>
-        </div>
-      </div>
-      <div
-        className="absolute bottom-12 right-[-150px] w-[950px] overflow-hidden z-[60] bg-transparent pointer-events-none"
-        style={{
-          maskImage:
-            "linear-gradient(to right, transparent, black 15%, black 85%, transparent)",
-          WebkitMaskImage:
-            "linear-gradient(to right, transparent, black 15%, black 85%, transparent)",
-        }}
-      >
-        <div className="animate-infinite-scroll gap-16 items-center pr-16">
-          {[...Array(2)].map((_, i) => (
-            <React.Fragment key={i}>
-              <img
-                src="https://upload.wikimedia.org/wikipedia/en/d/d3/Starbucks_Corporation_Logo_2011.svg"
-                alt="Starbucks"
-                className="h-16 w-auto object-contain shrink-0"
-              />
-              <img
-                src="https://upload.wikimedia.org/wikipedia/commons/3/36/McDonald%27s_Golden_Arches.svg"
-                alt="McDonald's"
-                className="h-12 w-auto object-contain shrink-0"
-              />
-              <img
-                src="https://upload.wikimedia.org/wikipedia/en/3/32/Wendy%27s_full_logo_2012.svg"
-                alt="Wendy's"
-                className="h-12 w-auto object-contain shrink-0"
-              />
-              <img
-                src="https://upload.wikimedia.org/wikipedia/commons/c/cc/Burger_King_2020.svg"
-                alt="Burger King"
-                className="h-12 w-auto object-contain shrink-0"
-              />
-              <img
-                src="https://upload.wikimedia.org/wikipedia/commons/5/5c/Subway_2016_logo.svg"
-                alt="Subway"
-                className="h-8 w-auto object-contain shrink-0"
-              />
-              <img
-                src="https://upload.wikimedia.org/wikipedia/commons/0/02/Chick-fil-A_Logo.svg"
-                alt="Chick-fil-A"
-                className="h-8 w-auto object-contain shrink-0"
-              />
-              <img
-                src="https://upload.wikimedia.org/wikipedia/commons/3/3e/Domino%27s_pizza_logo.svg"
-                alt="Domino's"
-                className="h-12 w-auto object-contain shrink-0"
-              />
-            </React.Fragment>
-          ))}
-        </div>
-      </div>
     </section>
   );
 };

@@ -24,7 +24,14 @@ export const Navbar = ({ variant = "filled", className }: NavbarProps) => {
       )}
     >
       <div
-        className="font-ibrand shrink-0"
+        className={cn(
+          "absolute top-[-32px] left-0 w-full h-[32px] transition-colors duration-300 md:hidden",
+          isOpen ? "bg-bg-primary" : "bg-transparent",
+        )}
+      />
+
+      <div
+        className="font-ibrand shrink-0 relative"
         style={{
           textAlign: "right",
           fontSize: "50px",
@@ -78,7 +85,7 @@ export const Navbar = ({ variant = "filled", className }: NavbarProps) => {
         </div>
       </div>
 
-      <div className="md:hidden flex items-center">
+      <div className="md:hidden flex items-center relative">
         <button
           onClick={() => setIsOpen(!isOpen)}
           className="focus:outline-none transition-transform duration-300 active:scale-90"
