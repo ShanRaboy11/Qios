@@ -28,7 +28,7 @@ export const QrScanner = (): JSX.Element => {
           aria-label="Close"
           variant="ghost"
           size="icon"
-          className="w-[30px] h-[30px] bg-[url(/fi-rr-cross-small.svg)] bg-[100%_100%]"
+          className="w-[30px] h-[30px] p-0 bg-[url(/fi-rr-cross-small.svg)] bg-[100%_100%]"
         />
         <div className="flex flex-col items-center gap-[59px] relative self-stretch w-full flex-[0_0_auto]">
           <div className="flex flex-col w-[258px] items-center gap-[59px] relative flex-[0_0_auto]">
