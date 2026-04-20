@@ -8,17 +8,62 @@ export interface MenuItemCardProps {
   title?: string;
   price?: string | number;
   imageSrc?: string;
+  variant?: "vertical" | "horizontal";
+  availability?: string;
   onAdd?: () => void;
   className?: string;
 }
 
 export const MenuItemCard = ({
   title = "Spicy seasoned seafood noodles",
-  price = "Php 2.29",
+  price = 2.29,
   imageSrc = "/images/noodles.png",
+  variant = "vertical",
+  availability,
   onAdd,
   className,
 }: MenuItemCardProps) => {
+
+  if (variant === "horizontal") {
+    return (
+      <div className={cn("relative flex items-center w-full max-w-[450px] min-h-[150px] sm:min-h-[170px] group", className)}>
+        {/* Card Background Shifted Right */}
+        <div className="absolute top-0 bottom-0 right-0 left-12 sm:left-16 bg-[#FFDC72] rounded-[32px] shadow-sm transition-all duration-300 group-hover:shadow-md z-0" />
+        
+        {/* Protruding Image on the Left */}
+        <div className="relative z-10 flex-shrink-0 transition-transform duration-300 group-hover:-translate-x-1 ml-2 sm:ml-0">
+          <div className="w-[130px] h-[130px] sm:w-[160px] sm:h-[160px] rounded-full overflow-hidden shadow-lg border-[3px] border-white/10">
+            <img
+              src={imageSrc}
+              alt={title}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        </div>
+
+        {/* Content Area */}
+        <div className="relative z-10 flex flex-col justify-center flex-grow py-5 pr-6 sm:pr-8 pl-4 sm:pl-5">
+          {/* Title - Left Aligned */}
+          <h3 className="text-[#2D2D2D] font-inter font-bold text-[18px] sm:text-[22px] leading-[1.25] tracking-tight text-left">
+            {title}
+          </h3>
+          
+          {/* Price & Availability - Right Aligned block below */}
+          <div className="mt-4 sm:mt-5 text-right w-full">
+            <p className="text-[#FF5269] font-inter font-bold text-[22px] sm:text-[26px]">
+              {typeof price === "number" ? `Php ${price.toFixed(2)}` : price}
+            </p>
+            {availability && (
+              <p className="text-text-secondary font-inter text-[14px] sm:text-[16px] mt-1 font-medium">
+                {availability}
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={cn("relative pt-16 w-full max-w-[220px] group", className)}>
       {/* Card Background */}

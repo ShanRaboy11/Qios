@@ -87,6 +87,26 @@ export default function HomePage() {
               imageSrc="/images/soup.png"
             />
           </div>
+
+          <div className="mt-16 text-center w-full max-w-5xl px-6">
+            <h3 className="text-[24px] font-bold font-ibrand text-text-primary mb-8 tracking-tight">Horizontal Variant Layout Test</h3>
+            <div className="flex flex-col md:flex-row justify-center gap-8 items-center">
+               <MenuItemCard
+                 variant="horizontal"
+                 title="Spicy seasoned seafood noodles"
+                 price={2.29}
+                 imageSrc="/images/noodles.png"
+                 availability="20 Bowls available"
+               />
+               <MenuItemCard
+                 variant="horizontal"
+                 title="Hearty Hot Soup"
+                 price={2.99}
+                 imageSrc="/images/soup.png"
+                 availability="14 Bowls available"
+               />
+            </div>
+          </div>
         </section>
       </div>
       <Footer />
