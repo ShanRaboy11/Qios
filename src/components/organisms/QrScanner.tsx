@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 import icons8QrCode801 from "./icons8-qr-code-80-1.png";
 
