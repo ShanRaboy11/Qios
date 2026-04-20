@@ -1,13 +1,17 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Navbar } from "@/components/organisms/navbar";
 import FeatureSection from "@/components/organisms/FeatureSection";
 import { ProblemSolution } from "@/components/organisms/ProblemnSolution";
 import { Footer } from "@/components/organisms/footer";
 import { MenuItemCard } from "@/components/molecules/MenuItemCard";
 
+import { CategoryToggle } from "@/components/molecules/CategoryToggle";
+
 export default function HomePage() {
+  const [activeCategory, setActiveCategory] = useState("Meal");
+
   return (
     <main className="flex flex-col min-h-screen bg-white w-full overflow-x-hidden">
       <Navbar variant="transparent" />
@@ -17,31 +21,73 @@ export default function HomePage() {
 
         {/* Example Menu Section */}
         <section className="py-24 bg-bg-primary flex flex-col items-center justify-center">
-          <div className="text-center mb-16">
-            <h2 className="text-[32px] md:text-[40px] font-bold font-ibrand text-text-primary tracking-tight">Our Signature Dishes</h2>
+          <div className="text-center mb-10">
+            <h2 className="text-[32px] md:text-[40px] font-bold font-ibrand text-text-primary tracking-tight">
+              Our Signature Dishes
+            </h2>
             <p className="text-text-secondary mt-3 max-w-lg mx-auto font-inter text-[16px]">
-              Explore our best-selling menu items crafted with authentic flavors.
+              Explore our best-selling menu items crafted with authentic
+              flavors.
             </p>
           </div>
+
+          {/* Category Toggle Example */}
+          <div className="flex flex-wrap justify-center gap-6 mb-16 px-4">
+            <CategoryToggle
+              label="Snacks"
+              iconSrc="/svg/snacks.svg"
+              isActive={activeCategory === "Snacks"}
+              onClick={() => setActiveCategory("Snacks")}
+              size="md"
+            />
+            <CategoryToggle
+              label="Meal"
+              iconSrc="/svg/meal.svg"
+              isActive={activeCategory === "Meal"}
+              onClick={() => setActiveCategory("Meal")}
+              size="md"
+            />
+            <CategoryToggle
+              label="Vegan"
+              iconSrc="/svg/vegan.svg"
+              isActive={activeCategory === "Vegan"}
+              onClick={() => setActiveCategory("Vegan")}
+              size="md"
+            />
+            <CategoryToggle
+              label="Dessert"
+              iconSrc="/svg/dessert.svg"
+              isActive={activeCategory === "Dessert"}
+              onClick={() => setActiveCategory("Dessert")}
+              size="md"
+            />
+            <CategoryToggle
+              label="Drinks"
+              iconSrc="/svg/drinks.svg"
+              isActive={activeCategory === "Drinks"}
+              onClick={() => setActiveCategory("Drinks")}
+              size="md"
+            />
+          </div>
+
           <div className="flex flex-wrap justify-center gap-10 px-6 w-full max-w-5xl">
-            <MenuItemCard 
+            <MenuItemCard
               title="Spicy seasoned seafood noodles"
               price={2.29}
               imageSrc="/images/noodles.png"
             />
-            <MenuItemCard 
+            <MenuItemCard
               title="Classic Filipino Pork Adobo"
-              price={3.50}
+              price={3.5}
               imageSrc="/images/adobo.png"
             />
-            <MenuItemCard 
+            <MenuItemCard
               title="Hearty Hot Soup"
               price={2.99}
               imageSrc="/images/soup.png"
             />
           </div>
         </section>
-
       </div>
       <Footer />
     </main>
