@@ -87,7 +87,7 @@ export const LiveActivityFeed = (): JSX.Element => {
           >
             <div className="relative w-[18px] h-[38px]">
               <div
-                className={`relative top-[3px] w-1.5 h-1.5 ${item.dotColor} rounded-[33554400px]`}
+                className={`relative top-[3px] w-1.5 h-1.5 ${item.dotColor} rounded-full`}
               />
             </div>
             <div className="flex flex-col w-[198px] h-[45px] items-start gap-1 relative">
