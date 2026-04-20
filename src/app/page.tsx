@@ -23,9 +23,12 @@ import { ChatBubble } from "@/components/molecules/ChatBubble";
 import { ItemCustomization } from "@/components/molecules/OrderCustomization";
 import { KPICard } from "@/components/molecules/KPICard";
 import { InsightLink } from "@/components/molecules/InsightLink";
+import MenuCatalog, { MenuItemData } from "@/components/organisms/MenuCatalog";
 import { Navbar } from "@/components/organisms/navbar";
 import { Footer } from "@/components/organisms/footer";
 import { Hero } from "@/components/organisms/hero";
+import TenantManagement from "@/components/organisms/TenantManagement"; 
+import FeatureSection from "@/components/organisms/feature";
 import {
   Plus,
   Lock,
@@ -109,6 +112,21 @@ export default function HomePage() {
     },
   ];
 
+  const MOCK_DATA: MenuItemData[] = Array(10).fill(null).map((_, i) => ({
+  id: `${i}`,
+  name: "Spicy seasoned seafood noodles",
+  price: 2.29,
+  category: "Snacks",
+  available: true,
+  imageUrl: "https://placehold.co/150x136",
+}));
+
+// Adding some items for other categories
+const CATALOG_ITEMS: MenuItemData[] = [...MOCK_DATA,
+    { id: "11", name: "Beef Pares Meal", price: 150, category: "Meal", available: true, imageUrl: "https://placehold.co/150x136" },
+    { id: "12", name: "Vegan Salad", price: 120, category: "Vegan", available: true, imageUrl: "https://placehold.co/150x136" },
+];
+
   return (
     <main className="flex min-h-screen bg-white flex-col items-center w-full overflow-x-hidden">
       <Hero />
@@ -169,6 +187,21 @@ export default function HomePage() {
             />
           </div>
         </div>
+
+      {/*Menu Catalog Section*/}
+        <div className="w-full mb-12">
+          <MenuCatalog initialItems={CATALOG_ITEMS} />
+        </div>
+
+      {/* Tenant Management Directory */}
+        <main className="min-h-screen bg-[#FFF7ED] py-16 px-6">
+          <div className="max-w-[966px] mx-auto">
+            <h1 className="text-[40px] font-bold text-gray-900 mb-12 leading-tight">
+                Tenant Management Directory
+            </h1>        
+            <TenantManagement />
+          </div>
+        </main>
 
         <div className="w-full max-w-2xl bg-white border-2 border-[#E5E5E5] rounded-2xl p-6 flex flex-col gap-5">
           <InsightLink
@@ -747,6 +780,7 @@ export default function HomePage() {
       </div>
 
       <StepperBar steps={businessSteps} currentStep={2} />
+      <FeatureSection />
       <Footer />
     </main>
   );
