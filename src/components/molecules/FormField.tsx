@@ -36,14 +36,16 @@ export const FormField = React.forwardRef<HTMLInputElement, FormFieldProps>(
     return (
       <div className={cn("flex flex-col gap-1.5 w-full max-w-sm", className)}>
         {/* Label - Uses b4 global style */}
-        <label
-          className={cn(
-            "b4 ml-1 transition-colors duration-300 font-medium",
-            isError ? "text-warning-primary" : "text-text-secondary",
-          )}
-        >
-          {label}
-        </label>
+        {label && (
+          <label
+            className={cn(
+              "b4 ml-1 transition-colors duration-300 font-medium",
+              isError ? "text-warning-primary" : "text-text-secondary",
+            )}
+          >
+            {label}
+          </label>
+        )}
 
         <div className="relative flex items-center group">
           {/* Left Icon Wrapper */}

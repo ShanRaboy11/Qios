@@ -3,7 +3,7 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 
-export type AvatarVariant = "primary" | "purple" | "green" | "blue";
+export type AvatarVariant = "primary" | "purple" | "green" | "blue" | "accent";
 
 interface UserItemProps {
   name: string;
@@ -28,6 +28,7 @@ export const UserItem = ({
 
   const variantStyles = {
     primary: "border-brand-primary text-brand-primary bg-brand-primary/5",
+    accent: "border-white/50 bg-gradient-to-bl from-brand-primary to-brand-accent text-white shadow-sm ring-1 ring-black/5",
     purple: "border-[#8B5CF6] text-[#8B5CF6] bg-[#8B5CF6]/5",
     green: "border-success-primary text-success-primary bg-success-primary/5",
     blue: "border-[#4C84FF] text-[#4C84FF] bg-[#4C84FF]/5",

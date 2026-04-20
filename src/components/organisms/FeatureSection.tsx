@@ -99,7 +99,7 @@ export default function FeatureSection() {
       <div className="max-w-6xl mx-auto space-y-8 relative z-10">
 
         {/* Header */}
-        <div className="max-w-lg space-y-3 max-w-[95%]">
+        <div className=" space-y-3 max-w-[90%]">
           <h2 className="h1 text-text-primary leading-tight tracking-tight w-full">
             Hardware-Free QR Kiosk.
           </h2>
@@ -109,30 +109,33 @@ export default function FeatureSection() {
           </p>
         </div>
 
-        {/* Top Row */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-2.5">
-          {[features[0], features[1]].map((f, i) => (
-            <Card key={i} wide={i === 0 ? 'md:col-span-3' : 'md:col-span-2'}>
-              <div className="flex items-center gap-3 mb-2.5">
-                <IconBox>{f.icon}</IconBox>
-                <h3 className="b3 text-text-primary">{f.title}</h3>
-              </div>
-              <p className="b4 text-text-secondary">{f.description}</p>
-            </Card>
-          ))}
-        </div>
+        {/* Features Container */}
+        <div className="flex flex-col gap-4">
+          {/* Top Row */}
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            {[features[0], features[1]].map((f, i) => (
+              <Card key={i} wide={i === 0 ? 'md:col-span-3' : 'md:col-span-2'}>
+                <div className="flex items-center gap-3 mb-4 ">
+                  <IconBox>{f.icon}</IconBox>
+                  <h3 className="b3 text-text-primary">{f.title}</h3>
+                </div>
+                <p className="b4 text-text-secondary">{f.description}</p>
+              </Card>
+            ))}
+          </div>
 
-        {/* Bottom Row */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
-          {features.slice(2).map((f, i) => (
-            <Card key={i}>
-              <div className="flex items-center gap-3 mb-2.5">
-                <IconBox>{f.icon}</IconBox>
-                <h3 className="b3 text-text-primary">{f.title}</h3>
-              </div>
-              <p className="b4 text-text-secondary">{f.description}</p>
-            </Card>
-          ))}
+          {/* Bottom Row */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {features.slice(2).map((f, i) => (
+              <Card key={i}>
+                <div className="flex items-center gap-3 mb-4">
+                  <IconBox>{f.icon}</IconBox>
+                  <h3 className="b3 text-text-primary">{f.title}</h3>
+                </div>
+                <p className="b4 text-text-secondary">{f.description}</p>
+              </Card>
+            ))}
+          </div>
         </div>
 
         {/* AI Banner */}
