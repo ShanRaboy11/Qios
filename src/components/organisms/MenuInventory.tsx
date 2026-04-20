@@ -3,7 +3,7 @@
 import React from "react";
 
 const imgDishPlaceholder =
-  "https://www.figma.com/api/mcp/asset/77ef3629-5786-414d-b1ea-156ca5525126";
+  "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 240'><rect width='320' height='240' fill='%23f3f4f6'/><rect x='24' y='24' width='272' height='192' rx='16' fill='%23e5e7eb'/><circle cx='160' cy='104' r='36' fill='%239ca3af'/><path d='M106 168c16-20 35-30 54-30s38 10 54 30' fill='none' stroke='%239ca3af' stroke-width='12' stroke-linecap='round'/><text x='160' y='214' text-anchor='middle' font-family='Arial, sans-serif' font-size='18' fill='%236b7280'>Dish image</text></svg>";
 
 const svgPaths = {
   pTabShape:
@@ -152,7 +152,7 @@ function DishCard({ data }: { data: DishCardData }) {
       {/* Image */}
       <div className="flex-1 flex items-center justify-center px-4 pt-6 pb-2">
         <img
-          alt=""
+          alt={data.name}
           className="w-[127px] h-[127px] object-cover rounded-[10px]"
           src={imgDishPlaceholder}
         />

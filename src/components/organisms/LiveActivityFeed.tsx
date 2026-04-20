@@ -5,67 +5,67 @@ const activityData = [
     name: "Maria",
     action: "Completed Order #8821",
     time: "Just now",
-    dotColor: "bg-success-1",
+    dotColor: "bg-success-primary",
   },
   {
     name: "Juan",
     action: "Processing Order #5247",
     time: "1m ago",
-    dotColor: "bg-primary",
+    dotColor: "bg-brand-primary",
   },
   {
     name: "Justin",
     action: "Completed Order #2467",
     time: "2m ago",
-    dotColor: "bg-success-1",
+    dotColor: "bg-success-primary",
   },
   {
     name: "Ken",
     action: "Cancelled Order #1636",
     time: "2m ago",
-    dotColor: "bg-warning-1",
+    dotColor: "bg-warning-primary",
   },
   {
     name: "DJ",
     action: "Processing Order #1369",
     time: "2m ago",
-    dotColor: "bg-primary",
+    dotColor: "bg-brand-primary",
   },
   {
     name: "Maria",
     action: "Processing Order #8821",
     time: "2m ago",
-    dotColor: "bg-primary",
+    dotColor: "bg-brand-primary",
   },
   {
     name: "Kian",
     action: "Cancelled Order #2571",
     time: "3m ago",
-    dotColor: "bg-warning-1",
+    dotColor: "bg-warning-primary",
   },
   {
     name: "Mark",
     action: "Completed Order #5638",
     time: "3m ago",
-    dotColor: "bg-success-1",
+    dotColor: "bg-success-primary",
   },
   {
     name: "Shiela",
     action: "Completed Order #1640",
     time: "3m ago",
-    dotColor: "bg-success-1",
+    dotColor: "bg-success-primary",
   },
   {
     name: "Erik",
     action: "Completed Order #3281",
     time: "4m ago",
-    dotColor: "bg-success-1",
+    dotColor: "bg-success-primary",
   },
   {
     name: "Edward",
     action: "Processing Order #2371",
     time: "4m ago",
-    dotColor: "bg-primary",
+    dotColor: "bg-brand-primary",
   },
 ];
 
@@ -74,7 +74,7 @@ export const LiveActivityFeed = (): JSX.Element => {
     <div className="flex flex-col w-[366px] h-[716px] items-start gap-[25px] pt-[21px] pb-px px-[21px] relative bg-white rounded-[10px] border border-solid border-[#f0f0f0]">
       <div className="flex h-6 items-center gap-2 relative self-stretch w-full">
         <div className="relative w-[131.11px] h-6">
-          <div className="absolute -top-px left-0 font-body-b3 font-[number:var(--body-b3-font-weight)] text-[#2d2d2d] text-[length:var(--body-b3-font-size)] tracking-[var(--body-b3-letter-spacing)] leading-[var(--body-b3-line-height)] whitespace-nowrap [font-style:var(--body-b3-font-style)]">
+          <div className="absolute -top-px left-0 font-[number:var(--body-b3-font-weight)] text-[#2d2d2d] text-[length:var(--body-b3-font-size)] tracking-[var(--body-b3-letter-spacing)] leading-[var(--body-b3-line-height)] whitespace-nowrap [font-style:var(--body-b3-font-style)]">
             Live Activity Feed
           </div>
         </div>
@@ -87,7 +87,7 @@ export const LiveActivityFeed = (): JSX.Element => {
           >
             <div className="relative w-[18px] h-[38px]">
               <div
-                className={`relative top-[3px] w-1.5 h-1.5 ${item.dotColor} rounded-[33554400px]`}
+                className={`relative top-[3px] w-1.5 h-1.5 ${item.dotColor} rounded-full`}
               />
             </div>
             <div className="flex flex-col w-[198px] h-[45px] items-start gap-1 relative">

@@ -1,21 +1,11 @@
-﻿"use client";
+"use client";
 
 import React from "react";
 
 const imgRectangle6389 =
-  "https://www.figma.com/api/mcp/asset/77ef3629-5786-414d-b1ea-156ca5525126";
+  "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96' viewBox='0 0 96 96' fill='none'%3E%3Crect width='96' height='96' rx='12' fill='%23F3F4F6'/%3E%3Cpath d='M24 62L38 48L50 58L60 46L72 62V72H24V62Z' fill='%23D1D5DB'/%3E%3Ccircle cx='35' cy='34' r='7' fill='%23D1D5DB'/%3E%3C/svg%3E";
 
 const svgPaths = {
-  p33726f0:
-    "M0 30C0 13.431 13.431 0 30 0H108C124.569 0 138 13.431 138 30V36H1209C1222.25 36 1233 46.7452 1233 60V807H6C2.68629 807 0 804.314 0 801V30Z",
-  p2f740400:
-    "M0 30C0 13.431 13.431 0 30 0H108C124.569 0 138 13.431 138 30V36H1209C1222.25 36 1233 46.7452 1233 60V807H6C2.68629 807 0 804.314 0 801V30ZM2 30C2 14.536 14.536 2 30 2H108C123.464 2 136 14.536 136 30V38H1209C1221.15 38 1231 47.8497 1231 60V805H2V30Z",
-  pTabShape:
-    "M1209 63C1225.57 63 1239 76.4315 1239 93V807H0V63H80C102.308 63 107.532 63 108.141 12.0254C108.22 5.39845 113.578 0 120.205 0H238.795C245.422 0 250.78 5.39845 250.859 12.0254C251.468 63 256.692 63 279 63H1209Z",
-  pTabBorder:
-    "M1209 63V61.5H279C255.955 61.5 249.002 61.4886 248.361 12.0466C248.291 6.22613 243.746 1.5 238.795 1.5H120.205C115.254 1.5 110.709 6.22613 110.639 12.0466C109.998 61.4886 103.045 61.5 80 61.5H0V63H1V807H0V63H-1.5V808.5H1240.5V93C1240.5 75.603 1226.4 61.5 1209 61.5V63Z",
-  pe19ff0:
-    "M8.0698 0L0 7.8755L8.0698 15.7509L6.5698 15.7509L1.5 7.8755L6.5698 0Z",
   p29a32100:
     "M7 1.16699C3.78334 1.16699 1.16667 3.78366 1.16667 7.00033C1.16667 10.217 3.78334 12.8337 7 12.8337C10.2167 12.8337 12.8333 10.217 12.8333 7.00033C12.8333 3.78366 10.2167 1.16699 7 1.16699Z",
   p25f52600:
@@ -23,6 +13,8 @@ const svgPaths = {
   p2611f400: "M8.4 0.9V15.9M0.9 8.4H15.9",
   p9b36e80:
     "M13.4063 0.9375C12.7813 0.3125 11.7813 0.3125 11.1563 0.9375L1.2188 10.875L0.75 13.875L3.75 13.4063L13.6875 3.4688C14.3125 2.8438 14.3125 1.8438 13.6875 1.2188L13.4063 0.9375Z",
+   pTabShape:
+    "M1209 63C1225.57 63 1239 76.4315 1239 93V807H0V63H80C102.308 63 107.532 63 108.141 12.0254C108.22 5.39845 113.578 0 120.205 0H238.795C245.422 0 250.78 5.39845 250.859 12.0254C251.468 63 256.692 63 279 63H1209Z"
 };
 
 /* ─── Header ─────────────────────────────────────────────── */
@@ -96,7 +88,7 @@ function InfoBanner() {
 }
 
 /* ─── Tabs + Search row (inside cream area) ──────────────────── */
-function SearchFilterBar() {
+export function SearchFilterBar() {
   return (
     <div className="flex items-center justify-end gap-3 w-full">
       <div className="relative bg-white border border-[#e5e7eb] rounded-2xl h-[51px] flex items-center px-5 gap-3 w-[340px]">
@@ -237,7 +229,7 @@ function IngredientCard({ data }: { data: IngredientCardData }) {
       {/* Thumbnail */}
       <div className="shrink-0 size-[50px] rounded-[12px] overflow-hidden">
         <img
-          alt=""
+          alt={`${data.name} thumbnail`}
           className="w-full h-full object-cover"
           src={imgRectangle6389}
         />
