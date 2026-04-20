@@ -152,7 +152,7 @@ function DishCard({ data }: { data: DishCardData }) {
       {/* Image */}
       <div className="flex-1 flex items-center justify-center px-4 pt-6 pb-2">
         <img
-          alt=""
+          alt={data.name}
           className="w-[127px] h-[127px] object-cover rounded-[10px]"
           src={imgDishPlaceholder}
         />
