@@ -11,7 +11,6 @@ export default function HomePage() {
   return (
     <main className="flex flex-col min-h-screen bg-white w-full overflow-x-hidden">
       <Hero />
-      <Navbar variant="transparent" />
       <div className="flex-grow w-full">
         <ProblemSolution />
         <FeatureSection />
