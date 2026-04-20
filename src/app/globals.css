@@ -91,3 +91,20 @@ h4,
   line-height: 125%;
   font-weight: 400;
 }
+
+@keyframes bubbleFloat {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-8px); }
+}
+@keyframes robotBreathe {
+  0%, 100% { transform: scaleY(1) scaleX(1); }
+  50%       { transform: scaleY(1.03) scaleX(0.982); }
+}
+@keyframes arcFade {
+  0%, 100% { opacity: 0; }
+  40%, 60%  { opacity: 0.9; }
+}
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.5; width: 110px; }
+  50%       { opacity: 1;   width: 130px; }
+}

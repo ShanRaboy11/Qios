@@ -1,26 +1,35 @@
 import type { Metadata } from "next";
 import { Figtree, Inter } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
 const figtree = Figtree({
   subsets: ["latin"],
   variable: "--font-figtree",
-  display: "swap"
+  display: "swap",
 });
 
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
-  display: "swap"
+  display: "swap",
+});
+
+const ibrand = localFont({
+  src: "../../public/fonts/ibrand.otf",
+  variable: "--font-ibrand",
 });
 
 export const metadata: Metadata = {
   title: "Qios",
-  description: "Multi-tenant F&B kiosk platform for Cebu establishments"
+  description: "Multi-tenant F&B kiosk platform for Cebu establishments",
+  icons: {
+    icon: "/svg/Qios_Icon.svg",
+  },
 };
 
 export default function RootLayout({
-  children
+  children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
@@ -28,7 +37,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body
         suppressHydrationWarning
-        className={`${figtree.variable} ${inter.variable} font-[family-name:var(--font-inter)] antialiased`}
+        className={`${figtree.variable} ${inter.variable} ${ibrand.variable} font-[family-name:var(--font-inter)] antialiased`}
       >
         {children}
       </body>

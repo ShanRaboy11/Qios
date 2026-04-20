@@ -4,7 +4,7 @@ const config: Config = {
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/app/**/*.{js,ts,jsx,tsx,mdx}"
+    "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
     extend: {
@@ -12,32 +12,33 @@ const config: Config = {
         brand: {
           primary: "#FFC670",
           secondary: "#FFD77A",
-          accent: "#FF5269"
+          accent: "#FF5269",
         },
         bg: {
-          primary: "#FFF9EF"
+          primary: "#FFF9EF",
         },
         text: {
           primary: "#2D2D2D",
           secondary: "#707070",
-          tertiary: "#FFFFFF"
+          tertiary: "#FFFFFF",
         },
         warning: {
           primary: "#EC1313",
-          secondary: "#FFF0F0"
+          secondary: "#FFF0F0",
         },
         success: {
           primary: "#1FAD66",
-          secondary: "#E0FAD6"
-        }
+          secondary: "#E0FAD6",
+        },
       },
       fontFamily: {
         figtree: ["var(--font-figtree)", "sans-serif"],
-        inter: ["var(--font-inter)", "sans-serif"]
-      }
-    }
+        inter: ["var(--font-inter)", "sans-serif"],
+        ibrand: ["var(--font-ibrand)", "serif"],
+      },
+    },
   },
-  plugins: []
+  plugins: [],
 };
 
 export default config;
