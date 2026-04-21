@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/atoms/Button";
 import { ArrowRight, Menu, X } from "lucide-react";
@@ -12,11 +12,30 @@ interface NavbarProps {
 
 export const Navbar = ({ variant = "filled", className }: NavbarProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const navRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        isOpen &&
+        navRef.current &&
+        !navRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen]);
 
   return (
     <nav
+      ref={navRef}
       className={cn(
-        "relative flex items-center justify-between w-full overflow-visible",
+        "relative z-50 flex items-center justify-between w-full overflow-visible",
         "px-[25px] md:px-[79px] py-[10px]",
         "gap-x-8 transition-colors duration-300",
         variant === "filled" || isOpen ? "bg-bg-primary" : "bg-transparent",
@@ -87,6 +106,7 @@ export const Navbar = ({ variant = "filled", className }: NavbarProps) => {
 
       <div className="md:hidden flex items-center relative">
         <button
+          type="button"
           onClick={() => setIsOpen(!isOpen)}
           className="focus:outline-none transition-transform duration-300 active:scale-90"
         >
