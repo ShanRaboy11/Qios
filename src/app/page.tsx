@@ -107,6 +107,36 @@ export default function HomePage() {
                />
             </div>
           </div>
+
+          <div className="mt-16 text-center w-full max-w-5xl px-6 pb-20">
+            <h3 className="text-[24px] font-bold font-ibrand text-text-primary mb-8 tracking-tight">Bestseller Variant Layout Test</h3>
+            <div className="flex justify-center gap-4 sm:gap-6 items-center flex-wrap">
+               <MenuItemCard
+                 variant="bestseller"
+                 price={105.50}
+                 imageSrc="/images/sushi.png"
+                 title="Sushi"
+               />
+               <MenuItemCard
+                 variant="bestseller"
+                 price={250.50}
+                 imageSrc="/images/steak.png"
+                 title="Steak"
+               />
+               <MenuItemCard
+                 variant="bestseller"
+                 price={80.50}
+                 imageSrc="/images/pasta.png"
+                 title="Pasta"
+               />
+               <MenuItemCard
+                 variant="bestseller"
+                 price={100.50}
+                 imageSrc="/images/cupcake.png"
+                 title="Cupcake"
+               />
+            </div>
+          </div>
         </section>
       </div>
       <Footer />

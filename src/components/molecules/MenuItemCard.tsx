@@ -8,7 +8,7 @@ export interface MenuItemCardProps {
   title?: string;
   price?: string | number;
   imageSrc?: string;
-  variant?: "vertical" | "horizontal";
+  variant?: "vertical" | "horizontal" | "bestseller";
   availability?: string;
   onAdd?: () => void;
   className?: string;
@@ -23,6 +23,30 @@ export const MenuItemCard = ({
   onAdd,
   className,
 }: MenuItemCardProps) => {
+
+  if (variant === "bestseller") {
+    return (
+      <div 
+        className={cn("relative w-[110px] h-[160px] sm:w-[130px] sm:h-[180px] md:w-[150px] md:h-[220px] rounded-[24px] overflow-hidden shadow-sm group hover:shadow-md transition-shadow cursor-pointer flex-shrink-0", className)} 
+        onClick={onAdd}
+      >
+        {/* Background Image */}
+        <div className="absolute inset-0 bg-black/5 z-10 group-hover:bg-transparent transition-colors" />
+        <img 
+          src={imageSrc} 
+          alt={title || "Best seller"} 
+          className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
+        />
+        
+        {/* Price Tag Overlay */}
+        <div className="absolute bottom-4 right-0 bg-[#FFDC72] py-1.5 pl-3 pr-2 rounded-l-[16px] shadow-sm transform translate-x-1 group-hover:translate-x-0 transition-transform z-20">
+          <span className="text-[#2D2D2D] font-inter font-bold text-[12px] sm:text-[14px] md:text-[16px] tracking-tight">
+            {typeof price === "number" ? `$${price.toFixed(2)}` : price}
+          </span>
+        </div>
+      </div>
+    );
+  }
 
   if (variant === "horizontal") {
     return (
