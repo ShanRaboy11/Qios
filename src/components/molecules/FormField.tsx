@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { Eye, EyeOff } from "lucide-react";
 
 interface FormFieldProps extends InputProps {
-  label: string;
+  label: React.ReactNode;
   supportiveText?: string;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
