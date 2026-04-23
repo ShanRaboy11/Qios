@@ -6,6 +6,7 @@ import { CustomerHeader } from "@/components/organisms/CustomerHeader";
 import { CategoryToggle } from "@/components/molecules/CategoryToggle";
 import { MenuItemCard } from "@/components/molecules/MenuItemCard";
 import { PromoBanner } from "@/components/organisms/PromoBanner";
+import { InventoryRecipeMatrix } from "@/components/organisms/InventoryRecipeMatrix";
 import { ChevronRight } from "lucide-react";
 
 export default function CustomerHomePage() {
@@ -109,6 +110,11 @@ export default function CustomerHomePage() {
             {/* Promo Banner Section */}
             <div className="mb-10 w-full">
                <PromoBanner />
+            </div>
+
+            {/* === New Inventory Matrix Section === */}
+            <div className="mb-10 w-full -mx-4 md:mx-0 lg:-ml-12 overflow-hidden rounded-[24px]">
+               <InventoryRecipeMatrix />
             </div>
 
             {/* Recommended For You Section */}
