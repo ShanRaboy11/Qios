@@ -78,6 +78,8 @@ export const ProblemSolution = () => {
 
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
+      const isMobile = window.innerWidth < 768;
+
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: sectionRef.current,
@@ -91,7 +93,10 @@ export const ProblemSolution = () => {
       });
 
       cardsRef.current.forEach((card, index) => {
-        if (index === cardsData.length - 1 || !card) return;
+        if (!card) return;
+
+        const isLastCard = index === cardsData.length - 1;
+        if (isLastCard && isMobile) return;
 
         tl.to(
           card,
