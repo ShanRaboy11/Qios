@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { TabGroup } from "@/components/molecules/TabGroup";
-import { GlobalThresholdView } from "./GlobalThresholdView";
+import { ThresholdSettingsPanel } from "./ThresholdSettingsPanel";
 import { RecipeMatrixView } from "./RecipeMatrixView";
 
 export const InventoryRecipeMatrix = () => {
@@ -32,7 +32,7 @@ export const InventoryRecipeMatrix = () => {
       {/* Main Content Area */}
       <div className="w-full">
         {activeTab === "recipe" && <RecipeMatrixView />}
-        {activeTab === "threshold" && <GlobalThresholdView />}
+        {activeTab === "threshold" && <ThresholdSettingsPanel />}
       </div>
     </div>
   );
