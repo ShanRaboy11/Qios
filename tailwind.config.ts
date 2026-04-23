@@ -36,6 +36,41 @@ const config: Config = {
         inter: ["var(--font-inter)", "sans-serif"],
         ibrand: ["var(--font-ibrand)", "serif"],
       },
+      keyframes: {
+        marquee: {
+          "0%": { transform: "translateX(0)" },
+          "100%": { transform: "translateX(-50%)" },
+        },
+        "marquee-reverse": {
+          "0%": { transform: "translateX(-50%)" },
+          "100%": { transform: "translateX(0)" },
+        },
+        "float-y": {
+          "0%, 100%": { transform: "translateY(0px)" },
+          "50%": { transform: "translateY(60px)" },
+        },
+        "float-y1": {
+          "0%, 100%": { transform: "translateY(0px)" },
+          "50%": { transform: "translateY(-60px)" },
+        },
+        "scan-line": {
+          "0%": { top: "0%" },
+          "50%": { top: "calc(100% - 2px)" },
+          "100%": { top: "0%" },
+        },
+        "bracket-pulse": {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.4" },
+        },
+      },
+      animation: {
+        marquee: "marquee 30s linear infinite",
+        "marquee-reverse": "marquee-reverse 30s linear infinite",
+        "float-y": "float-y 15s ease-in-out infinite",
+        "float-y1": "float-y1 15s ease-in-out infinite",
+        "scan-line": "scan-line 2s ease-in-out infinite",
+        "bracket-pulse": "bracket-pulse 1.5s ease-in-out infinite",
+      },
     },
   },
   plugins: [],
