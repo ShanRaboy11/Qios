@@ -9,12 +9,9 @@ import { Required } from "./BusinessInformation";
 const countries = [
   { name: "Philippines", code: "ph", dial: "+63" },
   { name: "United States", code: "us", dial: "+1" },
-  { name: "United Kingdom", code: "gb", dial: "+44" },
   { name: "Singapore", code: "sg", dial: "+65" },
-  { name: "Australia", code: "au", dial: "+61" },
 ];
 
-// --- Sub-component: Country Selector ---
 function CountryCodeSelect({ onSelect }: { onSelect: (dial: string) => void }) {
   const [isOpen, setIsOpen] = useState(false);
   const [selected, setSelected] = useState(countries[0]);
@@ -34,170 +31,164 @@ function CountryCodeSelect({ onSelect }: { onSelect: (dial: string) => void }) {
   );
 
   return (
-    <div className="relative h-full" ref={dropdownRef}>
+    <div className="relative h-full flex items-center" ref={dropdownRef}>
       <div
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1 px-3 h-full cursor-pointer border-r border-neutral-200 hover:bg-neutral-50 transition-colors"
+        className={cn(
+          "flex items-center gap-1 px-4 h-full cursor-pointer border-r-2 transition-all duration-300 rounded-l-[18px]",
+          isOpen ? "border-[var(--color-brand-primary)] bg-white" : "border-neutral-100 hover:bg-neutral-50"
+        )}
       >
-        <img 
-          src={`https://flagcdn.com/w40/${selected.code}.png`} 
-          alt={selected.name} 
-          className="w-6 h-4 rounded-sm object-cover" 
-        />
-        <ChevronDown size={14} className={cn("text-neutral-500 transition-transform", isOpen && "rotate-180")} />
-        <span className="b2 text-neutral-500 font-medium">({selected.dial})</span>
+        <img src={`https://flagcdn.com/w40/${selected.code}.png`} alt="" className="w-10 h-5 rounded-sm object-cover" />
+        <ChevronDown size={20} className={cn("text-neutral-400 transition-transform duration-300", isOpen && "rotate-180")} />
+        <span className="b2 text-neutral-600 font-medium whitespace-nowrap">({selected.dial})</span>
       </div>
 
       {isOpen && (
-        <div className="absolute top-[55px] left-0 w-[240px] bg-white border-2 border-neutral-100 rounded-xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-          <div className="p-2 border-b border-neutral-50 bg-neutral-50">
+        <div className="absolute top-[calc(100%+12px)] left-0 w-[240px] bg-white border-2 border-[#E5E5E5] rounded-2xl shadow-xl z-[999] overflow-hidden animate-in fade-in zoom-in-95 duration-300">
+          <div className="p-2 border-b border-neutral-100 bg-neutral-50/50">
             <div className="relative">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
               <input
-                className="w-full h-8 pl-8 pr-2 bg-white rounded-lg text-xs outline-none focus:ring-1 focus:ring-[var(--color-brand-primary)]"
-                placeholder="Search country..."
+                className="w-full h-9 pl-9 pr-3 bg-white border border-neutral-200 rounded-xl text-sm outline-none focus:border-[var(--color-brand-primary)]"
+                placeholder="Search..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
+                autoFocus
               />
             </div>
           </div>
-          <div className="max-h-[200px] overflow-y-auto">
+          <ul className="max-h-[220px] overflow-y-auto">
             {filtered.map((c) => (
-              <div 
-                key={c.code} 
-                onClick={() => { setSelected(c); onSelect(c.dial); setIsOpen(false); }} 
-                className="px-4 py-2.5 hover:bg-orange-50 flex items-center justify-between cursor-pointer transition-colors"
+              <li
+                key={c.code}
+                onClick={() => { setSelected(c); onSelect(c.dial); setIsOpen(false); }}
+                className={cn(
+                  "px-5 py-3.5 b2 cursor-pointer flex items-center justify-between hover:bg-slate-50",
+                  selected.code === c.code ? "text-[var(--color-brand-primary)] bg-orange-50/30 font-bold" : "text-text-primary"
+                )}
               >
                 <div className="flex items-center gap-3">
-                  <img src={`https://flagcdn.com/w40/${c.code}.png`} alt="" className="w-5 h-3 shadow-sm" />
-                  <span className="text-sm font-medium text-neutral-700">{c.name}</span>
+                  <img src={`https://flagcdn.com/w40/${c.code}.png`} alt="" className="w-10 h-5" />
+                  <span>{c.name}</span>
                 </div>
-                <span className="text-xs font-bold text-neutral-400">{c.dial}</span>
-              </div>
+                <span className="text-xs opacity-40">{c.dial}</span>
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
       )}
     </div>
   );
 }
 
-// --- Main Component ---
 export function ContactInformation({ onNext }: { onNext: () => void }) {
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [isFocused, setIsFocused] = useState(false); // New Focus State
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [timeLeft, setTimeLeft] = useState(45);
   const [otp, setOtp] = useState(["", "", "", ""]);
   const otpInputs = useRef<(HTMLInputElement | null)[]>([]);
 
-  // Timer Countdown Logic
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (isTimerRunning && timeLeft > 0) {
       interval = setInterval(() => setTimeLeft((prev) => prev - 1), 1000);
-    } else if (timeLeft === 0) {
-      setIsTimerRunning(false);
-    }
+    } else if (timeLeft === 0) setIsTimerRunning(false);
     return () => clearInterval(interval);
   }, [isTimerRunning, timeLeft]);
-
-  const startVerification = () => {
-    if (isPhoneValid) {
-      setTimeLeft(45);
-      setIsTimerRunning(true);
-    }
-  };
-
-  const handleOtpChange = (index: number, value: string) => {
-    const val = value.replace(/\D/g, "");
-    if (!val && value !== "") return;
-    
-    const newOtp = [...otp];
-    newOtp[index] = val;
-    setOtp(newOtp);
-
-    if (val && index < 3) {
-      otpInputs.current[index + 1]?.focus();
-    }
-  };
 
   const isPhoneValid = phoneNumber.length >= 10;
   const isOtpComplete = otp.every(digit => digit !== "");
 
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-right-8 duration-500">
-      {/* Phone Number Input Section */}
       <div className="space-y-2">
-        <label className="b4 ml-1 font-medium text-text-secondary">
-          Contact Number <Required />
-        </label>
-        <div className="flex items-center border-2 border-neutral-200 rounded-[15px] bg-white overflow-hidden focus-within:border-[var(--color-brand-primary)] transition-all h-[52px]">
+        <label className="b4 ml-1 font-medium text-text-secondary">Contact Number <Required /></label>
+        
+        {/* CONTAINER: Logic changed to highlight on isFocused */}
+        <div className={cn(
+          "relative flex items-center border-2 rounded-[20px] bg-white h-[60px] w-[550px] transition-all duration-300",
+          isFocused 
+            ? "border-[var(--color-brand-primary)] shadow-[0_0_0_2px_rgba(255,198,112,0.15)]" 
+            : "border-neutral-200"
+        )}>
           <CountryCodeSelect onSelect={() => {}} />
+          
           <input
             type="text"
             placeholder="963 469 4776"
             value={phoneNumber}
+            onFocus={() => setIsFocused(true)} // SET FOCUS
+            onBlur={() => setIsFocused(false)}  // REMOVE FOCUS
             onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ""))}
-            className="flex-1 px-4 outline-none b2 text-text-primary bg-transparent"
+            className="flex-1 px-5 outline-none b2 text-text-primary bg-transparent font-medium"
           />
+
+          {/* BUTTON: Stays independent - highlights only when isPhoneValid */}
           <button
-            onClick={startVerification}
+            onClick={() => { if(isPhoneValid) { setTimeLeft(45); setIsTimerRunning(true); }}}
             disabled={!isPhoneValid}
             className={cn(
-              "px-6 h-full b2 font-bold transition-all text-white",
-              isPhoneValid ? "bg-[#A68966] hover:brightness-95" : "bg-[#D2C1B0] cursor-not-allowed"
+              "px-8 h-full b2 font-bold transition-all text-white rounded-r-[18px] leading-tight min-w-[120px]",
+              isPhoneValid 
+                ? "bg-[var(--color-brand-primary)] hover:brightness-95" 
+                : "bg-neutral-200 cursor-not-allowed"
             )}
           >
-            Send Code
+            Send<br/>Code
           </button>
         </div>
       </div>
 
-      {/* Verification / OTP Section */}
-      <div className="flex flex-col items-center space-y-10 pt-4">
-        {/* Timer and Resend Link */}
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 b2 font-bold text-text-primary">
-            <Clock size={18} />
+      <div className="flex flex-col items-center space-y-12 pt-4">
+        {/* Timer UI */}
+        <div className="flex items-center gap-5">
+          <div className="flex items-center gap-2 b2 font-bold text-text-primary text-xl">
+            <Clock size={20} />
             <span>00 : {timeLeft.toString().padStart(2, '0')}</span>
           </div>
           <button
-            onClick={startVerification}
-            className="b2 text-[#D2C1B0] border-b border-[#D2C1B0] font-semibold hover:text-[#A68966] transition-colors"
+            onClick={() => { setTimeLeft(45); setIsTimerRunning(true); }}
+            className={cn(
+              "b2 border-b-2 font-bold transition-all",
+              timeLeft === 0 
+                ? "text-[var(--color-brand-primary)] border-[var(--color-brand-primary)]" 
+                : "text-neutral-300 border-transparent cursor-not-allowed"
+            )}
           >
             Resend Code
           </button>
         </div>
 
-        {/* 4 Digit OTP Inputs */}
-        <div className="flex gap-6">
+        {/* OTP Inputs */}
+        <div className="flex gap-8">
           {otp.map((digit, i) => (
             <input
               key={i}
               ref={(el) => { otpInputs.current[i] = el; }}
-              type="text"
-              maxLength={1}
-              value={digit}
-              onChange={(e) => handleOtpChange(i, e.target.value)}
+              type="text" maxLength={1} value={digit}
+              onChange={(e) => {
+                const val = e.target.value.replace(/\D/g, "");
+                const newOtp = [...otp]; newOtp[i] = val; setOtp(newOtp);
+                if (val && i < 3) otpInputs.current[i+1]?.focus();
+              }}
               className={cn(
-                "w-16 h-12 bg-transparent border-b-2 text-center text-2xl outline-none transition-all duration-300 font-inter",
-                digit !== "" || (i === 0 && otp[0] === "") ? "border-[#A68966]" : "border-slate-300"
+                "w-16 h-12 bg-transparent border-b-2 text-center text-3xl outline-none transition-all duration-300",
+                digit !== "" || (i === 0 && otp[0] === "") ? "border-[var(--color-brand-primary)]" : "border-slate-200"
               )}
             />
           ))}
         </div>
 
-        {/* Confirm Button using the Button Atom */}
         <Button
           variant="primary"
-          shape="pill"
           size="lg"
           className={cn(
-            "w-full h-16 shadow-none transition-all duration-500",
-            isOtpComplete ? "bg-[#A68966] text-white opacity-100" : "bg-[#D2C1B0] text-white/80 opacity-90 cursor-not-allowed hover:scale-100"
+            "w-full h-[55px] text-xl font-bold transition-all duration-500 shadow-none border-none",
+            isOtpComplete ? " text-text-tertiary scale-[1.02]" : "bg-neutral-100 text-white cursor-not-allowed"
           )}
           onClick={() => isOtpComplete && onNext()}
-          disabled={!isOtpComplete}
         >
           Confirm
         </Button>

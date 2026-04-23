@@ -21,7 +21,7 @@ export default function OnboardingPage() {
   const [currentStep, setCurrentStep] = useState(1);
 
   const nextStep = () => setCurrentStep((prev) => Math.min(prev + 1, steps.length));
-  const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 1));
+  // prevStep function removed to clean up unused code
 
   return (
     <div className="flex min-h-screen bg-white">
@@ -45,7 +45,7 @@ export default function OnboardingPage() {
             {currentStep === 2 && <ContactInformation onNext={nextStep} />}
             {currentStep === 3 && <AuthCredentials />}
             
-            {/* Steps 4 & 5 Placeholders */}
+            {/* Steps 4 & 5 */}
             {currentStep >= 4 && (
               <div className="py-20 text-center animate-in zoom-in-95 duration-500">
                 <ShoppingBag className="mx-auto mb-6 text-[var(--color-brand-primary)]" size={48} />
@@ -57,14 +57,9 @@ export default function OnboardingPage() {
             )}
           </div>
 
-          {/* Navigation Buttons (Hidden on Step 2 as it has its own Confirm button) */}
+          {/* Navigation Buttons (Back button removed here) */}
           {currentStep !== 2 && (
-            <div className="flex gap-4">
-              {currentStep > 1 && (
-                <Button variant="outline" onClick={prevStep}>
-                  Back
-                </Button>
-              )}
+            <div className="flex">
               <Button 
                 variant="primary" 
                 size="lg" 
