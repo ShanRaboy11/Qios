@@ -79,7 +79,6 @@ export const ProblemSolution = () => {
   });
 
   return (
-    // 500vh gives us plenty of scroll distance to peel off 4 cards, plus a buffer at the end
     <section
       ref={containerRef}
       className="relative w-full h-[500vh] bg-bg-primary"
@@ -87,17 +86,17 @@ export const ProblemSolution = () => {
       {/* Sticky container that locks to the screen while scrolling */}
       <div className="sticky top-0 w-full h-screen flex items-center justify-center overflow-hidden">
         {/* Massive Background Typography */}
-        <div className="absolute inset-0 flex items-center justify-between px-6 md:px-20 pointer-events-none z-0">
-          <h2 className="text-[22vw] md:text-[16vw] font-figtree font-black text-text-primary/90 tracking-tighter leading-none select-none">
-            Smarter
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-0">
+          <h2 className="text-[20vw] md:text-[18vw] font-figtree font-black text-text-primary/[0.04] leading-[0.85] tracking-tighter uppercase whitespace-nowrap">
+            Problems
           </h2>
-          <h2 className="text-[22vw] md:text-[16vw] font-figtree font-black text-text-primary/90 tracking-tighter leading-none select-none">
-            Orders
+          <h2 className="text-[20vw] md:text-[18vw] font-figtree font-black text-text-primary/[0.04] leading-[0.85] tracking-tighter uppercase whitespace-nowrap">
+            Solved
           </h2>
         </div>
 
         {/* Stacked Cards */}
-        <div className="relative z-10 flex items-center justify-center">
+        <div className="relative z-10 flex items-center justify-center w-full h-full">
           {cardsData.map((card, index) => (
             <StackedCard
               key={card.id}
@@ -114,48 +113,63 @@ export const ProblemSolution = () => {
 };
 
 const StackedCard = ({ card, index, progress, totalCards }: any) => {
-  // We want the highest index (top of DOM stack) to leave FIRST.
-  const reverseIndex = totalCards - 1 - index;
-
-  // We complete all animations by 80% scroll (0.8) so the last card sits still
-  // for the remaining 20% scroll, giving the user time to read it.
-  const animationEndProgress = 0.8;
-  const step = animationEndProgress / (totalCards - 1);
-  const start = reverseIndex * step;
-  const end = start + step;
-
   const isLastCard = index === 0;
 
-  // On scroll, cards fly UP and slightly alternate left/right
-  const flyOutY = useTransform(progress, [start, end], [0, -1000]);
+  // Highest index (top of visual stack) peels off first
+  const reverseIndex = totalCards - 1 - index;
+  const step = totalCards > 1 ? 1 / (totalCards - 1) : 1;
+
+  // Securely clamp math so offsets NEVER exceed 1.0 (prevents Framer API crashes)
+  let start = isLastCard ? 0 : Math.min(reverseIndex * step, 0.99);
+  let end = isLastCard ? 1 : Math.min(start + step, 1);
+
+  // Fallback to ensure 'end' is strictly greater than 'start'
+  if (start >= end) {
+    start = end - 0.01;
+  }
+
+  // Use "vh" instead of "px" so it fully flies off-screen on any device height
+  const flyOutY = useTransform(
+    progress,
+    [start, end],
+    ["0vh", isLastCard ? "0vh" : "-120vh"],
+  );
+
   const flyOutX = useTransform(
     progress,
     [start, end],
-    [0, index % 2 === 0 ? -150 : 150],
+    [0, isLastCard ? 0 : index % 2 === 0 ? -50 : 50],
   );
+
   const flyOutRotate = useTransform(
     progress,
     [start, end],
-    [card.rotate, card.rotate + (index % 2 === 0 ? -30 : 30)],
+    [
+      card.rotate,
+      isLastCard ? card.rotate : card.rotate + (index % 2 === 0 ? -20 : 20),
+    ],
   );
 
-  // If it's the very last card (index 0), it never flies away.
-  const y = isLastCard ? 0 : flyOutY;
-  const x = isLastCard ? 0 : flyOutX;
-  const rotate = isLastCard ? card.rotate : flyOutRotate;
+  let opStart = end - 0.05;
+  if (opStart <= start) {
+    opStart = start + 0.01;
+  }
 
-  // Fade out slightly after flying out to prevent visual glitches if the user scrolls wildly
-  const opacity = useTransform(progress, [end, end + 0.05], [1, 0]);
+  const opacity = useTransform(
+    progress,
+    [opStart, end],
+    [1, isLastCard ? 1 : 0],
+  );
 
   return (
     <motion.div
       style={{
-        y,
-        x,
-        rotate,
-        opacity: isLastCard ? 1 : opacity,
+        y: flyOutY,
+        x: flyOutX,
+        rotate: flyOutRotate,
+        opacity,
       }}
-      className={`absolute w-[280px] md:w-[380px] aspect-[4/5] rounded-[40px] p-8 md:p-10 flex flex-col justify-between shadow-[0_30px_60px_-15px_rgba(0,0,0,0.2)] border-2 border-white/10 origin-bottom ${card.bgColor} ${card.textColor}`}
+      className={`absolute w-[85vw] max-w-[380px] aspect-[4/5] rounded-[32px] md:rounded-[40px] p-8 md:p-10 flex flex-col justify-between shadow-[0_30px_60px_-15px_rgba(0,0,0,0.2)] border-2 border-white/10 origin-bottom ${card.bgColor} ${card.textColor}`}
     >
       <div>
         <div
@@ -171,7 +185,6 @@ const StackedCard = ({ card, index, progress, totalCards }: any) => {
         </p>
       </div>
 
-      {/* Decorative arrow mimicking the Swag cards' modern flair */}
       <div className="flex justify-end w-full">
         <div className="w-12 h-12 rounded-full border-2 border-current flex items-center justify-center opacity-40 transition-opacity hover:opacity-100 cursor-pointer">
           <ArrowUpRight size={24} />
