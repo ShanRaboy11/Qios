@@ -16,10 +16,13 @@ export type ButtonSize = "sm" | "md" | "lg" | "icon";
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
   shape?: ButtonShape;
-  size?: ButtonSize; // Added prop
+  size?: ButtonSize;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
+  loading?: boolean; // Added loading prop
 }
+
+import { Loader2 } from "lucide-react";
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   (
@@ -27,10 +30,12 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       className,
       variant = "primary",
       shape = "pill",
-      size = "md", // Default size
+      size = "md",
       leftIcon,
       rightIcon,
+      loading = false, // Added loading prop default
       children,
+      disabled, // Added to merge with loading
       ...props
     },
     ref,
@@ -69,16 +74,21 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <button
         ref={ref}
+        disabled={disabled || loading}
         className={cn(
           baseStyles,
           shapeStyles[shape],
-          sizeStyles[size], // Applied size here
+          sizeStyles[size],
           variantStyles[variant],
           className,
         )}
         {...props}
       >
-        {leftIcon && (
+        {loading && (
+          <Loader2 className={cn("animate-spin", children ? "mr-2" : "")} size={size === "sm" || size === "icon" ? 14 : 18} />
+        )}
+        
+        {!loading && leftIcon && (
           <span
             className={cn(
               "flex items-center justify-center",
@@ -91,7 +101,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
         {children}
 
-        {rightIcon && (
+        {!loading && rightIcon && (
           <span
             className={cn(
               "flex items-center justify-center",
