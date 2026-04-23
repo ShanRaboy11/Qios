@@ -86,6 +86,7 @@ export const ProblemSolution = () => {
           pin: true,
           scrub: 1,
           anticipatePin: 1,
+          pinSpacing: true,
         },
       });
 
@@ -114,7 +115,36 @@ export const ProblemSolution = () => {
       ref={sectionRef}
       className="relative w-full h-screen overflow-hidden bg-bg-primary"
     >
-      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-0">
+      <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-b from-white to-transparent z-[5] pointer-events-none" />
+
+      <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-40 z-0">
+        <div
+          style={{
+            width: "600px",
+            height: "600px",
+            borderRadius: "600px",
+            background: "#FFE5BE",
+            position: "absolute",
+            left: "-10%",
+            top: "10%",
+            filter: "blur(100px)",
+          }}
+        />
+        <div
+          style={{
+            width: "500px",
+            height: "500px",
+            borderRadius: "500px",
+            background: "#FFBDC6",
+            position: "absolute",
+            right: "-5%",
+            bottom: "10%",
+            filter: "blur(100px)",
+          }}
+        />
+      </div>
+
+      <div className="absolute inset-x-0 top-16 md:inset-0 flex flex-col items-center justify-start md:justify-center pointer-events-none z-0">
         <h2 className="text-[20vw] md:text-[18vw] font-figtree font-black text-text-primary/[0.04] leading-[0.85] tracking-tighter uppercase whitespace-nowrap">
           Problems
         </h2>
