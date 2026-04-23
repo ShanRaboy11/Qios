@@ -54,8 +54,12 @@ export const QrScanner = (): JSX.Element => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const animFrameRef = useRef<number | null>(null);
+  // Incremented each time a scan session starts; used to cancel stale async continuations
+  const scanSessionRef = useRef<number>(0);
 
   const stopCamera = useCallback(() => {
+    // Invalidate any in-flight scan session
+    scanSessionRef.current += 1;
     if (animFrameRef.current !== null) {
       cancelAnimationFrame(animFrameRef.current);
       animFrameRef.current = null;
@@ -78,12 +82,28 @@ export const QrScanner = (): JSX.Element => {
       animFrameRef.current = requestAnimationFrame(scanFrame);
       return;
     }
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
 
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const videoWidth = video.videoWidth;
+    const videoHeight = video.videoHeight;
+    if (!videoWidth || !videoHeight) {
+      animFrameRef.current = requestAnimationFrame(scanFrame);
+      return;
+    }
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      stopCamera();
+      setErrorMessage("Unable to access the camera preview for QR scanning.");
+      setScanState("error");
+      return;
+    }
+
+    // Only resize when dimensions actually change to avoid expensive reallocation
+    if (canvas.width !== videoWidth || canvas.height !== videoHeight) {
+      canvas.width = videoWidth;
+      canvas.height = videoHeight;
+    }
+    ctx.drawImage(video, 0, 0, videoWidth, videoHeight);
 
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const code = jsQR(imageData.data, imageData.width, imageData.height, {
@@ -104,16 +124,31 @@ export const QrScanner = (): JSX.Element => {
     setErrorMessage("");
     setOrderId("");
 
+    // Capture current session id; if stopCamera() is called before the async
+    // operations complete, the session id will be incremented and we bail out.
+    scanSessionRef.current += 1;
+    const sessionId = scanSessionRef.current;
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "environment" },
       });
+
+      // Guard: user may have pressed Stop while permission prompt was open
+      if (sessionId !== scanSessionRef.current) {
+        stream.getTracks().forEach((t) => t.stop());
+        return;
+      }
+
       streamRef.current = stream;
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
       }
+
+      // Guard again after the async play()
+      if (sessionId !== scanSessionRef.current) return;
 
       // Detect torch support
       const track = stream.getVideoTracks()[0];
@@ -228,10 +263,10 @@ export const QrScanner = (): JSX.Element => {
             />
           )}
 
-          {/* Animated scan line */}
+          {/* Animated scan line — uses transform:translateY for GPU-accelerated animation */}
           {scanState === "scanning" && (
             <div
-              className="absolute left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-brand-primary to-transparent animate-scan-line pointer-events-none"
+              className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-brand-primary to-transparent animate-scan-line pointer-events-none"
               aria-hidden="true"
             />
           )}

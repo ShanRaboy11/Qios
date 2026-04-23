@@ -54,9 +54,9 @@ const config: Config = {
           "50%": { transform: "translateY(-60px)" },
         },
         "scan-line": {
-          "0%": { top: "0%" },
-          "50%": { top: "calc(100% - 2px)" },
-          "100%": { top: "0%" },
+          "0%": { transform: "translateY(0%)" },
+          "50%": { transform: "translateY(calc(288px - 2px))" },
+          "100%": { transform: "translateY(0%)" },
         },
         "bracket-pulse": {
           "0%, 100%": { opacity: "1" },
