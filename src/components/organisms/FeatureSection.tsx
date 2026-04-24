@@ -178,7 +178,7 @@ export default function FeatureSection() {
             </div>
           </div>
 
-          {/* Robot */}
+          {/* Robot cute */}
           <div className="flex-shrink-0 relative z-10 flex flex-col items-center">
             <ChatbotLogo size={190} />
           </div>

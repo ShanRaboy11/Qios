@@ -57,7 +57,7 @@ export const Hero = () => {
           <div className="relative xl:absolute w-0 h-0 xl:w-auto xl:h-auto z-[65] top-auto xl:top-[110px] left-0 md:left-[-100px] lg:left-[-60px] xl:left-[480px] scale-[0.45] md:scale-[0.48] lg:scale-[0.58] xl:scale-100 origin-left xl:origin-top-left pointer-events-none xl:pointer-events-auto">
             {/* ipad mockup base */}
             <img
-              src="ipad.svg"
+              src="svg/ipad.svg"
               alt="iPad Mockup"
               className="relative z-10 block max-w-none"
             />
@@ -75,7 +75,7 @@ export const Hero = () => {
               }}
             >
               <img
-                src="ipad-dashboard.svg"
+                src="svg/ipad-dashboard.svg"
                 alt="Dashboard Content"
                 style={{
                   width: "100%",
@@ -127,7 +127,7 @@ export const Hero = () => {
               }}
             >
               <img
-                src="phone.svg"
+                src="svg/phone.svg"
                 alt="Phone Mockup"
                 style={{ width: "100%", height: "100%" }}
                 className="block max-w-none"
@@ -145,7 +145,7 @@ export const Hero = () => {
                 }}
               >
                 <img
-                  src="phone-dashboard.svg"
+                  src="svg/phone-dashboard.svg"
                   alt="Phone Dashboard Content"
                   style={{
                     width: "100%",
@@ -267,7 +267,7 @@ export const Hero = () => {
         }}
       >
         <img
-          src="phone.svg"
+          src="svg/phone.svg"
           alt="Phone Mockup"
           style={{ width: "100%", height: "100%" }}
         />
@@ -284,7 +284,7 @@ export const Hero = () => {
           }}
         >
           <img
-            src="phone-dashboard.svg"
+            src="svg/phone-dashboard.svg"
             alt="Phone Dashboard Content"
             style={{
               width: "100%",
