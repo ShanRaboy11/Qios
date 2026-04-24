@@ -8,9 +8,9 @@ import { Hero } from "@/components/organisms/hero";
 
 export default function HomePage() {
   return (
-    <main className="relative flex flex-col min-h-screen bg-white w-full overflow-x-hidden">
+    <main className="flex flex-col min-h-screen bg-white w-full overflow-x-hidden">
       <Hero />
-      <div className="flex-grow w-full relative z-0">
+      <div className="flex-grow w-full">
         <ProblemSolution />
         <FeatureSection />
       </div>
