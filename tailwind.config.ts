@@ -53,12 +53,23 @@ const config: Config = {
           "0%, 100%": { transform: "translateY(0px)" },
           "50%": { transform: "translateY(-60px)" },
         },
+        "scan-line": {
+          "0%": { transform: "translateY(0%)" },
+          "50%": { transform: "translateY(calc(288px - 2px))" },
+          "100%": { transform: "translateY(0%)" },
+        },
+        "bracket-pulse": {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.4" },
+        },
       },
       animation: {
         marquee: "marquee 30s linear infinite",
         "marquee-reverse": "marquee-reverse 30s linear infinite",
         "float-y": "float-y 15s ease-in-out infinite",
         "float-y1": "float-y1 15s ease-in-out infinite",
+        "scan-line": "scan-line 2s ease-in-out infinite",
+        "bracket-pulse": "bracket-pulse 1.5s ease-in-out infinite",
       },
     },
   },
