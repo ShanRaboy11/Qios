@@ -5,10 +5,12 @@ import { FormField } from "@/components/molecules/FormField";
 import { Button } from "@/components/atoms/Button";
 import { Checkbox } from "@/components/atoms/Checkbox";
 import { Badge } from "@/components/atoms/Badge";
-import { Mail, Lock, AlertCircle } from "lucide-react";
+import { Mail, Lock, AlertCircle, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
 export const LoginForm = () => {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
@@ -53,9 +55,17 @@ export const LoginForm = () => {
     // Simulate login
     setIsLoading(true);
     setTimeout(() => {
-      setIsLoading(false);
-      // Mock failure for demonstration
-      setError("Invalid credentials. Please try again.");
+      const MOCK_EMAIL = "admin@qios.com";
+      const MOCK_PASSWORD = "password123";
+
+      if (email === MOCK_EMAIL && password === MOCK_PASSWORD) {
+        // SUCCESS: Redirect to the landing page
+        router.push("/");
+      } else {
+        // FAILURE: Show error message
+        setIsLoading(false);
+        setError("Invalid email or password.");
+      }
     }, 1500);
   };
 
@@ -69,14 +79,25 @@ export const LoginForm = () => {
 
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center bg-gradient-to-b from-[#FFD77A] from-0% via-white via-75% to-[#FFD77A] to-100% overflow-hidden px-4 md:px-0">
+      <a
+        onClick={() => router.push("/")}
+        className="absolute top-10 right-10 z-50 p-2 rounded-full hover:scale-120 transition-all duration-200 group cursor-pointer"
+        aria-label="Close"
+      >
+        <X
+          size={28}
+          className="text-text-primary group-hover:scale-110 group-active:scale-95 transition-transform"
+        />
+      </a>
+
       {/* Background Vectors (Rotating) */}
       <div className="absolute inset-0 z-0 overflow-hidden flex items-center justify-end pointer-events-none opacity-60">
         <div
           className="relative shrink-0 -mr-[200px] md:-mr-[400px]"
-          style={{ transform: "scale(1.075)" }}
+          style={{ transform: "scale(1.5)" }}
         >
           <div
-            className="opacity-50 overflow-visible animate-[spin_60s_linear_infinite]"
+            className="opacity-50 overflow-visible animate-[spin_300s_linear_infinite]"
             style={{
               width: "1148.236px",
               height: "969.879px",
@@ -263,19 +284,6 @@ export const LoginForm = () => {
           </div>
         </div>
 
-        {/* Mock Error Alert */}
-        {error && (
-          <div className="bg-warning-secondary border border-warning-primary/30 rounded-xl p-4 flex items-start gap-3 animate-in fade-in zoom-in-95">
-            <AlertCircle className="w-5 h-5 text-warning-primary shrink-0 mt-0.5" />
-            <div className="flex flex-col gap-1">
-              <span className="b4 font-bold text-warning-primary">
-                Authentication Failed
-              </span>
-              <span className="b5 text-warning-primary/80">{error}</span>
-            </div>
-          </div>
-        )}
-
         {/* Form Section */}
         <form onSubmit={handleSubmit} className="flex flex-col gap-5 w-full">
           <FormField
@@ -283,9 +291,13 @@ export const LoginForm = () => {
             type="email"
             placeholder="Enter your email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              if (error) setError(null);
+              if (emailError) setEmailError(false);
+            }}
             onKeyDown={handleKeyDown}
-            isError={emailError}
+            isError={emailError || !!error}
             supportiveText={
               emailError
                 ? !email.trim()
@@ -302,9 +314,13 @@ export const LoginForm = () => {
             type="password"
             placeholder="Enter your password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              if (error) setError(null);
+              if (passwordError) setPasswordError(false);
+            }}
             onKeyDown={handleKeyDown}
-            isError={passwordError}
+            isError={passwordError || !!error}
             supportiveText={passwordError ? "Password is required" : undefined}
             leftIcon={<Lock size={20} />}
             className="max-w-full"
@@ -325,8 +341,19 @@ export const LoginForm = () => {
             </button>
           </div>
 
-          {/* Submit Button */}
-          <div className="pt-2">
+          {/* Submit Button & Error */}
+          <div className="pt-2 flex flex-col gap-3">
+            {error && (
+              <Badge
+                color="error"
+                variant="outline"
+                shape="rounded"
+                leftIcon={<AlertCircle size={16} className="shrink-0" />}
+                className="w-full justify-center whitespace-normal text-center py-2 animate-in fade-in zoom-in-95"
+              >
+                {error}
+              </Badge>
+            )}
             <Button
               type="submit"
               variant="accent"
