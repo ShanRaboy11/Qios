@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { FileText, Contact, Key, ShoppingBag, Component } from "lucide-react";
+import { FileText, Contact, ShoppingBag, Component, IdCard } from "lucide-react";
 import { Button } from "@/components/atoms/Button";
 
 // Components
@@ -14,7 +14,7 @@ import { FeatureConfig } from "./components/FeatureConfiguration";
 const steps = [
   { id: 1, title: "Business Information", icon: FileText },
   { id: 2, title: "Contact Information", icon: Contact },
-  { id: 3, title: "Authentication Credentials", icon: Key },
+  { id: 3, title: "Authentication Credentials", icon: IdCard },
   { id: 4, title: "Subscription Package", icon: ShoppingBag },
   { id: 5, title: "Feature Configuration", icon: Component },
 ];
