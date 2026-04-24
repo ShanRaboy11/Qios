@@ -13,7 +13,7 @@ export const Hero = () => {
   };
 
   return (
-    <section className="w-full max-w-[1440px] min-h-screen xl:min-h-0 h-auto xl:h-[1000px] py-24 lg:py-32 xl:py-40 bg-text-tertiary flex items-center justify-start mx-auto relative overflow-hidden xl:overflow-visible">
+    <section className="w-full max-w-[1440px] h-screen bg-text-tertiary flex items-center justify-start mx-auto relative z-[10]">
       <div className="absolute top-8 left-1/2 -translate-x-1/2 w-[100vw] flex justify-center z-[100]">
         <div className="w-full">
           <Navbar variant="transparent" />
@@ -299,7 +299,7 @@ export const Hero = () => {
 
       {/* vectors */}
       <div
-        className="relative shrink-0 opacity-50 -ml-[400px] overflow-visible"
+        className="relative shrink-0 opacity-50 -ml-[400px]"
         style={{
           width: "1148.236px",
           height: "969.879px",
@@ -443,7 +443,7 @@ export const Hero = () => {
           left: "-106px",
           top: "-372px",
           filter: "blur(100px)",
-          zIndex: 10,
+          zIndex: -1,
         }}
       >
         <div
