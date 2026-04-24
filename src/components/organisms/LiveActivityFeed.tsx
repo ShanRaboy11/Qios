@@ -71,7 +71,7 @@ const activityData = [
 
 export const LiveActivityFeed = (): JSX.Element => {
   return (
-    <div className="flex flex-col w-[366px] h-[716px] items-start gap-[25px] pt-[21px] pb-px px-[21px] relative bg-white rounded-[10px] border border-solid border-[#f0f0f0]">
+    <div className="flex flex-col w-[410px] h-[716px] items-start gap-[25px] pt-[21px] pb-px px-[21px] relative bg-white rounded-[10px] border border-solid border-[#f0f0f0]">
       <div className="flex h-6 items-center gap-2 relative self-stretch w-full">
         <div className="relative w-[131.11px] h-6">
           <div className="absolute -top-px left-0 font-[number:var(--body-b3-font-weight)] text-[#2d2d2d] text-[length:var(--body-b3-font-size)] tracking-[var(--body-b3-letter-spacing)] leading-[var(--body-b3-line-height)] whitespace-nowrap [font-style:var(--body-b3-font-style)]">
@@ -92,7 +92,7 @@ export const LiveActivityFeed = (): JSX.Element => {
             </div>
             <div className="flex flex-col w-[198px] h-[45px] items-start gap-1 relative">
               <div className="flex h-6 items-start justify-around pl-0 pr-[477.48px] py-0 relative self-stretch w-full">
-                <div className="relative w-[186.52px] h-6 mr-">
+                <div className="relative w-[186.52px] h-6 ">
                   <p className="absolute top-0.5 left-0 [font-family:'Inter-SemiBold',Helvetica] font-normal text-transparent text-[13px] tracking-[0] leading-[19.5px] whitespace-nowrap">
                     <span className="font-semibold text-[#2d2d2d]">
                       {item.name}{" "}
