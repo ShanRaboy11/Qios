@@ -92,7 +92,7 @@ export const LiveActivityFeed = (): JSX.Element => {
             </div>
             <div className="flex flex-col w-[198px] h-[45px] items-start gap-1 relative">
               <div className="flex h-6 items-start justify-around pl-0 pr-[477.48px] py-0 relative self-stretch w-full">
-                <div className="relative w-[186.52px] h-6 mr-[-466.00px]">
+                <div className="relative w-[186.52px] h-6 mr-">
                   <p className="absolute top-0.5 left-0 [font-family:'Inter-SemiBold',Helvetica] font-normal text-transparent text-[13px] tracking-[0] leading-[19.5px] whitespace-nowrap">
                     <span className="font-semibold text-[#2d2d2d]">
                       {item.name}{" "}

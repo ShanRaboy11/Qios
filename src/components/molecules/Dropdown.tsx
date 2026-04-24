@@ -16,6 +16,7 @@ interface DropdownProps {
   placeholder?: string;
   supportiveText?: string;
   onSelect?: (option: DropdownOption) => void;
+  value?: string;
   isError?: boolean;
   className?: string;
 }
@@ -26,12 +27,17 @@ export const Dropdown = ({
   placeholder = "Select Option",
   supportiveText,
   onSelect,
+  value,
   isError,
   className,
 }: DropdownProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [selected, setSelected] = useState<DropdownOption | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  
+  // Compute selected option based on controlled value
+  const selectedOption = React.useMemo(() => {
+    return options.find(opt => opt.value === value) || null;
+  }, [value, options]);
 
   // Close when clicking outside
   useEffect(() => {
@@ -48,7 +54,6 @@ export const Dropdown = ({
   }, []);
 
   const handleSelect = (option: DropdownOption) => {
-    setSelected(option);
     setIsOpen(false);
     onSelect?.(option);
   };
@@ -80,7 +85,7 @@ export const Dropdown = ({
         <Input
           readOnly
           placeholder={placeholder}
-          value={selected?.label || ""}
+          value={selectedOption?.label || ""}
           isError={isError}
           className={cn(
             "cursor-pointer pr-12",
@@ -111,7 +116,7 @@ export const Dropdown = ({
                   "hover:bg-slate-50",
                   index === 0 && "rounded-t-[14px]",
                   index === options.length - 1 && "rounded-b-[14px]",
-                  selected?.value === option.value
+                  selectedOption?.value === option.value
                     ? "text-brand-primary bg-orange-50/50 font-semibold"
                     : "text-text-primary",
                 )}
