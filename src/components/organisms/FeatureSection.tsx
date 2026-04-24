@@ -104,7 +104,6 @@ export default function FeatureSection() {
 
   return (
     <section className="w-full py-24 px-4 md:px-8 lg:px-12 bg-bg-primary relative overflow-hidden">
-      {/* Added Blending Elements */}
       <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-bg-primary via-bg-primary/80 to-transparent z-[2] pointer-events-none" />
       <div
         className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-64 opacity-20 pointer-events-none"
@@ -112,6 +111,16 @@ export default function FeatureSection() {
           background:
             "radial-gradient(circle at center, var(--color-brand-primary) 0%, transparent 70%)",
           filter: "blur(80px)",
+        }}
+      />
+
+      <div className="absolute bottom-0 inset-x-0 h-40 bg-gradient-to-t from-white via-white/50 to-transparent z-[2] pointer-events-none" />
+      <div
+        className="absolute bottom-0 left-1/4 -translate-x-1/2 translate-y-1/2 w-full h-80 opacity-[0.15] pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(circle at center, #FFD77A 0%, transparent 70%)",
+          filter: "blur(100px)",
         }}
       />
 
