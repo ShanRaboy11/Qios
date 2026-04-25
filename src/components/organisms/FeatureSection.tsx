@@ -114,7 +114,6 @@ export default function FeatureSection() {
         }}
       />
 
-      <div className="absolute bottom-0 inset-x-0 h-40 bg-gradient-to-t from-white via-white/50 to-transparent z-[2] pointer-events-none" />
       <div
         className="absolute bottom-0 left-1/4 -translate-x-1/2 translate-y-1/2 w-full h-80 opacity-[0.15] pointer-events-none"
         style={{

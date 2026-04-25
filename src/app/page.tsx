@@ -3,6 +3,7 @@
 import React from "react";
 import FeatureSection from "@/components/organisms/FeatureSection";
 import { ProblemSolution } from "@/components/organisms/ProblemnSolution";
+import SubscriptionPlans from "@/components/organisms/SubscriptionPlans";
 import { Footer } from "@/components/organisms/footer";
 import { Hero } from "@/components/organisms/hero";
 
@@ -13,6 +14,7 @@ export default function HomePage() {
       <div className="flex-grow w-full">
         <ProblemSolution />
         <FeatureSection />
+        <SubscriptionPlans />
       </div>
       <Footer />
     </main>
