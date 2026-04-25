@@ -23,21 +23,23 @@ export const MenuItemCard = ({
   onAdd,
   className,
 }: MenuItemCardProps) => {
-
   if (variant === "bestseller") {
     return (
-      <div 
-        className={cn("relative w-[110px] h-[160px] sm:w-[130px] sm:h-[180px] md:w-[150px] md:h-[220px] rounded-[24px] overflow-hidden shadow-sm group hover:shadow-md transition-shadow cursor-pointer flex-shrink-0", className)} 
+      <div
+        className={cn(
+          "relative w-full h-[160px] sm:h-[180px] md:h-[220px] rounded-[24px] overflow-hidden shadow-sm group hover:shadow-md transition-shadow cursor-pointer",
+          className,
+        )}
         onClick={onAdd}
       >
         {/* Background Image */}
         <div className="absolute inset-0 bg-black/5 z-10 group-hover:bg-transparent transition-colors" />
-        <img 
-          src={imageSrc} 
-          alt={title || "Best seller"} 
-          className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
+        <img
+          src={imageSrc}
+          alt={title || "Best seller"}
+          className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
         />
-        
+
         {/* Price Tag Overlay */}
         <div className="absolute bottom-4 right-0 bg-[#FFDC72] py-1.5 pl-3 pr-2 rounded-l-[16px] shadow-sm transform translate-x-1 group-hover:translate-x-0 transition-transform z-20">
           <span className="text-[#2D2D2D] font-inter font-bold text-[12px] sm:text-[14px] md:text-[16px] tracking-tight">
@@ -50,10 +52,15 @@ export const MenuItemCard = ({
 
   if (variant === "horizontal") {
     return (
-      <div className={cn("relative flex items-center w-full max-w-[450px] min-h-[150px] sm:min-h-[170px] group", className)}>
+      <div
+        className={cn(
+          "relative flex items-center w-full max-w-[450px] min-h-[150px] sm:min-h-[170px] group",
+          className,
+        )}
+      >
         {/* Card Background Shifted Right */}
         <div className="absolute top-0 bottom-0 right-0 left-12 sm:left-16 bg-[#FFDC72] rounded-[32px] shadow-sm transition-all duration-300 group-hover:shadow-md z-0" />
-        
+
         {/* Protruding Image on the Left */}
         <div className="relative z-10 flex-shrink-0 transition-transform duration-300 group-hover:-translate-x-1 ml-2 sm:ml-0">
           <div className="w-[130px] h-[130px] sm:w-[160px] sm:h-[160px] rounded-full overflow-hidden shadow-lg border-[3px] border-white/10">
@@ -71,7 +78,7 @@ export const MenuItemCard = ({
           <h3 className="text-[#2D2D2D] font-inter font-bold text-[18px] sm:text-[22px] leading-[1.25] tracking-tight text-left">
             {title}
           </h3>
-          
+
           {/* Price & Availability - Right Aligned block below */}
           <div className="mt-4 sm:mt-5 text-right w-full">
             <p className="text-[#FF5269] font-inter font-bold text-[22px] sm:text-[26px]">
@@ -105,25 +112,33 @@ export const MenuItemCard = ({
         </div>
 
         {/* Content Area */}
-        <div className="text-left mt-2 flex-grow flex flex-col justify-end z-0">
-          <h3 className="b3 text-[#2D2D2D] font-inter font-bold text-[18px] leading-[1.25] tracking-tight line-clamp-2">
+        <div className="text-center mt-2 flex-grow flex flex-col justify-end z-0 pb-4">
+          <h3 className="b3 text-[#2D2D2D] font-inter text-left font-bold text-[18px] sm:text-[20px] leading-[1.25] tracking-tight line-clamp-2">
             {title}
           </h3>
-          <p className="b2 text-brand-accent font-inter font-semibold text-[17px] mt-2.5">
+          <p className="b2 text-[#FF4D6D] font-inter text-left font-semibold text-[17px] mt-2.5">
             {typeof price === "number" ? `Php ${price.toFixed(2)}` : price}
           </p>
+          {availability && (
+            <p className="text-text-secondary font-inter text-left text-[12px] mt-1 font-medium">
+              {availability}
+            </p>
+          )}
         </div>
 
         {/* Action Button */}
-        <div className="flex justify-end mt-4">
+        <div className="absolute right-5 bottom-5 z-20">
           <Button
             variant="accent"
             shape="rounded"
             size="icon"
-            onClick={onAdd}
-            className="w-10 h-10 !rounded-[12px] !p-0 shadow-md hover:scale-105 transition-transform"
+            onClick={(e) => {
+              e.stopPropagation();
+              onAdd?.();
+            }}
+            className="w-8 h-8 !rounded-[8px] !p-0 shadow-md hover:scale-105 transition-transform bg-[#FF4D6D]"
           >
-            <Plus className="text-[#FFDC72]" size={22} strokeWidth={3} />
+            <Plus className="text-white" size={18} strokeWidth={3} />
           </Button>
         </div>
       </div>
