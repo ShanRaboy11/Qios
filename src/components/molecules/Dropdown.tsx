@@ -19,6 +19,7 @@ interface DropdownProps {
   value?: string;
   isError?: boolean;
   className?: string;
+  size?: "default" | "sm";
 }
 
 export const Dropdown = ({
@@ -30,6 +31,7 @@ export const Dropdown = ({
   value,
   isError,
   className,
+  size = "default",
 }: DropdownProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -88,16 +90,21 @@ export const Dropdown = ({
           value={selectedOption?.label || ""}
           isError={isError}
           className={cn(
-            "cursor-pointer pr-12",
+            "cursor-pointer",
+            size === "sm"
+              ? "px-3 pr-8 text-ellipsis text-xs md:text-sm"
+              : "pr-12",
             isOpen &&
               !isError &&
               "border-brand-primary shadow-[0_0_0_2px_rgba(255,198,112,0.15)]",
           )}
         />
         <ChevronDown
-          size={20}
+          size={size === "sm" ? 16 : 20}
+          style={{ right: size === "sm" ? "12px" : "20px" }}
           className={cn(
-            "absolute right-5 top-1/2 -translate-y-1/2 text-text-secondary transition-transform duration-300",
+            "absolute top-1/2 -translate-y-1/2 text-text-secondary transition-transform duration-300",
+            isOpen && "rotate-180 text-brand-primary",
             isOpen && "rotate-180 text-brand-primary",
           )}
         />
@@ -105,14 +112,22 @@ export const Dropdown = ({
 
       {/* Flexible Dropdown List */}
       {isOpen && (
-        <div className="absolute top-[calc(85%)] left-0 w-full z-50 bg-white border-2 border-[#E5E5E5] rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-300">
+        <div
+          className={cn(
+            "absolute top-[calc(85%)] left-0 z-50 bg-white border-2 border-[#E5E5E5] rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-300",
+            size === "sm" ? "min-w-full w-max" : "w-full",
+          )}
+        >
           <ul className="max-h-[240px] overflow-y-auto">
             {options.map((option, index) => (
               <li
                 key={option.value}
                 onClick={() => handleSelect(option)}
                 className={cn(
-                  "px-6 py-4 b2 cursor-pointer transition-colors",
+                  "cursor-pointer transition-colors",
+                  size === "sm"
+                    ? "px-4 py-2.5 b4 whitespace-nowrap"
+                    : "px-6 py-4 b2",
                   "hover:bg-slate-50",
                   index === 0 && "rounded-t-[14px]",
                   index === options.length - 1 && "rounded-b-[14px]",
