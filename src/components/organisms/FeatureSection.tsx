@@ -140,7 +140,7 @@ export default function FeatureSection() {
             Hardware-Free <br className="sm:hidden" />
             <span style={gradientHeaderStyle}>QR Kiosk</span>
           </h1>
-          <p className="b1 text-text-secondary max-w-[540px]">
+          <p className="h4 text-text-secondary max-w-[540px]">
             Turn every smartphone into a powerful ordering terminal. No tablets,
             no stands, no friction.
           </p>
@@ -183,7 +183,7 @@ export default function FeatureSection() {
                   </span>
                 </div>
 
-                <h2 className="font-ibrand font-bold text-3xl md:text-[48px] leading-[125%] italic text-text-tertiary">
+                <h2 className="font-ibrand font-semibold text-[38px] leading-[125%] italic text-text-tertiary">
                   "Find me a spicy dinner for two under ₱500."
                 </h2>
 
