@@ -85,7 +85,7 @@ export const CategoryTabBar = ({
 
   return (
     <div
-      className="relative w-full overflow-x-auto no-scrollbar pb-4 pt-4"
+      className="relative w-full overflow-x-auto no-scrollbar pb-4 pt-10"
       ref={containerRef}
     >
       <div className="flex justify-between items-end gap-2 w-max min-w-full px-6 relative">
@@ -93,7 +93,7 @@ export const CategoryTabBar = ({
         <div
           ref={indicatorRef}
           className={cn(
-            "absolute bottom-4 h-[120px] bg-white rounded-t-[40px] shadow-sm z-0 pointer-events-none opacity-0",
+            "absolute -mb-3 h-[140px] bg-white rounded-t-[30px] z-0 pointer-events-none opacity-0",
             // Inverted border-radius pseudo-elements
             "before:content-[''] before:absolute before:-bottom-[1px] before:-left-[20px] before:w-[20px] before:h-[20px] before:bg-transparent before:rounded-br-[20px] before:shadow-[10px_0_0_0_white]",
             "after:content-[''] after:absolute after:-bottom-[1px] after:-right-[20px] after:w-[20px] after:h-[20px] after:bg-transparent after:rounded-bl-[20px] after:shadow-[-10px_0_0_0_white]",
@@ -137,18 +137,12 @@ export const CategoryTabBar = ({
               </div>
               <span
                 className={cn(
-                  "font-inter font-semibold transition-colors duration-300 mt-2",
-                  isCategoryView && !isActive
-                    ? "text-[#2D2D2D] text-[13px]"
-                    : "",
-                  isCategoryView && isActive
-                    ? "text-[#2D2D2D] text-[13px]"
-                    : "",
-                  !isCategoryView && isActive
-                    ? "text-text-primary text-[13px]"
-                    : "",
+                  "font-figtree font-semibold text-[15px] transition-colors duration-300",
+                  isCategoryView && !isActive ? "text-[#2D2D2D]  " : "",
+                  isCategoryView && isActive ? "text-[#2D2D2D]" : "",
+                  !isCategoryView && isActive ? "text-text-primary mt-2" : "",
                   !isCategoryView && !isActive
-                    ? "text-text-primary/70 group-hover:text-text-primary text-[13px]"
+                    ? "text-text-primary/70 group-hover:text-text-primary mt-2"
                     : "",
                 )}
               >

@@ -54,11 +54,13 @@ export default function CustomerHomePage() {
           <motion.div
             layout
             className={cn(
-              "flex-grow bg-black w-full rounded-t-[40px] flex flex-col items-center relative z-40 shadow-[0_-4px_24px_rgba(0,0,0,0.05)] transition-all duration-500",
-              isCategoryView ? "-mt-[10px] pt-8" : "-mt-[150px] pt-[140px]",
+              "flex-grow bg-white w-full p-7 md:px-32 pb-10 flex flex-col items-center relative z-40 shadow-[0_-4px_24px_rgba(0,0,0,0.05)] transition-all duration-500",
+              isCategoryView
+                ? "-mt-[6px] pt-8 rounded-t-[18px]"
+                : "-mt-[165px] pt-[140px] rounded-t-[40px]",
             )}
           >
-            <div className="w-full max-w-[500px] md:max-w-[1024px]">
+            <div className="w-full">
               <AnimatePresence mode="wait">
                 {!isCategoryView ? (
                   <motion.div
@@ -69,13 +71,12 @@ export default function CustomerHomePage() {
                     transition={{ duration: 0.3 }}
                     className="w-full"
                   >
+                    <div className="mt-12 mb-8 h-[1px] w-full bg-[#FF5269]/50" />
                     {/* Best Seller Section */}
                     <div className="mb-10 w-full">
                       <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-[#2D2D2D] font-inter font-bold text-[22px]">
-                          Best Seller
-                        </h3>
-                        <button className="flex items-center gap-1 text-brand-accent font-inter text-[14px]">
+                        <h3 className="h3 font-bold">Best Seller</h3>
+                        <button className="flex items-center gap-1 text-brand-accent font-inter text-[14px] hover:scale-110 transition-all duration-300 cursor-pointer">
                           View All <ChevronRight size={16} />
                         </button>
                       </div>
@@ -121,9 +122,7 @@ export default function CustomerHomePage() {
 
                     {/* Recommended For You Section */}
                     <div className="w-full">
-                      <h3 className="text-[#2D2D2D] font-inter font-bold text-[22px] mb-6">
-                        Recommended For You
-                      </h3>
+                      <h3 className="h3 font-bold mb-6">Recommended For You</h3>
 
                       <div className="flex flex-col md:flex-row gap-6 w-full">
                         <MenuItemCard
@@ -152,7 +151,7 @@ export default function CustomerHomePage() {
                     transition={{ duration: 0.3 }}
                     className="w-full"
                   >
-                    <h2 className="text-[28px] font-inter font-bold text-[#2D2D2D] mb-6">
+                    <h2 className="h3 font-bold mb-6 -mt-2">
                       {selectedCategory}
                     </h2>
                     <motion.div

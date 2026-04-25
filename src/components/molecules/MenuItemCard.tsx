@@ -54,7 +54,7 @@ export const MenuItemCard = ({
     return (
       <div
         className={cn(
-          "relative flex items-center w-full max-w-[450px] min-h-[150px] sm:min-h-[170px] group",
+          "relative flex items-center w-full max-w-[450px] min-h-[150px] sm:min-h-[170px] group cursor-pointer",
           className,
         )}
       >
@@ -75,12 +75,12 @@ export const MenuItemCard = ({
         {/* Content Area */}
         <div className="relative z-10 flex flex-col justify-center flex-grow py-5 pr-6 sm:pr-8 pl-4 sm:pl-5">
           {/* Title - Left Aligned */}
-          <h3 className="text-[#2D2D2D] font-inter font-bold text-[18px] sm:text-[22px] leading-[1.25] tracking-tight text-left">
+          <h3 className="text-text-primary font-figtree font-medium text-[20px] sm:text-[22px] leading-[1.25] tracking-tight text-left">
             {title}
           </h3>
 
           {/* Price & Availability - Right Aligned block below */}
-          <div className="mt-4 sm:mt-5 text-right w-full">
+          <div className="-mt-1 sm:mt-5 text-right w-full">
             <p className="text-[#FF5269] font-inter font-bold text-[22px] sm:text-[26px]">
               {typeof price === "number" ? `Php ${price.toFixed(2)}` : price}
             </p>
