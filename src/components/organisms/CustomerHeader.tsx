@@ -8,7 +8,12 @@ export interface CustomerHeaderProps {
   onBack?: () => void;
 }
 
-const smoothTransition = { type: "spring", stiffness: 300, damping: 30 };
+// Add "as const" at the end to lock the string types
+const smoothTransition = {
+  type: "spring",
+  stiffness: 300,
+  damping: 30,
+} as const;
 
 export const CustomerHeader = ({
   isCategoryView = false,
