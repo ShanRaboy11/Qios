@@ -6,12 +6,7 @@ import { FilterBar } from "@/components/molecules/FilterBar";
 import { SectionHeader } from "@/components/molecules/SectionHeader";
 import { ThresholdRow } from "@/components/molecules/ThresholdRow";
 import { Button } from "@/components/atoms/Button";
-import {
-  Package,
-  AlertTriangle,
-  ArrowDownToLine,
-  CheckCircle2,
-} from "lucide-react";
+import { Package, AlertTriangle, ArrowDownToLine, CheckCircle2 } from "lucide-react";
 
 type IngredientData = {
   id: string;
@@ -24,82 +19,22 @@ type IngredientData = {
 };
 
 const INITIAL_DATA: IngredientData[] = [
-  {
-    id: "1",
-    name: "Chicken (whole)",
-    category: "Protein",
-    unit: "pcs",
-    onHand: 15,
-    lowValue: "20",
-    criticalValue: "5",
-  },
-  {
-    id: "2",
-    name: "Pork belly",
-    category: "Protein",
-    unit: "kg",
-    onHand: 8,
-    lowValue: "10",
-    criticalValue: "3",
-  },
-  {
-    id: "3",
-    name: "White rice",
-    category: "Staple",
-    unit: "kg",
-    onHand: 50,
-    lowValue: "20",
-    criticalValue: "10",
-  },
-  {
-    id: "4",
-    name: "Cooking oil",
-    category: "Condiments",
-    unit: "L",
-    onHand: 2,
-    lowValue: "5",
-    criticalValue: "2",
-  },
-  {
-    id: "5",
-    name: "Soy Sauce",
-    category: "Condiments",
-    unit: "L",
-    onHand: 4,
-    lowValue: "3",
-    criticalValue: "1",
-  },
-  {
-    id: "6",
-    name: "Garlic",
-    category: "Produce",
-    unit: "kg",
-    onHand: 1.5,
-    lowValue: "2",
-    criticalValue: "0.5",
-  },
-  {
-    id: "7",
-    name: "Sweet Potato",
-    category: "Produce",
-    unit: "kg",
-    onHand: 8,
-    lowValue: "10",
-    criticalValue: "3",
-  },
+  { id: "1", name: "Chicken (whole)", category: "Protein", unit: "pcs", onHand: 15, lowValue: "20", criticalValue: "5" },
+  { id: "2", name: "Pork belly", category: "Protein", unit: "kg", onHand: 8, lowValue: "10", criticalValue: "3" },
+  { id: "3", name: "White rice", category: "Staple", unit: "kg", onHand: 50, lowValue: "20", criticalValue: "10" },
+  { id: "4", name: "Cooking oil", category: "Condiments", unit: "L", onHand: 2, lowValue: "5", criticalValue: "2" },
+  { id: "5", name: "Soy Sauce", category: "Condiments", unit: "L", onHand: 4, lowValue: "3", criticalValue: "1" },
+  { id: "6", name: "Garlic", category: "Produce", unit: "kg", onHand: 1.5, lowValue: "2", criticalValue: "0.5" },
+  { id: "7", name: "Sweet Potato", category: "Produce", unit: "kg", onHand: 8, lowValue: "10", criticalValue: "3" },
 ];
 
 export const ThresholdSettingsPanel = () => {
   const [items, setItems] = useState<IngredientData[]>(INITIAL_DATA);
   const [statusFilter, setStatusFilter] = useState("all");
 
-  const handleUpdateItem = (
-    id: string,
-    field: "lowValue" | "criticalValue",
-    value: string,
-  ) => {
+  const handleUpdateItem = (id: string, field: "lowValue" | "criticalValue", value: string) => {
     setItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, [field]: value } : item)),
+      prev.map((item) => (item.id === id ? { ...item, [field]: value } : item))
     );
   };
 
@@ -107,13 +42,7 @@ export const ThresholdSettingsPanel = () => {
     return items.some((item) => {
       const low = Number(item.lowValue);
       const crit = Number(item.criticalValue);
-      if (
-        isNaN(low) ||
-        isNaN(crit) ||
-        item.lowValue === "" ||
-        item.criticalValue === ""
-      )
-        return true;
+      if (isNaN(low) || isNaN(crit) || item.lowValue === "" || item.criticalValue === "") return true;
       return crit >= low;
     });
   }, [items]);
@@ -205,9 +134,7 @@ export const ThresholdSettingsPanel = () => {
             <h2 className="text-lg md:text-xl font-extrabold text-text-primary tracking-wide">
               THRESHOLD SETTINGS
             </h2>
-            <p className="b4 text-text-secondary mt-1">
-              Manage alert levels for your inventory.
-            </p>
+            <p className="b5 text-text-secondary mt-1">Manage alert levels for your inventory.</p>
           </div>
           <FilterBar
             statusValue={statusFilter}
@@ -221,21 +148,11 @@ export const ThresholdSettingsPanel = () => {
           <div className="flex flex-col gap-6">
             {/* Table Header (Desktop Only) */}
             <div className="hidden md:grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr] items-center gap-6 px-4 pb-2 border-b-2 border-[#E5E5E5]">
-              <span className="b3 font-bold text-text-secondary uppercase tracking-wider">
-                INGREDIENT
-              </span>
-              <span className="b3 font-bold text-text-secondary uppercase tracking-wider">
-                ON HAND
-              </span>
-              <span className="b3 font-bold text-text-secondary uppercase tracking-wider text-center">
-                LOW LEVEL
-              </span>
-              <span className="b3 font-bold text-text-secondary uppercase tracking-wider text-center">
-                CRITICAL LEVEL
-              </span>
-              <span className="b3 font-bold text-text-secondary uppercase tracking-wider text-right">
-                STATUS
-              </span>
+              <span className="b5 font-bold text-text-secondary uppercase tracking-wider">INGREDIENT</span>
+              <span className="b5 font-bold text-text-secondary uppercase tracking-wider">ON HAND</span>
+              <span className="b5 font-bold text-text-secondary uppercase tracking-wider text-center">LOW LEVEL</span>
+              <span className="b5 font-bold text-text-secondary uppercase tracking-wider text-center">CRITICAL LEVEL</span>
+              <span className="b5 font-bold text-text-secondary uppercase tracking-wider text-right">STATUS</span>
             </div>
 
             {/* Grouped Table Body */}
@@ -256,12 +173,8 @@ export const ThresholdSettingsPanel = () => {
                         onHand={item.onHand}
                         lowValue={item.lowValue}
                         criticalValue={item.criticalValue}
-                        onLowChange={(val) =>
-                          handleUpdateItem(item.id, "lowValue", val)
-                        }
-                        onCriticalChange={(val) =>
-                          handleUpdateItem(item.id, "criticalValue", val)
-                        }
+                        onLowChange={(val) => handleUpdateItem(item.id, "lowValue", val)}
+                        onCriticalChange={(val) => handleUpdateItem(item.id, "criticalValue", val)}
                       />
                     ))}
                   </div>
@@ -273,22 +186,10 @@ export const ThresholdSettingsPanel = () => {
 
         {/* Footer actions */}
         <div className="p-4 md:p-6 border-t border-[#E5E5E5] flex flex-col md:flex-row justify-end gap-4 md:items-center bg-slate-50">
-          <Button
-            variant="ghost"
-            shape="rounded"
-            size="md"
-            className="text-text-secondary font-bold order-2 md:order-1"
-            onClick={() => setItems(INITIAL_DATA)}
-          >
+          <Button variant="ghost" shape="rounded" size="md" className="text-text-secondary font-bold order-2 md:order-1" onClick={() => setItems(INITIAL_DATA)}>
             Reset Changes
           </Button>
-          <Button
-            variant="accent"
-            shape="rounded"
-            size="md"
-            className="order-1 md:order-2 w-full md:w-auto"
-            disabled={isSaveDisabled}
-          >
+          <Button variant="accent" shape="rounded" size="md" className="order-1 md:order-2 w-full md:w-auto" disabled={isSaveDisabled}>
             Save Thresholds
           </Button>
         </div>
