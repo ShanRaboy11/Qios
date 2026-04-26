@@ -10,11 +10,13 @@ import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
-/** Decode a JWT payload without verifying the signature (Supabase has already verified it). */
+/** Decode a JWT payload for client-side inspection only; this does not verify the token or its claims. */
 function decodeJwtPayload(token: string): Record<string, unknown> {
   try {
     const payload = token.split(".")[1];
-    return JSON.parse(atob(payload.replace(/-/g, "+").replace(/_/g, "/")));
+    const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const paddedBase64 = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), "=");
+    return JSON.parse(atob(paddedBase64));
   } catch {
     return {};
   }
