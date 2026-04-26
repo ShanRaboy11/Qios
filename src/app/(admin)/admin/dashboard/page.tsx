@@ -1,13 +1,19 @@
 import React from "react";
-import { SystemActivity } from "@/components/organisms/SystemActivity";
+import { AdminDashboardHeader } from "@/components/organisms/AdminDashboardHeader";
+import { AdminMetricsRow } from "@/components/organisms/AdminMetricsRow";
+import { AdminChartsSection } from "@/components/organisms/AdminChartsSection";
+import { AdminListsSection } from "@/components/organisms/AdminListsSection";
+import TenantManagement from "@/components/organisms/TenantManagement";
 
 export default function AdminDashboardPage() {
   return (
-    <main className="min-h-screen bg-bg-primary">
-      <div className="max-w-full mx-auto py-8">
-        <h1 className="text-3xl font-bold text-text-primary mb-8 px-6 md:px-8">System Dashboard</h1>
-        <SystemActivity />
+    <div className="min-h-screen bg-[#FFF9EF] p-4 md:p-8 lg:p-12">
+      <div className="max-w-[1440px] mx-auto flex flex-col">
+        <AdminDashboardHeader />
+        <AdminMetricsRow />
+        <AdminChartsSection />
+        <AdminListsSection />
       </div>
-    </main>
+    </div>
   );
 }
