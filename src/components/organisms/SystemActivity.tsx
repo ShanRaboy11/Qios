@@ -100,7 +100,7 @@ export const SystemActivity = () => {
   });
 
   return (
-    <div className="w-full flex flex-col gap-8 p-8 md:pl-12 md:pr-12 lg:pl-48 lg:pr-48">
+    <div className="w-full flex flex-col gap-8">
       {/* 1. Top Search and Controls */}
       <SearchFilterbarv2
         onSearch={setSearchTerm}
@@ -111,7 +111,7 @@ export const SystemActivity = () => {
       />
 
       {/* 2. Table Container */}
-      <div className="w-full bg-white rounded-2xl max-w-full overflow-hidden border-2 border-[#E5E5E5] flex flex-col">
+      <div className="w-full bg-white rounded-2xl overflow-hidden border-2 border-[#E5E5E5] flex flex-col">
         <div className="overflow-x-auto w-full flex-grow">
           <table className="w-full text-left border-collapse min-w-[950px]">
             {/* Table Header */}
@@ -193,7 +193,10 @@ export const SystemActivity = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6} className="px-6 py-10 text-center text-text-secondary b4">
+                  <td
+                    colSpan={6}
+                    className="px-6 py-10 text-center text-text-secondary b4"
+                  >
                     No activities found.
                   </td>
                 </tr>

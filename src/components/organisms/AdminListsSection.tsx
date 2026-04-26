@@ -131,7 +131,12 @@ const expiry = [
   },
 ];
 
-export const AdminListsSection = () => {
+export interface AdminListsSectionProps {
+  onViewSystemActivity?: () => void;
+  onViewPendingTenants?: () => void;
+}
+
+export const AdminListsSection = ({ onViewSystemActivity, onViewPendingTenants }: AdminListsSectionProps) => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 pb-10">
       {/* Recent Transactions */}
@@ -140,7 +145,10 @@ export const AdminListsSection = () => {
           <span className="h4 font-semibold text-text-primary">
             Recent Transactions
           </span>
-          <button className="text-[13px] font-bold text-text-secondary hover:text-text-primary underline">
+          <button 
+            onClick={onViewSystemActivity}
+            className="text-[13px] font-bold text-text-secondary hover:text-text-primary underline"
+          >
             View All
           </button>
         </div>
@@ -179,7 +187,10 @@ export const AdminListsSection = () => {
           <span className="h4 font-semibold text-text-primary">
             Recently Registered
           </span>
-          <button className="text-[13px] font-bold text-text-secondary hover:text-text-primary underline">
+          <button 
+            onClick={onViewPendingTenants}
+            className="text-[13px] font-bold text-text-secondary hover:text-text-primary underline"
+          >
             View All
           </button>
         </div>

@@ -82,13 +82,23 @@ export type ActionType =
   | "deactivate"
   | "activate";
 
-export default function TenantManagement() {
+export interface TenantManagementProps {
+  initialStatusFilter?: string;
+}
+
+export default function TenantManagement({ initialStatusFilter }: TenantManagementProps) {
   const [tenants, setTenants] = useState<Tenant[]>(INITIAL_DATA);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("All");
+  const [statusFilter, setStatusFilter] = useState(initialStatusFilter || "All");
   const [typeFilter, setTypeFilter] = useState("All");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const filterRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (initialStatusFilter) {
+      setStatusFilter(initialStatusFilter);
+    }
+  }, [initialStatusFilter]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
