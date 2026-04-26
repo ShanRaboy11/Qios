@@ -1,189 +1,267 @@
-import React from 'react';
-import { QrCode, ArrowRight } from 'lucide-react';
-import { ChatbotLogo } from '../molecules/ChatbotLogo';
-import { Button } from '../atoms/Button';
+import React from "react";
+import {
+  QrCode,
+  ArrowRight,
+  Package,
+  Smartphone,
+  BarChart3,
+  ShieldCheck,
+} from "lucide-react";
+import { ChatbotLogo } from "../molecules/ChatbotLogo";
+import { Button } from "../atoms/Button";
 
 const features = [
   {
-    icon: (
-      <div className="relative flex items-center justify-center w-[24px] h-[24px]">
-        <QrCode className="w-[24px] h-[24px]" style={{ color: 'var(--color-brand-accent)' }} />
-      </div>
-    ),
-    title: "Scan. Order. Done.",
-    description: "Customers access the full digital menu on their own device — no download, no login, no friction. A unique QR captures their order ID and timestamp for staff to retrieve instantly.",
+    icon: <QrCode className="w-6 h-6 text-brand-accent" />,
+    title: "Scan & Order",
+    description:
+      "Frictionless digital menus. No apps or logins required—just scan and eat.",
   },
   {
-    icon: <img src="/svg/Stock.svg" alt="Stock" className="w-[24px] h-[24px]" />,
-    title: "Stock That Watches Itself.",
-    description: "Toggle between simple unit-count tracking or a measurement-based recipe matrix that auto-deducts ingredients.",
+    icon: <Package className="w-6 h-6 text-brand-accent" />,
+    title: "Smart Inventory",
+    description:
+      "Real-time tracking for ingredients and units. Auto-deducts as you sell.",
   },
   {
-    icon: <img src="/svg/Hand.svg" alt="Hand" className="w-[24px] h-[24px]" />,
-    title: "Built for How People Order.",
-    description: "Customers browse, pick modifiers, select sizes, and watch their total update live — all from a website.",
+    icon: <Smartphone className="w-6 h-6 text-brand-accent" />,
+    title: "Native Experience",
+    description:
+      "Live cart updates and easy modifiers built for the modern mobile web.",
   },
   {
-    icon: (
-      <div className="flex items-end justify-center gap-[3px] w-[24px] h-[22px]">
-        {[45, 88, 65].map((h, i) => (
-          <div key={i} className="w-[5px] rounded-t" style={{
-            height: `${h}%`,
-            background: `linear-gradient(to top, var(--color-brand-accent), var(--color-brand-primary))`
-          }} />
-        ))}
-      </div>
-    ),
-    title: "See Every Shift, Clearly.",
-    description: "Track order velocity, prep times, and staff productivity on one real-time dashboard.",
+    icon: <BarChart3 className="w-6 h-6 text-brand-accent" />,
+    title: "Shift Insights",
+    description:
+      "Track order velocity and staff productivity on one real-time dashboard.",
   },
   {
-    icon: <img src="/svg/Shield.svg" alt="Shield" className="w-[24px] h-[24px]" />,
-    title: "Validate. Process. Close.",
-    description: "Employees scan customer QR orders, confirm payment, and log every transaction in real time.",
+    icon: <ShieldCheck className="w-6 h-6 text-brand-accent" />,
+    title: "Instant Checkout",
+    description:
+      "Scan customer codes to confirm payments and sync with your kitchen.",
   },
 ];
 
 function IconBox({ children }: { children: React.ReactNode }) {
   return (
-    <div className="w-[46px] h-[46px] min-w-[46px] rounded-[13px] flex items-center justify-center relative overflow-hidden bg-brand-accent/10">
+    <div className="w-[46px] h-[46px] min-w-[46px] rounded-[13px] flex items-center justify-center relative overflow-hidden bg-brand-accent/10 border border-brand-accent/20">
       <div className="absolute inset-0 rounded-[13px] bg-gradient-to-br from-white/35 to-transparent" />
       <div className="relative z-10">{children}</div>
     </div>
   );
 }
 
-function Card({ children, wide }: { children: React.ReactNode; wide?: string }) {
+function Card({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  const baseShadow = `
+    0 0 0 1px color-mix(in srgb, var(--color-brand-primary) 12%, var(--color-brand-accent) 8%),
+    0 4px 20px color-mix(in srgb, var(--color-brand-primary) 6%, transparent),
+    0 1px 4px rgba(0,0,0,0.04)
+  `;
+  const hoverShadow = `
+    0 0 0 1px color-mix(in srgb, var(--color-brand-primary) 18%, var(--color-brand-accent) 12%),
+    0 8px 30px color-mix(in srgb, var(--color-brand-primary) 22%, transparent),
+    0 4px 12px color-mix(in srgb, var(--color-brand-accent) 14%, transparent),
+    0 2px 6px rgba(0,0,0,0.06)
+  `;
+
   return (
-    <div className={`bg-white rounded-2xl p-6 border relative overflow-hidden
-      hover:-translate-y-1 transition-all duration-300 group ${wide || ''}`}
+    <div
+      className={`bg-white rounded-[2rem] p-8 border relative overflow-hidden transition-all duration-300 group hover:-translate-y-1 ${className}`}
       style={{
-        borderColor: 'color-mix(in srgb, var(--color-brand-primary) 20%, var(--color-brand-accent) 20%)',
-        boxShadow: `
-          0 0 0 1px color-mix(in srgb, var(--color-brand-primary) 12%, var(--color-brand-accent) 8%),
-          0 4px 20px color-mix(in srgb, var(--color-brand-primary) 6%, transparent),
-          0 1px 4px rgba(0,0,0,0.04)
-        `
+        borderColor:
+          "color-mix(in srgb, var(--color-brand-primary) 20%, var(--color-brand-accent) 20%)",
+        boxShadow: baseShadow,
       }}
-      onMouseEnter={e => {
-        (e.currentTarget as HTMLDivElement).style.boxShadow = `
-          0 0 0 1px color-mix(in srgb, var(--color-brand-primary) 18%, var(--color-brand-accent) 12%),
-          0 8px 30px color-mix(in srgb, var(--color-brand-primary) 22%, transparent),
-          0 4px 12px color-mix(in srgb, var(--color-brand-accent) 14%, transparent),
-          0 2px 6px rgba(0,0,0,0.06)
-        `;
-      }}
-      onMouseLeave={e => {
-        (e.currentTarget as HTMLDivElement).style.boxShadow = `
-          0 0 0 1px color-mix(in srgb, var(--color-brand-primary) 12%, var(--color-brand-accent) 8%),
-          0 4px 20px color-mix(in srgb, var(--color-brand-primary) 6%, transparent),
-          0 1px 4px rgba(0,0,0,0.04)
-        `;
-      }}>
-      <div className="absolute inset-0 pointer-events-none bg-gradient-to-br from-brand-primary/5 to-transparent" />
-      <div className="relative z-10">{children}</div>
+      onMouseEnter={(e) => (e.currentTarget.style.boxShadow = hoverShadow)}
+      onMouseLeave={(e) => (e.currentTarget.style.boxShadow = baseShadow)}
+    >
+      <div
+        className="absolute inset-0 pointer-events-none opacity-[0.04]"
+        style={{
+          backgroundImage: "radial-gradient(circle, #000 1px, transparent 1px)",
+          backgroundSize: "24px 24px",
+        }}
+      />
+      <div className="absolute inset-0 pointer-events-none bg-gradient-to-br from-brand-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+      <div className="relative z-10 h-full flex flex-col">{children}</div>
     </div>
   );
 }
 
 export default function FeatureSection() {
-  return (
-    <section className="w-full py-20 px-4 md:px-8 lg:px-12 bg-bg-primary relative overflow-hidden">
-      {/* Background gradients using CSS variables */}
-      <div className="absolute inset-0 pointer-events-none" style={{
-        background: `
-          radial-gradient(ellipse 80% 50% at 10% 0%, color-mix(in srgb, var(--color-brand-primary) 15%, transparent) 0%, transparent 60%),
-          radial-gradient(ellipse 60% 40% at 90% 100%, color-mix(in srgb, var(--color-brand-accent) 10%, transparent) 0%, transparent 60%)
-        `
-      }} />
-      <div className="max-w-6xl mx-auto space-y-8 relative z-10">
+  const gradientHeaderStyle = {
+    background: "linear-gradient(250deg, #FFD77A 15.53%, #FF5269 84.47%)",
+    WebkitBackgroundClip: "text",
+    WebkitTextFillColor: "transparent",
+  };
 
-        {/* Header */}
-        <div className=" space-y-3 max-w-[90%]">
-          <h2 className="h1 text-text-primary leading-tight tracking-tight w-full">
-            Hardware-Free QR Kiosk.
+  return (
+    <section className="w-full py-24 px-4 md:px-8 lg:px-12 bg-bg-primary relative overflow-hidden">
+      <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-bg-primary via-bg-primary/80 to-transparent z-[2] pointer-events-none" />
+      <div
+        className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-64 opacity-20 pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(circle at center, var(--color-brand-primary) 0%, transparent 70%)",
+          filter: "blur(80px)",
+        }}
+      />
+
+      <div className="absolute bottom-0 inset-x-0 h-40 bg-gradient-to-t from-white via-white/50 to-transparent z-[2] pointer-events-none" />
+      <div
+        className="absolute bottom-0 left-1/4 -translate-x-1/2 translate-y-1/2 w-full h-80 opacity-[0.15] pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(circle at center, #FFD77A 0%, transparent 70%)",
+          filter: "blur(100px)",
+        }}
+      />
+
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: `
+          radial-gradient(circle at 10% 0%, color-mix(in srgb, var(--color-brand-primary) 12%, transparent) 0%, transparent 50%),
+          radial-gradient(circle at 90% 100%, color-mix(in srgb, var(--color-brand-accent) 8%, transparent) 0%, transparent 50%)
+        `,
+        }}
+      />
+
+      <div className="max-w-7xl mx-auto relative z-10">
+        <div className="mb-12 space-y-4">
+          <h2 className="text-4xl md:text-6xl font-bold text-text-primary tracking-tight font-figtree">
+            Hardware-Free <span style={gradientHeaderStyle}>QR Kiosk</span>
           </h2>
-          <p className="b1 text-text-secondary leading-relaxed">
-            Turn every customer's smartphone into an ordering terminal.
-            No tablets, no stands — just scan, browse, and trigger the kitchen.
+          <p className="text-lg md:text-xl text-text-secondary max-w-2xl leading-relaxed font-inter">
+            Turn every smartphone into a powerful ordering terminal. No tablets,
+            no stands, no friction.
           </p>
         </div>
 
-        {/* Features Container */}
-        <div className="flex flex-col gap-4">
-          {/* Top Row */}
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            {[features[0], features[1]].map((f, i) => (
-              <Card key={i} wide={i === 0 ? 'md:col-span-3' : 'md:col-span-2'}>
-                <div className="flex items-center gap-3 mb-4 ">
-                  <IconBox>{f.icon}</IconBox>
-                  <h3 className="b3 text-text-primary">{f.title}</h3>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full">
+          <div className="lg:col-span-8">
+            <div
+              className="relative rounded-[2.5rem] p-8 md:p-14 flex flex-col md:flex-row items-center justify-between gap-12 overflow-hidden h-full border border-white/10 shadow-2xl transition-transform duration-500 hover:-translate-y-1"
+              style={{
+                background:
+                  "linear-gradient(135deg, #1c1917 0%, #27201c 60%, #1c1917 100%)",
+              }}
+            >
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  backgroundImage:
+                    "radial-gradient(circle, rgba(255,255,255,0.07) 1px, transparent 1px)",
+                  backgroundSize: "32px 32px",
+                }}
+              />
+
+              <div
+                className="absolute -top-20 -right-20 w-96 h-96 rounded-full pointer-events-none"
+                style={{
+                  background:
+                    "radial-gradient(circle, color-mix(in srgb, var(--color-brand-accent) 22%, transparent) 0%, color-mix(in srgb, var(--color-brand-primary) 10%, transparent) 40%, transparent 65%)",
+                }}
+              />
+
+              <div className="flex-1 relative z-10 space-y-6">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-white/5 border border-white/10">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 bg-brand-primary" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-primary" />
+                  </span>
+                  <span className="text-xs font-bold tracking-[0.15em] uppercase text-brand-primary font-inter">
+                    AI Concierge
+                  </span>
                 </div>
-                <p className="b4 text-text-secondary">{f.description}</p>
-              </Card>
-            ))}
-          </div>
 
-          {/* Bottom Row */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {features.slice(2).map((f, i) => (
-              <Card key={i}>
-                <div className="flex items-center gap-3 mb-4">
-                  <IconBox>{f.icon}</IconBox>
-                  <h3 className="b3 text-text-primary">{f.title}</h3>
+                <h2 className="text-3xl md:text-5xl italic font-ibrand text-text-tertiary leading-tight">
+                  "Find me a spicy dinner for two under ₱500."
+                </h2>
+
+                <p className="text-lg text-white/60 max-w-md leading-relaxed font-inter">
+                  A natural chat interface that understands context. It
+                  recommends, upsells, and modifies orders in real-time.
+                </p>
+
+                <div className="pt-4">
+                  <Button
+                    variant="outline"
+                    rightIcon={<ArrowRight className="w-4 h-4" />}
+                  >
+                    See It In Action
+                  </Button>
                 </div>
-                <p className="b4 text-text-secondary">{f.description}</p>
-              </Card>
-            ))}
-          </div>
-        </div>
+              </div>
 
-        {/* AI Banner */}
-        <div className="relative rounded-3xl p-10 md:p-[52px_56px] flex flex-col md:flex-row items-center justify-between gap-10 overflow-hidden"
-          style={{ background: 'linear-gradient(135deg, #1c1917 0%, #27201c 60%, #1c1917 100%)' }}>
-
-          {/* Dot grid */}
-          <div className="absolute inset-0 pointer-events-none"
-            style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.07) 1px, transparent 1px)', backgroundSize: '28px 28px' }} />
-          {/* Glows */}
-          <div className="absolute -top-20 -right-20 w-96 h-96 rounded-full pointer-events-none"
-            style={{ background: 'radial-gradient(circle, color-mix(in srgb, var(--color-brand-accent) 22%, transparent) 0%, color-mix(in srgb, var(--color-brand-primary) 10%, transparent) 40%, transparent 65%)' }} />
-          <div className="absolute -bottom-16 -left-16 w-64 h-64 rounded-full pointer-events-none"
-            style={{ background: 'radial-gradient(circle, color-mix(in srgb, var(--color-brand-primary) 10%, transparent) 0%, transparent 65%)' }} />
-
-          <div className="flex-1 relative z-10 space-y-4 max-w-[620px]">
-            {/* Eyebrow */}
-            <div className="inline-flex items-center gap-2">
-              <span className="relative flex h-2 w-2 flex-shrink-0">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 bg-brand-primary" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-primary" />
-              </span>
-              <span className="text-[0.68rem] font-bold tracking-[0.13em] uppercase text-brand-primary">
-                AI Concierge
-              </span>
-            </div>
-
-            <h2 className="h2 italic text-text-tertiary">
-              "What can I get for ₱300 for two?"
-            </h2>
-
-            <p className="b2 text-text-secondary max-w-[600px]">
-              Your AI concierge understands plain language. It recommends, upsells, modifies, and adds items to the live cart — all through a natural chat interface.
-            </p>
-
-            <div className="pt-4">
-              <Button variant="outline" rightIcon={<ArrowRight className="w-4 h-4" />}>
-                See It In Action
-              </Button>
+              <div className="flex-shrink-0 relative z-10 lg:scale-110">
+                <ChatbotLogo size={240} />
+              </div>
             </div>
           </div>
 
-          {/* Robot cute */}
-          <div className="flex-shrink-0 relative z-10 flex flex-col items-center">
-            <ChatbotLogo size={190} />
+          <div className="lg:col-span-4 flex flex-col gap-6">
+            <Card className="flex-1">
+              <IconBox>{features[0].icon}</IconBox>
+              <h3 className="text-2xl font-bold text-text-primary mt-6 mb-3 font-figtree">
+                {features[0].title}
+              </h3>
+              <p className="text-text-secondary leading-relaxed font-inter">
+                {features[0].description}
+              </p>
+            </Card>
+            <Card className="flex-1">
+              <IconBox>{features[1].icon}</IconBox>
+              <h3 className="text-2xl font-bold text-text-primary mt-6 mb-3 font-figtree">
+                {features[1].title}
+              </h3>
+              <p className="text-text-secondary leading-relaxed font-inter">
+                {features[1].description}
+              </p>
+            </Card>
+          </div>
+
+          <div className="lg:col-span-4">
+            <Card className="h-full">
+              <IconBox>{features[2].icon}</IconBox>
+              <h3 className="text-2xl font-bold text-text-primary mt-6 mb-3 font-figtree">
+                {features[2].title}
+              </h3>
+              <p className="text-text-secondary leading-relaxed font-inter">
+                {features[2].description}
+              </p>
+            </Card>
+          </div>
+          <div className="lg:col-span-4">
+            <Card className="h-full">
+              <IconBox>{features[3].icon}</IconBox>
+              <h3 className="text-2xl font-bold text-text-primary mt-6 mb-3 font-figtree">
+                {features[3].title}
+              </h3>
+              <p className="text-text-secondary leading-relaxed font-inter">
+                {features[3].description}
+              </p>
+            </Card>
+          </div>
+          <div className="lg:col-span-4">
+            <Card className="h-full">
+              <IconBox>{features[4].icon}</IconBox>
+              <h3 className="text-2xl font-bold text-text-primary mt-6 mb-3 font-figtree">
+                {features[4].title}
+              </h3>
+              <p className="text-text-secondary leading-relaxed font-inter">
+                {features[4].description}
+              </p>
+            </Card>
           </div>
         </div>
-
       </div>
     </section>
   );

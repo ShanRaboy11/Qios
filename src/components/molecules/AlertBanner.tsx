@@ -10,26 +10,20 @@ export interface AlertBannerProps {
   icon?: React.ReactNode;
 }
 
-export const AlertBanner = ({
-  message,
-  className,
-  icon,
-}: AlertBannerProps) => {
+export const AlertBanner = ({ message, className, icon }: AlertBannerProps) => {
   return (
     <div
       className={cn(
-        "w-full flex items-center justify-center p-3 rounded-xl bg-[#FFF6F8] gap-3 text-center",
-        className
+        "w-full flex items-center justify-center p-3 rounded-xl bg-[#FFF6F8] gap-3 text-center border border-[#ec1313]",
+        className,
       )}
     >
       {icon ? (
         icon
       ) : (
-        <Info size={16} className="text-brand-primary shrink-0" />
+        <Info size={16} className="text-warning-primary shrink-0" />
       )}
-      <span className="b4 font-semibold text-text-primary">
-        {message}
-      </span>
+      <span className="b4 font-semibold text-text-primary">{message}</span>
     </div>
   );
 };
