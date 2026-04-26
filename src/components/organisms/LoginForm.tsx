@@ -82,7 +82,9 @@ export const LoginForm = () => {
       // avoids an extra DB round-trip and removes dependency on RLS being
       // configured on the profiles table.
       const claims = decodeJwtPayload(signInData.session.access_token);
-      const jwtRole = claims.user_role as string | undefined;
+      const jwtRole =
+        (claims.role as string | undefined) ??
+        (claims.user_role as string | undefined);
       const jwtTenantId = claims.tenant_id as string | undefined;
 
       if (jwtRole === "super_admin") {
