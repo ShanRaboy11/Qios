@@ -79,7 +79,7 @@ const ActivityCard = ({ act }: { act: ActivityData }) => {
         "rounded-2xl border-2 overflow-hidden transition-all duration-300",
         isOpen
           ? "border-[var(--color-brand-primary)] shadow-md shadow-[var(--color-brand-primary)]/20"
-          : "border-[#E5E5E5]"
+          : "border-[#E5E5E5]",
       )}
       style={{ backgroundColor: "white" }}
     >
@@ -126,7 +126,7 @@ const ActivityCard = ({ act }: { act: ActivityData }) => {
             strokeLinejoin="round"
             className={cn(
               "transition-transform duration-300 shrink-0",
-              isOpen ? "rotate-180" : "rotate-0"
+              isOpen ? "rotate-180" : "rotate-0",
             )}
             style={{
               color: isOpen
@@ -143,12 +143,11 @@ const ActivityCard = ({ act }: { act: ActivityData }) => {
       <div
         className={cn(
           "grid transition-all duration-300 ease-in-out",
-          isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+          isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
         )}
       >
         <div className="overflow-hidden">
           <div className="px-4 py-4 flex flex-col gap-3 border-t-2 border-[#E5E5E5]">
-
             {/* Row: Role */}
             <div className="flex items-center justify-between gap-2">
               <span
