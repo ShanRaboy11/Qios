@@ -4,7 +4,7 @@ import { Users, Building2, Activity, DollarSign } from "lucide-react";
 
 export const AdminMetricsRow = () => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6">
+    <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6">
       <AdminKPICard
         title="Total Companies"
         value="5468"

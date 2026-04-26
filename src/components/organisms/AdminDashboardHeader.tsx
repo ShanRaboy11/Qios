@@ -21,7 +21,7 @@ export const AdminDashboardHeader = ({
         {/* Text Section */}
         <div>
           <h1 className="h2 text-text-primary leading-tight mb-2">
-            Welcome Back, Adrian
+            Welcome Back, Admin
           </h1>
           <p className="b1 text-text-primary">
             Today,{" "}
@@ -32,13 +32,13 @@ export const AdminDashboardHeader = ({
 
         {/* Buttons Section */}
         <div className="flex items-center gap-3">
-          <button 
+          <button
             onClick={onCompaniesClick}
             className={cn(
               "px-6 py-2.5 rounded-[12px] font-semibold text-[15px] transition-colors",
-              isCompaniesActive 
-                ? "bg-white text-[#FF5269]" 
-                : "bg-[#FF5269] text-white hover:bg-[#FF3B55]"
+              isCompaniesActive
+                ? "bg-white text-[#FF5269]"
+                : "bg-[#FF5269] text-white hover:bg-[#FF3B55]",
             )}
           >
             {isCompaniesActive ? "Back to Dashboard" : "Companies"}
