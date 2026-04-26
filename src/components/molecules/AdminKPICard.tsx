@@ -76,7 +76,7 @@ export const AdminKPICard = ({
         </div>
 
         {/* Mini Bar Chart */}
-        <div className="flex items-end gap-1 h-8">
+        <div className="hidden md:flex items-end gap-1 h-8">
           {chartData.map((height, i) => (
             <div
               key={i}
