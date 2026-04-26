@@ -67,23 +67,23 @@ interface CatCfg {
 }
 const CAT_CFG: Record<string, CatCfg> = {
   "Meat & Poultry": {
-    fg: "#7c3aed",
-    bg: "rgba(139,92,246,0.12)",
-    strip: "#8b5cf6",
+    fg: "#92400e",
+    bg: "rgba(245,158,11,0.12)",
+    strip: "#f59e0b",
     iconBg: "#ddd6fe",
     emoji: "🥩",
   },
   "Fresh Produce": {
-    fg: "#166534",
-    bg: "rgba(22,163,74,0.1)",
-    strip: "#22c55e",
+    fg: "#92400e",
+    bg: "rgba(245,158,11,0.12)",
+    strip: "#f59e0b",
     iconBg: "#bbf7d0",
     emoji: "🥦",
   },
   Seafood: {
-    fg: "#0369a1",
-    bg: "rgba(14,165,233,0.12)",
-    strip: "#38bdf8",
+    fg: "#92400e",
+    bg: "rgba(245,158,11,0.12)",
+    strip: "#f59e0b",
     iconBg: "#bae6fd",
     emoji: "🦐",
   },
@@ -1727,31 +1727,114 @@ function InfoBanner({ tab }: { tab: "menu" | "ingredients" }) {
 /*  TOOLBAR                                                             */
 /* ================================================================== */
 import { SearchFilterBar } from "@/components/molecules/SearchFilterBar";
+import { useRef, useEffect } from "react";
 
 function Toolbar({
   search,
   onSearch,
+  filter,
+  onFilter,
 }: {
   search: string;
   onSearch: (v: string) => void;
+  filter: string;
+  onFilter: (v: string) => void;
 }) {
+  const [filterOpen, setFilterOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
+      ) {
+        setFilterOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   return (
     <div
-      className="
+      ref={containerRef}
+      className={`
+      relative
       [&_input]:!h-[40px] [&_input]:!py-0 [&_input]:!pl-[38px] [&_input]:!pr-[14px] 
       [&_input]:!rounded-[10px] [&_input]:!text-[13px] 
       [&_input]:!border-[1.5px]
       [&_.left-5]:!left-[12px] [&_svg]:!w-[18px] [&_svg]:!h-[18px]
       [&_button]:!h-[40px] [&_button]:!px-[14px] [&_button]:!rounded-[10px] [&_button]:!text-[13px] [&_button]:!font-bold
-      [&_button]:!border-[1.5px]
+      [&_button]:!border-[1.5px] [&_button]:transition-all [&_button]:duration-200
+      [&_button:hover]:!border-[#ff5269] [&_button:hover_span]:!text-[#ff5269] [&_button:hover_svg]:!text-[#ff5269] [&_button:hover]:!bg-[rgba(255,82,105,0.05)]
+      ${filterOpen ? "[&_button]:!border-[#ff5269] [&_button_span]:!text-[#ff5269] [&_button_svg]:!text-[#ff5269] [&_button]:!bg-[rgba(255,82,105,0.05)]" : ""}
       [&_.gap-3]:!gap-[8px]
-    "
+    `}
     >
       <SearchFilterBar
         searchWidth="316px"
         placeholder="Search…"
         onSearch={(v) => onSearch(v)}
+        onFilterClick={() => setFilterOpen((prev) => !prev)}
       />
+
+      {filterOpen && (
+        <div
+          style={{
+            position: "absolute",
+            top: "calc(100% + 8px)",
+            right: 0,
+            background: "#fff",
+            borderRadius: 14,
+            boxShadow: "0 10px 40px rgba(0,0,0,0.1)",
+            border: "1.5px solid rgba(255,198,112,0.25)",
+            padding: "8px",
+            minWidth: 180,
+            zIndex: 100,
+            display: "flex",
+            flexDirection: "column",
+            gap: 2,
+          }}
+        >
+          <div style={{ padding: "8px 12px", fontSize: 11, fontWeight: 800, color: MUTED, textTransform: "uppercase", letterSpacing: 0.5 }}>
+            Filter by Status
+          </div>
+          {["All", "High Stock", "Medium Stock", "Low Stock"].map((opt) => (
+            <button
+              key={opt}
+              onClick={() => {
+                onFilter(opt);
+                setFilterOpen(false);
+              }}
+              style={{
+                width: "100%",
+                background: filter === opt ? "rgba(255,82,105,0.08)" : "transparent",
+                border: "none",
+                textAlign: "left",
+                padding: "10px 12px",
+                fontSize: 13,
+                fontWeight: 600,
+                color: filter === opt ? ACCENT : INK,
+                borderRadius: 8,
+                cursor: "pointer",
+                transition: "background 0.15s",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "rgba(255,82,105,0.08)";
+                e.currentTarget.style.color = ACCENT;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "transparent";
+                e.currentTarget.style.color = INK;
+              }}
+            >
+              {opt}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -2094,15 +2177,17 @@ function DishListRow({
       >
         <div
           style={{
-            width: 36,
-            height: 36,
-            borderRadius: 10,
-            background: sc.band,
+            width: 56,
+            height: 56,
+            borderRadius: "50%",
+            border: "3px solid #fff",
+            background: sc.icon,
             flexShrink: 0,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            fontSize: 16,
+            fontSize: 26,
+            boxShadow: "0 0 0 1px rgba(0,0,0,0.05)",
           }}
         >
           {DISH_ICONS[index % DISH_ICONS.length]}
@@ -2110,8 +2195,8 @@ function DishListRow({
         <div
           style={{
             flex: 1,
-            fontSize: 13,
-            fontWeight: 700,
+            fontSize: 14,
+            fontWeight: 800,
             color: INK,
             minWidth: 0,
             overflow: "hidden",
@@ -2135,14 +2220,14 @@ function DishListRow({
           </div>
           <div
             style={{
-              fontSize: 12,
-              fontWeight: 700,
-              width: 70,
+              fontSize: 13,
+              fontWeight: 500,
+              width: 100,
               textAlign: "right",
-              color: sc.text,
+              color: MUTED,
             }}
           >
-            {data.servings} left
+            {data.servings} servings left
           </div>
           <div
             style={{
@@ -2602,15 +2687,17 @@ function IngredientListRow({
       >
         <div
           style={{
-            width: 36,
-            height: 36,
-            borderRadius: 10,
+            width: 56,
+            height: 56,
+            borderRadius: "50%",
+            border: "3px solid #fff",
             background: sc.icon,
             flexShrink: 0,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            fontSize: 16,
+            fontSize: 26,
+            boxShadow: "0 0 0 1px rgba(0,0,0,0.05)",
           }}
         >
           {cfg.emoji}
@@ -2618,8 +2705,8 @@ function IngredientListRow({
         <div style={{ flex: 1, minWidth: 0 }}>
           <div
             style={{
-              fontSize: 13,
-              fontWeight: 700,
+              fontSize: 14,
+              fontWeight: 800,
               color: INK,
               whiteSpace: "nowrap",
               overflow: "hidden",
@@ -2627,16 +2714,6 @@ function IngredientListRow({
             }}
           >
             {data.name}
-          </div>
-          <div
-            style={{
-              fontSize: 10,
-              fontWeight: 700,
-              color: cfg.fg,
-              marginTop: 2,
-            }}
-          >
-            {data.cat}
           </div>
         </div>
         <div
@@ -2655,15 +2732,15 @@ function IngredientListRow({
           </div>
           <div
             style={{
-              fontSize: 12,
-              fontWeight: 700,
-              color: sc.text,
+              fontSize: 13,
+              fontWeight: 500,
+              color: MUTED,
               whiteSpace: "nowrap",
               width: 100,
               textAlign: "right",
             }}
           >
-            {data.stock}/{data.max} {data.unit}
+            {data.stock} / {data.max} {data.unit}
           </div>
           <div
             style={{
@@ -3126,73 +3203,98 @@ function ResponsiveStyles() {
 export default function MenuInventory() {
   const [tab, setTab] = useState<"menu" | "ingredients">("menu");
   const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("All");
   const [modal, setModal] = useState<ModalAction | null>(null);
 
-  const filteredDishes = useMemo(
-    () =>
-      DISH_DATA.filter((d) =>
-        d.name.toLowerCase().includes(search.toLowerCase()),
-      ),
-    [search],
-  );
+  const filteredDishes = useMemo(() => {
+    let list = DISH_DATA.filter((d) =>
+      d.name.toLowerCase().includes(search.toLowerCase()),
+    );
+    if (filter !== "All") {
+      const matchStatus = filter.split(" ")[0].toLowerCase();
+      list = list.filter((d) => d.status === matchStatus);
+    }
+    return list;
+  }, [search, filter]);
 
-  const filteredIngredients = useMemo(
-    () =>
-      INGREDIENT_DATA.filter(
-        (i) =>
-          i.name.toLowerCase().includes(search.toLowerCase()) ||
-          i.cat.toLowerCase().includes(search.toLowerCase()),
-      ),
-    [search],
-  );
+  const filteredIngredients = useMemo(() => {
+    let list = INGREDIENT_DATA.filter(
+      (i) =>
+        i.name.toLowerCase().includes(search.toLowerCase()) ||
+        i.cat.toLowerCase().includes(search.toLowerCase()),
+    );
+    if (filter !== "All") {
+      const matchStatus = filter.split(" ")[0].toLowerCase();
+      list = list.filter((i) => pctToStatus(Math.round((i.stock / i.max) * 100)) === matchStatus);
+    }
+    return list;
+  }, [search, filter]);
 
   const handleTabChange = (t: "menu" | "ingredients") => {
     setTab(t);
     setSearch("");
+    setFilter("All");
   };
 
   return (
     <>
       <ResponsiveStyles />
       <div className="bg-bg-primary min-h-screen font-inter text-text-primary p-4 md:p-6 lg:p-20">
-        <header
+        <div
           style={{
             background: "#fff",
-            borderBottom: `1.5px solid rgba(255,198,112,0.25)`,
-            padding: "24px 32px 0",
-            position: "sticky",
-            top: 0,
-            zIndex: 30,
+            borderRadius: 24,
+            border: `1px solid rgba(255,198,112,0.25)`,
+            boxShadow: "0 4px 24px rgba(0,0,0,0.02)",
+            minHeight: "80vh",
+            display: "flex",
+            flexDirection: "column",
           }}
         >
-          <PageHeader tab={tab} />
-          <InfoBanner tab={tab} />
-          <div
+          <header
             style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 12,
-              flexWrap: "wrap",
-              paddingBottom: 14,
+              padding: "32px 32px 24px",
+              borderBottom: `1px dashed rgba(255,198,112,0.3)`,
+              position: "sticky",
+              top: 0,
+              zIndex: 30,
+              background: "#fff",
+              borderTopLeftRadius: 24,
+              borderTopRightRadius: 24,
             }}
           >
-            <TabNav active={tab} onChange={handleTabChange} />
-            <Toolbar
-              search={search}
-              onSearch={setSearch}
-            />
-          </div>
-        </header>
+            <PageHeader tab={tab} />
+            <InfoBanner tab={tab} />
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 12,
+                flexWrap: "wrap",
+              }}
+            >
+              <TabNav active={tab} onChange={handleTabChange} />
+              <Toolbar
+                search={search}
+                onSearch={setSearch}
+                filter={filter}
+                onFilter={setFilter}
+              />
+            </div>
+          </header>
 
-        {tab === "menu" ? (
-          <MenuTab dishes={filteredDishes} onAction={setModal} />
-        ) : (
-          <IngredientsTab
-            ingredients={filteredIngredients}
-            onAction={setModal}
-          />
-        )}
+          <div style={{ flex: 1 }}>
+            {tab === "menu" ? (
+              <MenuTab dishes={filteredDishes} onAction={setModal} />
+            ) : (
+              <IngredientsTab
+                ingredients={filteredIngredients}
+                onAction={setModal}
+              />
+            )}
+          </div>
+        </div>
 
         <ModalController action={modal} onClose={() => setModal(null)} />
       </div>
