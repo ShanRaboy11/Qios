@@ -8,6 +8,7 @@ import { Badge } from "@/components/atoms/Badge";
 import { Mail, Lock, AlertCircle, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export const LoginForm = () => {
   const router = useRouter();
@@ -25,7 +26,7 @@ export const LoginForm = () => {
   const vectorStyle =
     "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rotate-[6.521deg] overflow-visible";
 
-  const handleSubmit = (e?: React.FormEvent) => {
+  const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
 
     // Reset errors
@@ -52,26 +53,56 @@ export const LoginForm = () => {
 
     if (hasError) return;
 
-    // Simulate login
     setIsLoading(true);
-    setTimeout(() => {
-      const MOCK_EMAIL = "admin@qios.com";
-      const MOCK_PASSWORD = "password123";
 
-      if (email === MOCK_EMAIL && password === MOCK_PASSWORD) {
-        // SUCCESS: Redirect to the landing page
-        router.push("/");
-      } else {
-        // FAILURE: Show error message
+    // Mock account shortcut
+    const MOCK_EMAIL = "admin@qios.com";
+    const MOCK_PASSWORD = "exc.admin";
+    if (email === MOCK_EMAIL && password === MOCK_PASSWORD) {
+      router.push("/");
+      return;
+    }
+
+    try {
+      const supabase = createSupabaseBrowserClient();
+
+      const { data: signInData, error: signInError } =
+        await supabase.auth.signInWithPassword({ email, password });
+
+      if (signInError || !signInData.user) {
+        setError(signInError?.message ?? "Invalid email or password.");
         setIsLoading(false);
-        setError("Invalid email or password.");
+        return;
       }
-    }, 1500);
+
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("role, tenant_id")
+        .eq("id", signInData.user.id)
+        .single();
+
+      if (profileError || !profile) {
+        setError(
+          "Could not load your account profile. Please contact support.",
+        );
+        setIsLoading(false);
+        return;
+      }
+
+      if (profile.role === "super_admin") {
+        router.push("/admin/dashboard");
+      } else {
+        router.push(`/${profile.tenant_id}/dashboard`);
+      }
+    } catch {
+      setError("An unexpected error occurred. Please try again.");
+      setIsLoading(false);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
-      handleSubmit();
+      void handleSubmit();
     }
   };
 
