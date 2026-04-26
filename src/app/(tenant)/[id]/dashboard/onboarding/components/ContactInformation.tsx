@@ -106,10 +106,9 @@ export function ContactInformation({ onNext }: ContactInformationProps) {
   const isOtpComplete = otp.every(digit => digit !== "");
 
   return (
-    // ROOT FIX: Added flex flex-col items-center to center both sections
     <div className="flex flex-col items-center w-full space-y-10 animate-in fade-in slide-in-from-right-8 duration-500">
       
-      {/* 1. TOP PART: Phone Input Box */}
+      {/* Phone Input Box */}
       <div className="w-full max-w-[550px] space-y-2">
         <label className="b4 ml-1 font-medium text-text-secondary text-left block">
           Contact Number <Required />
@@ -148,9 +147,8 @@ export function ContactInformation({ onNext }: ContactInformationProps) {
         </div>
       </div>
 
-      {/* 2. BOTTOM PART: Timer, OTP, and Button (Now centered within the container) */}
+      {/* Timer, OTP, and Button */}
       <div className="flex flex-col items-center w-full max-w-[550px] space-y-12 pt-4">
-        {/* Timer UI */}
         <div className="flex items-center gap-5">
           <div className="flex items-center gap-2 b2 font-bold text-text-primary text-xl">
             <Clock size={20} className={timeLeft > 0 ? "text-[var(--color-brand-primary)]" : "text-neutral-400"} />
@@ -193,8 +191,8 @@ export function ContactInformation({ onNext }: ContactInformationProps) {
           variant="primary"
           size="lg"
           className={cn(
-            "w-[400px] h-[60px] text-l font-bold transition-all duration-500 shadow-none border-none max-w-[480px]",
-            isOtpComplete ? "bg-[var(--color-brand-primary)] text-text-tertiary scale-[1.02]" : "bg-neutral-50 text-white cursor-not-allowed"
+            "w-[420px] h-[55px] b2 transition-all duration-500 shadow-none border-none max-w-[480px]",
+            isOtpComplete ? "bg-[var(--color-brand-secondary)] text-text-tertiary scale-[1.02]" : "bg-neutral-300 text-white cursor-not-allowed"
           )}
           onClick={() => isOtpComplete && onNext()}
         >

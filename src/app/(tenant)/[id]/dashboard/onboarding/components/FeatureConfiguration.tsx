@@ -143,7 +143,7 @@ export function FeatureConfig({ onFinish }: FeatureConfigProps) {
         <Button 
           variant="primary" 
           size="lg" 
-          className="h-16 flex-1 font-bold text-lg shadow-xl shadow-orange-200/50" 
+          className="h-16 flex-1 b2 shadow-xl shadow-orange-200/50" 
           onClick={handleFinalize}
         >
           Finalize
