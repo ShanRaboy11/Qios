@@ -7,21 +7,30 @@ import { AdminChartsSection } from "@/components/organisms/AdminChartsSection";
 import { AdminListsSection } from "@/components/organisms/AdminListsSection";
 import TenantManagement from "@/components/organisms/TenantManagement";
 import { SystemActivity } from "@/components/organisms/SystemActivity";
+import { Footer } from "@/components/organisms/footer";
+import { Navbar } from "@/components/organisms/navbar";
 
 import { motion, AnimatePresence } from "framer-motion";
 
-type ViewState = "dashboard" | "tenant" | "system_activity";
+type ViewState =
+  | "dashboard"
+  | "tenant"
+  | "system_activity"
+  | "subscription"
+  | "settings";
 
 export default function AdminDashboardPage() {
   const [currentView, setCurrentView] = useState<ViewState>("dashboard");
-  const [initialTenantFilter, setInitialTenantFilter] = useState<string | undefined>();
+  const [initialTenantFilter, setInitialTenantFilter] = useState<
+    string | undefined
+  >();
   const [isTransitioning, setIsTransitioning] = useState(false);
 
   const handleNavigation = (view: ViewState, tenantFilter?: string) => {
     if (currentView === view && view !== "tenant") return;
-    
+
     setIsTransitioning(true);
-    
+
     // Simulate loading delay for skeleton
     setTimeout(() => {
       setInitialTenantFilter(tenantFilter);
@@ -31,13 +40,64 @@ export default function AdminDashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FFF9EF] p-4 md:p-8 lg:p-12 overflow-x-hidden">
-      <div className="max-w-[1440px] mx-auto flex flex-col">
-        <AdminDashboardHeader 
-          onCompaniesClick={() => handleNavigation(currentView === "dashboard" ? "tenant" : "dashboard")}
-          isCompaniesActive={currentView !== "dashboard"}
+    <div className="min-h-screen bg-bg-primary overflow-x-hidden relative">
+      {/* Background Moving Blobs */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <motion.div
+          animate={{
+            x: [0, 100, -50, 0],
+            y: [0, -100, 50, 0],
+            scale: [1, 1.2, 0.8, 1],
+          }}
+          transition={{
+            duration: 60,
+            repeat: Infinity,
+            repeatType: "reverse",
+            ease: "easeInOut",
+          }}
+          className="absolute top-[10%] left-[20%] w-[500px] h-[500px] bg-[#FFE5BE] rounded-full mix-blend-multiply filter blur-[80px] opacity-15"
         />
-        
+        <motion.div
+          animate={{
+            x: [0, -120, 80, 0],
+            y: [0, 80, -120, 0],
+            scale: [1, 0.8, 1.2, 1],
+          }}
+          transition={{
+            duration: 75,
+            repeat: Infinity,
+            repeatType: "reverse",
+            ease: "easeInOut",
+          }}
+          className="absolute top-[40%] right-[10%] w-[600px] h-[600px] bg-[#FFDF96] rounded-full mix-blend-multiply filter blur-[100px] opacity-20"
+        />
+        <motion.div
+          animate={{
+            x: [0, 150, -100, 0],
+            y: [0, 100, -150, 0],
+            scale: [1, 1.3, 0.9, 1],
+          }}
+          transition={{
+            duration: 66,
+            repeat: Infinity,
+            repeatType: "reverse",
+            ease: "easeInOut",
+          }}
+          className="absolute bottom-[-10%] left-[40%] w-[700px] h-[700px] bg-[#FFBDC6] rounded-full mix-blend-multiply filter blur-[120px] opacity-15"
+        />
+      </div>
+
+      <div className="absolute top-8 left-1/2 -translate-x-1/2 w-full flex justify-center z-[100]">
+        <div className="w-full">
+          <Navbar
+            variant="transparent"
+            type="admin"
+            activeView={currentView}
+            onNavigate={(view) => handleNavigation(view as ViewState)}
+          />
+        </div>
+      </div>
+      <div className="max-w-[1440px] mx-auto flex flex-col p-4 md:p-8 lg:p-12 mt-28 relative z-[100]">
         <AnimatePresence mode="wait">
           {isTransitioning ? (
             <motion.div
@@ -50,18 +110,24 @@ export default function AdminDashboardPage() {
             >
               {/* Top Row Skeleton */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-                {[1, 2, 3, 4].map(i => (
-                  <div key={i} className="h-[120px] bg-white border border-gray-100 shadow-sm rounded-[24px] animate-pulse" />
+                {[1, 2, 3, 4].map((i) => (
+                  <div
+                    key={i}
+                    className="h-[120px] bg-white border border-gray-100 shadow-sm rounded-[24px] animate-pulse"
+                  />
                 ))}
               </div>
-              
+
               {/* Main Content Skeleton */}
               <div className="h-[400px] w-full bg-white border border-gray-100 shadow-sm rounded-[24px] animate-pulse" />
-              
+
               {/* Bottom Row Skeleton */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
-                {[1, 2, 3].map(i => (
-                  <div key={i} className="h-[250px] bg-white border border-gray-100 shadow-sm rounded-[24px] animate-pulse" />
+                {[1, 2, 3].map((i) => (
+                  <div
+                    key={i}
+                    className="h-[250px] bg-white border border-gray-100 shadow-sm rounded-[24px] animate-pulse"
+                  />
                 ))}
               </div>
             </motion.div>
@@ -73,11 +139,21 @@ export default function AdminDashboardPage() {
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3, ease: "easeInOut" }}
             >
+              <AdminDashboardHeader
+                onCompaniesClick={() =>
+                  handleNavigation(
+                    currentView === "dashboard" ? "tenant" : "dashboard",
+                  )
+                }
+                isCompaniesActive={currentView !== "dashboard"}
+              />
               <AdminMetricsRow />
               <AdminChartsSection />
-              <AdminListsSection 
+              <AdminListsSection
                 onViewSystemActivity={() => handleNavigation("system_activity")}
-                onViewPendingTenants={() => handleNavigation("tenant", "Pending")}
+                onViewPendingTenants={() =>
+                  handleNavigation("tenant", "Pending")
+                }
               />
             </motion.div>
           ) : currentView === "system_activity" ? (
@@ -89,7 +165,63 @@ export default function AdminDashboardPage() {
               transition={{ duration: 0.3, ease: "easeInOut" }}
               className="mt-4"
             >
-               <SystemActivity />
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                <div>
+                  <span className="h1 text-text-primary">System Activity</span>
+                  <p className="h4 text-text-secondary mt-2">
+                    Monitor all actions and events across your system.
+                  </p>
+                </div>
+              </div>
+              <SystemActivity />
+            </motion.div>
+          ) : currentView === "subscription" ? (
+            <motion.div
+              key="subscription"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+              className="mt-4"
+            >
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                <div>
+                  <span className="h1 text-text-primary">
+                    Subscription and Plans
+                  </span>
+                  <p className="h4 text-text-secondary mt-2">
+                    Manage billing, plans, and subscriptions.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center justify-center h-[400px] bg-white rounded-[24px] shadow-sm">
+                <h2 className="text-2xl font-bold text-text-primary">
+                  Coming Soon
+                </h2>
+              </div>
+            </motion.div>
+          ) : currentView === "settings" ? (
+            <motion.div
+              key="settings"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+              className="mt-4"
+            >
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                <div>
+                  <span className="h1 text-text-primary">Settings</span>
+                  <p className="h4 text-text-secondary mt-2">
+                    Configure system preferences and administrator settings.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center justify-center h-[400px] bg-white rounded-[24px] shadow-sm">
+                <h2 className="text-2xl font-bold text-text-primary">
+                  Coming Soon
+                </h2>
+              </div>
             </motion.div>
           ) : (
             <motion.div
@@ -100,6 +232,14 @@ export default function AdminDashboardPage() {
               transition={{ duration: 0.3, ease: "easeInOut" }}
               className="mt-4"
             >
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                <div>
+                  <span className="h1 text-text-primary">Tenant Directory</span>
+                  <p className="h4 text-text-secondary mt-2">
+                    Manage all registered tenants and their statuses.
+                  </p>
+                </div>
+              </div>
               <TenantManagement initialStatusFilter={initialTenantFilter} />
             </motion.div>
           )}
