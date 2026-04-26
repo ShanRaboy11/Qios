@@ -10,6 +10,16 @@ import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
+/** Decode a JWT payload without verifying the signature (Supabase has already verified it). */
+function decodeJwtPayload(token: string): Record<string, unknown> {
+  try {
+    const payload = token.split(".")[1];
+    return JSON.parse(atob(payload.replace(/-/g, "+").replace(/_/g, "/")));
+  } catch {
+    return {};
+  }
+}
+
 export const LoginForm = () => {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -55,26 +65,35 @@ export const LoginForm = () => {
 
     setIsLoading(true);
 
-    // Mock account shortcut
-    const MOCK_EMAIL = "admin@qios.com";
-    const MOCK_PASSWORD = "exc.admin";
-    if (email === MOCK_EMAIL && password === MOCK_PASSWORD) {
-      router.push("/");
-      return;
-    }
-
     try {
-      const supabase = createSupabaseBrowserClient();
+      const supabase = createSupabaseBrowserClient(rememberMe);
 
       const { data: signInData, error: signInError } =
         await supabase.auth.signInWithPassword({ email, password });
 
-      if (signInError || !signInData.user) {
+      if (signInError || !signInData.user || !signInData.session) {
         setError(signInError?.message ?? "Invalid email or password.");
-        setIsLoading(false);
         return;
       }
 
+      // Prefer claims injected by Supabase's custom_access_token_hook —
+      // avoids an extra DB round-trip and removes dependency on RLS being
+      // configured on the profiles table.
+      const claims = decodeJwtPayload(signInData.session.access_token);
+      const jwtRole = claims.user_role as string | undefined;
+      const jwtTenantId = claims.tenant_id as string | undefined;
+
+      if (jwtRole === "super_admin") {
+        router.push("/admin/dashboard");
+        return;
+      }
+      if (jwtRole && jwtTenantId) {
+        router.push(`/${jwtTenantId}/dashboard`);
+        return;
+      }
+
+      // Fallback: query the profiles table (requires RLS policy allowing
+      // authenticated users to SELECT their own row).
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("role, tenant_id")
@@ -85,7 +104,6 @@ export const LoginForm = () => {
         setError(
           "Could not load your account profile. Please contact support.",
         );
-        setIsLoading(false);
         return;
       }
 
@@ -96,6 +114,7 @@ export const LoginForm = () => {
       }
     } catch {
       setError("An unexpected error occurred. Please try again.");
+    } finally {
       setIsLoading(false);
     }
   };
