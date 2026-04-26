@@ -1,4 +1,5 @@
 import React from "react";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 export type CategoryToggleSize = "sm" | "md" | "lg";
@@ -7,6 +8,7 @@ export interface CategoryToggleProps {
   label: string;
   iconSrc: string;
   isActive?: boolean;
+  isCategoryView?: boolean;
   size?: CategoryToggleSize;
   onClick?: () => void;
   className?: string;
@@ -16,6 +18,7 @@ export const CategoryToggle = ({
   label,
   iconSrc,
   isActive = false,
+  isCategoryView = false,
   size = "md",
   onClick,
   className,
@@ -41,23 +44,30 @@ export const CategoryToggle = ({
   const { container, icon, text } = sizeStyles[size];
 
   return (
-    <button
+    <motion.button
+      layout
       onClick={onClick}
       className={cn(
-        "flex flex-col items-center justify-center group outline-none",
+        "flex flex-col items-center justify-center group outline-none mt-15",
         className,
       )}
     >
-      <div
+      <motion.div
+        layout
         className={cn(
-          "rounded-[30px] flex items-center justify-center transition-all duration-300",
+          "flex items-center justify-center transition-all duration-300",
           container,
-          isActive
-            ? "bg-[#FFDC72] shadow-sm transform scale-100"
-            : "bg-[#FEF5E7] group-hover:bg-[#FFDC72]/60 group-hover:scale-105",
+          isCategoryView
+            ? isActive
+              ? "bg-white rounded-t-[30px] rounded-b-none pb-4 scale-110 shadow-sm z-10"
+              : "bg-transparent scale-90"
+            : isActive
+              ? "bg-[#FFDC72] rounded-[30px] shadow-sm transform scale-100"
+              : "bg-[#FEF5E7] rounded-[30px] group-hover:bg-[#FFDC72]/60 group-hover:scale-105",
         )}
       >
-        <img
+        <motion.img
+          layout
           src={iconSrc}
           alt={label}
           className={cn(
@@ -66,19 +76,25 @@ export const CategoryToggle = ({
             isActive ? "scale-110" : "group-hover:scale-110",
           )}
         />
-      </div>
+      </motion.div>
 
-      <span
+      <motion.span
+        layout
         className={cn(
-          "font-inter font-semibold transition-colors duration-300",
+          "font-inter font-semibold transition-colors duration-300 z-20",
           text,
-          isActive
-            ? "text-text-primary"
-            : "text-text-primary/70 group-hover:text-text-primary",
+          isCategoryView && !isActive ? "-mt-2 text-[#2D2D2D] text-[13px]" : "",
+          isCategoryView && isActive
+            ? "mt-4 text-[#2D2D2D] text-[13px] bg-white"
+            : "",
+          !isCategoryView && isActive ? "text-text-primary" : "",
+          !isCategoryView && !isActive
+            ? "text-text-primary/70 group-hover:text-text-primary"
+            : "",
         )}
       >
         {label}
-      </span>
-    </button>
+      </motion.span>
+    </motion.button>
   );
 };
