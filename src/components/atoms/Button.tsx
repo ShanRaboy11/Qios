@@ -7,6 +7,7 @@ export type ButtonVariant =
   | "outline"
   | "dark"
   | "warning"
+  | "approve"
   | "ghost";
 
 export type ButtonShape = "pill" | "rounded";
@@ -45,8 +46,8 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       "inline-flex items-center justify-center font-inter font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none border border-transparent shrink-0";
 
     const shapeStyles = {
-      pill: "rounded-full",
-      rounded: "rounded-[8px]",
+      pill: "rounded-[13px]",
+      rounded: "rounded-full",
     };
 
     // 3. New Size Mapping
@@ -67,6 +68,8 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       dark: "bg-text-primary text-white hover:bg-text-primary/90 transition-all duration-300 transform hover:scale-105 shadow-lg cursor-pointer active:scale-[0.98]",
       warning:
         "bg-warning-secondary text-warning-primary border-2 border-transparent hover:border-warning-primary transition-all duration-300 transform hover:scale-105 shadow-lg cursor-pointer active:scale-[0.98]",
+      approve:
+        "bg-success-secondary text-success-primary border-2 border-transparent hover:border-success-primary transition-all duration-300 transform hover:scale-105 shadow-lg cursor-pointer active:scale-[0.98]",
       ghost:
         "bg-transparent text-text-primary hover:bg-black/5 transition-all duration-300 transform hover:scale-105 cursor-pointer active:scale-[0.98]",
     };
@@ -85,9 +88,12 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         {...props}
       >
         {loading && (
-          <Loader2 className={cn("animate-spin", children ? "mr-2" : "")} size={size === "sm" || size === "icon" ? 14 : 18} />
+          <Loader2
+            className={cn("animate-spin", children ? "mr-2" : "")}
+            size={size === "sm" || size === "icon" ? 14 : 18}
+          />
         )}
-        
+
         {!loading && leftIcon && (
           <span
             className={cn(
