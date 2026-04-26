@@ -92,7 +92,7 @@ export const ThresholdRow = ({
         </span>
         <div className="flex items-baseline gap-1">
           <span className="text-lg font-bold text-text-primary">{onHand}</span>
-          <span className="b5 text-text-secondary">{unit}</span>
+          <span className="b4 text-text-secondary">{unit}</span>
         </div>
       </div>
 

@@ -258,7 +258,7 @@ export const SystemActivity = () => {
   });
 
   return (
-    <div className="w-full flex flex-col gap-8 p-8 md:pl-12 md:pr-12 lg:pl-48 lg:pr-48">
+    <div className="w-full flex flex-col gap-8">
       {/* 1. Top Search and Controls */}
       <SearchFilterbarv2
         onSearch={setSearchTerm}

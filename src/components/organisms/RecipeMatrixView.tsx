@@ -139,7 +139,7 @@ const RecipeEditor = ({
         // Auto-select unit when ingredient name matches DB
         if (field === "ingredientName") {
           const ingredient = INGREDIENTS_DB.find(
-            (i) => i.name.toLowerCase() === value.toLowerCase()
+            (i) => i.name.toLowerCase() === value.toLowerCase(),
           );
           if (ingredient) {
             newRow.ingredientId = ingredient.id;
@@ -158,13 +158,14 @@ const RecipeEditor = ({
   };
 
   return (
-    <div className="bg-white rounded-[24px] border border-[#E5E5E5] mb-6 overflow-hidden shadow-sm transition-all text-left">
+    <div className="bg-white rounded-[24px] border border-[#E5E5E5] mb-6 shadow-sm transition-all text-left">
       {/* Accordion Header */}
       <div
         onClick={() => setIsExpanded(!isExpanded)}
         className={cn(
-          "p-4 md:px-6 md:py-4 flex flex-col md:flex-row items-start md:items-center justify-between cursor-pointer transition-colors gap-4 md:gap-0",
+          "p-4 md:px-6 md:py-4 flex flex-col md:flex-row items-start rounded-t-[24px] overflow-hidden md:items-center justify-between cursor-pointer transition-colors gap-4 md:gap-0",
           headerColorClass,
+          isExpanded ? "rounded-t-3xl" : "rounded-[24px]",
         )}
       >
         <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-start">
@@ -187,7 +188,7 @@ const RecipeEditor = ({
                   {badgeLabel}
                 </Badge>
               </div>
-              <p className="b5 font-medium text-text-secondary mt-1">
+              <p className="b4 font-medium text-text-secondary mt-1">
                 {subtext}
               </p>
             </div>
@@ -217,8 +218,8 @@ const RecipeEditor = ({
       {isExpanded && (
         <div className="flex flex-col">
           {/* DESKTOP VIEW: Table */}
-          <div className="hidden md:block w-full overflow-x-auto">
-            <div className="min-w-[800px] border-t border-[#E5E5E5]">
+          <div className="hidden md:block w-full">
+            <div className="w-full border-t border-[#E5E5E5]">
               {/* Table Header */}
               <div
                 className={cn(
@@ -228,19 +229,19 @@ const RecipeEditor = ({
                     : "grid-cols-[2fr_1.5fr_1fr_1fr_1fr_auto]",
                 )}
               >
-                <span className="b6 font-bold text-text-secondary uppercase tracking-wider">
+                <span className="b4 font-bold text-text-primary uppercase tracking-wider">
                   INGREDIENT
                 </span>
-                <span className="b6 font-bold text-text-secondary uppercase tracking-wider text-center">
+                <span className="b4 font-bold text-text-primary uppercase tracking-wider text-center">
                   {mode === "measurement" ? "QUANTITY & UNIT" : "UNITS/ORDER"}
                 </span>
-                <span className="b6 font-bold text-text-secondary uppercase tracking-wider text-right">
+                <span className="b4 font-bold text-text-primary uppercase tracking-wider text-right">
                   ON HAND
                 </span>
-                <span className="b6 font-bold text-text-secondary uppercase tracking-wider text-right">
+                <span className="b4 font-bold text-text-primary uppercase tracking-wider text-right">
                   EST. ORDERS
                 </span>
-                <span className="b6 font-bold text-text-secondary uppercase tracking-wider text-right">
+                <span className="b4 font-bold text-text-primary uppercase tracking-wider text-right">
                   STATUS
                 </span>
                 <span className="w-[32px]"></span> {/* Action Col */}
@@ -249,7 +250,9 @@ const RecipeEditor = ({
               {/* Ingredients List */}
               <div className="flex flex-col px-8">
                 {rows.map((row) => {
-                  const ingredient = row.ingredientId ? getIngredient(row.ingredientId) : null;
+                  const ingredient = row.ingredientId
+                    ? getIngredient(row.ingredientId)
+                    : null;
 
                   // Computations
                   let estimatedOrders = NaN;
@@ -284,7 +287,7 @@ const RecipeEditor = ({
                     >
                       {/* Ingredient Dropdown */}
                       <div className="w-full flex items-center">
-                        <span className="b4 font-medium text-text-primary">
+                        <span className="text-md font-regular text-text-primary">
                           {row.ingredientName || "New Ingredient"}
                         </span>
                       </div>
@@ -300,12 +303,12 @@ const RecipeEditor = ({
                                 onChange={(e) =>
                                   updateRow(row.id, "qty", e.target.value)
                                 }
-                                className="text-center font-bold"
+                                className="text-center font-medium"
                                 min="0.01"
                                 step="0.01"
                               />
                             </div>
-                            <div className="w-[120px]">
+                            <div className="w-[140px]">
                               <Dropdown
                                 label=""
                                 placeholder="Unit"
@@ -314,7 +317,8 @@ const RecipeEditor = ({
                                 onSelect={(opt) =>
                                   updateRow(row.id, "unit", opt.value)
                                 }
-                                className="max-w-none"
+                                size="sm"
+                                className="text-md font-medium max-w-none"
                               />
                             </div>
                           </>
@@ -326,7 +330,7 @@ const RecipeEditor = ({
                               onChange={(e) =>
                                 updateRow(row.id, "qty", e.target.value)
                               }
-                              className="text-center font-bold"
+                              className="text-center font-medium"
                               min="1"
                               step="1"
                             />
@@ -335,14 +339,14 @@ const RecipeEditor = ({
                       </div>
 
                       {/* On Hand Read Only */}
-                      <span className="b4 font-semibold text-text-secondary text-right">
+                      <span className="text-md font-medium text-text-secondary text-right">
                         {ingredient
                           ? `${ingredient.onHand} ${ingredient.baseUnit}`
                           : "-"}
                       </span>
 
                       {/* Est Orders */}
-                      <span className="text-xl font-extrabold text-text-primary text-right">
+                      <span className="text-xl font-bold text-text-primary text-right">
                         {!isNaN(estimatedOrders) ? estimatedOrders : "-"}
                       </span>
 
@@ -384,7 +388,9 @@ const RecipeEditor = ({
             )}
 
             {rows.map((row, index) => {
-              const ingredient = row.ingredientId ? getIngredient(row.ingredientId) : null;
+              const ingredient = row.ingredientId
+                ? getIngredient(row.ingredientId)
+                : null;
 
               let estimatedOrders = NaN;
               if (ingredient && Number(row.qty) > 0) {
@@ -496,7 +502,7 @@ const RecipeEditor = ({
           </div>
 
           {/* Add Ingredients Footer */}
-          <div className="px-4 md:px-8 py-5 border-t border-[#E5E5E5] text-center md:text-left bg-white">
+          <div className="px-4 md:px-8 py-5 border-t border-[#E5E5E5] text-center md:text-left bg-white rounded-b-[24px]">
             <Button
               variant="ghost"
               shape="rounded"
@@ -526,14 +532,44 @@ export const RecipeMatrixView = () => {
 
   // Initial mockup rows
   const initialMeasRows: RecipeRowState[] = [
-    { id: "row1", ingredientId: "1", ingredientName: "Pork face/cheek", qty: "300", unit: "g" },
-    { id: "row2", ingredientId: "2", ingredientName: "Chili (siling labuyo)", qty: "10", unit: "g" },
-    { id: "row3", ingredientId: "3", ingredientName: "White onion", qty: "50", unit: "g" },
-    { id: "row4", ingredientId: "4", ingredientName: "Calamansi", qty: "3", unit: "pcs" },
+    {
+      id: "row1",
+      ingredientId: "1",
+      ingredientName: "Pork face/cheek",
+      qty: "300",
+      unit: "g",
+    },
+    {
+      id: "row2",
+      ingredientId: "2",
+      ingredientName: "Chili (siling labuyo)",
+      qty: "10",
+      unit: "g",
+    },
+    {
+      id: "row3",
+      ingredientId: "3",
+      ingredientName: "White onion",
+      qty: "50",
+      unit: "g",
+    },
+    {
+      id: "row4",
+      ingredientId: "4",
+      ingredientName: "Calamansi",
+      qty: "3",
+      unit: "pcs",
+    },
   ];
 
   const initialUnitRows: RecipeRowState[] = [
-    { id: "u1", ingredientId: "6", ingredientName: "Pork belly", qty: "1", unit: "pcs" },
+    {
+      id: "u1",
+      ingredientId: "6",
+      ingredientName: "Pork belly",
+      qty: "1",
+      unit: "pcs",
+    },
   ];
 
   return (
@@ -597,12 +633,16 @@ export const RecipeMatrixView = () => {
             headerColorClass="bg-[#FDD26E]"
             mode={segmentedMode}
             initialRows={
-              segmentedMode === "measurement" ? initialMeasRows : initialUnitRows
+              segmentedMode === "measurement"
+                ? initialMeasRows
+                : initialUnitRows
             }
           />
         )}
 
-        {"Sinigang na Baboy".toLowerCase().includes(searchQuery.toLowerCase()) && (
+        {"Sinigang na Baboy"
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase()) && (
           <RecipeEditor
             name="Sinigang na Baboy"
             badgeLabel="Soup"

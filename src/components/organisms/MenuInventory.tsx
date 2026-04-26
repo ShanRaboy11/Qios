@@ -5,25 +5,25 @@ import React, { useState, useMemo } from "react";
 /* ------------------------------------------------------------------ */
 /*  Tokens                                                              */
 /* ------------------------------------------------------------------ */
-const AMBER = "#ffc670";
-const AMBER_LIGHT = "#fff3de";
-const AMBER_DARK = "#92600a";
-const ACCENT = "#ff5269";
-const ACCENT_LIGHT = "#fff0f2";
-const ACCENT_DARK = "#b5192e";
-const INK = "#2d2d2d";
-const MUTED = "#707070";
-const FAINT = "#b0a898";
+export const AMBER = "#ffc670";
+export const AMBER_LIGHT = "#fff3de";
+export const AMBER_DARK = "#92600a";
+export const ACCENT = "#ff5269";
+export const ACCENT_LIGHT = "#fff0f2";
+export const ACCENT_DARK = "#b5192e";
+export const INK = "#2d2d2d";
+export const MUTED = "#707070";
+export const FAINT = "#b0a898";
 
-const CARD_SHADOW =
+export const CARD_SHADOW =
   "0 0 0 1.5px rgba(255,198,112,0.22), 0 2px 8px rgba(0,0,0,0.04)";
-const CARD_SHADOW_HOVER =
+export const CARD_SHADOW_HOVER =
   "0 0 0 2px rgba(255,198,112,0.5),  0 4px 16px rgba(0,0,0,0.07)";
 
 /* ------------------------------------------------------------------ */
 /*  Stock-level color palette                                           */
 /* ------------------------------------------------------------------ */
-const STOCK_COLORS = {
+export const STOCK_COLORS = {
   high: {
     band: "#e0f2fe",
     icon: "#bae6fd",
@@ -47,9 +47,9 @@ const STOCK_COLORS = {
   },
 };
 
-type StatusKey = "high" | "medium" | "low";
+export type StatusKey = "high" | "medium" | "low";
 
-function pctToStatus(pct: number): StatusKey {
+export function pctToStatus(pct: number): StatusKey {
   if (pct > 60) return "high";
   if (pct > 30) return "medium";
   return "low";
@@ -58,14 +58,14 @@ function pctToStatus(pct: number): StatusKey {
 /* ------------------------------------------------------------------ */
 /*  Category config                                                     */
 /* ------------------------------------------------------------------ */
-interface CatCfg {
+export interface CatCfg {
   fg: string;
   bg: string;
   strip: string;
   iconBg: string;
   emoji: string;
 }
-const CAT_CFG: Record<string, CatCfg> = {
+export const CAT_CFG: Record<string, CatCfg> = {
   "Meat & Poultry": {
     fg: "#92400e",
     bg: "rgba(245,158,11,0.12)",
@@ -95,7 +95,7 @@ const CAT_CFG: Record<string, CatCfg> = {
     emoji: "🥚",
   },
 };
-const DEFAULT_CAT: CatCfg = {
+export const DEFAULT_CAT: CatCfg = {
   fg: MUTED,
   bg: "rgba(112,112,112,0.1)",
   strip: "#b0a898",
@@ -121,7 +121,7 @@ export interface IngredientData {
   unit: string;
 }
 
-type ModalAction =
+export type ModalAction =
   | { type: "add-dish" }
   | { type: "add-ingredient"; cat?: string }
   | { type: "edit-dish"; data: DishData }
@@ -134,7 +134,7 @@ type ModalAction =
 /* ------------------------------------------------------------------ */
 /*  Sample data                                                         */
 /* ------------------------------------------------------------------ */
-const DISH_DATA: DishData[] = [
+export const DISH_DATA: DishData[] = [
   { name: "Spicy Seafood Noodles", servings: 20, max: 20, status: "high" },
   { name: "Grilled Chicken Rice", servings: 15, max: 20, status: "high" },
   { name: "Beef Steak Plate", servings: 8, max: 20, status: "medium" },
@@ -146,7 +146,7 @@ const DISH_DATA: DishData[] = [
   { name: "Green Curry Bowl", servings: 2, max: 20, status: "low" },
 ];
 
-const INGREDIENT_DATA: IngredientData[] = [
+export const INGREDIENT_DATA: IngredientData[] = [
   {
     cat: "Meat & Poultry",
     name: "Chicken Breast",
@@ -180,12 +180,12 @@ const INGREDIENT_DATA: IngredientData[] = [
   { cat: "Dairy & Eggs", name: "Butter", stock: 2, max: 8, unit: "kg" },
 ];
 
-const DISH_ICONS = ["🍜", "🍗", "🥩", "🥦", "🍚", "🍲", "🍝", "🍮", "🍛"];
+export const DISH_ICONS = ["🍜", "🍗", "🥩", "🥦", "🍚", "🍲", "🍝", "🍮", "🍛"];
 
 /* ------------------------------------------------------------------ */
 /*  Icons                                                               */
 /* ------------------------------------------------------------------ */
-const IcoChevronLeft = () => (
+export const IcoChevronLeft = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
     <path
       d="M15 18l-6-6 6-6"
@@ -196,7 +196,7 @@ const IcoChevronLeft = () => (
     />
   </svg>
 );
-const IcoChevronDown = () => (
+export const IcoChevronDown = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
     <path
       d="M6 9l6 6 6-6"
@@ -207,7 +207,7 @@ const IcoChevronDown = () => (
     />
   </svg>
 );
-const IcoInfo = () => (
+export const IcoInfo = () => (
   <svg width="11" height="11" viewBox="0 0 24 24" fill="none">
     <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2.2" />
     <path
@@ -218,7 +218,7 @@ const IcoInfo = () => (
     />
   </svg>
 );
-const IcoSearch = () => (
+export const IcoSearch = () => (
   <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
     <circle cx="11" cy="11" r="8" stroke={FAINT} strokeWidth="2" />
     <path
@@ -229,7 +229,7 @@ const IcoSearch = () => (
     />
   </svg>
 );
-const IcoPlus = () => (
+export const IcoPlus = () => (
   <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
     <path
       d="M12 5v14M5 12h14"
@@ -239,7 +239,7 @@ const IcoPlus = () => (
     />
   </svg>
 );
-const IcoPencil = () => (
+export const IcoPencil = () => (
   <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
     <path
       d="M15.232 5.232l3.536 3.536M9 11l-5 5v4h4l5-5M16.5 3.5a2.121 2.121 0 013 3L7 19H4v-3L16.5 3.5z"
@@ -250,7 +250,7 @@ const IcoPencil = () => (
     />
   </svg>
 );
-const IcoTrash = () => (
+export const IcoTrash = () => (
   <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
     <path
       d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"
@@ -261,7 +261,7 @@ const IcoTrash = () => (
     />
   </svg>
 );
-const IcoGrid = () => (
+export const IcoGrid = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
     <rect
       x="3"
@@ -301,7 +301,7 @@ const IcoGrid = () => (
     />
   </svg>
 );
-const IcoList = () => (
+export const IcoList = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
     <path
       d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"
@@ -311,7 +311,7 @@ const IcoList = () => (
     />
   </svg>
 );
-const IcoX = () => (
+export const IcoX = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
     <path
       d="M18 6L6 18M6 6l12 12"
@@ -321,7 +321,7 @@ const IcoX = () => (
     />
   </svg>
 );
-const IcoWarning = () => (
+export const IcoWarning = () => (
   <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
     <path
       d="M12 9v4M12 17h.01"
@@ -2130,7 +2130,7 @@ function DishGrid({
     <div
       style={{
         display: "grid",
-        gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
+        gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
         gap: 16,
       }}
     >
@@ -3080,21 +3080,17 @@ function IngredientSection({
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
+              gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
               gap: 16,
             }}
           >
             <AddIngredientCard
               catName={catName}
               onAction={onAction}
-              className="add-ingr-card-grid"
             />
             {items.map((item) => (
               <IngredientCard key={item.name} data={item} onAction={onAction} />
             ))}
-          </div>
-          <div className="add-ingr-row-mobile" style={{ display: "none" }}>
-            <AddIngredientRow catName={catName} onAction={onAction} />
           </div>
         </>
       ) : (
@@ -3188,8 +3184,6 @@ const RESPONSIVE_CSS = `
     .desktop-row-extras   { display: none !important; }
     .mobile-chevron       { display: flex !important; }
     .mobile-expanded      { display: flex !important; }
-    .add-ingr-card-grid   { display: none !important; }
-    .add-ingr-row-mobile  { display: flex !important; }
   }
 `;
 
