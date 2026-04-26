@@ -193,9 +193,8 @@ export function SubscriptionPackage({ onNext }: { onNext: () => void }) {
       <div className="w-full max-w-[460px]">
         <Button 
           variant="primary" 
-          shape="pill" 
           size="lg" 
-          className="w-full h-14 lg:h-16 b2 font-bold text-lg shadow-lg shadow-orange-100 transform transition-all active:scale-[0.98] bg-[var(--color-brand-primary)] text-white"
+          className="w-full h-13 lg:h-13 b2 font-bold text-lg shadow-lg shadow-secondary transform transition-all active:scale-[0.98] bg-[var(--color-brand-secondary)] text-white"
           onClick={onNext}
         >
           Select {activePackage.name}

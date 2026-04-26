@@ -65,7 +65,7 @@ export default function OnboardingPage() {
               <Button 
                 variant="primary" 
                 size="lg" 
-                className="h-14 lg:h-16 flex-1 b2 font-bold text-lg shadow-xl shadow-orange-200/50 text-[var(--color-text-tertiary)] transition-all duration-300" 
+                className="h-13 lg:h-13 flex-1 b2 font-bold text-lg shadow-xl shadow-orange-200/50 text-[var(--color-text-tertiary)] transition-all duration-300" 
                 onClick={nextStep}
               >
                 Continue

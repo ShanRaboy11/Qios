@@ -191,7 +191,7 @@ export function ContactInformation({ onNext }: ContactInformationProps) {
           variant="primary"
           size="lg"
           className={cn(
-            "w-[420px] h-[55px] b2 transition-all duration-500 shadow-none border-none max-w-[480px]",
+            "w-[420px] h-13 lg:h-13 b2 transition-all duration-500 shadow-none border-none max-w-[480px]",
             isOtpComplete ? "bg-[var(--color-brand-secondary)] text-text-tertiary scale-[1.02]" : "bg-neutral-300 text-white cursor-not-allowed"
           )}
           onClick={() => isOtpComplete && onNext()}
