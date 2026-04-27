@@ -193,6 +193,7 @@ export const ProblemSolution = () => {
           </div>
         ))}
       </div>
+      <div className="absolute bottom-0 inset-x-0 h-48 bg-gradient-to-t from-bg-primary via-bg-primary/50 to-transparent pointer-events-none z-[20]" />
     </section>
   );
 };

@@ -184,6 +184,40 @@ export default function SubscriptionPlans() {
       className="relative w-full py-24 px-6 bg-bg-primary overflow-hidden"
       id="subscription"
     >
+      <div className="absolute top-0 inset-x-0 h-48 bg-gradient-to-b from-bg-primary via-bg-primary/50 to-transparent pointer-events-none z-[10]" />
+      <div
+        className="absolute -top-[10%] -left-[10%] w-[60%] h-[60%] rounded-full opacity-40 pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(circle at center, #FFD77A 0%, transparent 70%)",
+          filter: "blur(110px)",
+        }}
+      />
+      <div
+        className="absolute -bottom-[15%] -right-[10%] w-[70%] h-[70%] rounded-full opacity-35 pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(circle at center, #FF5269 0%, transparent 70%)",
+          filter: "blur(130px)",
+        }}
+      />
+      <div
+        className="absolute top-1/4 right-[5%] w-[40%] h-[50%] rounded-full opacity-20 pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(circle at center, #ffc670 0%, transparent 60%)",
+          filter: "blur(90px)",
+        }}
+      />
+      <div
+        className="absolute bottom-1/4 left-[5%] w-[30%] h-[40%] rounded-full opacity-15 pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(circle at center, #FF5269 0%, transparent 60%)",
+          filter: "blur(80px)",
+        }}
+      />
+
       <div className="max-w-7xl mx-auto relative z-10">
         <div className="text-center mb-16 space-y-4">
           <h1 className="h1 text-text-primary tracking-tight max-w-2xl mx-auto">

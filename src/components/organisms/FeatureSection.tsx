@@ -104,7 +104,7 @@ export default function FeatureSection() {
 
   return (
     <section className="w-full py-24 px-4 md:px-8 lg:px-12 bg-bg-primary relative overflow-hidden">
-      <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-bg-primary via-bg-primary/80 to-transparent z-[2] pointer-events-none" />
+      <div className="absolute top-0 inset-x-0 h-48 bg-gradient-to-b from-bg-primary via-bg-primary/50 to-transparent z-[10] pointer-events-none" />
       <div
         className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-64 opacity-20 pointer-events-none"
         style={{
@@ -263,6 +263,7 @@ export default function FeatureSection() {
           </div>
         </div>
       </div>
+      <div className="absolute bottom-0 inset-x-0 h-48 bg-gradient-to-t from-bg-primary via-bg-primary/50 to-transparent pointer-events-none z-[10]" />
     </section>
   );
 }
