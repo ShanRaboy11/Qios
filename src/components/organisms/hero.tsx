@@ -1,6 +1,5 @@
 import React from "react";
 import { Button } from "@/components/atoms/Button";
-import { Navbar } from "@/components/organisms/navbar";
 
 export const Hero = () => {
   const vectorStyle =
@@ -14,14 +13,7 @@ export const Hero = () => {
 
   return (
     <section className="w-full max-w-[1440px] h-screen bg-text-tertiary flex items-center justify-start mx-auto relative z-[10]">
-      <div className="absolute top-8 left-1/2 -translate-x-1/2 w-[100vw] flex justify-center z-[100]">
-        <div className="w-full">
-          <Navbar variant="transparent" />
-        </div>
-      </div>
-
       <div className="w-full flex flex-col md:grid md:grid-cols-[max-content_1fr] gap-y-16 md:gap-y-[100px] lg:gap-y-[120px] xl:gap-y-16 md:gap-x-8 lg:gap-x-12 px-6 md:px-12 xl:px-0 xl:contents mt-32 md:mt-16 lg:mt-20 xl:mt-0 relative z-[70] items-center md:items-start">
-        {/* contents */}
         <div className="col-start-1 row-start-1 flex justify-center md:justify-start xl:contents md:pl-4 lg:pl-8 xl:pl-0">
           <div className="relative xl:absolute left-auto xl:left-[-150px] top-auto xl:top-[48%] translate-y-0 xl:-translate-y-1/2 z-[70] flex flex-col justify-between w-full max-w-[400px] md:max-w-none md:w-[369px] xl:w-[369px] h-auto xl:h-[371px] items-center text-center md:items-start md:text-left">
             <div className="flex flex-col items-center md:items-start">
@@ -55,10 +47,8 @@ export const Hero = () => {
           </div>
         </div>
 
-        {/* mockups */}
         <div className="hidden md:flex xl:contents col-start-2 row-start-1 justify-start items-center w-full">
           <div className="relative xl:absolute w-0 h-0 xl:w-auto xl:h-auto z-[65] top-auto xl:top-[110px] left-0 md:left-[-100px] lg:left-[-60px] xl:left-[480px] scale-[0.45] md:scale-[0.48] lg:scale-[0.58] xl:scale-100 origin-left xl:origin-top-left pointer-events-none xl:pointer-events-auto">
-            {/* ipad mockup base */}
             <img
               src="svg/ipad.svg"
               alt="iPad Mockup"
@@ -91,7 +81,6 @@ export const Hero = () => {
               />
             </div>
 
-            {/* ipad shadows */}
             <div
               className="hidden xl:block absolute z-30"
               style={{
@@ -119,7 +108,6 @@ export const Hero = () => {
               }}
             />
 
-            {/* tablet-only phone mockup */}
             <div
               className="hidden md:block xl:hidden absolute z-[80]"
               style={{
@@ -164,7 +152,6 @@ export const Hero = () => {
           </div>
         </div>
 
-        {/* analytics */}
         <div className="col-start-1 row-start-2 flex justify-center md:justify-start xl:contents md:pl-4 lg:pl-8 xl:pl-0">
           <div className="relative xl:absolute bottom-auto xl:bottom-12 left-auto xl:left-[-150px] z-[60] flex flex-row flex-wrap md:flex-nowrap items-center justify-center md:justify-start gap-8 md:gap-6 lg:gap-8 xl:gap-[25px] w-full md:w-max xl:w-auto">
             <div className="flex flex-col items-center md:items-start text-center md:text-left gap-[4px] w-[120px] md:w-[135px] lg:w-[145px] xl:w-[129px]">
@@ -203,7 +190,6 @@ export const Hero = () => {
           </div>
         </div>
 
-        {/* logo carousels */}
         <div className="col-start-2 row-start-2 flex justify-center md:justify-start xl:contents w-full overflow-hidden md:overflow-visible">
           <div
             className="relative xl:absolute bottom-auto xl:bottom-12 right-auto xl:right-[-150px] w-full md:w-[350px] lg:w-[480px] xl:w-[950px] overflow-hidden z-[60] bg-transparent pointer-events-none mt-4 md:mt-0 md:ml-8 lg:ml-12 xl:ml-0 md:mr-4 lg:mr-6 xl:mr-0"
@@ -259,7 +245,6 @@ export const Hero = () => {
         </div>
       </div>
 
-      {/* desktop phone mockup */}
       <div
         className="hidden xl:block absolute z-[80]"
         style={{
@@ -300,7 +285,6 @@ export const Hero = () => {
         </div>
       </div>
 
-      {/* vectors */}
       <div
         className="relative shrink-0 opacity-50 -ml-[400px]"
         style={{
@@ -437,7 +421,6 @@ export const Hero = () => {
         </svg>
       </div>
 
-      {/* blushes */}
       <div
         className="absolute pointer-events-none overflow-visible"
         style={{
