@@ -92,7 +92,7 @@ export default function DraftPage() {
       </SectionWrapper>
 
       <SectionWrapper title="QR Scanner">
-        <div>
+        <div className="w-full flex items-center justify-center p-12 bg-bg-primary min-h-[700px]">
           <QrScanner />
         </div>
       </SectionWrapper>
