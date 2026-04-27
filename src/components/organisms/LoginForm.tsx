@@ -74,7 +74,8 @@ export const LoginForm = () => {
         await supabase.auth.signInWithPassword({ email, password });
 
       if (signInError || !signInData.user || !signInData.session) {
-        setError(signInError?.message ?? "Invalid email or password.");
+        // Adhere to cybersecurity standards: Do not leak whether the email exists
+        setError("Invalid email or password. Please try again.");
         return;
       }
 
@@ -91,8 +92,14 @@ export const LoginForm = () => {
         router.push("/admin/dashboard");
         return;
       }
-      if (jwtRole && jwtTenantId) {
+      
+      if (jwtRole === "admin" && jwtTenantId) {
         router.push(`/${jwtTenantId}/dashboard`);
+        return;
+      }
+
+      if (jwtRole === "employee" && jwtTenantId) {
+        router.push(`/${jwtTenantId}/employee/dashboard`);
         return;
       }
 
@@ -113,8 +120,12 @@ export const LoginForm = () => {
 
       if (profile.role === "super_admin") {
         router.push("/admin/dashboard");
-      } else {
+      } else if (profile.role === "admin" && profile.tenant_id) {
         router.push(`/${profile.tenant_id}/dashboard`);
+      } else if (profile.role === "employee" && profile.tenant_id) {
+        router.push(`/${profile.tenant_id}/employee/dashboard`);
+      } else {
+        setError("Account configuration is incomplete.");
       }
     } catch {
       setError("An unexpected error occurred. Please try again.");

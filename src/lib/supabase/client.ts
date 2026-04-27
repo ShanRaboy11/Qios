@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createBrowserClient } from "@supabase/ssr";
 
 export function createSupabaseBrowserClient(persistSession = true) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -8,23 +8,7 @@ export function createSupabaseBrowserClient(persistSession = true) {
     throw new Error("Supabase browser credentials are not configured.");
   }
 
-  // When "Remember me" is off, use sessionStorage so the session is cleared
-  // when the tab/window is closed. When it is on, fall back to the default
-  // localStorage so the session survives browser restarts.
-  // persistSession is always true; storage type controls the lifetime.
-  const storage =
-    typeof window !== "undefined"
-      ? persistSession
-        ? window.localStorage
-        : window.sessionStorage
-      : undefined;
-
-  return createClient(supabaseUrl, supabaseAnonKey, {
-    auth: {
-      persistSession: true,
-      storage,
-      autoRefreshToken: true,
-      detectSessionInUrl: true,
-    },
-  });
+  // @supabase/ssr inherently synchronizes the user's session with browser cookies.
+  // This is required so that the Next.js Middleware can read the user's session on the server.
+  return createBrowserClient(supabaseUrl, supabaseAnonKey);
 }
