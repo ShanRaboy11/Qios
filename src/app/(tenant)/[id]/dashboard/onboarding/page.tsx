@@ -2,8 +2,8 @@
 import React, { useState } from "react";
 import { FileText, Contact, ShoppingBag, Component, IdCard } from "lucide-react";
 import { Button } from "@/components/atoms/Button";
+import { cn } from "@/lib/utils";
 
-// Components
 import { OnboardingSidebar } from "./components/Sidebar";
 import { BusinessInformation } from "./components/BusinessInformation";
 import { ContactInformation } from "./components/ContactInformation";
@@ -27,39 +27,45 @@ export default function OnboardingPage() {
   const handleFinalize = (data: any) => {
     console.log("Final Onboarding Data:", data);
     alert("Onboarding Completed!");
-    // Redirect or trigger API call here
   };
 
   return (
-    <div className="flex min-h-screen bg-white">
+    <div className="flex flex-col lg:flex-row min-h-screen bg-[var(--color-bg-primary)]">
+      
+      {/* Sidebar */}
       <OnboardingSidebar steps={steps} currentStep={currentStep} />
 
-      <div className="flex-1 bg-[var(--color-bg-primary)] flex flex-col justify-center px-24">
-        <div className="w-full mb-12">
-          <h1 className="h1 text-[var(--color-text-primary)] leading-tight whitespace-nowrap">
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col justify-center items-center lg:items-start px-6 py-10 md:px-16 lg:pl-[50%] xl:pl-[60%] lg:pr-24 min-h-screen">
+        
+        {/* Header */}
+        <div className="w-full mb-8 lg:mb-12 text-center lg:text-left">
+          <h1 className="text-3xl md:text-4xl lg:h1 text-[var(--color-text-primary)] leading-tight lg:whitespace-nowrap">
             {currentStep === 1 
               ? "Business Information" 
               : steps.find(s => s.id === currentStep)?.title}
           </h1>
         </div>
 
-        <div className={currentStep === 4 ? "max-w-2xl w-full" : "max-w-[450px] w-full"}>
+        <div className={cn(
+          "w-full transition-all duration-500",
+          currentStep === 4 ? "max-w-2xl" : "max-w-[450px]"
+        )}>
           <div className="min-h-fit">
             {currentStep === 1 && <BusinessInformation />}
             {currentStep === 2 && <ContactInformation onNext={nextStep} />}
             {currentStep === 3 && <AuthCredentials />}
             {currentStep === 4 && <SubscriptionPackage onNext={nextStep} />}
-            {/* Pass the handleFinalize function here */}
             {currentStep === 5 && <FeatureConfig onFinish={handleFinalize} />}
           </div>
 
           {/* Navigation Button for Steps 1 & 3 */}
           {currentStep !== 2 && currentStep !== 4 && currentStep !== 5 && (
-            <div className="flex mt-20"> 
+            <div className="flex mt-12 lg:mt-20"> 
               <Button 
                 variant="primary" 
                 size="lg" 
-                className="h-16 flex-1 font-bold text-lg shadow-xl shadow-orange-200/50" 
+                className="h-14 lg:h-16 flex-1 b2 font-bold text-lg shadow-xl shadow-orange-200/50 text-[var(--color-text-tertiary)] transition-all duration-300" 
                 onClick={nextStep}
               >
                 Continue

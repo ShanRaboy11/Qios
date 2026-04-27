@@ -9,29 +9,38 @@ interface SearchFilterBarProps {
   onSearch?: (value: string) => void;
   onFilterClick?: () => void;
   className?: string;
+  searchWidth?: string;
+  placeholder?: string;
+  supportiveText?: string;
 }
 
 export const SearchFilterBar = ({
   onSearch,
   onFilterClick,
   className,
+  searchWidth,
+  placeholder = "Search tenants by name, ID, or owner...",
+  supportiveText = "Ex: Juan Dela Cruz, ORD-123...",
 }: SearchFilterBarProps) => {
   return (
     <div
       className={cn(
-        "w-full flex flex-col md:flex-row items-start gap-3",
+        "w-full flex flex-col md:flex-row items-center gap-3",
         className,
       )}
     >
       {/* 1. Search Field */}
-      <div className="flex-grow w-full">
+      <div 
+        className={cn("w-full", !searchWidth && "flex-grow")}
+        style={searchWidth ? { width: searchWidth, flex: "0 0 auto" } : undefined}
+      >
         <FormField
           label=""
-          placeholder="Search tenants by name, ID, or owner..."
-          supportiveText="Ex: Juan Dela Cruz, ORD-123..."
+          placeholder={placeholder}
+          supportiveText=""
           leftIcon={<Search size={20} />}
           onChange={(e) => onSearch?.(e.target.value)}
-          className="max-w-none mt-[17px]"
+          className="max-w-none mb-0"
         />
       </div>
 
@@ -39,7 +48,7 @@ export const SearchFilterBar = ({
       <button
         onClick={onFilterClick}
         className={cn(
-          "md:mt-[22px] h-[52px] px-6 flex items-center gap-2 bg-white border-2 border-[#E5E5E5] rounded-2xl",
+          "h-[52px] px-6 flex items-center gap-2 bg-white border-2 border-[#E5E5E5] rounded-2xl",
           "hover:bg-slate-50 active:scale-95 transition-all group",
           "w-full md:w-auto justify-center shrink-0",
         )}
