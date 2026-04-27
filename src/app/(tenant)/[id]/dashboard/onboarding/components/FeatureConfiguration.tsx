@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Required } from "./BusinessInformation";
 import { Button } from "@/components/atoms/Button"; 
+import { ArrowLeft, ChevronLeft } from "lucide-react";
 
 const CustomLockedToggle = ({ 
   isOn, 
@@ -47,9 +48,10 @@ const CustomLockedToggle = ({
 
 interface FeatureConfigProps {
   onFinish?: (data: any) => void;
+    onBack: () => void;
 }
 
-export function FeatureConfig({ onFinish }: FeatureConfigProps) {
+export function FeatureConfig({ onFinish, onBack }: FeatureConfigProps) {
   const [inventoryMode, setInventoryMode] = useState<"unit" | "measurement">("unit");
   const [generalFeatures, setGeneralFeatures] = useState({
     ai: true, inventory: false, analytics: true, notifications: false, customization: false,
@@ -139,11 +141,20 @@ export function FeatureConfig({ onFinish }: FeatureConfigProps) {
       </div>
 
       {/* Finalize Button */}
-      <div className="flex pt-4">
+      <div className="flex flex-row gap-10 pt-4">
+        <Button 
+          variant="ghost" 
+          size="lg" 
+          className="h-13 lg:h-13 px-5 b2 border-neutral-200 text-neutral-500" 
+          onClick={onBack}
+        >
+          <ArrowLeft className="w-5 h-5 mr-1" />
+          Back
+        </Button>
         <Button 
           variant="primary" 
           size="lg" 
-          className="h-16 flex-1 b2 shadow-xl shadow-orange-200/50" 
+          className="h-13 lg:h-13 flex-1 b2 shadow-xl shadow-orange-200/50" 
           onClick={handleFinalize}
         >
           Finalize
