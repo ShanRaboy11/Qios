@@ -60,7 +60,7 @@ export const Navbar = ({
     <nav
       ref={navRef}
       className={cn(
-        "relative z-50 flex items-center justify-between w-full overflow-visible",
+        "fixed top-0 left-0 right-0 z-50 flex items-center justify-between w-full overflow-visible",
         "px-[25px] md:px-[79px] py-[10px]",
         "gap-x-8 transition-colors duration-300",
         variant === "filled" || isOpen ? "bg-bg-primary" : "bg-transparent",
@@ -113,7 +113,7 @@ export const Navbar = ({
               (type === "admin" && activeView === link.id) ||
                 (type === "default" && link.id === "home")
                 ? "text-brand-accent"
-                : "text-text-primary hover:text-brand-accent"
+                : "text-text-primary hover:text-brand-accent",
             )}
           >
             {link.label}
@@ -124,7 +124,7 @@ export const Navbar = ({
           <div className="shrink-0">
             <Button
               variant="accent"
-              shape="pill"
+              shape="rounded"
               className="text-[18px]"
               rightIcon={<ArrowRight size={18} strokeWidth={2.5} />}
             >
@@ -180,7 +180,7 @@ export const Navbar = ({
               (type === "admin" && activeView === link.id) ||
                 (type === "default" && link.id === "home")
                 ? "text-brand-accent"
-                : "text-text-primary hover:text-brand-accent active:text-brand-accent"
+                : "text-text-primary hover:text-brand-accent active:text-brand-accent",
             )}
           >
             {link.label}
@@ -190,7 +190,7 @@ export const Navbar = ({
           <div className="pt-2">
             <Button
               variant="accent"
-              shape="pill"
+              shape="rounded"
               className="w-full justify-center active:scale-[0.98] transition-transform text-[18px]"
               rightIcon={<ArrowRight size={18} strokeWidth={2.5} />}
             >

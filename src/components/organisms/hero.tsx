@@ -41,9 +41,12 @@ export const Hero = () => {
             </div>
 
             <div className="flex gap-4 mt-8 xl:mt-0">
-              <Button variant="accent">Schedule a Demo</Button>
+              <Button variant="accent" shape="rounded">
+                Schedule a Demo
+              </Button>
               <Button
                 variant="outline"
+                shape="rounded"
                 className="border-brand-accent text-brand-accent hover:bg-brand-accent hover:border-brand-accent hover:text-white"
               >
                 Learn More
