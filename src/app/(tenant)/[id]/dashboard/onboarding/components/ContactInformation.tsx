@@ -104,7 +104,7 @@ export function ContactInformation({ onNext, onBack }: ContactInformationProps) 
     return () => clearInterval(interval);
   }, [isTimerRunning, timeLeft]);
 
-  const isPhoneValid = phoneNumber.length >= 10;
+  const isPhoneValid = phoneNumber.length === 10;
   const isOtpComplete = otp.every(digit => digit !== "");
 
   return (
@@ -127,6 +127,7 @@ export function ContactInformation({ onNext, onBack }: ContactInformationProps) 
           <input
             type="text"
             placeholder="963 469 4776"
+            maxLength={10}
             value={phoneNumber}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
