@@ -68,10 +68,11 @@ export const Navbar = ({
       ref={navRef}
       className={cn(
         "fixed left-0 right-0 z-[100] flex items-center justify-between w-full overflow-visible",
-        "px-[25px] md:px-[79px] transition-all duration-300",
+        "px-[25px] md:px-[79px] transition-all duration-300 py-[10px]",
+        isScrolled || initialVariant === "filled" ? "top-0" : "top-8",
         isScrolled || initialVariant === "filled" || isOpen
-          ? "bg-bg-primary py-[10px] top-0 shadow-sm"
-          : "bg-transparent py-[10px] top-8",
+          ? "bg-bg-primary shadow-sm"
+          : "bg-transparent",
         className,
       )}
     >
