@@ -4,6 +4,7 @@ import React from "react";
 import FeatureSection from "@/components/organisms/FeatureSection";
 import { ProblemSolution } from "@/components/organisms/ProblemnSolution";
 import SubscriptionPlans from "@/components/organisms/SubscriptionPlans";
+import FAQs from "@/components/organisms/FAQs";
 import { Footer } from "@/components/organisms/footer";
 import { Hero } from "@/components/organisms/hero";
 import { Navbar } from "@/components/organisms/navbar";
@@ -17,6 +18,7 @@ export default function HomePage() {
         <ProblemSolution />
         <FeatureSection />
         <SubscriptionPlans />
+        <FAQs />
       </div>
       <Footer />
     </main>

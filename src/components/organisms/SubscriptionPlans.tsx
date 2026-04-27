@@ -181,7 +181,7 @@ export default function SubscriptionPlans() {
 
   return (
     <section
-      className="relative w-full py-24 px-6 bg-bg-primary overflow-hidden"
+      className="relative w-full py-32 px-6 bg-bg-primary overflow-hidden"
       id="subscription"
     >
       <div className="absolute top-0 inset-x-0 h-48 bg-gradient-to-b from-bg-primary via-bg-primary/50 to-transparent pointer-events-none z-[10]" />
@@ -348,6 +348,7 @@ export default function SubscriptionPlans() {
           </div>
         </div>
       </div>
+      <div className="absolute bottom-0 inset-x-0 h-48 bg-gradient-to-t from-bg-primary via-bg-primary/50 to-transparent pointer-events-none z-0" />
     </section>
   );
 }
