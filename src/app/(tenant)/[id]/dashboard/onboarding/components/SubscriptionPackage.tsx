@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Check, Crown, Zap, Rocket } from "lucide-react";
+import { Check, Crown, Zap, Rocket, ChevronLeft, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge, BadgeColor, BadgeVariant } from "@/components/atoms/Badge";
 import { Button } from "@/components/atoms/Button";
@@ -74,8 +74,7 @@ const packages: Package[] = [
   },
 ];
 
-export function SubscriptionPackage({ onNext }: { onNext: () => void }) {
-  const [selectedId, setSelectedId] = useState("starter");
+export function SubscriptionPackage({ onNext, onBack }: { onNext: () => void; onBack: () => void }) {  const [selectedId, setSelectedId] = useState("starter");
   const activePackage = packages.find((p) => p.id === selectedId) || packages[0];
 
   return (
@@ -190,11 +189,21 @@ export function SubscriptionPackage({ onNext }: { onNext: () => void }) {
       </div>
 
       {/* 3. SELECTION BUTTON */}
-      <div className="w-full max-w-[460px]">
+     <div className="w-full max-w-[460px] flex flex-row gap-10">
+        <Button 
+          variant="ghost" 
+          size="lg" 
+          className="h-13 lg:h-13 px-5 b2 border-neutral-200 text-neutral-500 transition-all" 
+          onClick={onBack}
+        >
+          <ArrowLeft className="w-5 h-5 mr-1" />
+          Back
+        </Button>
         <Button 
           variant="primary" 
+          shape="pill" 
           size="lg" 
-          className="w-full h-13 lg:h-13 b2 font-bold text-lg shadow-lg shadow-secondary transform transition-all active:scale-[0.98] bg-[var(--color-brand-secondary)] text-white"
+          className="flex-1 h-13 lg:h-13 b2 font-bold text-lg shadow-lg shadow-secondary bg-[var(--color-brand-secondary)] text-white"
           onClick={onNext}
         >
           Select {activePackage.name}

@@ -1,14 +1,22 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { Clock, ChevronDown, Search } from "lucide-react";
+import { Clock, ChevronDown, Search, ChevronLeft, ArrowRight, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/atoms/Button";
 import { cn } from "@/lib/utils";
 import { Required } from "./BusinessInformation";
 
 interface ContactInformationProps {
   onNext: () => void;
+  onBack: () => void;
 }
+
+// Country code data
+const countries = [
+  { name: "Philippines", code: "ph", dial: "+63" },
+  { name: "United States", code: "us", dial: "+1" },
+  { name: "Singapore", code: "sg", dial: "+65" },
+];
 
 function CountryCodeSelect({ onSelect }: { onSelect: (dial: string) => void }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -80,13 +88,7 @@ function CountryCodeSelect({ onSelect }: { onSelect: (dial: string) => void }) {
   );
 }
 
-const countries = [
-  { name: "Philippines", code: "ph", dial: "+63" },
-  { name: "United States", code: "us", dial: "+1" },
-  { name: "Singapore", code: "sg", dial: "+65" },
-];
-
-export function ContactInformation({ onNext }: ContactInformationProps) {
+export function ContactInformation({ onNext, onBack }: ContactInformationProps) {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
@@ -106,10 +108,10 @@ export function ContactInformation({ onNext }: ContactInformationProps) {
   const isOtpComplete = otp.every(digit => digit !== "");
 
   return (
-    <div className="flex flex-col items-center w-full space-y-10 animate-in fade-in slide-in-from-right-8 duration-500">
+    <div className="flex flex-col items-start w-full space-y-10 animate-in fade-in slide-in-from-right-8 duration-500 ">
       
       {/* Phone Input Box */}
-      <div className="w-full max-w-[550px] space-y-2">
+      <div className="max-w-[550px] space-y-2">
         <label className="b4 ml-1 font-medium text-text-secondary text-left block">
           Contact Number <Required />
         </label>
@@ -133,6 +135,7 @@ export function ContactInformation({ onNext }: ContactInformationProps) {
           />
 
           <button
+            type="button"
             onClick={() => { if(isPhoneValid) { setTimeLeft(45); setIsTimerRunning(true); }}}
             disabled={!isPhoneValid}
             className={cn(
@@ -147,7 +150,7 @@ export function ContactInformation({ onNext }: ContactInformationProps) {
         </div>
       </div>
 
-      {/* Timer, OTP, and Button */}
+      {/* Timer and OTP */}
       <div className="flex flex-col items-center w-full max-w-[550px] space-y-12 pt-4">
         <div className="flex items-center gap-5">
           <div className="flex items-center gap-2 b2 font-bold text-text-primary text-xl">
@@ -155,6 +158,7 @@ export function ContactInformation({ onNext }: ContactInformationProps) {
             <span>00 : {timeLeft.toString().padStart(2, '0')}</span>
           </div>
           <button
+            type="button"
             onClick={() => { if (timeLeft === 0) { setTimeLeft(45); setIsTimerRunning(true); }}}
             className={cn(
               "b2 border-b-2 font-bold transition-all",
@@ -187,17 +191,31 @@ export function ContactInformation({ onNext }: ContactInformationProps) {
           ))}
         </div>
 
-        <Button
-          variant="primary"
-          size="lg"
-          className={cn(
-            "w-[420px] h-13 lg:h-13 b2 transition-all duration-500 shadow-none border-none max-w-[480px]",
-            isOtpComplete ? "bg-[var(--color-brand-secondary)] text-text-tertiary scale-[1.02]" : "bg-neutral-300 text-white cursor-not-allowed"
-          )}
-          onClick={() => isOtpComplete && onNext()}
-        >
-          Continue
-        </Button>
+        <div className="flex flex-row gap-10 w-full justify-center">
+          <Button 
+            variant="ghost" 
+            size="lg" 
+            className="h-13 lg:h-13 px-5 b2 border-neutral-200 text-neutral-500 transition-all" 
+            onClick={onBack}
+          >
+            <ArrowLeft className="w-5 h-5 mr-1" />
+            Back
+          </Button>
+          <Button
+            variant="primary"
+            size="lg"
+            className={cn(
+              "flex-1 h-13 lg:h-13 b2 transition-all duration-500 shadow-none border-none max-w-[480px] font-bold text-lg",
+              isOtpComplete 
+                ? "bg-[var(--color-brand-secondary)] text-text-tertiary scale-[1.02]" 
+                : "bg-neutral-300 text-white cursor-not-allowed"
+            )}
+            onClick={() => isOtpComplete && onNext()}
+          >
+            Continue
+            <ArrowRight className="w-5 h-5 ml-2" />
+          </Button>
+        </div>
       </div>
     </div>
   );
