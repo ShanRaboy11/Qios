@@ -62,7 +62,7 @@ const cardsData = [
   {
     id: 5,
     title: "Total Transparency",
-    desc: "Monitor your staff, revenue, and inventory from anywhere — even while you're on Bantayan Island.",
+    desc: "Monitor your staff, revenue, and inventory from anywhere—even while you're on Bantayan Island.",
     icon: LayoutDashboard,
     bgColor: "bg-text-primary",
     textColor: "text-white",
@@ -193,6 +193,7 @@ export const ProblemSolution = () => {
           </div>
         ))}
       </div>
+      <div className="absolute bottom-0 inset-x-0 h-48 bg-gradient-to-t from-bg-primary via-bg-primary/50 to-transparent pointer-events-none z-[20]" />
     </section>
   );
 };
