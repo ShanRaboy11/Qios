@@ -88,7 +88,7 @@ export default function AdminDashboardPage() {
         />
       </div>
 
-      <div className="absolute top-8 left-1/2 -translate-x-1/2 w-full flex justify-center z-[100]">
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full flex justify-center z-[100]">
         <div className="w-full">
           <Navbar
             variant="transparent"
