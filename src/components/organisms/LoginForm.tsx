@@ -8,6 +8,19 @@ import { Badge } from "@/components/atoms/Badge";
 import { Mail, Lock, AlertCircle, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+
+/** Decode a JWT payload for client-side inspection only; this does not verify the token or its claims. */
+function decodeJwtPayload(token: string): Record<string, unknown> {
+  try {
+    const payload = token.split(".")[1];
+    const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const paddedBase64 = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), "=");
+    return JSON.parse(atob(paddedBase64));
+  } catch {
+    return {};
+  }
+}
 
 export const LoginForm = () => {
   const router = useRouter();
@@ -25,7 +38,7 @@ export const LoginForm = () => {
   const vectorStyle =
     "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rotate-[6.521deg] overflow-visible";
 
-  const handleSubmit = (e?: React.FormEvent) => {
+  const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
 
     // Reset errors
@@ -52,26 +65,78 @@ export const LoginForm = () => {
 
     if (hasError) return;
 
-    // Simulate login
     setIsLoading(true);
-    setTimeout(() => {
-      const MOCK_EMAIL = "admin@qios.com";
-      const MOCK_PASSWORD = "password123";
 
-      if (email === MOCK_EMAIL && password === MOCK_PASSWORD) {
-        // SUCCESS: Redirect to the landing page
-        router.push("/");
-      } else {
-        // FAILURE: Show error message
-        setIsLoading(false);
-        setError("Invalid email or password.");
+    try {
+      const supabase = createSupabaseBrowserClient(rememberMe);
+
+      const { data: signInData, error: signInError } =
+        await supabase.auth.signInWithPassword({ email, password });
+
+      if (signInError || !signInData.user || !signInData.session) {
+        // Adhere to cybersecurity standards: Do not leak whether the email exists
+        setError("Invalid email or password. Please try again.");
+        return;
       }
-    }, 1500);
+
+      // Prefer claims injected by Supabase's custom_access_token_hook —
+      // avoids an extra DB round-trip and removes dependency on RLS being
+      // configured on the profiles table.
+      const claims = decodeJwtPayload(signInData.session.access_token);
+      const jwtRole =
+        (claims.role as string | undefined) ??
+        (claims.user_role as string | undefined);
+      const jwtTenantId = claims.tenant_id as string | undefined;
+
+      if (jwtRole === "super_admin") {
+        router.push("/admin/dashboard");
+        return;
+      }
+      
+      if (jwtRole === "admin" && jwtTenantId) {
+        router.push(`/${jwtTenantId}/dashboard`);
+        return;
+      }
+
+      if (jwtRole === "employee" && jwtTenantId) {
+        router.push(`/${jwtTenantId}/employee/dashboard`);
+        return;
+      }
+
+      // Fallback: query the profiles table (requires RLS policy allowing
+      // authenticated users to SELECT their own row).
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("role, tenant_id")
+        .eq("id", signInData.user.id)
+        .single();
+
+      if (profileError || !profile) {
+        setError(
+          "Could not load your account profile. Please contact support.",
+        );
+        return;
+      }
+
+      if (profile.role === "super_admin") {
+        router.push("/admin/dashboard");
+      } else if (profile.role === "admin" && profile.tenant_id) {
+        router.push(`/${profile.tenant_id}/dashboard`);
+      } else if (profile.role === "employee" && profile.tenant_id) {
+        router.push(`/${profile.tenant_id}/employee/dashboard`);
+      } else {
+        setError("Account configuration is incomplete.");
+      }
+    } catch {
+      setError("An unexpected error occurred. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
-      handleSubmit();
+      void handleSubmit();
     }
   };
 
