@@ -70,6 +70,7 @@ const config: Config = {
         "float-y1": "float-y1 15s ease-in-out infinite",
         "scan-line": "scan-line 2s ease-in-out infinite",
         "bracket-pulse": "bracket-pulse 1.5s ease-in-out infinite",
+        
       },
     },
   },
