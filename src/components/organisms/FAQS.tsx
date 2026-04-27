@@ -180,6 +180,7 @@ export default function FAQs() {
           </div>
         </div>
       </div>
+      <div className="absolute bottom-0 inset-x-0 h-48 bg-gradient-to-t from-white via-white/50 to-transparent pointer-events-none z-0" />
     </section>
   );
 }
