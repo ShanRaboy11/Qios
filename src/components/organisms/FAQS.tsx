@@ -5,35 +5,34 @@ import {
   CheckCircle,
   MessageSquare,
   ChevronDown,
-  ChevronUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const faqdata = [
   {
-    question: "can i switch plans later?",
+    question: "Can I switch plans later?",
     answer:
-      "yes — upgrade or downgrade anytime from your admin dashboard. upgrades take effect immediately. downgrades apply at the start of your next billing cycle. your data is always preserved.",
+      "Yes, you can upgrade or downgrade anytime from your admin dashboard. Upgrades take effect immediately, while downgrades apply at the start of your next billing cycle. Your data is always preserved.",
   },
   {
-    question: "what happens when i hit my order limit?",
+    question: "What happens when I hit my order limit?",
     answer:
-      "we won't cut you off. you'll receive a notification when you reach 90% and 100% of your limit. if you consistently exceed it, we'll help you transition to a plan that better fits your volume.",
+      "We won’t cut you off. You’ll receive notifications at 90% and 100% of your limit. If you consistently exceed it, we’ll help you move to a plan that better fits your volume.",
   },
   {
-    question: "what is gemini ai concierge?",
+    question: "What is Gemini AI Concierge?",
     answer:
-      "it's our proprietary ai that acts as a digital waiter. it can answer customer questions about the menu, suggest pairings, handle dietary requests, and guide users through the checkout process naturally.",
+      "It’s our AI-powered assistant that acts like a digital waiter. It can answer menu questions, suggest items, handle dietary requests, and guide customers through checkout.",
   },
   {
-    question: "is there really no setup fee?",
+    question: "Is there really no setup fee?",
     answer:
-      "correct. we believe in providing value first. you can set up your digital menu, qr codes, and branch settings entirely on your own for free. optional on-site support packages are available if needed.",
+      "Yes. You can set up your digital menu, QR codes, and branch settings on your own at no cost. Optional on-site support is available if needed.",
   },
   {
-    question: "can i cancel anytime?",
+    question: "Can I cancel anytime?",
     answer:
-      "absolutely. there are no long-term contracts for basic and business plans. if you cancel, your service will remain active until the end of your current billing period.",
+      "Absolutely. There are no long-term contracts for Basic and Business plans. If you cancel, your service stays active until the end of your current billing period.",
   },
 ];
 
@@ -49,71 +48,123 @@ const AccordionItem = ({
   onclick: () => void;
 }) => {
   return (
-    <div className="border-b border-black/5 last:border-0">
+    <div
+      className={cn(
+        "group border-b border-black/5 last:border-0 transition-colors duration-500",
+        isopen ? "bg-black/[0.02]" : "hover:bg-black/[0.01]",
+      )}
+    >
       <button
         onClick={onclick}
-        className="w-full py-6 px-8 flex items-center justify-between hover:bg-black/[0.01] transition-colors text-left"
+        className="w-full py-6 px-8 flex items-center justify-between text-left"
       >
-        <span className="b2 text-text-primary font-bold">{question}</span>
-        {isopen ? (
-          <ChevronUp className="w-5 h-5 text-text-secondary" />
-        ) : (
-          <ChevronDown className="w-5 h-5 text-text-secondary" />
-        )}
+        <span
+          className={cn(
+            "b3 transition-colors duration-300",
+            isopen ? "text-brand-primary" : "text-text-primary",
+          )}
+        >
+          {question}
+        </span>
+        <div
+          className={cn(
+            "p-1.5 rounded-full transition-all duration-500",
+            isopen ? "bg-brand-primary/20 rotate-180" : "bg-black/5",
+          )}
+        >
+          <ChevronDown
+            className={cn(
+              "w-4 h-4",
+              isopen ? "text-brand-primary" : "text-text-secondary",
+            )}
+          />
+        </div>
       </button>
       <div
         className={cn(
-          "overflow-hidden transition-all duration-300 ease-in-out",
-          isopen ? "max-h-40 opacity-100" : "max-h-0 opacity-0",
+          "grid transition-all duration-500 ease-in-out",
+          isopen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
         )}
       >
-        <div className="px-8 pb-6 b2 text-text-secondary/80 leading-relaxed">
-          {answer}
+        <div className="overflow-hidden">
+          <div className="px-8 pb-6 b1 text-text-secondary leading-relaxed max-w-3xl">
+            {answer}
+          </div>
         </div>
       </div>
     </div>
   );
 };
 
-export default function FAQS() {
+export default function FAQs() {
   const [openindex, setopenindex] = useState<number | null>(0);
 
   return (
-    <section className="w-full py-24 px-6 bg-bg-primary">
-      <div className="max-w-5xl mx-auto">
-        <div className="text-center mb-12">
-          <p className="b2 text-text-primary font-bold mb-6">
-            no hidden fees. cancel anytime. all plans include a 14-day free
-            trial.
-          </p>
+    <section className="relative w-full py-24 px-6 bg-bg-primary overflow-hidden">
+      <div className="absolute top-0 inset-x-0 h-48 bg-gradient-to-b from-bg-primary via-bg-primary/50 to-transparent pointer-events-none z-0" />
+      <div
+        className="absolute top-[10%] -right-[5%] w-[40%] h-[40%] rounded-full opacity-30 pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(circle at center, #ffc670 0%, transparent 70%)",
+          filter: "blur(100px)",
+        }}
+      />
+      <div
+        className="absolute bottom-[5%] -left-[10%] w-[50%] h-[50%] rounded-full opacity-20 pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(circle at center, #ff5269 0%, transparent 70%)",
+          filter: "blur(120px)",
+        }}
+      />
 
-          <div className="flex flex-wrap justify-center gap-x-8 gap-y-4">
-            <div className="flex items-center gap-2 b4 text-text-secondary">
-              <Users size={18} className="text-text-secondary/60" />
-              <span>255+ restaurants trust qios</span>
+      <div className="max-w-4xl mx-auto space-y-10 relative z-10">
+        <div className="bg-white/80 backdrop-blur-sm rounded-[2rem] p-8 md:p-10 border border-brand-primary/20 shadow-sm">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-8 text-center md:text-left">
+            <div>
+              <p className="text-[25px] leading-[125%] font-bold font-figtree text-text-primary mb-1">
+                Still have questions?
+              </p>
+              <p className="b2 text-text-secondary">
+                No hidden fees. All plans include a{" "}
+                <span className="text-brand-primary font-bold">
+                  14-day free trial
+                </span>
+                .
+              </p>
             </div>
-            <div className="flex items-center gap-2 b4 text-text-secondary">
-              <Lock size={16} className="text-text-secondary/60" />
-              <span>soc 2 compliant · data secure</span>
-            </div>
-            <div className="flex items-center gap-2 b4 text-text-secondary">
-              <CheckCircle size={18} className="text-text-secondary/60" />
-              <span>setup in under 30 minutes</span>
+            <div className="flex flex-wrap justify-center gap-6">
+              <div className="flex items-center gap-2 b4 text-text-secondary">
+                <Users className="w-5 h-5 text-brand-primary" /> 255+
+                restaurants
+              </div>
+              <div className="flex items-center gap-2 b4 text-text-secondary">
+                <Lock className="w-5 h-5 text-success-primary" /> SOC 2 Secure
+              </div>
+              <div className="flex items-center gap-2 b4 text-text-secondary">
+                <CheckCircle className="w-5 h-5 text-brand-accent" /> 30m setup
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-[1.5rem] border border-black/5 shadow-sm overflow-hidden">
-          <div className="bg-[#ffebc4] px-8 py-5 flex items-center gap-3 border-b border-black/5">
-            <div className="w-8 h-8 rounded-lg bg-white/40 flex items-center justify-center">
+        <div className="bg-white rounded-[2rem] border border-black/5 shadow-xl shadow-black/[0.02] overflow-hidden">
+          <div className="bg-brand-primary/30 px-8 py-8 flex items-center gap-5 border-b border-black/5">
+            <div className="w-12 h-12 rounded-2xl bg-brand-primary flex items-center justify-center shadow-lg shadow-brand-primary/20">
               <MessageSquare
-                className="w-4 h-4 text-[#ff9d00]"
+                className="w-6 h-6 text-text-tertiary"
                 fill="currentColor"
               />
             </div>
-            <h2 className="text-[25px] font-bold text-[#ff9d00] font-figtree">
-              frequently ask questions
-            </h2>
+            <div>
+              <h2 className="text-[25px] leading-[125%] font-bold font-figtree text-text-primary">
+                Frequently Asked Questions
+              </h2>
+              <p className="b4 text-text-secondary">
+                Everything you need to know about Qios
+              </p>
+            </div>
           </div>
 
           <div className="flex flex-col">
