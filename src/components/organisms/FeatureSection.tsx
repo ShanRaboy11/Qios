@@ -104,7 +104,7 @@ export default function FeatureSection() {
 
   return (
     <section className="w-full py-24 px-4 md:px-8 lg:px-12 bg-bg-primary relative overflow-hidden">
-      <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-bg-primary via-bg-primary/80 to-transparent z-[2] pointer-events-none" />
+      <div className="absolute top-0 inset-x-0 h-48 bg-gradient-to-b from-bg-primary via-bg-primary/50 to-transparent z-[10] pointer-events-none" />
       <div
         className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-64 opacity-20 pointer-events-none"
         style={{
@@ -114,7 +114,6 @@ export default function FeatureSection() {
         }}
       />
 
-      <div className="absolute bottom-0 inset-x-0 h-40 bg-gradient-to-t from-white via-white/50 to-transparent z-[2] pointer-events-none" />
       <div
         className="absolute bottom-0 left-1/4 -translate-x-1/2 translate-y-1/2 w-full h-80 opacity-[0.15] pointer-events-none"
         style={{
@@ -136,10 +135,11 @@ export default function FeatureSection() {
 
       <div className="max-w-7xl mx-auto relative z-10">
         <div className="mb-12 space-y-4">
-          <h2 className="text-4xl md:text-6xl font-bold text-text-primary tracking-tight font-figtree">
-            Hardware-Free <span style={gradientHeaderStyle}>QR Kiosk</span>
-          </h2>
-          <p className="text-lg md:text-xl text-text-secondary max-w-2xl leading-relaxed font-inter">
+          <h1 className="h1 text-text-primary tracking-tight">
+            Hardware-Free <br className="sm:hidden" />
+            <span style={gradientHeaderStyle}>QR Kiosk</span>
+          </h1>
+          <p className="h4 text-text-secondary max-w-[540px]">
             Turn every smartphone into a powerful ordering terminal. No tablets,
             no stands, no friction.
           </p>
@@ -182,11 +182,11 @@ export default function FeatureSection() {
                   </span>
                 </div>
 
-                <h2 className="text-3xl md:text-5xl italic font-ibrand text-text-tertiary leading-tight">
+                <h2 className="font-ibrand font-semibold text-[38px] leading-[125%] italic text-text-tertiary">
                   "Find me a spicy dinner for two under ₱500."
                 </h2>
 
-                <p className="text-lg text-white/60 max-w-md leading-relaxed font-inter">
+                <p className="b1 text-white/60 max-w-md">
                   A natural chat interface that understands context. It
                   recommends, upsells, and modifies orders in real-time.
                 </p>
@@ -210,19 +210,19 @@ export default function FeatureSection() {
           <div className="lg:col-span-4 flex flex-col gap-6">
             <Card className="flex-1">
               <IconBox>{features[0].icon}</IconBox>
-              <h3 className="text-2xl font-bold text-text-primary mt-6 mb-3 font-figtree">
+              <h4 className="font-figtree font-bold text-[25px] leading-[125%] text-text-primary mt-6 mb-3">
                 {features[0].title}
-              </h3>
-              <p className="text-text-secondary leading-relaxed font-inter">
+              </h4>
+              <p className="b1 text-text-secondary">
                 {features[0].description}
               </p>
             </Card>
             <Card className="flex-1">
               <IconBox>{features[1].icon}</IconBox>
-              <h3 className="text-2xl font-bold text-text-primary mt-6 mb-3 font-figtree">
+              <h4 className="font-figtree font-bold text-[25px] leading-[125%] text-text-primary mt-6 mb-3">
                 {features[1].title}
-              </h3>
-              <p className="text-text-secondary leading-relaxed font-inter">
+              </h4>
+              <p className="b1 text-text-secondary">
                 {features[1].description}
               </p>
             </Card>
@@ -231,10 +231,10 @@ export default function FeatureSection() {
           <div className="lg:col-span-4">
             <Card className="h-full">
               <IconBox>{features[2].icon}</IconBox>
-              <h3 className="text-2xl font-bold text-text-primary mt-6 mb-3 font-figtree">
+              <h4 className="font-figtree font-bold text-[25px] leading-[125%] text-text-primary mt-6 mb-3">
                 {features[2].title}
-              </h3>
-              <p className="text-text-secondary leading-relaxed font-inter">
+              </h4>
+              <p className="b1 text-text-secondary">
                 {features[2].description}
               </p>
             </Card>
@@ -242,10 +242,10 @@ export default function FeatureSection() {
           <div className="lg:col-span-4">
             <Card className="h-full">
               <IconBox>{features[3].icon}</IconBox>
-              <h3 className="text-2xl font-bold text-text-primary mt-6 mb-3 font-figtree">
+              <h4 className="font-figtree font-bold text-[25px] leading-[125%] text-text-primary mt-6 mb-3">
                 {features[3].title}
-              </h3>
-              <p className="text-text-secondary leading-relaxed font-inter">
+              </h4>
+              <p className="b1 text-text-secondary">
                 {features[3].description}
               </p>
             </Card>
@@ -253,16 +253,17 @@ export default function FeatureSection() {
           <div className="lg:col-span-4">
             <Card className="h-full">
               <IconBox>{features[4].icon}</IconBox>
-              <h3 className="text-2xl font-bold text-text-primary mt-6 mb-3 font-figtree">
+              <h4 className="font-figtree font-bold text-[25px] leading-[125%] text-text-primary mt-6 mb-3">
                 {features[4].title}
-              </h3>
-              <p className="text-text-secondary leading-relaxed font-inter">
+              </h4>
+              <p className="b1 text-text-secondary">
                 {features[4].description}
               </p>
             </Card>
           </div>
         </div>
       </div>
+      <div className="absolute bottom-0 inset-x-0 h-48 bg-gradient-to-t from-bg-primary via-bg-primary/50 to-transparent pointer-events-none z-[10]" />
     </section>
   );
 }
