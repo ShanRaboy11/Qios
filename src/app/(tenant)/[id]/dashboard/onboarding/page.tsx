@@ -6,7 +6,6 @@ import {
   ShoppingBag, 
   Component, 
   IdCard, 
-  ChevronLeft, 
   ArrowRight, 
   ArrowLeft
 } from "lucide-react";
@@ -30,9 +29,35 @@ const steps = [
 
 export default function OnboardingPage() {
   const [currentStep, setCurrentStep] = useState(1);
+  
+  // States for validation in Step 1 and 3
+  const [businessData, setBusinessData] = useState({ name: "", email: "" });
+  const [authData, setAuthData] = useState({ email: "", password: "", confirm: "" });
+  const [error, setError] = useState("");
 
-  const nextStep = () => setCurrentStep((prev) => Math.min(prev + 1, steps.length));
-  const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 1));
+  const validateEmail = (email: string) => /\S+@\S+\.\S+/.test(email);
+
+  const nextStep = () => {
+    setError("");
+    // Step 1 Validation
+    if (currentStep === 1) {
+      if (!businessData.name.trim()) return setError("Business Name is required");
+      if (!validateEmail(businessData.email)) return setError("A valid business email is required");
+    }
+    // Step 3 Validation
+    if (currentStep === 3) {
+      if (!validateEmail(authData.email)) return setError("Valid Admin Email is required");
+      if (authData.password.length < 8) return setError("Password must be at least 8 characters");
+      if (authData.password !== authData.confirm) return setError("Passwords do not match");
+    }
+
+    setCurrentStep((prev) => Math.min(prev + 1, steps.length));
+  };
+
+  const prevStep = () => {
+    setError("");
+    setCurrentStep((prev) => Math.max(prev - 1, 1));
+  };
   
   const handleFinalize = (data: any) => {
     console.log("Final Onboarding Data:", data);
@@ -55,39 +80,47 @@ export default function OnboardingPage() {
           currentStep === 4 ? "max-w-2xl" : "max-w-[450px]"
         )}>
           <div className="min-h-fit">
-            {currentStep === 1 && <BusinessInformation />}
+            {currentStep === 1 && (
+              <BusinessInformation data={businessData} setData={setBusinessData} error={error} />
+            )}
             
             {currentStep === 2 && (
               <ContactInformation onNext={nextStep} onBack={prevStep} />
             )}
             
-            {currentStep === 3 && <AuthCredentials />}
+            {currentStep === 3 && (
+              <AuthCredentials data={authData} setData={setAuthData} error={error} />
+            )}
+            
             {currentStep === 4 && <SubscriptionPackage onNext={nextStep} onBack={prevStep} />}
             {currentStep === 5 && <FeatureConfig onFinish={handleFinalize} onBack={prevStep} />}
           </div>
 
           {(currentStep === 1 || currentStep === 3) && (
-            <div className="flex flex-row gap-10 mt-12 lg:mt-20"> 
-              {currentStep === 3 && (
+            <div className="flex flex-col mt-12 ">
+              {error && <p className="text-red-500 text-sm mb-4 animate-in fade-in slide-in-from-top-1">{error}</p>}
+              <div className="flex flex-row gap-10"> 
+                {currentStep === 3 && (
+                  <Button 
+                    variant="ghost" 
+                    size="lg" 
+                    className="h-13 lg:h-13 px-5 b2 border-neutral-200 text-neutral-500 transition-all" 
+                    onClick={prevStep}
+                  >
+                    <ArrowLeft className="w-5 h-5 mr-1" />
+                    Back
+                  </Button>
+                )}
                 <Button 
-                  variant="outline" 
+                  variant="primary" 
                   size="lg" 
-                  className="h-13 lg:h-13 px-8 b2 border-neutral-200 text-neutral-500 hover:bg- transition-all" 
-                  onClick={prevStep}
+                  className="h-13 lg:h-13 flex-1 b2 font-bold text-lg shadow-xl shadow-orange-200/50 text-[var(--color-text-tertiary)]" 
+                  onClick={nextStep}
                 >
-                  <ArrowLeft className="w-5 h-5 mr-1" />
-                  Back
+                  Continue
+                  <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
-              )}
-              <Button 
-                variant="primary" 
-                size="lg" 
-                className="h-13 lg:h-13 flex-1 b2 font-bold text-lg shadow-xl shadow-orange-200/50 text-[var(--color-text-tertiary)]" 
-                onClick={nextStep}
-              >
-                Continue
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </Button>
+              </div>
             </div>
           )}
         </div>
