@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Check, ExternalLink, Info, Sparkles } from "lucide-react";
+import { Check, ExternalLink, Info, Sparkles, Rocket } from "lucide-react";
 import { Button } from "../atoms/Button";
 import { Badge } from "../atoms/Badge";
 import { cn } from "@/lib/utils";
@@ -35,113 +35,99 @@ const PlanCard = ({
   const isEnterprise = variant === "enterprise";
   const isBasic = variant === "basic";
 
-  const cardStyles = {
-    basic: "border-brand-primary/30",
-    business: "border-brand-accent shadow-2xl scale-105 z-20",
-    enterprise: "border-success-primary/30",
-  };
-
-  const blushColors = {
-    basic: "from-[#ffc670]/20",
-    business: "from-[#ff5269]/20",
-    enterprise: "from-[#1fad66]/20",
-  };
-
-  const checkCircleStyles = {
-    basic: "bg-brand-primary/10",
-    business: "bg-brand-accent/10",
-    enterprise: "bg-success-secondary",
-  };
-
-  const checkIconStyles = {
-    basic: "text-brand-primary",
-    business: "text-brand-accent",
-    enterprise: "text-success-primary",
-  };
+  const styles = {
+    basic: {
+      border: "border-[#ffc670]/80",
+      bg: "bg-white bg-gradient-to-b from-white to-[#FFF1D6]",
+      checkBg: "bg-[#ffc670]/20",
+      checkIcon: "text-[#ffc670]",
+    },
+    business: {
+      border: "border-[#ff5269]/80",
+      bg: "bg-white bg-gradient-to-b from-white to-[#FFDFE4]",
+      checkBg: "bg-[#ff5269]/20",
+      checkIcon: "text-[#ff5269]",
+    },
+    enterprise: {
+      border: "border-[#1fad66]/80",
+      bg: "bg-white bg-gradient-to-b from-white to-[#DFF2E8]",
+      checkBg: "bg-[#1fad66]/20",
+      checkIcon: "text-[#1fad66]",
+    },
+  }[variant];
 
   return (
     <div
       className={cn(
-        "relative flex flex-col p-6 md:p-8 rounded-[2.5rem] border bg-white h-full transition-all duration-300",
-        cardStyles[variant],
+        "relative flex flex-col rounded-[2.5rem] p-8 h-full border transition-all duration-300",
+        styles.bg,
+        styles.border,
+        isBusiness ? "shadow-2xl z-20" : "shadow-md z-10",
       )}
     >
-      {/* contained blushes to prevent cutting the badge */}
-      <div className="absolute inset-0 overflow-hidden rounded-[2.5rem] pointer-events-none">
-        <div
-          className={cn(
-            "absolute -top-10 -right-10 w-40 h-40 blur-[40px] rounded-full bg-gradient-to-br to-transparent",
-            blushColors[variant],
-          )}
-        />
-        <div
-          className={cn(
-            "absolute -bottom-10 -left-10 w-40 h-40 blur-[40px] rounded-full bg-gradient-to-tr to-transparent",
-            blushColors[variant],
-          )}
-        />
-      </div>
-
       {isBusiness && (
         <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-30">
           <Badge
             color="accent"
             variant="solid"
-            className="py-1 px-4 shadow-md font-bold text-[10px] tracking-wider"
+            className="py-1 px-4 shadow-md font-bold text-[10px]"
           >
             MOST POPULAR
           </Badge>
         </div>
       )}
 
-      <div className="mb-6 relative z-10">
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-[31px] font-bold leading-[125%] text-text-primary">
-            {name}
-          </h3>
+      <div className={cn("text-center mb-6", isBusiness ? "mt-6" : "mt-0")}>
+        <div className="flex flex-col items-center gap-3 mb-4">
           {badge && !isBusiness && (
             <Badge
               color={isEnterprise ? "success" : "primary"}
               variant="subtle"
-              className="text-[10px]"
-              leftIcon={isEnterprise ? <Sparkles size={12} /> : null}
+              className="text-[10px] py-1 px-4 font-bold"
+              leftIcon={
+                isEnterprise ? (
+                  <Sparkles size={12} />
+                ) : isBasic ? (
+                  <Rocket size={12} />
+                ) : null
+              }
             >
               {badge}
             </Badge>
           )}
+          <h3 className="text-[31px] font-bold leading-[125%] text-text-primary">
+            {name}
+          </h3>
         </div>
-        <p className="b4 text-text-secondary h-12 md:h-10 leading-tight">
+        <p className="b4 text-text-secondary h-10 leading-tight max-w-[240px] mx-auto">
           {description}
         </p>
+      </div>
 
-        <div className="mt-8 flex items-baseline gap-1">
-          <span className="h2 text-text-primary">₱ {price}</span>
-          <span className="b2 text-text-secondary">/month</span>
+      <div className="text-center mb-8">
+        <div className="flex items-baseline justify-center">
+          <span className="h2 text-text-primary">₱{price}</span>
+          <span className="b2 text-text-secondary ml-1">/month</span>
         </div>
         <p className="b5 font-medium text-text-secondary mt-1">{billingInfo}</p>
       </div>
 
-      <div className="flex-1 relative z-10">
-        <div className="h-[1px] w-full bg-brand-primary/10 mb-6" />
-
-        <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-text-secondary/60 mb-5">
+      <div className="flex-1">
+        <div className="h-[1px] w-full bg-black/10 mb-6" />
+        <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-text-secondary/60 mb-5 text-center">
           {featuresTitle}
         </p>
-
-        <ul className="space-y-4 mb-8">
+        <ul className="space-y-4 mb-8 lg:pl-6">
           {features.map((feature, i) => (
             <li key={i} className="flex gap-3 items-start">
               <div
                 className={cn(
                   "mt-0.5 shrink-0 w-5 h-5 rounded-full flex items-center justify-center",
-                  checkCircleStyles[variant],
+                  styles.checkBg,
                 )}
               >
                 <Check
-                  className={cn(
-                    "w-3 h-3 stroke-[4px]",
-                    checkIconStyles[variant],
-                  )}
+                  className={cn("w-3 h-3 stroke-[4px]", styles.checkIcon)}
                 />
               </div>
               <span className="b4 text-text-primary leading-tight">
@@ -152,8 +138,8 @@ const PlanCard = ({
         </ul>
       </div>
 
-      <div className="space-y-6 relative z-10">
-        <div className="flex flex-wrap gap-x-4 gap-y-2 pt-2">
+      <div className="space-y-6">
+        <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 pt-2">
           {notes.map((note, i) => (
             <div key={i} className="flex items-center gap-1.5 opacity-80">
               <Info size={13} className="text-text-secondary" />
@@ -164,27 +150,19 @@ const PlanCard = ({
           ))}
         </div>
 
-        {isEnterprise ? (
-          <Button
-            variant="outline"
-            shape="rounded"
-            size="md"
-            className="w-full text-sm md:text-base border-success-primary text-success-primary hover:bg-success-primary hover:text-white hover:border-success-primary"
-            rightIcon={<ExternalLink size={16} />}
-          >
-            Get Started
-          </Button>
-        ) : (
-          <Button
-            variant={isBusiness ? "accent" : "outline"}
-            shape="rounded"
-            size="md"
-            className="w-full text-sm md:text-base"
-            rightIcon={<ExternalLink size={16} />}
-          >
-            Get Started
-          </Button>
-        )}
+        <Button
+          variant={isBusiness ? "accent" : "outline"}
+          shape="rounded"
+          size="md"
+          className={cn(
+            "w-full text-sm md:text-base",
+            isEnterprise &&
+              "border-success-primary text-success-primary hover:bg-success-primary hover:text-white hover:border-success-primary",
+          )}
+          rightIcon={<ExternalLink size={16} />}
+        >
+          Get Started
+        </Button>
       </div>
     </div>
   );
@@ -212,7 +190,7 @@ export default function SubscriptionPlans() {
             From startup to enterprise, <br />
             <span style={gradientHeaderStyle}>we have you covered.</span>
           </h1>
-          <p className="h4 text-text-secondary whitespace-nowrap px-4">
+          <p className="h4 text-text-secondary whitespace-nowrap overflow-hidden">
             Transparent pricing for every stage of your growth.
           </p>
         </div>
@@ -243,7 +221,7 @@ export default function SubscriptionPlans() {
               <Badge
                 color="success"
                 variant="solid"
-                className="text-[10px] px-2.5 py-0.5 border border-white/20"
+                className="text-[10px] px-2.5 py-0.5 border border-white/20 font-bold"
               >
                 SAVE 15%
               </Badge>
@@ -251,77 +229,89 @@ export default function SubscriptionPlans() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-y-12 md:gap-x-6 lg:gap-x-8 mb-20 items-stretch">
-          <PlanCard
-            variant="basic"
-            name="Basic"
-            description="Perfect for small F&B operators starting digital."
-            price={billingCycle === "monthly" ? "1,499" : "1,274"}
-            billingInfo={
-              billingCycle === "monthly"
-                ? "Billed monthly"
-                : "₱15,290 billed annually"
-            }
-            featuresTitle="What's Included"
-            features={[
-              "QR mobile ordering (no app needed)",
-              "Simple digital menu + cart",
-              "Order status tracking",
-              "Basic sales summary",
-              "1 store only",
-            ]}
-            notes={[{ label: "Cancel anytime" }, { label: "7-day guarantee" }]}
-          />
-
-          <PlanCard
-            variant="business"
-            name="Business"
-            badge="Popular"
-            description="Advanced tools for growing multi-branch operators."
-            price={billingCycle === "monthly" ? "3,499" : "2,974"}
-            billingInfo={
-              billingCycle === "monthly"
-                ? "Billed monthly"
-                : "₱35,690 billed annually"
-            }
-            featuresTitle="Everything in Basic, plus"
-            features={[
-              "AI chat ordering functionality",
-              "Customizable menu options",
-              "Staff accounts with login",
-              "Live sales dashboard",
-              "Inventory & performance tracking",
-              "Detailed analytical reports",
-              "Multi-device support",
-            ]}
-            notes={[{ label: "Cancel anytime" }, { label: "14-day guarantee" }]}
-          />
-
-          <PlanCard
-            variant="enterprise"
-            name="Enterprise"
-            badge="Premium Suite"
-            description="Custom solutions for chains and large franchises."
-            price={billingCycle === "monthly" ? "7,999" : "6,799"}
-            billingInfo={
-              billingCycle === "monthly"
-                ? "Billed monthly"
-                : "₱81,590 billed annually"
-            }
-            featuresTitle="Everything in Business, plus"
-            features={[
-              "Multi-branch management",
-              "Advanced stock tracking",
-              "Deep efficiency analytics",
-              "Full activity audit logs",
-              "Custom settings per branch",
-              "External API integration",
-            ]}
-            notes={[
-              { label: "30-day cancellation notice" },
-              { label: "Onboarding support" },
-            ]}
-          />
+        <div className="w-full">
+          <div className="group flex flex-col lg:flex-row justify-center items-center gap-16 lg:gap-0">
+            <div className="w-full max-w-md lg:w-1/3 transition-all duration-500 ease-out lg:-mr-2 group-hover:lg:-translate-x-20">
+              <PlanCard
+                variant="basic"
+                name="Basic"
+                badge="Starter Ready"
+                description="Perfect for small F&B operators starting digital."
+                price={billingCycle === "monthly" ? "1,499" : "1,274"}
+                billingInfo={
+                  billingCycle === "monthly"
+                    ? "Billed monthly"
+                    : "₱15,290 billed annually"
+                }
+                featuresTitle="What's Included"
+                features={[
+                  "QR mobile ordering",
+                  "Simple digital menu + cart",
+                  "Order status tracking",
+                  "Basic sales summary",
+                  "1 store only",
+                ]}
+                notes={[
+                  { label: "Cancel anytime" },
+                  { label: "7-day guarantee" },
+                ]}
+              />
+            </div>
+            <div className="w-full max-w-md lg:w-1/3 z-20 transition-all duration-500 ease-out lg:scale-110 group-hover:lg:scale-105">
+              <PlanCard
+                variant="business"
+                name="Business"
+                description="Advanced tools for growing multi-branch operators."
+                price={billingCycle === "monthly" ? "3,499" : "2,974"}
+                billingInfo={
+                  billingCycle === "monthly"
+                    ? "Billed monthly"
+                    : "₱35,690 billed annually"
+                }
+                featuresTitle="Everything in Basic, plus"
+                features={[
+                  "AI chat ordering functionality",
+                  "Customizable menu options",
+                  "Staff accounts with login",
+                  "Live sales dashboard",
+                  "Inventory & performance tracking",
+                  "Detailed analytical reports",
+                  "Multi-device support",
+                ]}
+                notes={[
+                  { label: "Cancel anytime" },
+                  { label: "14-day guarantee" },
+                ]}
+              />
+            </div>
+            <div className="w-full max-w-md lg:w-1/3 transition-all duration-500 ease-out lg:-ml-2 group-hover:lg:translate-x-20">
+              <PlanCard
+                variant="enterprise"
+                name="Enterprise"
+                badge="Premium Suite"
+                description="Custom solutions for chains and large franchises."
+                price={billingCycle === "monthly" ? "7,999" : "6,799"}
+                billingInfo={
+                  billingCycle === "monthly"
+                    ? "Billed monthly"
+                    : "₱81,590 billed annually"
+                }
+                featuresTitle="Everything in Business, plus"
+                features={[
+                  "Multi-branch management",
+                  "Advanced stock tracking",
+                  "Deep efficiency analytics",
+                  "Full activity audit logs",
+                  "Custom settings per branch",
+                  "External API integration",
+                ]}
+                notes={[
+                  { label: "30-day cancellation notice" },
+                  { label: "Onboarding support" },
+                ]}
+              />
+            </div>
+          </div>
         </div>
       </div>
     </section>
