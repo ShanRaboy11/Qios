@@ -1,13 +1,34 @@
 "use client";
 
 import React, { useState } from "react";
-import { Check, Crown, Zap, Rocket, Edit3 } from "lucide-react";
+import { Check, Crown, Zap, Rocket, ChevronLeft, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
-// Atom Imports
-import { Badge } from "@/components/atoms/Badge";
+import { Badge, BadgeColor, BadgeVariant } from "@/components/atoms/Badge";
 import { Button } from "@/components/atoms/Button";
 
-const packages = [
+interface Feature {
+  text: string;
+  hasAiBadge?: boolean;
+}
+
+interface PackageBadge {
+  label: string;
+  color: BadgeColor;
+  variant: BadgeVariant;
+}
+
+interface Package {
+  id: string;
+  name: string;
+  description: string;
+  price: string;
+  subscribers: string;
+  icon: React.ReactNode;
+  features: Feature[];
+  tierBadge?: PackageBadge;
+}
+
+const packages: Package[] = [
   {
     id: "starter",
     name: "Starter",
@@ -15,7 +36,11 @@ const packages = [
     price: "499",
     subscribers: "100 subscribers",
     icon: <Zap size={20} />,
-    features: ["Digital Menu", "Order Management", "Basic Reports"],
+    features: [
+      { text: "Digital Menu" }, 
+      { text: "Order Management" }, 
+      { text: "Basic Reports" }
+    ],
   },
   {
     id: "growth",
@@ -24,7 +49,13 @@ const packages = [
     price: "1,499",
     subscribers: "500 subscribers",
     icon: <Rocket size={20} />,
-    features: ["Digital Menu", "Order Management", "Advanced Reports", "Inventory Sync"],
+    tierBadge: { label: "Popular", color: "error", variant: "solid" },
+    features: [
+      { text: "Digital Menu" }, 
+      { text: "Order Management" }, 
+      { text: "Advanced Reports" }, 
+      { text: "Inventory Sync" }
+    ],
   },
   {
     id: "enterprises",
@@ -33,29 +64,33 @@ const packages = [
     price: "4,999",
     subscribers: "Unlimited subscribers",
     icon: <Crown size={20} />,
-    features: ["Custom Integrations", "Multi-branch Support", "Priority Support", "Dedicated Manager"],
+    tierBadge: { label: "Gemini AI", color: "success", variant: "solid" },
+    features: [
+      { text: "Gemini AI concierge", hasAiBadge: true }, 
+      { text: "Multi-branch Support" }, 
+      { text: "Priority Support" }, 
+      { text: "Dedicated Manager" }
+    ],
   },
 ];
 
-export function SubscriptionPackage({ onNext }: { onNext: () => void }) {
-  const [selectedId, setSelectedId] = useState("starter");
+export function SubscriptionPackage({ onNext, onBack }: { onNext: () => void; onBack: () => void }) {  const [selectedId, setSelectedId] = useState("starter");
   const activePackage = packages.find((p) => p.id === selectedId) || packages[0];
 
   return (
-    // Changed items-center to items-start for left alignment
-    <div className="flex flex-col items-start space-y-10 animate-in fade-in slide-in-from-right-8 duration-500 w-full">
+    <div className="flex flex-col items-center lg:items-start space-y-6 lg:space-y-10 animate-in fade-in slide-in-from-right-8 duration-500 w-full overflow-visible">
       
-      {/* 1. PACKAGE SELECTION TABS (Left Aligned) */}
-      <div className="inline-flex items-center bg-white rounded-[50px] p-1.5 border border-neutral-100 shadow-sm">
+      {/* 1. PACKAGE SELECTION TABS */}
+      <div className="inline-flex items-center bg-white rounded-[50px] p-1 lg:p-1.5 border border-neutral-100 shadow-sm overflow-x-auto max-w-full">
         {packages.map((pkg) => (
           <button
             key={pkg.id}
             onClick={() => setSelectedId(pkg.id)}
             className={cn(
-              "px-8 py-2.5 rounded-[40px] text-[16px] font-semibold transition-all duration-300 whitespace-nowrap",
+              "px-6 py-2 lg:px-7 lg:py-3 rounded-[40px] b3 transition-all duration-300 whitespace-nowrap",
               selectedId === pkg.id
-                ? "bg-[#ffc670] text-white shadow-sm"
-                : "bg-transparent text-[#707070] hover:text-black"
+                ? "bg-[var(--color-brand-primary)] text-white shadow-md"
+                : "bg-transparent text-[var(--color-text-secondary)] hover:text-black"
             )}
           >
             {pkg.name}
@@ -63,28 +98,37 @@ export function SubscriptionPackage({ onNext }: { onNext: () => void }) {
         ))}
       </div>
 
-      {/* 2. PRICING CARD (Left Aligned) */}
+      {/* 2. PRICING CARD */}
       <div className="relative max-w-[460px] w-full bg-white rounded-[32px] border-2 border-[var(--color-brand-primary)] overflow-hidden shadow-sm transition-all duration-500">
         
-        {/* Top Header Section (Amber Area) */}
-        <div className="bg-[var(--color-bg-primary)] p-10 border-b-2 border-orange-100/50">
+        {/* Top Header Section */}
+        <div className="bg-[var(--color-bg-primary)] p-6 lg:p-10 border-b-2 border-orange-100/50">
           <div className="flex justify-between items-start">
-            <div className="space-y-1">
-              <h2 className="text-4xl font-bold font-figtree text-[var(--color-text-primary)]">
-                {activePackage.name}
-              </h2>
-              <p className="b2 text-[var(--color-text-secondary)]">
-                {activePackage.description}
-              </p>
+            <div className="space-y-2">
+              <div className="flex items-center gap-3">
+                <h2 className="h2 text-[var(--color-text-primary)] leading-tight">
+                  {activePackage.name}
+                </h2>
+                
+                {activePackage.tierBadge && (
+                  <Badge 
+                    color={activePackage.tierBadge.color} 
+                    variant={activePackage.tierBadge.variant}
+                    className="text-[11px] px-3.5 py-0.5 font-bold h-fit mt-1.5 shadow-sm"
+                  >
+                    {activePackage.tierBadge.label}
+                  </Badge>
+                )}
+              </div>
+              <p className="b2 text-[var(--color-text-secondary)]">{activePackage.description}</p>
             </div>
-            {/* Icon decoration from your image */}
             <div className="p-3 bg-white rounded-2xl shadow-sm border border-orange-50 text-[var(--color-brand-primary)]">
               {activePackage.icon}
             </div>
           </div>
 
           <div className="mt-8 flex items-baseline gap-1">
-            <span className="text-[52px] font-bold font-figtree text-[var(--color-text-primary)]">
+            <span className="text-4xl lg:text-[52px] font-bold font-figtree text-[var(--color-text-primary)]">
               ₱ {activePackage.price}
             </span>
             <span className="text-2xl font-bold font-figtree text-[var(--color-text-secondary)] ml-1">
@@ -98,12 +142,12 @@ export function SubscriptionPackage({ onNext }: { onNext: () => void }) {
             <span>cancel anytime</span>
           </div>
 
-          <div className="mt-8">
+          <div className="mt-6 lg:mt-8">
             <Badge 
               color="success" 
               variant="outline" 
-              shape="pill" 
-              className="px-5 py-2 font-bold tracking-tight bg-white"
+              shape="pill"
+              className="px-4 py-1.5 lg:px-5 lg:py-2 font-bold tracking-tight bg-white border-[var(--color-success-primary)] text-[var(--color-success-primary)]"
             >
               {activePackage.subscribers}
             </Badge>
@@ -111,33 +155,55 @@ export function SubscriptionPackage({ onNext }: { onNext: () => void }) {
         </div>
 
         {/* Features Section */}
-        <div className="p-10 space-y-8 bg-white">
-          <h4 className="b3 text-[var(--color-text-secondary)] tracking-[2px] uppercase font-bold">
+        <div className="p-6 lg:p-10 space-y-6 lg:space-y-8 bg-white text-left">
+          <h4 className="b3 text-[var(--color-text-secondary)] tracking-[2px] uppercase font-bold text-xs lg:text-base">
             FEATURES
           </h4>
 
-          <ul className="space-y-5">
+          <ul className="space-y-4 lg:space-y-5">
             {activePackage.features.map((feature, idx) => (
               <li key={idx} className="flex items-center gap-4 group">
-                <div className="flex-shrink-0 w-7 h-7 rounded-full bg-[var(--color-success-secondary)] border border-[var(--color-success-primary)] flex items-center justify-center">
-                   <Check size={14} className="text-[var(--color-success-primary)]" strokeWidth={3} />
+                <div className="flex-shrink-0 w-6 h-6 lg:w-7 lg:h-7 rounded-full bg-[var(--color-success-secondary)] border border-[var(--color-success-primary)] flex items-center justify-center">
+                   <Check size={12} className="text-[var(--color-success-primary)]" strokeWidth={3} />
                 </div>
-                <span className="text-[17px] text-[var(--color-text-primary)] font-medium font-inter">
-                  {feature}
-                </span>
+                
+                <div className="flex items-center gap-2.5">
+                  <span className="text-sm lg:text-[17px] text-[var(--color-text-primary)] font-medium font-inter">
+                    {feature.text}
+                  </span>
+                  
+                 {feature.hasAiBadge && (
+                    <Badge 
+                      color="success" 
+                      variant="subtle" 
+                      className="text-[10px] px-2.5 py-0.5 font-bold h-fit whitespace-nowrap border border-[var(--color-success-primary)]/20"
+                    >
+                      AI-powered
+                    </Badge>
+                  )}
+                </div>
               </li>
             ))}
           </ul>
         </div>
       </div>
 
-      {/* 3. SELECTION BUTTON (Aligned with card width, not screen) */}
-      <div className="w-full max-w-[460px]">
+      {/* 3. SELECTION BUTTON */}
+     <div className="w-full max-w-[460px] flex flex-row gap-10">
+        <Button 
+          variant="ghost" 
+          size="lg" 
+          className="h-13 lg:h-13 px-5 b2 border-neutral-200 text-neutral-500 transition-all" 
+          onClick={onBack}
+        >
+          <ArrowLeft className="w-5 h-5 mr-1" />
+          Back
+        </Button>
         <Button 
           variant="primary" 
           shape="pill" 
           size="lg" 
-          className="w-full h-16 font-bold text-lg shadow-lg shadow-orange-100 transform transition-all active:scale-[0.98]"
+          className="flex-1 h-13 lg:h-13 b2 font-bold text-lg shadow-lg shadow-secondary bg-[var(--color-brand-secondary)] text-white"
           onClick={onNext}
         >
           Select {activePackage.name}

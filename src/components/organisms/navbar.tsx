@@ -14,16 +14,21 @@ interface NavbarProps {
 }
 
 export const Navbar = ({
-  variant = "filled",
+  variant: initialVariant = "transparent",
   type = "default",
   activeView,
   onNavigate,
   className,
 }: NavbarProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const navRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+
     const handleClickOutside = (event: MouseEvent) => {
       if (
         isOpen &&
@@ -34,8 +39,10 @@ export const Navbar = ({
       }
     };
 
+    window.addEventListener("scroll", handleScroll);
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
+      window.removeEventListener("scroll", handleScroll);
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isOpen]);
@@ -60,10 +67,12 @@ export const Navbar = ({
     <nav
       ref={navRef}
       className={cn(
-        "relative z-50 flex items-center justify-between w-full overflow-visible",
-        "px-[25px] md:px-[79px] py-[10px]",
-        "gap-x-8 transition-colors duration-300",
-        variant === "filled" || isOpen ? "bg-bg-primary" : "bg-transparent",
+        "fixed left-0 right-0 z-[100] flex items-center justify-between w-full overflow-visible",
+        "px-[25px] md:px-[79px] transition-all duration-300 py-[10px]",
+        isScrolled || initialVariant === "filled" ? "top-0" : "top-8",
+        isScrolled || initialVariant === "filled" || isOpen
+          ? "bg-bg-primary shadow-sm"
+          : "bg-transparent",
         className,
       )}
     >
@@ -113,7 +122,7 @@ export const Navbar = ({
               (type === "admin" && activeView === link.id) ||
                 (type === "default" && link.id === "home")
                 ? "text-brand-accent"
-                : "text-text-primary hover:text-brand-accent"
+                : "text-text-primary hover:text-brand-accent",
             )}
           >
             {link.label}
@@ -124,7 +133,7 @@ export const Navbar = ({
           <div className="shrink-0">
             <Button
               variant="accent"
-              shape="pill"
+              shape="rounded"
               className="text-[18px]"
               rightIcon={<ArrowRight size={18} strokeWidth={2.5} />}
             >
@@ -180,7 +189,7 @@ export const Navbar = ({
               (type === "admin" && activeView === link.id) ||
                 (type === "default" && link.id === "home")
                 ? "text-brand-accent"
-                : "text-text-primary hover:text-brand-accent active:text-brand-accent"
+                : "text-text-primary hover:text-brand-accent active:text-brand-accent",
             )}
           >
             {link.label}
@@ -190,7 +199,7 @@ export const Navbar = ({
           <div className="pt-2">
             <Button
               variant="accent"
-              shape="pill"
+              shape="rounded"
               className="w-full justify-center active:scale-[0.98] transition-transform text-[18px]"
               rightIcon={<ArrowRight size={18} strokeWidth={2.5} />}
             >
