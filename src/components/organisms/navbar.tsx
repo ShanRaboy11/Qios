@@ -7,10 +7,19 @@ import { ArrowRight, Menu, X } from "lucide-react";
 
 interface NavbarProps {
   variant?: "filled" | "transparent";
+  type?: "default" | "admin";
+  activeView?: string;
+  onNavigate?: (view: string) => void;
   className?: string;
 }
 
-export const Navbar = ({ variant = "filled", className }: NavbarProps) => {
+export const Navbar = ({
+  variant = "filled",
+  type = "default",
+  activeView,
+  onNavigate,
+  className,
+}: NavbarProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const navRef = useRef<HTMLElement>(null);
 
@@ -30,6 +39,22 @@ export const Navbar = ({ variant = "filled", className }: NavbarProps) => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isOpen]);
+
+  const defaultLinks = [
+    { label: "Home", href: "#home", id: "home" },
+    { label: "Services", href: "#services", id: "services" },
+    { label: "Contact", href: "#contact", id: "contact" },
+  ];
+
+  const adminLinks = [
+    { label: "Dashboard", href: "#", id: "dashboard" },
+    { label: "Tenant Directory", href: "#", id: "tenant" },
+    { label: "Subscription and Plans", href: "#", id: "subscription" },
+    { label: "System Activity", href: "#", id: "system_activity" },
+    { label: "Settings", href: "#", id: "settings" },
+  ];
+
+  const links = type === "admin" ? adminLinks : defaultLinks;
 
   return (
     <nav
@@ -73,35 +98,40 @@ export const Navbar = ({ variant = "filled", className }: NavbarProps) => {
           "gap-x-6 lg:gap-x-12",
         )}
       >
-        <a
-          href="#home"
-          className="text-brand-accent font-inter font-medium text-[18px] shrink-0 transition-colors"
-        >
-          Home
-        </a>
-        <a
-          href="#services"
-          className="text-text-primary hover:text-brand-accent transition-colors font-inter font-medium text-[18px] shrink-0"
-        >
-          Services
-        </a>
-        <a
-          href="#contact"
-          className="text-text-primary hover:text-brand-accent transition-colors font-inter font-medium text-[18px] shrink-0"
-        >
-          Contact
-        </a>
-
-        <div className="shrink-0">
-          <Button
-            variant="accent"
-            shape="pill"
-            className="text-[18px]"
-            rightIcon={<ArrowRight size={18} strokeWidth={2.5} />}
+        {links.map((link) => (
+          <a
+            key={link.id}
+            href={link.href}
+            onClick={(e) => {
+              if (type === "admin") {
+                e.preventDefault();
+                onNavigate?.(link.id);
+              }
+            }}
+            className={cn(
+              "transition-colors font-inter font-medium text-[18px] shrink-0",
+              (type === "admin" && activeView === link.id) ||
+                (type === "default" && link.id === "home")
+                ? "text-brand-accent"
+                : "text-text-primary hover:text-brand-accent"
+            )}
           >
-            Get Started
-          </Button>
-        </div>
+            {link.label}
+          </a>
+        ))}
+
+        {type !== "admin" && (
+          <div className="shrink-0">
+            <Button
+              variant="accent"
+              shape="pill"
+              className="text-[18px]"
+              rightIcon={<ArrowRight size={18} strokeWidth={2.5} />}
+            >
+              Get Started
+            </Button>
+          </div>
+        )}
       </div>
 
       <div className="md:hidden flex items-center relative">
@@ -134,37 +164,40 @@ export const Navbar = ({ variant = "filled", className }: NavbarProps) => {
             : "opacity-0 scale-y-95 invisible pointer-events-none",
         )}
       >
-        <a
-          href="#home"
-          onClick={() => setIsOpen(false)}
-          className="text-brand-accent font-inter font-medium text-[18px] transition-colors active:opacity-70"
-        >
-          Home
-        </a>
-        <a
-          href="#services"
-          onClick={() => setIsOpen(false)}
-          className="text-text-primary hover:text-brand-accent active:text-brand-accent transition-colors font-inter font-medium text-[18px]"
-        >
-          Services
-        </a>
-        <a
-          href="#contact"
-          onClick={() => setIsOpen(false)}
-          className="text-text-primary hover:text-brand-accent active:text-brand-accent transition-colors font-inter font-medium text-[18px]"
-        >
-          Contact
-        </a>
-        <div className="pt-2">
-          <Button
-            variant="accent"
-            shape="pill"
-            className="w-full justify-center active:scale-[0.98] transition-transform text-[18px]"
-            rightIcon={<ArrowRight size={18} strokeWidth={2.5} />}
+        {links.map((link) => (
+          <a
+            key={link.id}
+            href={link.href}
+            onClick={(e) => {
+              if (type === "admin") {
+                e.preventDefault();
+                onNavigate?.(link.id);
+              }
+              setIsOpen(false);
+            }}
+            className={cn(
+              "transition-colors font-inter font-medium text-[18px] active:opacity-70",
+              (type === "admin" && activeView === link.id) ||
+                (type === "default" && link.id === "home")
+                ? "text-brand-accent"
+                : "text-text-primary hover:text-brand-accent active:text-brand-accent"
+            )}
           >
-            Get Started
-          </Button>
-        </div>
+            {link.label}
+          </a>
+        ))}
+        {type !== "admin" && (
+          <div className="pt-2">
+            <Button
+              variant="accent"
+              shape="pill"
+              className="w-full justify-center active:scale-[0.98] transition-transform text-[18px]"
+              rightIcon={<ArrowRight size={18} strokeWidth={2.5} />}
+            >
+              Get Started
+            </Button>
+          </div>
+        )}
       </div>
     </nav>
   );
