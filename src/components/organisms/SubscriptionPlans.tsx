@@ -265,7 +265,7 @@ export default function SubscriptionPlans() {
 
         <div className="w-full">
           <div className="group flex flex-col lg:flex-row justify-center items-center gap-16 lg:gap-0">
-            <div className="w-full max-w-md lg:w-1/3 transition-all duration-500 ease-out lg:-mr-2 group-hover:lg:-translate-x-20">
+            <div className="w-full max-w-md lg:w-1/3 transition-all duration-500 ease-out lg:-mr-2 group-hover:lg:-translate-x-12">
               <PlanCard
                 variant="basic"
                 name="Basic"
@@ -318,7 +318,7 @@ export default function SubscriptionPlans() {
                 ]}
               />
             </div>
-            <div className="w-full max-w-md lg:w-1/3 transition-all duration-500 ease-out lg:-ml-2 group-hover:lg:translate-x-20">
+            <div className="w-full max-w-md lg:w-1/3 transition-all duration-500 ease-out lg:-ml-2 group-hover:lg:translate-x-12">
               <PlanCard
                 variant="enterprise"
                 name="Enterprise"
