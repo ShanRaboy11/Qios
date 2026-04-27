@@ -9,6 +9,7 @@ import TenantManagement from "@/components/organisms/TenantManagement";
 import { SystemActivity } from "@/components/organisms/SystemActivity";
 import { Footer } from "@/components/organisms/footer";
 import { Navbar } from "@/components/organisms/navbar";
+import { LogOut } from "lucide-react";
 
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -97,7 +98,7 @@ export default function AdminDashboardPage() {
           />
         </div>
       </div>
-      <div className="max-w-[1440px] mx-auto flex flex-col p-4 md:p-8 lg:p-12 mt-28 relative z-[100]">
+      <div className="max-w-[1440px] mx-auto flex flex-col p-4 md:p-8 lg:p-12 mt-28 relative z-[90]">
         <AnimatePresence mode="wait">
           {isTransitioning ? (
             <motion.div
@@ -217,10 +218,18 @@ export default function AdminDashboardPage() {
                   </p>
                 </div>
               </div>
-              <div className="flex items-center justify-center h-[400px] bg-white rounded-[24px] shadow-sm">
-                <h2 className="text-2xl font-bold text-text-primary">
-                  Coming Soon
-                </h2>
+              <div className="flex flex-col h-[400px] bg-white rounded-[24px] shadow-sm relative p-6 sm:p-8">
+                <div className="flex-1 flex items-center justify-center">
+                  <h2 className="text-2xl font-bold text-text-primary">
+                    Coming Soon
+                  </h2>
+                </div>
+                <div className="flex justify-end mt-auto">
+                  <button className="flex items-center gap-2 px-6 py-3 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-colors font-semibold">
+                    <LogOut className="w-5 h-5" />
+                    Logout
+                  </button>
+                </div>
               </div>
             </motion.div>
           ) : (
@@ -245,6 +254,9 @@ export default function AdminDashboardPage() {
           )}
         </AnimatePresence>
       </div>
+      <div className="relative bottom-0 inset-x-0 h-40 bg-gradient-to-t from-white via-white/50 to-transparent z-[2] pointer-events-none" />
+
+      <Footer hideSocials />
     </div>
   );
 }

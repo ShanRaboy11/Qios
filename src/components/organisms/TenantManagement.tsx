@@ -330,6 +330,21 @@ function TenantCard({
   onAction: (action: ActionType) => void;
   disableActions: boolean;
 }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    if (menuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [menuOpen]);
+
   return (
     <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col md:flex-row md:items-center gap-4 transition-all hover:border-orange-100">
       <div className="flex items-start md:items-center gap-4 md:w-[60%] shrink-0">
@@ -365,7 +380,7 @@ function TenantCard({
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center md:flex-1 justify-between gap-3 md:gap-6 border-t border-gray-50 pt-3 md:pt-0 md:border-none">
+      <div className="flex flex-row items-center justify-between w-full md:w-auto md:flex-1 gap-3 md:gap-6 border-t border-gray-50 pt-3 md:pt-0 md:border-none mt-2 md:mt-0">
         <span className="hidden lg:block text-gray-500 text-sm font-normal shrink-0 mr-[20px]">
           Joined {tenant.joined}
         </span>
@@ -395,65 +410,67 @@ function TenantCard({
         </div>
 
         <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 shrink-0 md:ml-auto">
-          {tenant.status === "Pending" && (
-            <>
-              <Button
-                onClick={() => onAction("approve")}
-                disabled={disableActions}
-                variant="approve"
-                shape="pill"
-                size="sm"
-              >
-                Approve
-              </Button>
-              <Button
-                onClick={() => onAction("reject")}
-                disabled={disableActions}
-                variant="warning"
-                shape="pill"
-                size="sm"
-              >
-                Reject
-              </Button>
-            </>
-          )}
-
-          {tenant.status === "Rejected" && (
-            <Button
-              onClick={() => onAction("reapprove")}
-              disabled={disableActions}
-              variant="accent"
-              size="sm"
+          <div className="relative" ref={menuRef}>
+            <button
+              onClick={() => setMenuOpen(!menuOpen)}
+              className="flex p-2 hover:bg-gray-50 rounded-lg text-gray-400 transition-colors"
             >
-              Re-Approve
-            </Button>
-          )}
+              <MoreVertical className="w-5 h-5" />
+            </button>
+            
+            {menuOpen && (
+              <div className="absolute right-0 top-[110%] w-40 bg-white border border-gray-100 shadow-lg rounded-xl overflow-hidden z-10 py-1">
+                {tenant.status === "Pending" && (
+                  <>
+                    <button
+                      onClick={() => { onAction("approve"); setMenuOpen(false); }}
+                      disabled={disableActions}
+                      className="w-full text-left px-4 py-2 text-sm text-[#22C55E] hover:bg-green-50 disabled:opacity-50 transition-colors"
+                    >
+                      Approve
+                    </button>
+                    <button
+                      onClick={() => { onAction("reject"); setMenuOpen(false); }}
+                      disabled={disableActions}
+                      className="w-full text-left px-4 py-2 text-sm text-warning-primary hover:bg-red-50 disabled:opacity-50 transition-colors"
+                    >
+                      Reject
+                    </button>
+                  </>
+                )}
 
-          {tenant.status === "Active" && (
-            <Button
-              onClick={() => onAction("deactivate")}
-              disabled={disableActions}
-              variant="outline"
-              size="sm"
-            >
-              Deactivate
-            </Button>
-          )}
+                {tenant.status === "Rejected" && (
+                  <button
+                    onClick={() => { onAction("reapprove"); setMenuOpen(false); }}
+                    disabled={disableActions}
+                    className="w-full text-left px-4 py-2 text-sm text-brand-secondary hover:bg-orange-50 disabled:opacity-50 transition-colors"
+                  >
+                    Re-Approve
+                  </button>
+                )}
 
-          {tenant.status === "Suspended" && (
-            <Button
-              onClick={() => onAction("activate")}
-              disabled={disableActions}
-              variant="primary"
-              size="sm"
-            >
-              Activate
-            </Button>
-          )}
+                {tenant.status === "Active" && (
+                  <button
+                    onClick={() => { onAction("deactivate"); setMenuOpen(false); }}
+                    disabled={disableActions}
+                    className="w-full text-left px-4 py-2 text-sm text-warning-primary hover:bg-red-50 disabled:opacity-50 transition-colors"
+                  >
+                    Deactivate
+                  </button>
+                )}
 
-          <button className="hidden sm:flex p-2 hover:bg-gray-50 rounded-lg text-gray-400 transition-colors ml-2">
-            <MoreVertical className="w-5 h-5" />
-          </button>
+                {tenant.status === "Suspended" && (
+                  <button
+                    onClick={() => { onAction("activate"); setMenuOpen(false); }}
+                    disabled={disableActions}
+                    className="w-full text-left px-4 py-2 text-sm text-[#22C55E] hover:bg-green-50 disabled:opacity-50 transition-colors"
+                  >
+                    Activate
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

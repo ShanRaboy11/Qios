@@ -67,7 +67,7 @@ export const AdminKPICard = ({
 
       <div className="flex justify-between items-end mt-4">
         <div className="flex flex-col">
-          <span className="text-[28px] font-bold text-[#2D2D2D] leading-none">
+          <span className="text-[20px] md:text-[28px] font-bold text-[#2D2D2D] leading-none">
             {value}
           </span>
           <span className="text-[16px] text-text-secondary font-figtree mt-1">
