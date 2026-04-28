@@ -149,7 +149,7 @@ export const ProblemSolution = () => {
         />
       </div>
 
-      <div className="absolute inset-x-0 top-16 md:inset-0 flex flex-col items-center justify-start md:justify-center pointer-events-none z-0">
+      <div className="absolute inset-x-0 top-28 md:inset-0 flex flex-col items-center justify-start md:justify-center pointer-events-none z-0">
         <h2 className="text-[20vw] md:text-[18vw] font-figtree font-black text-text-primary/[0.04] leading-[0.85] tracking-tighter uppercase whitespace-nowrap">
           Problems
         </h2>
@@ -158,7 +158,7 @@ export const ProblemSolution = () => {
         </h2>
       </div>
 
-      <div className="relative z-10 flex items-center justify-center w-full h-full">
+      <div className="relative z-10 flex items-center justify-center w-full h-full mt-10 md:mt-0">
         {cardsData.map((card, index) => (
           <div
             key={card.id}

@@ -41,28 +41,31 @@ const PlanCard = ({
       bg: "bg-white bg-gradient-to-b from-white to-[#FFF1D6]",
       checkBg: "bg-[#ffc670]/20",
       checkIcon: "text-[#ffc670]",
+      btnMobile: "bg-brand-primary text-white border-brand-primary",
     },
     business: {
       border: "border-[#ff5269]/80",
       bg: "bg-white bg-gradient-to-b from-white to-[#FFDFE4]",
       checkBg: "bg-[#ff5269]/20",
       checkIcon: "text-[#ff5269]",
+      btnMobile: "",
     },
     enterprise: {
       border: "border-[#1fad66]/80",
       bg: "bg-white bg-gradient-to-b from-white to-[#DFF2E8]",
       checkBg: "bg-[#1fad66]/20",
       checkIcon: "text-[#1fad66]",
+      btnMobile: "bg-success-primary text-white border-success-primary",
     },
   }[variant];
 
   return (
     <div
       className={cn(
-        "relative flex flex-col rounded-[2.5rem] p-8 h-full border transition-all duration-300",
+        "relative flex flex-col rounded-[2.5rem] p-8 h-full border transition-all duration-300 shadow-md",
         styles.bg,
         styles.border,
-        isBusiness ? "shadow-2xl z-20" : "shadow-md z-10",
+        isBusiness ? "md:shadow-2xl z-20" : "z-10",
       )}
     >
       {isBusiness && (
@@ -106,7 +109,10 @@ const PlanCard = ({
 
       <div className="text-center mb-8">
         <div className="flex items-baseline justify-center">
-          <span className="h2 text-text-primary">₱{price}</span>
+          <span className="h2 text-text-primary">
+            <span className="font-figtree">₱</span>
+            {price}
+          </span>
           <span className="b2 text-text-secondary ml-1">/month</span>
         </div>
         <p className="b5 font-medium text-text-secondary mt-1">{billingInfo}</p>
@@ -155,9 +161,13 @@ const PlanCard = ({
           shape="rounded"
           size="md"
           className={cn(
-            "w-full text-sm md:text-base",
+            "w-full text-sm md:text-base transition-colors",
+            !isBusiness && styles.btnMobile,
+            !isBusiness && "md:bg-transparent md:text-inherit",
             isEnterprise &&
-              "border-success-primary text-success-primary hover:bg-success-primary hover:text-white hover:border-success-primary",
+              "md:border-success-primary md:text-success-primary md:hover:bg-success-primary md:hover:text-white md:hover:border-success-primary",
+            isBasic &&
+              "md:border-brand-primary md:text-brand-primary md:hover:bg-brand-primary md:hover:text-white",
           )}
           rightIcon={<ExternalLink size={16} />}
         >
@@ -219,22 +229,22 @@ export default function SubscriptionPlans() {
       />
 
       <div className="max-w-7xl mx-auto relative z-10">
-        <div className="text-center mb-16 space-y-4">
-          <h1 className="h1 text-text-primary tracking-tight max-w-2xl mx-auto">
+        <div className="text-center mb-16 space-y-3 md:space-y-4">
+          <h1 className="text-[34px] md:h1 text-text-primary tracking-tight max-w-2xl mx-auto leading-tight">
             From startup to enterprise, <br />
             <span style={gradientHeaderStyle}>we have you covered.</span>
           </h1>
-          <p className="h4 text-text-secondary whitespace-nowrap overflow-hidden">
+          <p className="text-base md:h4 text-text-secondary max-w-[540px] mx-auto">
             Transparent pricing for every stage of your growth.
           </p>
         </div>
 
-        <div className="flex justify-center mb-20">
-          <div className="bg-white p-1.5 rounded-full border border-brand-primary/20 shadow-lg shadow-brand-primary/5 inline-flex items-center">
+        <div className="flex justify-center mb-10 md:mb-20">
+          <div className="bg-white p-1 md:p-1.5 rounded-full border border-brand-primary/20 shadow-lg shadow-brand-primary/5 inline-flex items-center">
             <button
               onClick={() => setBillingCycle("monthly")}
               className={cn(
-                "px-8 py-2.5 rounded-full b2 transition-all",
+                "px-6 py-2 md:px-8 md:py-2.5 rounded-full text-xs md:b2 transition-all",
                 billingCycle === "monthly"
                   ? "bg-brand-secondary text-text-tertiary shadow-md"
                   : "text-text-secondary hover:bg-gray-50",
@@ -245,7 +255,7 @@ export default function SubscriptionPlans() {
             <button
               onClick={() => setBillingCycle("annually")}
               className={cn(
-                "px-8 py-2.5 rounded-full b2 transition-all flex items-center gap-2",
+                "px-6 py-2 md:px-8 md:py-2.5 rounded-full text-xs md:b2 transition-all flex items-center gap-2",
                 billingCycle === "annually"
                   ? "bg-brand-secondary text-text-tertiary shadow-md"
                   : "text-text-secondary hover:bg-gray-50",
@@ -255,7 +265,7 @@ export default function SubscriptionPlans() {
               <Badge
                 color="success"
                 variant="solid"
-                className="text-[10px] px-2.5 py-0.5 border border-white/20 font-bold"
+                className="text-[9px] md:text-[10px] px-2 md:px-2.5 py-0.5 border border-white/20 font-bold"
               >
                 SAVE 15%
               </Badge>
