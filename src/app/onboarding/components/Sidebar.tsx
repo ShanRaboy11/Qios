@@ -39,7 +39,7 @@ export function OnboardingSidebar({ steps, currentStep }: SidebarProps) {
 
   return (
     <div className={cn(
-      "w-full lg:w-[45%] xl:w-[55%] h-auto lg:h-screen sticky lg:fixed top-0 left-0 z-40 overflow-hidden",
+      "w-full lg:w-[45%] xl:w-[55%] h-auto lg:h-screen sticky top-0 z-40 overflow-hidden",
       "flex flex-row lg:flex-col justify-center items-center lg:items-start px-6 py-8 lg:px-24",
       "bg-gradient-to-br from-[#FFF5E9] via-[#FFD8B1] to-[#FFCC99] border-b lg:border-b-0 lg:border-r border-orange-200"
     )}>

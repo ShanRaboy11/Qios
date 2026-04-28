@@ -18,6 +18,8 @@ import { ContactInformation } from "./components/ContactInformation";
 import { AuthCredentials } from "./components/AuthCredentials";
 import { SubscriptionPackage } from "./components/SubscriptionPackage";
 import { FeatureConfig } from "./components/FeatureConfiguration";
+import { Navbar } from "@/components/organisms/navbar";
+import { Footer } from "@/components/organisms/footer";
 
 const steps = [
   { id: 1, title: "Business Information", icon: FileText },
@@ -65,10 +67,12 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row min-h-screen bg-[var(--color-bg-primary)]">
-      <OnboardingSidebar steps={steps} currentStep={currentStep} />
+    <main className="flex flex-col min-h-screen bg-white w-full overflow-x-hidden">
+      <Navbar variant="transparent" />
+      <div className="flex flex-col lg:flex-row min-h-screen bg-[var(--color-bg-primary)]">
+        <OnboardingSidebar steps={steps} currentStep={currentStep} />
 
-      <div className="flex-1 flex flex-col justify-center items-center lg:items-start px-6 py-10 md:px-16 lg:pl-[50%] xl:pl-[60%] lg:pr-24 min-h-screen">
+      <div className="flex-1 flex flex-col justify-center items-center lg:items-start px-6 py-10 md:px-16 lg:px-16 xl:px-24 min-h-screen">
         <div className="w-full mb-8 lg:mb-12 text-center lg:text-left">
           <h1 className="text-3xl md:text-4xl lg:h1 text-[var(--color-text-primary)] leading-tight lg:whitespace-nowrap">
             {steps.find(s => s.id === currentStep)?.title}
@@ -126,5 +130,7 @@ export default function OnboardingPage() {
         </div>
       </div>
     </div>
+    <Footer />
+    </main>
   );
 }
