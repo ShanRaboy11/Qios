@@ -96,19 +96,6 @@ export default function KitchenPreparationDashboard() {
     );
   };
 
-  const getStatusColor = (status: OrderStatus) => {
-    switch (status) {
-      case "pending":
-        return "bg-brand-primary/20 text-text-primary border-brand-primary";
-      case "preparing":
-        return "bg-brand-accent/10 text-brand-accent border-brand-accent/30";
-      case "ready":
-        return "bg-success-secondary text-success-primary border-success-primary/30";
-      case "completed":
-        return "bg-bg-primary text-text-secondary border-gray-200";
-    }
-  };
-
   const pendingOrders = orders.filter((o) => o.status === "pending");
   const preparingOrders = orders.filter((o) => o.status === "preparing");
   const readyOrders = orders.filter((o) => o.status === "ready");
@@ -117,14 +104,14 @@ export default function KitchenPreparationDashboard() {
     <div key={order.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex flex-col gap-4 transition-all hover:shadow-md">
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-2">
-          <span className="font-bold text-lg text-gray-900">{order.id}</span>
+          <span className="font-bold text-lg text-text-primary">{order.id}</span>
         </div>
-        <div className={`px-2.5 py-1 rounded-lg text-xs font-bold ${order.targetTimePercentage > 100 ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-600'}`}>
+        <div className={`px-2.5 py-1 rounded-lg text-xs font-bold ${order.targetTimePercentage > 100 ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-text-secondary'}`}>
           {order.time}
         </div>
       </div>
 
-      <div className="flex items-center gap-2 text-xs text-gray-500 font-medium">
+      <div className="flex items-center gap-2 text-xs text-text-secondary font-medium">
         <span className="px-2 py-0.5 bg-gray-100 rounded-md">{order.counter}</span>
         <span>•</span>
         <span>{order.type}</span>
@@ -138,12 +125,12 @@ export default function KitchenPreparationDashboard() {
         {order.items.map((item) => (
           <div key={item.id} className="flex justify-between items-start border-b border-gray-50 pb-2 last:border-0 last:pb-0">
             <div className="flex gap-3">
-              <div className="bg-gray-100 text-gray-700 w-6 h-6 rounded flex items-center justify-center text-xs font-bold shrink-0">
+              <div className="bg-gray-100 text-text-secondary w-6 h-6 rounded flex items-center justify-center text-xs font-bold shrink-0">
                 {item.quantity}x
               </div>
               <div className="flex flex-col">
-                <span className="text-sm font-semibold text-gray-900">{item.name}</span>
-                {item.notes && <span className="text-xs text-gray-500 mt-0.5">{item.notes}</span>}
+                <span className="text-sm font-semibold text-text-primary">{item.name}</span>
+                {item.notes && <span className="text-xs text-text-secondary mt-0.5">{item.notes}</span>}
               </div>
             </div>
           </div>
@@ -174,6 +161,7 @@ export default function KitchenPreparationDashboard() {
             className="w-full py-2.5 rounded-xl text-sm font-bold shadow-sm flex items-center justify-center gap-2"
           >
             Order Received
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12l5 5l10 -10"/></svg>
           </Button>
         )}
       </div>
@@ -185,7 +173,7 @@ export default function KitchenPreparationDashboard() {
       {/* Top Stats */}
       <div className="grid grid-cols-4 gap-4">
         <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-xl">
+          <div className="w-12 h-12 rounded-xl bg-brand-accent/10 flex items-center justify-center text-brand-accent font-bold text-xl">
             {preparingOrders.length}
           </div>
           <div>
@@ -194,7 +182,7 @@ export default function KitchenPreparationDashboard() {
           </div>
         </div>
         <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-brand-primary flex items-center justify-center text-gray-900 font-bold text-xl">
+          <div className="w-12 h-12 rounded-xl bg-brand-primary/20 flex items-center justify-center text-brand-primary font-bold text-xl">
             {pendingOrders.length}
           </div>
           <div>
@@ -212,7 +200,7 @@ export default function KitchenPreparationDashboard() {
           </div>
         </div>
         <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-brand-secondary flex items-center justify-center text-brand-accent font-bold text-xl">
+          <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center text-text-primary font-bold text-xl">
             {orders.filter((o) => o.status !== 'completed').length}
           </div>
           <div>
