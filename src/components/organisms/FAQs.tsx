@@ -87,7 +87,7 @@ const AccordionItem = ({
         )}
       >
         <div className="overflow-hidden">
-          <div className="px-8 pb-6 b1 text-text-secondary leading-relaxed max-w-3xl">
+          <div className="px-8 pb-6 text-sm md:b1 text-text-secondary leading-relaxed max-w-3xl">
             {answer}
           </div>
         </div>
@@ -151,7 +151,7 @@ export default function FAQs() {
 
         <div className="bg-white rounded-[2rem] border border-black/5 shadow-xl shadow-black/[0.02] overflow-hidden">
           <div className="bg-brand-primary/30 px-8 py-8 flex items-center gap-5 border-b border-black/5">
-            <div className="w-12 h-12 rounded-2xl bg-brand-primary flex items-center justify-center shadow-lg shadow-brand-primary/20">
+            <div className="w-12 h-12 rounded-2xl bg-brand-primary flex items-center justify-center shadow-lg shadow-brand-primary/20 shrink-0">
               <MessageSquare
                 className="w-6 h-6 text-text-tertiary"
                 fill="currentColor"
