@@ -239,7 +239,7 @@ export default function SubscriptionPlans() {
           </p>
         </div>
 
-        <div className="flex justify-center mb-20">
+        <div className="flex justify-center mb-10 md:mb-20">
           <div className="bg-white p-1 md:p-1.5 rounded-full border border-brand-primary/20 shadow-lg shadow-brand-primary/5 inline-flex items-center">
             <button
               onClick={() => setBillingCycle("monthly")}
