@@ -72,7 +72,7 @@ export function FeatureConfig({ onFinish, onBack }: FeatureConfigProps) {
       
       {/*INVENTORY MODE */}
       <div className="space-y-4">
-        <h3 className="h3 text-[var(--color-text-primary)]">
+        <h3 className="h4 text-[var(--color-text-primary)]">
           Inventory Mode Selection <Required />
         </h3>
         <div className="space-y-3">
@@ -106,7 +106,7 @@ export function FeatureConfig({ onFinish, onBack }: FeatureConfigProps) {
 
       {/* GENERAL MODE */}
       <div className="space-y-4">
-        <h3 className="h3 text-[var(--color-text-primary)]">
+        <h3 className="h4 text-[var(--color-text-primary)]">
           General Mode Selection
         </h3>
         <div className="space-y-3">
