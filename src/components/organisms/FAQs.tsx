@@ -161,7 +161,7 @@ export default function FAQs() {
               <h2 className="text-[25px] leading-[125%] font-bold font-figtree text-text-primary">
                 Frequently Asked Questions
               </h2>
-              <p className="b4 text-text-secondary">
+              <p className="b4 text-text-secondary hidden md:block">
                 Everything you need to know about Qios
               </p>
             </div>
