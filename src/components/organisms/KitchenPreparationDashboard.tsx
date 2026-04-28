@@ -103,7 +103,7 @@ export default function KitchenPreparationDashboard() {
   const readyOrders = orders.filter((o) => o.status === "ready");
 
   const renderOrderCard = (order: Order) => (
-    <div key={order.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex flex-col gap-4 transition-all hover:shadow-md">
+    <div key={order.id} className="bg-white rounded-[24px] overflow-hidden shadow-sm border-[1.5px] border-[#ffc670]/40 p-4 flex flex-col gap-4 transition-all hover:shadow-md hover:border-[#ffc670]/80">
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-2">
           <span className="font-bold text-lg text-text-primary">{order.id}</span>
