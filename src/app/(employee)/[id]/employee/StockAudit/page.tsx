@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/atoms/Button";
+import { Badge } from "@/components/atoms/Badge";
 
 interface Ingredient {
   id: string;
@@ -63,7 +64,7 @@ export default function StockAudit() {
     <div className="w-full min-h-screen p-6 lg:p-24 bg-orange-50 flex flex-col gap-12 overflow-hidden font-figtree">
       <div className="w-full flex flex-col gap-7">
         
-        {/* TABLE HEADER - Adjusted for symmetry + Font Applied */}
+        {/* TABLE HEADER - Symmetrical Layout */}
         <div className="w-full px-14 py-8 bg-neutral-500/10 rounded-t-[50px] flex items-center border-b border-neutral-200 font-figtree">
           <div className="flex-1 text-black text-xl lg:text-2xl font-semibold uppercase tracking-wider text-left">Ingredient</div>
           <div className="flex-1 text-center text-black text-xl lg:text-2xl font-semibold uppercase tracking-wider">System Count</div>
@@ -88,22 +89,22 @@ export default function StockAudit() {
                 return (
                   <div key={item.id} className="w-full px-14 py-6 bg-white rounded-[20px] shadow-[0px_4px_10px_0px_rgba(0,0,0,0.05)] flex items-center transition-all hover:shadow-md border border-transparent hover:border-orange-200">
                     
-                    {/* Ingredient - Symmetrical Left + Font Applied */}
+                    {/* Ingredient - Symmetrical Start */}
                     <div className="flex-1 flex flex-col gap-1 text-left">
                       <div className="text-zinc-800 text-2xl lg:text-3xl font-bold font-figtree">{item.name}</div>
                       <div className="flex items-center gap-3 text-neutral-500 font-medium font-inter">
                         <span>{item.category}</span>
-                        <span className="text-gray-400 text-sm leading-5">•</span>
+                        <span className="text-gray-400 text-sm font-normal leading-5">•</span>
                         <span>{item.unit}</span>
                       </div>
                     </div>
 
-                    {/* System Count - Font Applied */}
-                    <div className="flex-1 text-center text-neutral-500 text-2xl font-normal font-figtree">
+                    {/* System Count */}
+                    <div className="flex-1 text-center text-neutral-500 text-xl lg:text-2xl font-normal font-figtree">
                       {item.systemCount.toFixed(2)} {item.unit}
                     </div>
 
-                    {/* Physical Count - Font Applied */}
+                    {/* Physical Count */}
                     <div className="flex-1 flex justify-center">
                       <div className="relative w-40 lg:w-44 h-14">
                         <input
@@ -111,33 +112,52 @@ export default function StockAudit() {
                           value={physicalCounts[item.id] || ""}
                           onChange={(e) => handleInputChange(item.id, e.target.value)}
                           placeholder="0.00"
-                          className="w-full h-full bg-white rounded-[20px] outline outline-2 outline-offset-[-2px] outline-neutral-500/30 text-center text-2xl font-normal text-neutral-500 focus:outline-amber-400 font-figtree"
+                          className="w-full h-full bg-white rounded-[20px] outline outline-2 outline-offset-[-2px] outline-neutral-500/30 text-center text-xl lg:text-2xl font-normal text-neutral-500/80 focus:outline-amber-400 font-figtree"
                         />
                       </div>
                     </div>
 
-                    {/* Variance - Meta uses font-inter */}
+                    {/* Variance - Integrated Badge component */}
                     <div className="flex-1 flex justify-center">
-                      <div className={cn(
-                        "w-32 px-4 py-2 rounded-[50px] outline outline-1 outline-offset-[-1px] flex justify-center items-center gap-[5px] overflow-hidden transition-all",
-                        variance.status === "increase" && "bg-lime-100 outline-green-500 text-green-500",
-                        variance.status === "decrease" && "bg-red-600/20 outline-red-600/90 text-red-600/90",
-                        variance.status === "inactive" && "bg-white outline-neutral-500 text-neutral-500"
-                      )}>
-                        {variance.status === "increase" && <TrendingUp size={16} />}
-                        {variance.status === "decrease" && <TrendingDown size={16} />}
-                        {variance.status === "inactive" && <Minus size={16} />}
-                        <div className="text-xs font-normal font-inter">{variance.value.toFixed(2)} {item.unit}</div>
-                      </div>
+                      {variance.status === "increase" && (
+                        <Badge 
+                          color="success" 
+                          variant="outline" 
+                          leftIcon={<TrendingUp size={14} />}
+                          className="font-inter"
+                        >
+                          {variance.value.toFixed(2)} {item.unit}
+                        </Badge>
+                      )}
+                      {variance.status === "decrease" && (
+                        <Badge 
+                          color="error" 
+                          variant="outline" 
+                          leftIcon={<TrendingDown size={14} />}
+                          className="font-inter"
+                        >
+                          {variance.value.toFixed(2)} {item.unit}
+                        </Badge>
+                      )}
+                      {variance.status === "inactive" && (
+                        <Badge 
+                          color="primary" 
+                          variant="subtle" 
+                          leftIcon={<Minus size={14} />}
+                          className="font-inter text-neutral-500"
+                        >
+                          {variance.value.toFixed(2)} {item.unit}
+                        </Badge>
+                      )}
                     </div>
 
-                    {/* Notes - Symmetrical Right */}
+                    {/* Notes - Symmetrical End */}
                     <div className="w-24 flex justify-end">
                       <button 
                         onClick={() => setActiveNoteId(item.id)}
                         className={cn(
                           "p-3 rounded-lg transition-all relative",
-                          hasNote ? "bg-amber-400 text-white" : "bg-amber-200 text-zinc-800 hover:bg-amber-300"
+                          hasNote ? "bg-amber-400 text-white shadow-md" : "bg-amber-200 text-zinc-800 hover:bg-amber-300"
                         )}
                       >
                         <FileText size={24} />
@@ -152,7 +172,7 @@ export default function StockAudit() {
         ))}
       </div>
 
-      {/* FOOTER ACTIONS - Buttons use font-inter */}
+      {/* FOOTER ACTIONS */}
       <div className="flex justify-center lg:justify-end items-center gap-6 mt-8 font-inter">
         <Button 
           variant="outline" 
@@ -184,7 +204,7 @@ export default function StockAudit() {
                 autoFocus
                 value={notes[activeNoteId] || ""}
                 onChange={(e) => setNotes(prev => ({ ...prev, [activeNoteId]: e.target.value }))}
-                placeholder="Type discrepancy reason..."
+                placeholder="Reason for discrepancy..."
                 className="w-full h-40 p-4 bg-gray-50 border border-neutral-200 rounded-2xl focus:outline-none focus:border-amber-400 resize-none font-inter text-neutral-600"
               />
               <Button onClick={() => setActiveNoteId(null)} className="w-full h-12 bg-zinc-800 hover:bg-zinc-700 text-white font-bold rounded-xl font-inter">
