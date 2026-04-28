@@ -103,7 +103,7 @@ export default function KitchenPreparationDashboard() {
   const readyOrders = orders.filter((o) => o.status === "ready");
 
   const renderOrderCard = (order: Order) => (
-    <div key={order.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex flex-col gap-4 transition-all hover:shadow-md">
+    <div key={order.id} className="bg-white rounded-[24px] overflow-hidden shadow-sm border-[1.5px] border-[#ffc670]/40 p-4 flex flex-col gap-4 transition-all hover:shadow-md hover:border-[#ffc670]/80">
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-2">
           <span className="font-bold text-lg text-text-primary">{order.id}</span>
@@ -170,55 +170,67 @@ export default function KitchenPreparationDashboard() {
   );
 
   return (
-    <div className="flex flex-col bg-bg-primary min-h-screen p-6 gap-6">
-      {/* Top Stats */}
-      <div className="grid grid-cols-4 gap-4">
-        <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-brand-accent/10 flex items-center justify-center text-brand-accent font-bold text-xl">
-            {preparingOrders.length}
-          </div>
-          <div>
-            <p className="text-xs text-text-secondary font-medium uppercase tracking-wider">Preparing</p>
-            <p className="text-lg font-bold text-text-primary">Active Orders</p>
-          </div>
+    <div className="flex flex-col bg-[#F8FAFC] min-h-screen p-4 md:p-6 lg:p-8 gap-8 font-inter">
+      {/* Dashboard Header Element */}
+      <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4 bg-white p-6 rounded-2xl shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-100">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold text-text-primary font-figtree tracking-tight">Kitchen Operations</h1>
+          <p className="text-text-secondary mt-1 text-sm md:text-base font-medium">Real-time active order management system</p>
         </div>
-        <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-brand-primary/20 flex items-center justify-center text-brand-primary font-bold text-xl">
+        <div className="flex items-center gap-3 bg-success-primary/10 px-4 py-2.5 rounded-xl border border-success-primary/20 shadow-sm">
+           <span className="w-2.5 h-2.5 rounded-full bg-success-primary animate-pulse"></span>
+           <span className="text-sm font-bold text-success-primary tracking-wide">SYSTEM LIVE</span>
+        </div>
+      </div>
+
+      {/* Top Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white p-5 rounded-[20px] shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-100 flex items-center gap-4 transition-transform hover:-translate-y-0.5">
+          <div className="w-14 h-14 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center text-text-primary font-bold text-2xl shadow-sm">
             {pendingOrders.length}
           </div>
-          <div>
-            <p className="text-xs text-text-secondary font-medium uppercase tracking-wider">Pending</p>
-            <p className="text-lg font-bold text-text-primary">In Queue</p>
+          <div className="flex flex-col justify-center">
+            <p className="text-[11px] text-text-secondary font-bold uppercase tracking-widest mb-0.5">Pending</p>
+            <p className="text-[19px] font-bold text-text-primary leading-none">In Queue</p>
           </div>
         </div>
-        <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-success-secondary flex items-center justify-center text-success-primary font-bold text-xl">
+        <div className="bg-white p-5 rounded-[20px] shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-100 flex items-center gap-4 transition-transform hover:-translate-y-0.5">
+          <div className="w-14 h-14 rounded-xl bg-brand-accent/10 border border-brand-accent/20 flex items-center justify-center text-brand-accent font-bold text-2xl shadow-sm">
+            {preparingOrders.length}
+          </div>
+          <div className="flex flex-col justify-center">
+            <p className="text-[11px] text-brand-accent/80 font-bold uppercase tracking-widest mb-0.5">Preparing</p>
+            <p className="text-[19px] font-bold text-text-primary leading-none">Active Orders</p>
+          </div>
+        </div>
+        <div className="bg-white p-5 rounded-[20px] shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-100 flex items-center gap-4 transition-transform hover:-translate-y-0.5">
+          <div className="w-14 h-14 rounded-xl bg-success-primary/10 border border-success-primary/20 flex items-center justify-center text-success-primary font-bold text-2xl shadow-sm">
             {readyOrders.length}
           </div>
-          <div>
-            <p className="text-xs text-text-secondary font-medium uppercase tracking-wider">Ready</p>
-            <p className="text-lg font-bold text-text-primary">For Pickup</p>
+          <div className="flex flex-col justify-center">
+            <p className="text-[11px] text-success-primary/80 font-bold uppercase tracking-widest mb-0.5">Ready</p>
+            <p className="text-[19px] font-bold text-text-primary leading-none">For Pickup</p>
           </div>
         </div>
-        <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center text-text-primary font-bold text-xl">
+        <div className="bg-white p-5 rounded-[20px] shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-100 flex items-center gap-4 transition-transform hover:-translate-y-0.5">
+          <div className="w-14 h-14 rounded-xl bg-brand-primary/20 border border-brand-primary/30 flex items-center justify-center text-brand-primary font-bold text-2xl shadow-sm">
             {orders.filter((o) => o.status !== 'completed').length}
           </div>
-          <div>
-            <p className="text-xs text-text-secondary font-medium uppercase tracking-wider">Total</p>
-            <p className="text-lg font-bold text-text-primary">All Orders</p>
+          <div className="flex flex-col justify-center">
+            <p className="text-[11px] text-brand-dark/70 font-bold uppercase tracking-widest mb-0.5">Total</p>
+            <p className="text-[19px] font-bold text-text-primary leading-none">All Orders</p>
           </div>
         </div>
       </div>
 
       {/* Main Boards */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 items-start">
         {/* Pending Column */}
         <div className="flex flex-col gap-4 bg-white p-4 rounded-2xl border border-gray-100">
           <div className="flex items-center gap-2 mb-1 px-1">
-            <div className="w-3 h-3 rounded-full bg-brand-primary shadow-sm shadow-brand-secondary"></div>
+            <div className="w-3 h-3 rounded-full bg-gray-400 shadow-sm"></div>
             <h2 className="text-lg font-bold text-text-primary">Pending Orders</h2>
-            <span className="ml-auto bg-bg-primary border border-gray-200 text-text-secondary px-2.5 py-0.5 rounded-full text-xs font-bold shadow-sm">{pendingOrders.length}</span>
+            <span className="ml-auto bg-gray-50 border border-gray-200 text-text-secondary px-2.5 py-0.5 rounded-full text-xs font-bold shadow-sm">{pendingOrders.length}</span>
           </div>
           <div className="flex flex-col gap-4 overflow-y-auto">
             {pendingOrders.map(renderOrderCard)}
@@ -235,7 +247,7 @@ export default function KitchenPreparationDashboard() {
           <div className="flex items-center gap-2 mb-1 px-1">
             <div className="w-3 h-3 rounded-full bg-brand-accent shadow-sm shadow-brand-accent/30"></div>
             <h2 className="text-lg font-bold text-text-primary">Preparing Now</h2>
-            <span className="ml-auto bg-bg-primary border border-gray-200 text-text-secondary px-2.5 py-0.5 rounded-full text-xs font-bold shadow-sm">{preparingOrders.length}</span>
+            <span className="ml-auto bg-brand-accent/5 border border-brand-accent/20 text-brand-accent px-2.5 py-0.5 rounded-full text-xs font-bold shadow-sm">{preparingOrders.length}</span>
           </div>
           <div className="flex flex-col gap-4 overflow-y-auto">
             {preparingOrders.map(renderOrderCard)}
@@ -252,7 +264,7 @@ export default function KitchenPreparationDashboard() {
           <div className="flex items-center gap-2 mb-1 px-1">
             <div className="w-3 h-3 rounded-full bg-success-primary shadow-sm shadow-success-secondary"></div>
             <h2 className="text-lg font-bold text-text-primary">Ready for Pickup</h2>
-            <span className="ml-auto bg-bg-primary border border-gray-200 text-text-secondary px-2.5 py-0.5 rounded-full text-xs font-bold shadow-sm">{readyOrders.length}</span>
+            <span className="ml-auto bg-success-primary/5 border border-success-primary/20 text-success-primary px-2.5 py-0.5 rounded-full text-xs font-bold shadow-sm">{readyOrders.length}</span>
           </div>
           <div className="flex flex-col gap-4 overflow-y-auto">
             {readyOrders.map(renderOrderCard)}
