@@ -13,7 +13,7 @@ export const Hero = () => {
 
   return (
     <section className="w-full max-w-[1440px] h-screen bg-text-tertiary flex items-center justify-start mx-auto relative z-[10]">
-      <div className="w-full flex flex-col md:grid md:grid-cols-[max-content_1fr] gap-y-16 md:gap-y-[100px] lg:gap-y-[120px] xl:gap-y-16 md:gap-x-8 lg:gap-x-12 px-6 md:px-12 xl:px-0 xl:contents mt-32 md:mt-16 lg:mt-20 xl:mt-0 relative z-[70] items-center md:items-start">
+      <div className="w-full flex flex-col md:grid md:grid-cols-[max-content_1fr] gap-y-16 md:gap-y-[100px] lg:gap-y-[120px] xl:gap-y-16 md:gap-x-8 lg:gap-x-12 px-6 md:px-12 xl:px-0 xl:contents mt-12 md:mt-16 lg:mt-20 xl:mt-0 relative z-[70] items-center md:items-start">
         <div className="col-start-1 row-start-1 flex justify-center md:justify-start xl:contents md:pl-4 lg:pl-8 xl:pl-0">
           <div className="relative xl:absolute left-auto xl:left-[-150px] top-auto xl:top-[48%] translate-y-0 xl:-translate-y-1/2 z-[70] flex flex-col justify-between w-full max-w-[400px] md:max-w-none md:w-[369px] xl:w-[369px] h-auto xl:h-[371px] items-center text-center md:items-start md:text-left">
             <div className="flex flex-col items-center md:items-start">
@@ -153,37 +153,37 @@ export const Hero = () => {
         </div>
 
         <div className="col-start-1 row-start-2 flex justify-center md:justify-start xl:contents md:pl-4 lg:pl-8 xl:pl-0">
-          <div className="relative xl:absolute bottom-auto xl:bottom-12 left-auto xl:left-[-150px] z-[60] flex flex-row flex-wrap md:flex-nowrap items-center justify-center md:justify-start gap-8 md:gap-6 lg:gap-8 xl:gap-[25px] w-full md:w-max xl:w-auto">
-            <div className="flex flex-col items-center md:items-start text-center md:text-left gap-[4px] w-[120px] md:w-[135px] lg:w-[145px] xl:w-[129px]">
+          <div className="relative xl:absolute bottom-auto xl:bottom-12 left-auto xl:left-[-150px] z-[60] flex flex-row flex-nowrap items-start justify-between md:justify-start gap-4 md:gap-6 lg:gap-8 xl:gap-[25px] w-full md:w-max xl:w-auto">
+            <div className="flex flex-col items-center md:items-start text-center md:text-left gap-[4px] flex-1 md:w-[135px] lg:w-[145px] xl:w-[129px]">
               <h2
-                className="font-figtree text-[39px] md:text-[34px] lg:text-[36px] xl:text-[39px] font-semibold leading-normal bg-clip-text text-transparent"
+                className="font-figtree text-[28px] md:text-[34px] lg:text-[36px] xl:text-[39px] font-semibold leading-tight bg-clip-text text-transparent"
                 style={gradientHeaderStyle}
               >
                 50+
               </h2>
-              <p className="text-text-primary font-inter text-[16px] md:text-[14px] lg:text-[15px] xl:text-[16px] font-normal leading-normal">
+              <p className="text-text-primary font-inter text-[11px] md:text-[14px] lg:text-[15px] xl:text-[16px] font-normal leading-tight">
                 Cebu F&B establishments
               </p>
             </div>
-            <div className="flex flex-col items-center md:items-start text-center md:text-left gap-[4px] w-[130px] md:w-[155px] lg:w-[160px] xl:w-[142px]">
+            <div className="flex flex-col items-center md:items-start text-center md:text-left gap-[4px] flex-1 md:w-[155px] lg:w-[160px] xl:w-[142px]">
               <h2
-                className="font-figtree text-[39px] md:text-[34px] lg:text-[36px] xl:text-[39px] font-semibold leading-normal bg-clip-text text-transparent"
+                className="font-figtree text-[28px] md:text-[34px] lg:text-[36px] xl:text-[39px] font-semibold leading-tight bg-clip-text text-transparent"
                 style={gradientHeaderStyle}
               >
                 40%
               </h2>
-              <p className="text-text-primary font-inter text-[16px] md:text-[14px] lg:text-[15px] xl:text-[16px] font-normal leading-normal">
+              <p className="text-text-primary font-inter text-[11px] md:text-[14px] lg:text-[15px] xl:text-[16px] font-normal leading-tight">
                 average reduction in wait times
               </p>
             </div>
-            <div className="flex flex-col items-center md:items-start text-center md:text-left gap-[4px] w-[130px] md:w-[155px] lg:w-[160px] xl:w-[142px]">
+            <div className="flex flex-col items-center md:items-start text-center md:text-left gap-[4px] flex-1 md:w-[155px] lg:w-[160px] xl:w-[142px]">
               <h2
-                className="font-figtree text-[39px] md:text-[34px] lg:text-[36px] xl:text-[39px] font-semibold leading-normal bg-clip-text text-transparent"
+                className="font-figtree text-[28px] md:text-[34px] lg:text-[36px] xl:text-[39px] font-semibold leading-tight bg-clip-text text-transparent"
                 style={gradientHeaderStyle}
               >
                 ₱50K+
               </h2>
-              <p className="text-text-primary font-inter text-[16px] md:text-[14px] lg:text-[15px] xl:text-[16px] font-normal leading-normal">
+              <p className="text-text-primary font-inter text-[11px] md:text-[14px] lg:text-[15px] xl:text-[16px] font-normal leading-tight">
                 saved on hardware costs
               </p>
             </div>
