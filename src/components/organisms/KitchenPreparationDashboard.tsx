@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Hourglass, Flame, BadgeCheck } from "lucide-react";
 import { PrepCard, Order, OrderStatus } from "@/components/molecules/PrepCard";
 import { StatCard } from "@/components/molecules/StatCard";
 import { cn } from "@/lib/utils";
@@ -189,68 +188,34 @@ const INITIAL_ORDERS: Order[] = [
 interface SectionConfig {
   status: OrderStatus;
   label: string;
-  dotClass: string;
-  badgeClass: string;
   accentColor: string;
-  gif: string;
-  Icon: React.ComponentType<{
-    className?: string;
-    style?: React.CSSProperties;
-  }>;
-  iconClass: string;
-  iconStyle?: React.CSSProperties;
 }
 
 const SECTIONS: SectionConfig[] = [
   {
     status: "pending",
     label: "Pending",
-    dotClass: "bg-[var(--kds-gold)]",
-    badgeClass: "bg-[var(--kds-gold-soft)] text-[var(--kds-gold-deeper)]",
     accentColor: "var(--kds-gold)",
-    gif: "/images/Pending.gif",
-    Icon: Hourglass,
-    iconClass: "text-[var(--kds-gold-mid)] animate-spin",
-    iconStyle: { animationDuration: "3s" },
   },
   {
     status: "preparing",
     label: "Preparing",
-    dotClass: "bg-[var(--kds-coral)]",
-    badgeClass: "bg-[var(--kds-coral-soft)] text-[var(--kds-coral)]",
     accentColor: "var(--kds-coral)",
-    gif: "/images/Cooking.gif",
-    Icon: Flame,
-    iconClass: "text-[var(--kds-coral)] animate-bounce",
   },
   {
     status: "ready",
     label: "Ready",
-    dotClass: "bg-[var(--kds-green)]",
-    badgeClass: "bg-[var(--kds-green-soft)] text-[var(--kds-green)]",
     accentColor: "var(--kds-green)",
-    gif: "/images/Completed.gif",
-    Icon: BadgeCheck,
-    iconClass: "text-[var(--kds-green)] animate-pulse",
   },
 ];
-
-function formatClock(d: Date) {
-  return d.toLocaleTimeString("en-PH", {
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: true,
-  });
-}
 
 export default function KitchenPreparationDashboard(): JSX.Element {
   const [orders, setOrders] = useState<Order[]>(INITIAL_ORDERS);
   const [activeTab, setActiveTab] = useState<OrderStatus>("pending");
-  const [clock, setClock] = useState(() => formatClock(new Date()));
+  const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
-    const id = setInterval(() => setClock(formatClock(new Date())), 1000);
+    const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
   }, []);
 
@@ -313,28 +278,28 @@ export default function KitchenPreparationDashboard(): JSX.Element {
             value={counts.pending}
             subtext="Waiting to start"
             variant="yellow"
-            className="bg-[#FFC670] border-[#FFC670] hover:shadow-sm"
+            className="hover:shadow-sm"
           />
           <StatCard
             title="In Progress"
             value={counts.preparing}
             subtext="Currently cooking"
             variant="coral"
-            className="bg-[#FFC670] border-[#FFC670] hover:shadow-sm"
+            className="hover:shadow-sm"
           />
           <StatCard
             title="Ready"
             value={counts.ready}
             subtext="For pickup"
             variant="green"
-            className="bg-[#FFC670] border-[#FFC670] hover:shadow-sm"
+            className="hover:shadow-sm"
           />
           <StatCard
             title="Total Active"
-            value={orders.length}
+            value={activeCount}
             subtext="All orders"
             variant="pink"
-            className="bg-[#FFC670] border-[#FFC670] hover:shadow-sm"
+            className="hover:shadow-sm"
           />
         </div>
       </div>
@@ -351,7 +316,7 @@ export default function KitchenPreparationDashboard(): JSX.Element {
               key={s.status}
               onClick={() => setActiveTab(s.status)}
               className={cn(
-                "relative flex items-center gap-2 px-5 py-2.5 rounded-t-xl text-sm font-semibold transition-all duration-200 focus:outline-none",
+                "relative flex items-center gap-2 px-5 py-2.5 rounded-t-xl text-sm font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--kds-gold)] focus-visible:ring-offset-2",
                 isActive
                   ? "bg-white text-[var(--kds-dark)] shadow-sm"
                   : "bg-transparent text-[var(--kds-muted)] hover:text-[var(--kds-dark)] hover:bg-white/60",
@@ -402,6 +367,7 @@ export default function KitchenPreparationDashboard(): JSX.Element {
                     order={order}
                     onAdvance={advanceOrder}
                     index={index}
+                    now={now}
                   />
                 ))
               )}

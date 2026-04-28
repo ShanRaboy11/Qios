@@ -1,6 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
-import { Timer, ChefHat, CheckCircle2, Clock } from "lucide-react";
+import { Timer, ChefHat, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/atoms/Button";
 import { cn } from "@/lib/utils";
 
@@ -43,15 +42,10 @@ interface PrepCardProps {
   order: Order;
   onAdvance: (id: string) => void;
   index?: number;
+  now: number;
 }
 
-export function PrepCard({ order, onAdvance, index = 0 }: PrepCardProps) {
-  const [now, setNow] = useState(Date.now());
-
-  useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(t);
-  }, []);
+export function PrepCard({ order, onAdvance, index = 0, now }: PrepCardProps) {
 
   const elapsed = now - order.startedAt;
   const urgency = getUrgency(elapsed, order.status);
@@ -242,7 +236,6 @@ export function PrepCard({ order, onAdvance, index = 0 }: PrepCardProps) {
             onClick={() => onAdvance(order.id)}
             disabled={order.status === "ready"}
             variant="ghost"
-            shape="rounded"
             size="md"
             className={cn(
               "w-full h-11 rounded-xl text-sm font-bold transition-all active:scale-[0.97]",

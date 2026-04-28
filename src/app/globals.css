@@ -212,3 +212,12 @@ h4,
 .kds-tick {
   animation: kds-tick 1s step-start infinite;
 }
+
+/* ─── Scrollbar Utility ─────────────────────────────────────── */
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
