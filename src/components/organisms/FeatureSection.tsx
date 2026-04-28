@@ -12,31 +12,31 @@ import { Button } from "../atoms/Button";
 
 const features = [
   {
-    icon: <QrCode className="w-6 h-6 text-brand-accent" />,
+    icon: <QrCode className="w-5 h-5 md:w-6 md:h-6 text-brand-accent" />,
     title: "Scan & Order",
     description:
       "Frictionless digital menus. No apps or logins required—just scan and eat.",
   },
   {
-    icon: <Package className="w-6 h-6 text-brand-accent" />,
+    icon: <Package className="w-5 h-5 md:w-6 md:h-6 text-brand-accent" />,
     title: "Smart Inventory",
     description:
       "Real-time tracking for ingredients and units. Auto-deducts as you sell.",
   },
   {
-    icon: <Smartphone className="w-6 h-6 text-brand-accent" />,
+    icon: <Smartphone className="w-5 h-5 md:w-6 md:h-6 text-brand-accent" />,
     title: "Native Experience",
     description:
       "Live cart updates and easy modifiers built for the modern mobile web.",
   },
   {
-    icon: <BarChart3 className="w-6 h-6 text-brand-accent" />,
+    icon: <BarChart3 className="w-5 h-5 md:w-6 md:h-6 text-brand-accent" />,
     title: "Shift Insights",
     description:
       "Track order velocity and staff productivity on one real-time dashboard.",
   },
   {
-    icon: <ShieldCheck className="w-6 h-6 text-brand-accent" />,
+    icon: <ShieldCheck className="w-5 h-5 md:w-6 md:h-6 text-brand-accent" />,
     title: "Instant Checkout",
     description:
       "Scan customer codes to confirm payments and sync with your kitchen.",
@@ -45,8 +45,8 @@ const features = [
 
 function IconBox({ children }: { children: React.ReactNode }) {
   return (
-    <div className="w-[46px] h-[46px] min-w-[46px] rounded-[13px] flex items-center justify-center relative overflow-hidden bg-brand-accent/10 border border-brand-accent/20">
-      <div className="absolute inset-0 rounded-[13px] bg-gradient-to-br from-white/35 to-transparent" />
+    <div className="w-[38px] h-[38px] md:w-[46px] md:h-[46px] min-w-[38px] md:min-w-[46px] rounded-[10px] md:rounded-[13px] flex items-center justify-center relative overflow-hidden bg-brand-accent/10 border border-brand-accent/20">
+      <div className="absolute inset-0 rounded-[10px] md:rounded-[13px] bg-gradient-to-br from-white/35 to-transparent" />
       <div className="relative z-10">{children}</div>
     </div>
   );
@@ -73,7 +73,7 @@ function Card({
 
   return (
     <div
-      className={`bg-white rounded-[2rem] p-8 border relative overflow-hidden transition-all duration-300 group hover:-translate-y-1 ${className}`}
+      className={`bg-white rounded-[1.5rem] md:rounded-[2rem] p-5 md:p-8 border relative overflow-hidden transition-all duration-300 group hover:-translate-y-1 ${className}`}
       style={{
         borderColor:
           "color-mix(in srgb, var(--color-brand-primary) 20%, var(--color-brand-accent) 20%)",
@@ -134,21 +134,21 @@ export default function FeatureSection() {
       />
 
       <div className="max-w-7xl mx-auto relative z-10">
-        <div className="mb-12 space-y-4">
-          <h1 className="h1 text-text-primary tracking-tight">
+        <div className="mb-12 space-y-3 md:space-y-4">
+          <h1 className="text-[34px] md:h1 text-text-primary tracking-tight leading-tight">
             Hardware-Free <br className="sm:hidden" />
             <span style={gradientHeaderStyle}>QR Kiosk</span>
           </h1>
-          <p className="h4 text-text-secondary max-w-[540px]">
+          <p className="text-base md:h4 text-text-secondary max-w-[540px]">
             Turn every smartphone into a powerful ordering terminal. No tablets,
             no stands, no friction.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full">
-          <div className="lg:col-span-8">
+        <div className="grid grid-cols-2 lg:grid-cols-12 gap-4 md:gap-6 h-full">
+          <div className="col-span-2 lg:col-span-8">
             <div
-              className="relative rounded-[2.5rem] p-8 md:p-14 flex flex-col md:flex-row items-center justify-between gap-12 overflow-hidden h-full border border-white/10 shadow-2xl transition-transform duration-500 hover:-translate-y-1"
+              className="relative rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-14 flex flex-col md:flex-row items-center justify-between gap-8 md:gap-12 overflow-hidden h-full border border-white/10 shadow-2xl transition-transform duration-500 hover:-translate-y-1"
               style={{
                 background:
                   "linear-gradient(135deg, #1c1917 0%, #27201c 60%, #1c1917 100%)",
@@ -171,27 +171,31 @@ export default function FeatureSection() {
                 }}
               />
 
-              <div className="flex-1 relative z-10 space-y-6">
+              <div className="flex-1 relative z-10 space-y-4 md:space-y-6 text-center md:text-left">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-white/5 border border-white/10">
                   <span className="relative flex h-2 w-2">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 bg-brand-primary" />
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-primary" />
                   </span>
-                  <span className="text-xs font-bold tracking-[0.15em] uppercase text-brand-primary font-inter">
+                  <span className="text-[10px] md:text-xs font-bold tracking-[0.15em] uppercase text-brand-primary font-inter">
                     AI Concierge
                   </span>
                 </div>
 
-                <h2 className="font-ibrand font-semibold text-[38px] leading-[125%] italic text-text-tertiary">
-                  "Find me a spicy dinner for two under ₱500."
+                <h2 className="font-ibrand font-semibold text-2xl md:text-[38px] leading-[125%] italic text-text-tertiary">
+                  "Find me a spicy dinner for two under{" "}
+                  <span className="font-figtree font-bold italic lg:not-italic lg:font-normal">
+                    ₱
+                  </span>
+                  500."
                 </h2>
 
-                <p className="b1 text-white/60 max-w-md">
+                <p className="text-sm md:b1 text-white/60 max-w-md mx-auto md:mx-0">
                   A natural chat interface that understands context. It
                   recommends, upsells, and modifies orders in real-time.
                 </p>
 
-                <div className="pt-4">
+                <div className="pt-2 md:pt-4">
                   <Button
                     variant="outline"
                     rightIcon={<ArrowRight className="w-4 h-4" />}
@@ -201,62 +205,62 @@ export default function FeatureSection() {
                 </div>
               </div>
 
-              <div className="flex-shrink-0 relative z-10 lg:scale-110">
-                <ChatbotLogo size={240} />
+              <div className="flex-shrink-0 relative z-10 scale-75 md:scale-110">
+                <ChatbotLogo size={200} />
               </div>
             </div>
           </div>
 
-          <div className="lg:col-span-4 flex flex-col gap-6">
+          <div className="col-span-2 lg:col-span-4 grid grid-cols-2 lg:grid-cols-1 gap-4 md:gap-6">
             <Card className="flex-1">
               <IconBox>{features[0].icon}</IconBox>
-              <h4 className="font-figtree font-bold text-[25px] leading-[125%] text-text-primary mt-6 mb-3">
+              <h4 className="font-figtree font-bold text-lg md:text-[25px] leading-[125%] text-text-primary mt-4 md:mt-6 mb-2 md:mb-3">
                 {features[0].title}
               </h4>
-              <p className="b1 text-text-secondary">
+              <p className="text-xs md:b1 text-text-secondary leading-relaxed">
                 {features[0].description}
               </p>
             </Card>
             <Card className="flex-1">
               <IconBox>{features[1].icon}</IconBox>
-              <h4 className="font-figtree font-bold text-[25px] leading-[125%] text-text-primary mt-6 mb-3">
+              <h4 className="font-figtree font-bold text-lg md:text-[25px] leading-[125%] text-text-primary mt-4 md:mt-6 mb-2 md:mb-3">
                 {features[1].title}
               </h4>
-              <p className="b1 text-text-secondary">
+              <p className="text-xs md:b1 text-text-secondary leading-relaxed">
                 {features[1].description}
               </p>
             </Card>
           </div>
 
-          <div className="lg:col-span-4">
+          <div className="col-span-1 lg:col-span-4">
             <Card className="h-full">
               <IconBox>{features[2].icon}</IconBox>
-              <h4 className="font-figtree font-bold text-[25px] leading-[125%] text-text-primary mt-6 mb-3">
+              <h4 className="font-figtree font-bold text-lg md:text-[25px] leading-[125%] text-text-primary mt-4 md:mt-6 mb-2 md:mb-3">
                 {features[2].title}
               </h4>
-              <p className="b1 text-text-secondary">
+              <p className="text-xs md:b1 text-text-secondary leading-relaxed">
                 {features[2].description}
               </p>
             </Card>
           </div>
-          <div className="lg:col-span-4">
+          <div className="col-span-1 lg:col-span-4">
             <Card className="h-full">
               <IconBox>{features[3].icon}</IconBox>
-              <h4 className="font-figtree font-bold text-[25px] leading-[125%] text-text-primary mt-6 mb-3">
+              <h4 className="font-figtree font-bold text-lg md:text-[25px] leading-[125%] text-text-primary mt-4 md:mt-6 mb-2 md:mb-3">
                 {features[3].title}
               </h4>
-              <p className="b1 text-text-secondary">
+              <p className="text-xs md:b1 text-text-secondary leading-relaxed">
                 {features[3].description}
               </p>
             </Card>
           </div>
-          <div className="lg:col-span-4">
+          <div className="col-span-2 lg:col-span-4">
             <Card className="h-full">
               <IconBox>{features[4].icon}</IconBox>
-              <h4 className="font-figtree font-bold text-[25px] leading-[125%] text-text-primary mt-6 mb-3">
+              <h4 className="font-figtree font-bold text-lg md:text-[25px] leading-[125%] text-text-primary mt-4 md:mt-6 mb-2 md:mb-3">
                 {features[4].title}
               </h4>
-              <p className="b1 text-text-secondary">
+              <p className="text-xs md:b1 text-text-secondary leading-relaxed">
                 {features[4].description}
               </p>
             </Card>
