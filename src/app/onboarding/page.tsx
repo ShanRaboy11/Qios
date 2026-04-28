@@ -20,6 +20,8 @@ import { SubscriptionPackage } from "./components/SubscriptionPackage";
 import { FeatureConfig } from "./components/FeatureConfiguration";
 import { Navbar } from "@/components/organisms/navbar";
 import { Footer } from "@/components/organisms/footer";
+import { processOnboarding } from "./actions";
+import { useRouter } from "next/navigation";
 
 const steps = [
   { id: 1, title: "Business Information", icon: FileText },
@@ -30,11 +32,15 @@ const steps = [
 ];
 
 export default function OnboardingPage() {
+  const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
+  const [loading, setLoading] = useState(false);
   
   // States for validation in Step 1 and 3
   const [businessData, setBusinessData] = useState({ name: "", email: "" });
+  const [contactData, setContactData] = useState({ phoneNumber: "" });
   const [authData, setAuthData] = useState({ email: "", password: "", confirm: "" });
+  const [subscriptionData, setSubscriptionData] = useState({ packageId: "starter" });
   const [error, setError] = useState("");
 
   const validateEmail = (email: string) => /\S+@\S+\.\S+/.test(email);
@@ -45,6 +51,10 @@ export default function OnboardingPage() {
     if (currentStep === 1) {
       if (!businessData.name.trim()) return setError("Business Name is required");
       if (!validateEmail(businessData.email)) return setError("A valid business email is required");
+    }
+    // Step 2 Validation
+    if (currentStep === 2) {
+      if (contactData.phoneNumber.length < 10) return setError("Valid phone number is required");
     }
     // Step 3 Validation
     if (currentStep === 3) {
@@ -61,9 +71,27 @@ export default function OnboardingPage() {
     setCurrentStep((prev) => Math.max(prev - 1, 1));
   };
   
-  const handleFinalize = (data: any) => {
-    console.log("Final Onboarding Data:", data);
-    alert("Onboarding Completed!");
+  const handleFinalize = async (featureData: any) => {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await processOnboarding({
+        businessData,
+        contactData,
+        authData,
+        subscriptionData,
+        featureData
+      });
+      if (res.success) {
+        // Now you might want to sign them in automatically, or redirect to login.
+        // Easiest is to redirect to login.
+        router.push("/login?onboarding=success");
+      }
+    } catch (err: any) {
+      setError(err.message || "An error occurred during onboarding.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -89,14 +117,14 @@ export default function OnboardingPage() {
             )}
             
             {currentStep === 2 && (
-              <ContactInformation onNext={nextStep} onBack={prevStep} />
+              <ContactInformation data={contactData} setData={setContactData} onNext={nextStep} onBack={prevStep} />
             )}
             
             {currentStep === 3 && (
               <AuthCredentials data={authData} setData={setAuthData} error={error} />
             )}
             
-            {currentStep === 4 && <SubscriptionPackage onNext={nextStep} onBack={prevStep} />}
+            {currentStep === 4 && <SubscriptionPackage data={subscriptionData} setData={setSubscriptionData} onNext={nextStep} onBack={prevStep} />}
             {currentStep === 5 && <FeatureConfig onFinish={handleFinalize} onBack={prevStep} />}
           </div>
 
@@ -110,6 +138,7 @@ export default function OnboardingPage() {
                     size="lg" 
                     className="h-13 lg:h-13 px-5 b2 border-neutral-200 text-neutral-500 transition-all" 
                     onClick={prevStep}
+                    disabled={loading}
                   >
                     <ArrowLeft className="w-5 h-5 mr-1" />
                     Back
@@ -120,6 +149,7 @@ export default function OnboardingPage() {
                   size="lg" 
                   className="h-13 lg:h-13 flex-1 b2 font-bold text-lg shadow-xl shadow-orange-200/50 text-[var(--color-text-tertiary)]" 
                   onClick={nextStep}
+                  disabled={loading}
                 >
                   Continue
                   <ArrowRight className="w-5 h-5 ml-2" />
@@ -127,6 +157,7 @@ export default function OnboardingPage() {
               </div>
             </div>
           )}
+          {currentStep === 5 && error && <p className="text-red-500 text-sm mt-4 animate-in fade-in slide-in-from-top-1 text-center">{error}</p>}
         </div>
       </div>
     </div>
