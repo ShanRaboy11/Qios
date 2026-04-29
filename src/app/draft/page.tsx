@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { Suspense } from "react";
 
 // Organism Imports
 import { CustomerHeader } from "@/components/organisms/CustomerHeader";
@@ -25,7 +25,8 @@ import { ThresholdSettingsPanel } from "@/components/organisms/ThresholdSettings
 
 export default function DraftPage() {
   return (
-    <div className="min-h-screen bg-[#fff8e1] flex flex-col gap-24 py-12">
+    <Suspense fallback={<div>Loading draft...</div>}>
+      <div className="min-h-screen bg-[#fff8e1] flex flex-col gap-24 py-12">
       <div className="container mx-auto px-4">
         <h1 className="text-4xl font-bold text-center mb-12">
           Organisms Showcase Draft
@@ -97,6 +98,7 @@ export default function DraftPage() {
         </div>
       </SectionWrapper>
     </div>
+    </Suspense>
   );
 }
 

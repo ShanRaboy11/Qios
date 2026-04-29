@@ -2,6 +2,8 @@ import React from "react";
 import TenantManagement from "@/components/organisms/TenantManagement";
 import { getTenants } from "./actions";
 
+export const dynamic = 'force-dynamic';
+
 export default async function TenantManagementPage() {
   const tenants = await getTenants();
 
