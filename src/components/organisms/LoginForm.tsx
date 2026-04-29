@@ -148,7 +148,7 @@ export const LoginForm = () => {
         return;
       }
       
-      const tenantStatus = profile.tenants?.status || "approved";
+      const tenantStatus = (profile.tenants as any)?.status || "approved";
 
       if (profile.role !== "super_admin" && tenantStatus !== "approved") {
         await supabase.auth.signOut();
