@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { Suspense } from "react";
 
 // Organism Imports
 import { CustomerHeader } from "@/components/organisms/CustomerHeader";
@@ -25,78 +25,80 @@ import { ThresholdSettingsPanel } from "@/components/organisms/ThresholdSettings
 
 export default function DraftPage() {
   return (
-    <div className="min-h-screen bg-[#fff8e1] flex flex-col gap-24 py-12">
-      <div className="container mx-auto px-4">
-        <h1 className="text-4xl font-bold text-center mb-12">
-          Organisms Showcase Draft
-        </h1>
-        <p className="text-center text-gray-500 max-w-2xl mx-auto">
-          This is a draft page to visualize all organisms side-by-side. Some
-          components might look cramped or unusual depending on how they are
-          styled to fill their parent container.
-        </p>
-      </div>
+    <Suspense fallback={<div>Loading draft...</div>}>
+      <div className="min-h-screen bg-[#fff8e1] flex flex-col gap-24 py-12">
+        <div className="container mx-auto px-4">
+          <h1 className="text-4xl font-bold text-center mb-12">
+            Organisms Showcase Draft
+          </h1>
+          <p className="text-center text-gray-500 max-w-2xl mx-auto">
+            This is a draft page to visualize all organisms side-by-side. Some
+            components might look cramped or unusual depending on how they are
+            styled to fill their parent container.
+          </p>
+        </div>
 
-      <SectionWrapper title="Login Form">
-        {/* LoginForm contains a min-h-screen container. Setting a specific height to contain it here if possible, 
+        <SectionWrapper title="Login Form">
+          {/* LoginForm contains a min-h-screen container. Setting a specific height to contain it here if possible, 
             though min-h-screen might force it to be full viewport height regardless. */}
-        <div className="relative border rounded-xl overflow-hidden">
-          <LoginForm />
-        </div>
-      </SectionWrapper>
+          <div className="relative border rounded-xl overflow-hidden">
+            <LoginForm />
+          </div>
+        </SectionWrapper>
 
-      <SectionWrapper title="Menu Catalog">
-        <MenuCatalog initialItems={[]} />
-      </SectionWrapper>
+        <SectionWrapper title="Menu Catalog">
+          <MenuCatalog initialItems={[]} />
+        </SectionWrapper>
 
-      <SectionWrapper title="Menu Inventory">
-        <MenuInventory />
-      </SectionWrapper>
+        <SectionWrapper title="Menu Inventory">
+          <MenuInventory />
+        </SectionWrapper>
 
-      <SectionWrapper title="Ingredients Inventory">
-        <IngredientsInventory />
-      </SectionWrapper>
+        <SectionWrapper title="Ingredients Inventory">
+          <IngredientsInventory />
+        </SectionWrapper>
 
-      <SectionWrapper title="Inventory Recipe Matrix">
-        <div className="container mx-auto">
-          <InventoryRecipeMatrix />
-        </div>
-      </SectionWrapper>
+        <SectionWrapper title="Inventory Recipe Matrix">
+          <div className="container mx-auto">
+            <InventoryRecipeMatrix />
+          </div>
+        </SectionWrapper>
 
-      <SectionWrapper title="Recipe Matrix View">
-        <div className="p-4 bg-gray-100">
-          <RecipeMatrixView />
-        </div>
-      </SectionWrapper>
+        <SectionWrapper title="Recipe Matrix View">
+          <div className="p-4 bg-gray-100">
+            <RecipeMatrixView />
+          </div>
+        </SectionWrapper>
 
-      <SectionWrapper title="Tenant Management">
-        <TenantManagement />
-      </SectionWrapper>
+        <SectionWrapper title="Tenant Management">
+          <TenantManagement />
+        </SectionWrapper>
 
-      <SectionWrapper title="Kitchen Preparation Dashboard">
-        <div className="p-4 bg-gray-100">
-          <KitchenPreparationDashboard />
-        </div>
-      </SectionWrapper>
+        <SectionWrapper title="Kitchen Preparation Dashboard">
+          <div className="p-4 bg-gray-100">
+            <KitchenPreparationDashboard />
+          </div>
+        </SectionWrapper>
 
-      <SectionWrapper title="System Activity">
-        <div>
-          <SystemActivity />
-        </div>
-      </SectionWrapper>
+        <SectionWrapper title="System Activity">
+          <div>
+            <SystemActivity />
+          </div>
+        </SectionWrapper>
 
-      <SectionWrapper title="Threshold Settings Panel">
-        <div className="w-full p-10">
-          <ThresholdSettingsPanel />
-        </div>
-      </SectionWrapper>
+        <SectionWrapper title="Threshold Settings Panel">
+          <div className="w-full p-10">
+            <ThresholdSettingsPanel />
+          </div>
+        </SectionWrapper>
 
-      <SectionWrapper title="QR Scanner">
-        <div className="w-full flex items-center justify-center p-12 bg-bg-primary min-h-[700px]">
-          <QrScanner />
-        </div>
-      </SectionWrapper>
-    </div>
+        <SectionWrapper title="QR Scanner">
+          <div className="w-full flex items-center justify-center p-12 bg-bg-primary min-h-[700px]">
+            <QrScanner />
+          </div>
+        </SectionWrapper>
+      </div>
+    </Suspense>
   );
 }
 

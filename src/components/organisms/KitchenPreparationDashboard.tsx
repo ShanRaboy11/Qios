@@ -1,1347 +1,284 @@
-import React from "react";
-export default (): JSX.Element => {
+"use client";
+
+import React, { useState } from "react";
+import { Button } from "@/components/atoms/Button";
+
+type OrderStatus = 'pending' | 'preparing' | 'ready' | 'completed';
+
+interface OrderItem {
+  id: string;
+  name: string;
+  notes: string;
+  quantity: number;
+}
+
+interface Order {
+  id: string;
+  status: OrderStatus;
+  time: string;
+  counter: string;
+  type: string;
+  targetTimePercentage: number;
+  items: OrderItem[];
+}
+
+const initialOrders: Order[] = [
+  {
+    id: "#R-4821",
+    status: "preparing",
+    time: "10:22",
+    counter: "Counter 3",
+    type: "Dine-in",
+    targetTimePercentage: 86,
+    items: [
+      { id: "1", name: "Garlic Fried Rice", notes: "Extra crispy", quantity: 1 },
+      { id: "2", name: "Soy Chicken", notes: "Extra crispy", quantity: 1 },
+      { id: "3", name: "Mango Shake", notes: "Medium", quantity: 1 },
+    ],
+  },
+  {
+    id: "#R-4822",
+    status: "preparing",
+    time: "5:22",
+    counter: "Counter 2",
+    type: "Takeout",
+    targetTimePercentage: 53,
+    items: [
+      { id: "4", name: "Kare-Kare Meal", notes: "Mild to peanut sauce", quantity: 1 },
+      { id: "5", name: "Lumpia Shanghai", notes: "10 pieces", quantity: 2 },
+    ],
+  },
+  {
+    id: "#R-4823",
+    status: "pending",
+    time: "3:22",
+    counter: "Counter 1",
+    type: "Dine-in",
+    targetTimePercentage: 28,
+    items: [
+      { id: "6", name: "Beef Tapa", notes: "Well done", quantity: 1 },
+      { id: "7", name: "Garlic Rice", notes: "Medium serving", quantity: 1 },
+      { id: "8", name: "Fried Egg", notes: "Over easy", quantity: 2 },
+    ],
+  },
+  {
+    id: "#R-4824",
+    status: "ready",
+    time: "17:22",
+    counter: "Counter 4",
+    type: "Dine-in",
+    targetTimePercentage: 144,
+    items: [
+      { id: "9", name: "Sisig Rice Bowl", notes: "Medium spice", quantity: 1 },
+      { id: "10", name: "Calamansi Juice", notes: "Less sugar", quantity: 2 },
+    ],
+  },
+  {
+    id: "#R-4825",
+    status: "preparing",
+    time: "8:15",
+    counter: "Counter 1",
+    type: "Dine-in",
+    targetTimePercentage: 62,
+    items: [
+      { id: "11", name: "Chicken Adobo", notes: "Extra sauce", quantity: 1 },
+      { id: "12", name: "Pancit Canton", notes: "No liver", quantity: 1 },
+    ],
+  },
+];
+
+export default function KitchenPreparationDashboard() {
+  const [orders, setOrders] = useState<Order[]>(initialOrders);
+
+  const updateOrderStatus = (orderId: string, newStatus: OrderStatus) => {
+    setOrders((prev) =>
+      prev.map((order) =>
+        order.id === orderId ? { ...order, status: newStatus } : order
+      )
+    );
+  };
+
+  const pendingOrders = orders.filter((o) => o.status === "pending");
+  const preparingOrders = orders.filter((o) => o.status === "preparing");
+  const readyOrders = orders.filter((o) => o.status === "ready");
+
+  const renderOrderCard = (order: Order) => (
+    <div key={order.id} className="bg-white rounded-[24px] overflow-hidden shadow-sm border-[1.5px] border-[#ffc670]/40 p-4 flex flex-col gap-4 transition-all hover:shadow-md hover:border-[#ffc670]/80">
+      <div className="flex justify-between items-center">
+        <div className="flex items-center gap-2">
+          <span className="font-bold text-lg text-text-primary">{order.id}</span>
+        </div>
+        <div className={`px-2.5 py-1 rounded-lg text-xs font-bold ${order.targetTimePercentage > 100 ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-text-secondary'}`}>
+          {order.time}
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2 text-xs text-text-secondary font-medium">
+        <span className="px-2 py-0.5 bg-gray-100 rounded-md shrink-0">{order.counter}</span>
+        <span>•</span>
+        <span className="truncate">{order.type}</span>
+        <span>•</span>
+        <span className={`${order.targetTimePercentage > 100 ? 'text-red-500 font-bold' : ''} shrink-0`}>
+          {order.targetTimePercentage}%
+        </span>
+      </div>
+
+      <div className="flex flex-col gap-3">
+        {order.items.map((item) => (
+          <div key={item.id} className="flex justify-between items-start border-b border-gray-50 pb-2 last:border-0 last:pb-0">
+            <div className="flex gap-3">
+              <div className="bg-gray-100 text-text-secondary w-6 h-6 rounded flex items-center justify-center text-xs font-bold shrink-0">
+                {item.quantity}x
+              </div>
+              <div className="flex flex-col">
+                <span className="text-sm font-semibold text-text-primary">{item.name}</span>
+                {item.notes && <span className="text-xs text-text-secondary mt-0.5 line-clamp-1">{item.notes}</span>}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-auto pt-2 flex">
+        {order.status === 'pending' && (
+          <button
+            onClick={() => updateOrderStatus(order.id, 'preparing')}
+            className="w-full py-2.5 rounded-xl text-sm font-bold transition-all bg-white text-text-primary hover:bg-bg-primary active:bg-gray-100 border border-brand-primary shadow-sm"
+          >
+            Start Preparing
+          </button>
+        )}
+        {order.status === 'preparing' && (
+          <button
+            onClick={() => updateOrderStatus(order.id, 'ready')}
+            className="w-full py-2.5 rounded-xl text-sm font-bold transition-all bg-success-primary text-text-tertiary hover:bg-success-primary/90 active:bg-success-primary/80 shadow-sm"
+          >
+            Mark Ready
+          </button>
+        )}
+        {order.status === 'ready' && (
+          <Button
+            onClick={() => updateOrderStatus(order.id, 'completed')}
+            variant="primary"
+            className="w-full py-2.5 rounded-xl text-sm font-bold shadow-sm flex items-center justify-center gap-2"
+          >
+            Order Received
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+
   return (
-    <div className="flex flex-col bg-white">
-      <div className="self-stretch bg-[#FEF9F6] p-4">
-        <div className="flex items-center self-stretch mb-4 gap-3">
-          <div
-            className="flex flex-1 items-center bg-white p-3 gap-2.5 rounded-[14px] border border-solid border-gray-100"
-            style={{
-              boxShadow: "0px 1px 2px #0000001A",
-            }}
-          >
-            <button
-              className="flex flex-col shrink-0 items-start bg-[#FF52691A] text-left py-1 px-[13px] rounded-[14px] border-0"
-              onClick={() => alert("Pressed!")}
-            >
-              <span className="text-[#FF5269] text-lg font-bold">{"4"}</span>
-            </button>
-            <div className="flex flex-col shrink-0 items-start gap-[1px]">
-              <div className="flex flex-col items-start mr-7">
-                <span className="text-[#6A7282] text-[10px]">
-                  {"Preparing"}
-                </span>
-              </div>
-              <div className="flex flex-col items-start">
-                <span className="text-[#101828] text-sm font-bold">
-                  {"Active orders"}
-                </span>
-              </div>
-            </div>
+    <div className="flex flex-col bg-[#F8FAFC] min-h-screen p-4 md:p-6 lg:p-8 gap-6 md:gap-8 font-inter">
+      {/* Dashboard Header Element */}
+      <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4 bg-white p-6 rounded-2xl shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-100">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold text-text-primary font-figtree tracking-tight">Kitchen Operations</h1>
+          <p className="text-text-secondary mt-1 text-sm md:text-base font-medium">Real-time active order management system</p>
+        </div>
+        <div className="flex items-center gap-3 bg-success-primary/10 px-4 py-2.5 rounded-xl border border-success-primary/20 shadow-sm self-start md:self-auto">
+           <span className="w-2.5 h-2.5 rounded-full bg-success-primary animate-pulse"></span>
+           <span className="text-sm font-bold text-success-primary tracking-wide">SYSTEM LIVE</span>
+        </div>
+      </div>
+
+      {/* Top Stats - Updated to grid-cols-2 for 2x2 mobile layout */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+        <div className="bg-white p-3 md:p-5 rounded-[20px] shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-100 flex items-center gap-3 md:gap-4 transition-transform hover:-translate-y-0.5">
+          <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center text-text-primary font-bold text-lg md:text-2xl shadow-sm shrink-0">
+            {pendingOrders.length}
           </div>
-          <div
-            className="flex flex-1 items-center bg-white p-3 gap-2.5 rounded-[14px] border border-solid border-gray-100"
-            style={{
-              boxShadow: "0px 1px 2px #0000001A",
-            }}
-          >
-            <button
-              className="flex flex-col shrink-0 items-start bg-gray-100 text-left py-1 px-[13px] rounded-[14px] border-0"
-              onClick={() => alert("Pressed!")}
-            >
-              <span className="text-[#364153] text-lg font-bold">{"2"}</span>
-            </button>
-            <div className="flex flex-col shrink-0 items-start gap-[1px]">
-              <div className="flex flex-col items-start mr-[11px]">
-                <span className="text-[#6A7282] text-[10px]">{"Pending"}</span>
-              </div>
-              <div className="flex flex-col items-start">
-                <span className="text-[#101828] text-sm font-bold">
-                  {"In queue"}
-                </span>
-              </div>
-            </div>
-          </div>
-          <div
-            className="flex flex-1 items-center bg-white p-3 gap-2.5 rounded-[14px] border border-solid border-gray-100"
-            style={{
-              boxShadow: "0px 1px 2px #0000001A",
-            }}
-          >
-            <button
-              className="flex flex-col shrink-0 items-start bg-[#10B9811A] text-left py-1 px-[13px] rounded-[14px] border-0"
-              onClick={() => alert("Pressed!")}
-            >
-              <span className="text-emerald-500 text-lg font-bold">{"1"}</span>
-            </button>
-            <div className="flex flex-col shrink-0 items-start gap-[1px]">
-              <div className="flex flex-col items-start mr-[35px]">
-                <span className="text-[#6A7282] text-[10px]">{"Ready"}</span>
-              </div>
-              <div className="flex flex-col items-start">
-                <span className="text-[#101828] text-sm font-bold">
-                  {"For pickup"}
-                </span>
-              </div>
-            </div>
-          </div>
-          <div
-            className="flex flex-1 items-center bg-white p-3 gap-2.5 rounded-[14px] border border-solid border-gray-100"
-            style={{
-              boxShadow: "0px 1px 2px #0000001A",
-            }}
-          >
-            <button
-              className="flex flex-col shrink-0 items-start bg-[#FB923C1A] text-left py-1 px-[13px] rounded-[14px] border-0"
-              onClick={() => alert("Pressed!")}
-            >
-              <span className="text-orange-400 text-lg font-bold">{"7"}</span>
-            </button>
-            <div className="flex flex-col shrink-0 items-start gap-[1px]">
-              <div className="flex flex-col items-start">
-                <span className="text-[#6A7282] text-[10px]">
-                  {"7 min avg"}
-                </span>
-              </div>
-              <div className="flex flex-col items-start mr-[18px]">
-                <span className="text-[#101828] text-sm font-bold">
-                  {"Total"}
-                </span>
-              </div>
-            </div>
+          <div className="flex flex-col justify-center min-w-0">
+            <p className="text-[9px] md:text-[11px] text-text-secondary font-bold uppercase tracking-widest mb-0.5 truncate">Pending</p>
+            <p className="text-sm md:text-[19px] font-bold text-text-primary leading-none truncate">In Queue</p>
           </div>
         </div>
-        <div className="flex flex-col self-stretch mb-[21px] gap-[11px]">
-          <div className="flex items-center self-stretch gap-2">
-            <img
-              src={
-                "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/nTVjCOahcp/8p4yzl4s_expires_30_days.png"
-              }
-              className="w-4 h-4 object-fill"
-            />
-            <span className="text-[#101828] text-base font-bold">
-              {"Preparing Now"}
-            </span>
+        
+        <div className="bg-white p-3 md:p-5 rounded-[20px] shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-100 flex items-center gap-3 md:gap-4 transition-transform hover:-translate-y-0.5">
+          <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl bg-brand-accent/10 border border-brand-accent/20 flex items-center justify-center text-brand-accent font-bold text-lg md:text-2xl shadow-sm shrink-0">
+            {preparingOrders.length}
           </div>
-          <div className="flex flex-col self-stretch gap-3">
-            <div className="flex items-center self-stretch gap-3">
-              <div
-                className="flex-1 bg-white py-[21px] px-5 rounded-2xl border border-solid border-gray-100"
-                style={{
-                  boxShadow: "0px 1px 2px #0000001A",
-                }}
-              >
-                <div className="flex justify-between items-center self-stretch mb-3">
-                  <div className="flex shrink-0 items-center gap-[9px]">
-                    <div className="flex flex-col shrink-0 items-start">
-                      <span className="text-[#101828] text-base font-bold">
-                        {"#R-4821"}
-                      </span>
-                    </div>
-                    <button
-                      className="flex shrink-0 items-center bg-[#FF52691A] text-left py-[3px] px-2.5 gap-1 rounded-[26843500px] border border-solid border-[#FFCCD4]"
-                      onClick={() => alert("Pressed!")}
-                    >
-                      <img
-                        src={
-                          "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/nTVjCOahcp/hbol6ap9_expires_30_days.png"
-                        }
-                        className="w-3 h-3 rounded-[26843500px] object-fill"
-                      />
-                      <span className="text-[#FF5269] text-xs">
-                        {"Preparing"}
-                      </span>
-                    </button>
-                  </div>
-                  <div className="flex shrink-0 items-center bg-orange-50 py-1 px-2.5 gap-[3px] rounded-[10px]">
-                    <img
-                      src={
-                        "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/nTVjCOahcp/b0syqw6n_expires_30_days.png"
-                      }
-                      className="w-3.5 h-3.5 rounded-[10px] object-fill"
-                    />
-                    <div className="flex flex-col shrink-0 items-start">
-                      <span className="text-[#F54900] text-xs font-bold">
-                        {"10:22"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center self-stretch mb-[13px] gap-[9px]">
-                  <div className="flex flex-col shrink-0 items-start">
-                    <span className="text-[#6A7282] text-xs">
-                      {"Counter 3"}
-                    </span>
-                  </div>
-                  <div className="flex flex-col shrink-0 items-start">
-                    <span className="text-[#6A7282] text-xs">{"•"}</span>
-                  </div>
-                  <div className="flex flex-col shrink-0 items-start">
-                    <span className="text-[#6A7282] text-xs">{"Dine-in"}</span>
-                  </div>
-                  <div className="flex flex-col shrink-0 items-start">
-                    <span className="text-[#6A7282] text-xs">{"•"}</span>
-                  </div>
-                  <div className="flex flex-col shrink-0 items-start">
-                    <span className="text-[#6A7282] text-xs">
-                      {"86% of target time"}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex flex-col self-stretch mb-[11px] gap-[9px]">
-                  <div className="flex items-center self-stretch gap-[9px]">
-                    <img
-                      src={
-                        "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/nTVjCOahcp/qqf1syn5_expires_30_days.png"
-                      }
-                      className="w-10 h-10 object-fill"
-                    />
-                    <div className="flex-1">
-                      <div className="flex flex-col items-start self-stretch">
-                        <span className="text-[#101828] text-xs font-bold">
-                          {"Garlic Fried Rice"}
-                        </span>
-                      </div>
-                      <div className="flex flex-col items-start self-stretch">
-                        <span className="text-[#6A7282] text-[11px]">
-                          {"Extra crispy"}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center self-stretch gap-[9px]">
-                    <img
-                      src={
-                        "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/nTVjCOahcp/m5jkz96y_expires_30_days.png"
-                      }
-                      className="w-10 h-10 object-fill"
-                    />
-                    <div className="flex-1">
-                      <div className="flex flex-col items-start self-stretch">
-                        <span className="text-[#101828] text-xs font-bold">
-                          {"Soy Chicken"}
-                        </span>
-                      </div>
-                      <div className="flex flex-col items-start self-stretch">
-                        <span className="text-[#6A7282] text-[11px]">
-                          {"Extra crispy"}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center self-stretch gap-[9px]">
-                    <img
-                      src={
-                        "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/nTVjCOahcp/icrhaubu_expires_30_days.png"
-                      }
-                      className="w-10 h-10 object-fill"
-                    />
-                    <div className="flex-1">
-                      <div className="flex flex-col items-start self-stretch">
-                        <span className="text-[#101828] text-xs font-bold">
-                          {"Mango Shake"}
-                        </span>
-                      </div>
-                      <div className="flex flex-col items-start self-stretch">
-                        <span className="text-[#6A7282] text-[11px]">
-                          {"Medium"}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div
-                  className="flex items-start self-stretch bg-[#00000000] py-[11px] px-3 mb-[13px] gap-[7px] rounded-[14px] border border-solid border-orange-400"
-                  style={{
-                    boxShadow: "0px 1px 2px #0000001A",
-                  }}
-                >
-                  <img
-                    src={
-                      "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/nTVjCOahcp/d23x38ra_expires_30_days.png"
-                    }
-                    className="w-5 h-5 object-fill"
-                  />
-                  <div className="flex flex-1 flex-col gap-[1px]">
-                    <div className="flex items-center self-stretch gap-1">
-                      <div className="bg-orange-400 w-1 h-1 rounded-[26843500px]"></div>
-                      <span className="text-orange-400 text-[10px] font-bold">
-                        {"AI Special Instructions"}
-                      </span>
-                    </div>
-                    <div className="flex flex-col items-start self-stretch">
-                      <span className="text-amber-800 text-xs">
-                        {
-                          "No onions - customer has allergy, ensure no cross-contamination"
-                        }
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center self-stretch py-[5px] gap-2">
-                  <button
-                    className="flex flex-col shrink-0 items-start bg-transparent text-left py-1.5 px-[15px] rounded-xl border border-solid border-[#FFC670]"
-                    onClick={() => alert("Pressed!")}
-                  >
-                    <span className="text-[#FFC670] text-xs">{"Pending"}</span>
-                  </button>
-                  <button
-                    className="flex flex-col shrink-0 items-start bg-[#FF5269] text-left py-1.5 px-2.5 rounded-xl border-0"
-                    onClick={() => alert("Pressed!")}
-                  >
-                    <span className="text-white text-xs">{"Preparing"}</span>
-                  </button>
-                  <button
-                    className="flex flex-1 justify-center items-center bg-emerald-500 text-left py-1.5 gap-1 rounded-[14px] border-0"
-                    style={{
-                      boxShadow: "0px 1px 2px #0000001A",
-                    }}
-                    onClick={() => alert("Pressed!")}
-                  >
-                    <img
-                      src={
-                        "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/nTVjCOahcp/cze59410_expires_30_days.png"
-                      }
-                      className="w-3.5 h-3.5 rounded-[14px] object-fill"
-                    />
-                    <span className="text-white text-xs">{"Mark Ready"}</span>
-                  </button>
-                </div>
-              </div>
-              <div
-                className="flex flex-1 flex-col items-start bg-white py-[23px] pr-5 rounded-2xl border border-solid border-gray-100"
-                style={{
-                  boxShadow: "0px 1px 2px #0000001A",
-                }}
-              >
-                <div className="flex justify-between items-center self-stretch mb-3 ml-5">
-                  <div className="flex shrink-0 items-center gap-[9px]">
-                    <div className="flex flex-col shrink-0 items-start">
-                      <span className="text-[#101828] text-base font-bold">
-                        {"#R-4822"}
-                      </span>
-                    </div>
-                    <button
-                      className="flex shrink-0 items-center bg-[#FF52691A] text-left py-[3px] px-2.5 gap-1 rounded-[26843500px] border border-solid border-[#FFCCD4]"
-                      onClick={() => alert("Pressed!")}
-                    >
-                      <img
-                        src={
-                          "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/nTVjCOahcp/p91idv0d_expires_30_days.png"
-                        }
-                        className="w-3 h-3 rounded-[26843500px] object-fill"
-                      />
-                      <span className="text-[#FF5269] text-xs">
-                        {"Preparing"}
-                      </span>
-                    </button>
-                  </div>
-                  <div className="flex shrink-0 items-center bg-green-50 py-1 px-2.5 gap-[3px] rounded-[10px]">
-                    <img
-                      src={
-                        "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/nTVjCOahcp/zm70kp7u_expires_30_days.png"
-                      }
-                      className="w-3.5 h-3.5 rounded-[10px] object-fill"
-                    />
-                    <div className="flex flex-col shrink-0 items-start">
-                      <span className="text-[#00A63E] text-xs font-bold">
-                        {"5:22"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center mb-[13px] ml-5">
-                  <div className="flex flex-col shrink-0 items-start mr-[9px]">
-                    <span className="text-[#6A7282] text-xs">
-                      {"Counter 2"}
-                    </span>
-                  </div>
-                  <div className="flex flex-col shrink-0 items-start mr-[9px]">
-                    <span className="text-[#6A7282] text-xs">{"•"}</span>
-                  </div>
-                  <div className="flex flex-col shrink-0 items-start mr-2">
-                    <span className="text-[#6A7282] text-xs">{"Takeout"}</span>
-                  </div>
-                  <div className="flex flex-col shrink-0 items-start mr-[9px]">
-                    <span className="text-[#6A7282] text-xs">{"•"}</span>
-                  </div>
-                  <div className="flex flex-col shrink-0 items-start">
-                    <span className="text-[#6A7282] text-xs">
-                      {"53% of target time"}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex flex-col self-stretch mb-[63px] ml-5 gap-[9px]">
-                  <div className="flex items-center self-stretch gap-[9px]">
-                    <img
-                      src={
-                        "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/nTVjCOahcp/d8rjpdun_expires_30_days.png"
-                      }
-                      className="w-10 h-10 object-fill"
-                    />
-                    <div className="flex-1">
-                      <div className="flex flex-col items-start self-stretch">
-                        <span className="text-[#101828] text-xs font-bold">
-                          {"Kare-Kare Meal"}
-                        </span>
-                      </div>
-                      <div className="flex flex-col items-start self-stretch">
-                        <span className="text-[#6A7282] text-[11px]">
-                          {"Mild to peanut sauce"}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center self-stretch gap-[9px]">
-                    <div className="flex flex-col shrink-0 items-start relative">
-                      <img
-                        src={
-                          "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/nTVjCOahcp/dynn6dav_expires_30_days.png"
-                        }
-                        className="w-10 h-10 object-fill"
-                      />
-                      <div
-                        className="flex flex-col items-start bg-[#00000000] absolute top-0 right-0 pb-1 px-1.5 rounded-[26843500px]"
-                        style={{
-                          boxShadow: "0px 2px 4px #0000001A",
-                        }}
-                      >
-                        <div className="flex flex-col items-start">
-                          <span className="text-white text-[11px] font-bold">
-                            {"2"}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex flex-col items-start self-stretch">
-                        <span className="text-[#101828] text-xs font-bold">
-                          {"Lumpia Shanghai"}
-                        </span>
-                      </div>
-                      <div className="flex flex-col items-start self-stretch">
-                        <span className="text-[#6A7282] text-[11px]">
-                          {"10 pieces"}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div
-                  className="flex items-start self-stretch bg-[#00000000] p-[11px] mb-4 ml-[21px] gap-[7px] rounded-[14px] border border-solid border-orange-400"
-                  style={{
-                    boxShadow: "0px 1px 2px #0000001A",
-                  }}
-                >
-                  <img
-                    src={
-                      "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/nTVjCOahcp/4gimo9w1_expires_30_days.png"
-                    }
-                    className="w-5 h-5 object-fill"
-                  />
-                  <div className="flex flex-1 flex-col gap-0.5">
-                    <div className="flex items-center self-stretch gap-1">
-                      <div className="bg-orange-400 w-1 h-1 rounded-[26843500px]"></div>
-                      <span className="text-orange-400 text-[10px] font-bold">
-                        {"AI Special Instructions"}
-                      </span>
-                    </div>
-                    <div className="flex flex-col items-start self-stretch pb-[1px]">
-                      <span className="text-amber-800 text-xs">
-                        {"Rush order - customer is in hurry for meeting"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center self-stretch ml-5 gap-2">
-                  <button
-                    className="flex flex-col shrink-0 items-start bg-transparent text-left py-1.5 px-[15px] rounded-xl border border-solid border-[#FFC670]"
-                    onClick={() => alert("Pressed!")}
-                  >
-                    <span className="text-[#FFC670] text-xs">{"Pending"}</span>
-                  </button>
-                  <button
-                    className="flex flex-col shrink-0 items-start bg-[#FF5269] text-left py-1.5 px-2.5 rounded-xl border-0"
-                    onClick={() => alert("Pressed!")}
-                  >
-                    <span className="text-white text-xs">{"Preparing"}</span>
-                  </button>
-                  <button
-                    className="flex flex-1 justify-center items-center bg-emerald-500 text-left py-1.5 gap-1 rounded-[14px] border-0"
-                    style={{
-                      boxShadow: "0px 1px 2px #0000001A",
-                    }}
-                    onClick={() => alert("Pressed!")}
-                  >
-                    <img
-                      src={
-                        "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/nTVjCOahcp/dypuauli_expires_30_days.png"
-                      }
-                      className="w-3.5 h-3.5 rounded-[14px] object-fill"
-                    />
-                    <span className="text-white text-xs">{"Mark Ready"}</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center self-stretch gap-3">
-              <div
-                className="flex flex-1 flex-col items-start bg-white py-[23px] pr-5 rounded-2xl border border-solid border-gray-100"
-                style={{
-                  boxShadow: "0px 1px 2px #0000001A",
-                }}
-              >
-                <div className="flex justify-between items-center self-stretch mb-3 ml-5">
-                  <div className="flex shrink-0 items-center gap-[9px]">
-                    <div className="flex flex-col shrink-0 items-start">
-                      <span className="text-[#101828] text-base font-bold">
-                        {"#R-4825"}
-                      </span>
-                    </div>
-                    <button
-                      className="flex shrink-0 items-center bg-[#FF52691A] text-left py-[3px] px-[9px] gap-[5px] rounded-[26843500px] border border-solid border-[#FFCCD4]"
-                      onClick={() => alert("Pressed!")}
-                    >
-                      <img
-                        src={
-                          "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/nTVjCOahcp/5s919y31_expires_30_days.png"
-                        }
-                        className="w-3 h-3 rounded-[26843500px] object-fill"
-                      />
-                      <span className="text-[#FF5269] text-xs">
-                        {"Preparing"}
-                      </span>
-                    </button>
-                  </div>
-                  <div className="flex shrink-0 items-center bg-green-50 py-1 px-2.5 gap-[3px] rounded-[10px]">
-                    <img
-                      src={
-                        "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/nTVjCOahcp/8dwx0zj9_expires_30_days.png"
-                      }
-                      className="w-3.5 h-3.5 rounded-[10px] object-fill"
-                    />
-                    <div className="flex flex-col shrink-0 items-start">
-                      <span className="text-[#00A63E] text-xs font-bold">
-                        {"10:22"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center mb-[13px] ml-5">
-                  <div className="flex flex-col shrink-0 items-start mr-[9px]">
-                    <span className="text-[#6A7282] text-xs">
-                      {"Counter 2"}
-                    </span>
-                  </div>
-                  <div className="flex flex-col shrink-0 items-start mr-[9px]">
-                    <span className="text-[#6A7282] text-xs">{"•"}</span>
-                  </div>
-                  <div className="flex flex-col shrink-0 items-start mr-2">
-                    <span className="text-[#6A7282] text-xs">{"Takeout"}</span>
-                  </div>
-                  <div className="flex flex-col shrink-0 items-start mr-[9px]">
-                    <span className="text-[#6A7282] text-xs">{"•"}</span>
-                  </div>
-                  <div className="flex flex-col shrink-0 items-start">
-                    <span className="text-[#6A7282] text-xs">
-                      {"69% of target time"}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex flex-col self-stretch mb-[86px] ml-5 gap-[9px]">
-                  <div className="flex items-center self-stretch gap-[9px]">
-                    <img
-                      src={
-                        "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/nTVjCOahcp/rgu3u1zf_expires_30_days.png"
-                      }
-                      className="w-10 h-10 object-fill"
-                    />
-                    <div className="flex-1">
-                      <div className="flex flex-col items-start self-stretch">
-                        <span className="text-[#101828] text-xs font-bold">
-                          {"Chicken Inasal Platter"}
-                        </span>
-                      </div>
-                      <div className="flex flex-col items-start self-stretch">
-                        <span className="text-[#6A7282] text-[11px]">
-                          {"Extra chicken with java rice"}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center self-stretch gap-[9px]">
-                    <img
-                      src={
-                        "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/nTVjCOahcp/pwos87zt_expires_30_days.png"
-                      }
-                      className="w-10 h-10 object-fill"
-                    />
-                    <div className="flex-1">
-                      <div className="flex flex-col items-start self-stretch">
-                        <span className="text-[#101828] text-xs font-bold">
-                          {"Sinigang na Baboy"}
-                        </span>
-                      </div>
-                      <div className="flex flex-col items-start self-stretch">
-                        <span className="text-[#6A7282] text-[11px]">
-                          {"Extra with rice extra"}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center self-stretch ml-5 gap-2">
-                  <button
-                    className="flex flex-col shrink-0 items-start bg-transparent text-left py-1.5 px-[15px] rounded-xl border border-solid border-[#FFC670]"
-                    onClick={() => alert("Pressed!")}
-                  >
-                    <span className="text-[#FFC670] text-xs">{"Pending"}</span>
-                  </button>
-                  <button
-                    className="flex flex-col shrink-0 items-start bg-[#FF5269] text-left py-1.5 px-2.5 rounded-xl border-0"
-                    onClick={() => alert("Pressed!")}
-                  >
-                    <span className="text-white text-xs">{"Preparing"}</span>
-                  </button>
-                  <button
-                    className="flex flex-1 justify-center items-center bg-emerald-500 text-left py-1.5 gap-1 rounded-[14px] border-0"
-                    style={{
-                      boxShadow: "0px 1px 2px #0000001A",
-                    }}
-                    onClick={() => alert("Pressed!")}
-                  >
-                    <img
-                      src={
-                        "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/nTVjCOahcp/m5wd32y5_expires_30_days.png"
-                      }
-                      className="w-3.5 h-3.5 rounded-[14px] object-fill"
-                    />
-                    <span className="text-white text-xs">{"Mark Ready"}</span>
-                  </button>
-                </div>
-              </div>
-              <div
-                className="flex-1 bg-white py-[21px] px-5 rounded-2xl border border-solid border-gray-100"
-                style={{
-                  boxShadow: "0px 1px 2px #0000001A",
-                }}
-              >
-                <div className="flex justify-between items-center self-stretch mb-3">
-                  <div className="flex shrink-0 items-center gap-[9px]">
-                    <div className="flex flex-col shrink-0 items-start">
-                      <span className="text-[#101828] text-base font-bold">
-                        {"#R-4827"}
-                      </span>
-                    </div>
-                    <button
-                      className="flex shrink-0 items-center bg-[#FF52691A] text-left py-[3px] px-2.5 gap-1 rounded-[26843500px] border border-solid border-[#FFCCD4]"
-                      onClick={() => alert("Pressed!")}
-                    >
-                      <img
-                        src={
-                          "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/nTVjCOahcp/iszhn301_expires_30_days.png"
-                        }
-                        className="w-3 h-3 rounded-[26843500px] object-fill"
-                      />
-                      <span className="text-[#FF5269] text-xs">
-                        {"Preparing"}
-                      </span>
-                    </button>
-                  </div>
-                  <div className="flex shrink-0 items-center bg-red-50 py-1 px-2.5 gap-[3px] rounded-[10px]">
-                    <img
-                      src={
-                        "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/nTVjCOahcp/uy7p670n_expires_30_days.png"
-                      }
-                      className="w-3.5 h-3.5 rounded-[10px] object-fill"
-                    />
-                    <div className="flex flex-col shrink-0 items-start">
-                      <span className="text-[#E7000B] text-xs font-bold">
-                        {"12:22"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center self-stretch mb-[13px] gap-[9px]">
-                  <div className="flex flex-col shrink-0 items-start">
-                    <span className="text-[#6A7282] text-xs">
-                      {"Counter 1"}
-                    </span>
-                  </div>
-                  <div className="flex flex-col shrink-0 items-start">
-                    <span className="text-[#6A7282] text-xs">{"•"}</span>
-                  </div>
-                  <div className="flex flex-col shrink-0 items-start">
-                    <span className="text-[#6A7282] text-xs">{"Dine-in"}</span>
-                  </div>
-                  <div className="flex flex-col shrink-0 items-start">
-                    <span className="text-[#6A7282] text-xs">{"•"}</span>
-                  </div>
-                  <div className="flex flex-col shrink-0 items-start">
-                    <span className="text-[#6A7282] text-xs">
-                      {"103% of target time"}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex flex-col self-stretch mb-[11px] gap-[9px]">
-                  <div className="flex items-center self-stretch gap-[9px]">
-                    <div className="flex flex-col shrink-0 items-start relative">
-                      <img
-                        src={
-                          "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/nTVjCOahcp/ntmszcnh_expires_30_days.png"
-                        }
-                        className="w-10 h-10 object-fill"
-                      />
-                      <div
-                        className="flex flex-col items-start bg-[#00000000] absolute top-0 right-0 pb-1 px-1.5 rounded-[26843500px]"
-                        style={{
-                          boxShadow: "0px 2px 4px #0000001A",
-                        }}
-                      >
-                        <div className="flex flex-col items-start">
-                          <span className="text-white text-[11px] font-bold">
-                            {"2"}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex flex-col items-start self-stretch">
-                        <span className="text-[#101828] text-xs font-bold">
-                          {"Sisig Rice Bowl"}
-                        </span>
-                      </div>
-                      <div className="flex flex-col items-start self-stretch">
-                        <span className="text-[#6A7282] text-[11px]">
-                          {"Spicy with extra egg"}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center self-stretch gap-[9px]">
-                    <img
-                      src={
-                        "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/nTVjCOahcp/dyhkrcft_expires_30_days.png"
-                      }
-                      className="w-10 h-10 object-fill"
-                    />
-                    <div className="flex-1">
-                      <div className="flex flex-col items-start self-stretch">
-                        <span className="text-[#101828] text-xs font-bold">
-                          {"Garlic Rice"}
-                        </span>
-                      </div>
-                      <div className="flex flex-col items-start self-stretch">
-                        <span className="text-[#6A7282] text-[11px]">
-                          {"Large"}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div
-                  className="flex items-start self-stretch bg-[#00000000] py-[11px] px-3 mb-[13px] gap-[7px] rounded-[14px] border border-solid border-orange-400"
-                  style={{
-                    boxShadow: "0px 1px 2px #0000001A",
-                  }}
-                >
-                  <img
-                    src={
-                      "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/nTVjCOahcp/awjr9e68_expires_30_days.png"
-                    }
-                    className="w-5 h-5 object-fill"
-                  />
-                  <div className="flex flex-1 flex-col gap-[1px]">
-                    <div className="flex items-center self-stretch gap-1">
-                      <div className="bg-orange-400 w-1 h-1 rounded-[26843500px]"></div>
-                      <span className="text-orange-400 text-[10px] font-bold">
-                        {"AI Special Instructions"}
-                      </span>
-                    </div>
-                    <div className="flex flex-col items-start self-stretch">
-                      <span className="text-amber-800 text-xs">
-                        {
-                          "VIP customer - ensure premium presentation and garnish"
-                        }
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center self-stretch py-1.5 gap-2">
-                  <button
-                    className="flex flex-col shrink-0 items-start bg-transparent text-left py-1.5 px-[15px] rounded-xl border border-solid border-[#FFC670]"
-                    onClick={() => alert("Pressed!")}
-                  >
-                    <span className="text-[#FFC670] text-xs">{"Pending"}</span>
-                  </button>
-                  <button
-                    className="flex flex-col shrink-0 items-start bg-[#FF5269] text-left py-1.5 px-2.5 rounded-xl border-0"
-                    onClick={() => alert("Pressed!")}
-                  >
-                    <span className="text-white text-xs">{"Preparing"}</span>
-                  </button>
-                  <button
-                    className="flex flex-1 justify-center items-center bg-emerald-500 text-left py-1.5 gap-1 rounded-[14px] border-0"
-                    style={{
-                      boxShadow: "0px 1px 2px #0000001A",
-                    }}
-                    onClick={() => alert("Pressed!")}
-                  >
-                    <img
-                      src={
-                        "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/nTVjCOahcp/ihwnaqcz_expires_30_days.png"
-                      }
-                      className="w-3.5 h-3.5 rounded-[14px] object-fill"
-                    />
-                    <span className="text-white text-xs">{"Mark Ready"}</span>
-                  </button>
-                </div>
-              </div>
-            </div>
+          <div className="flex flex-col justify-center min-w-0">
+            <p className="text-[9px] md:text-[11px] text-brand-accent/80 font-bold uppercase tracking-widest mb-0.5 truncate">Preparing</p>
+            <p className="text-sm md:text-[19px] font-bold text-text-primary leading-none truncate">Active</p>
           </div>
         </div>
-        <div className="flex flex-col self-stretch mb-5 gap-[11px]">
-          <div className="flex items-center self-stretch gap-2">
-            <img
-              src={
-                "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/nTVjCOahcp/l11ihhpm_expires_30_days.png"
-              }
-              className="w-4 h-4 object-fill"
-            />
-            <span className="text-[#101828] text-base font-bold">
-              {"Pending Orders"}
-            </span>
+
+        <div className="bg-white p-3 md:p-5 rounded-[20px] shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-100 flex items-center gap-3 md:gap-4 transition-transform hover:-translate-y-0.5">
+          <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl bg-success-primary/10 border border-success-primary/20 flex items-center justify-center text-success-primary font-bold text-lg md:text-2xl shadow-sm shrink-0">
+            {readyOrders.length}
           </div>
-          <div className="flex items-center self-stretch gap-3">
-            <div
-              className="flex flex-1 flex-col items-start bg-white py-[23px] pr-5 rounded-2xl border border-solid border-gray-100"
-              style={{
-                boxShadow: "0px 1px 2px #0000001A",
-              }}
-            >
-              <div className="flex justify-between items-center self-stretch mb-3 ml-5">
-                <div className="flex shrink-0 items-center gap-[9px]">
-                  <div className="flex flex-col shrink-0 items-start">
-                    <span className="text-[#101828] text-base font-bold">
-                      {"#R-4823"}
-                    </span>
-                  </div>
-                  <button
-                    className="flex shrink-0 items-center bg-gray-100 text-left py-0.5 px-2.5 gap-1 rounded-[26843500px] border border-solid border-gray-200"
-                    onClick={() => alert("Pressed!")}
-                  >
-                    <img
-                      src={
-                        "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/nTVjCOahcp/rn6391fh_expires_30_days.png"
-                      }
-                      className="w-3 h-3 rounded-[26843500px] object-fill"
-                    />
-                    <span className="text-[#364153] text-xs">{"Pending"}</span>
-                  </button>
-                </div>
-                <div className="flex shrink-0 items-center bg-green-50 py-1 px-2.5 gap-[3px] rounded-[10px]">
-                  <img
-                    src={
-                      "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/nTVjCOahcp/oieoi08j_expires_30_days.png"
-                    }
-                    className="w-3.5 h-3.5 rounded-[10px] object-fill"
-                  />
-                  <div className="flex flex-col shrink-0 items-start">
-                    <span className="text-[#00A63E] text-xs font-bold">
-                      {"3:22"}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center mb-[13px] ml-5 gap-[9px]">
-                <div className="flex flex-col shrink-0 items-start">
-                  <span className="text-[#6A7282] text-xs">{"Counter 1"}</span>
-                </div>
-                <div className="flex flex-col shrink-0 items-start">
-                  <span className="text-[#6A7282] text-xs">{"•"}</span>
-                </div>
-                <div className="flex flex-col shrink-0 items-start">
-                  <span className="text-[#6A7282] text-xs">{"Dine-in"}</span>
-                </div>
-                <div className="flex flex-col shrink-0 items-start">
-                  <span className="text-[#6A7282] text-xs">{"•"}</span>
-                </div>
-                <div className="flex flex-col shrink-0 items-start">
-                  <span className="text-[#6A7282] text-xs">
-                    {"28% of target time"}
-                  </span>
-                </div>
-              </div>
-              <div className="flex flex-col self-stretch mb-9 ml-5 gap-[9px]">
-                <div className="flex items-center self-stretch gap-[9px]">
-                  <img
-                    src={
-                      "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/nTVjCOahcp/y4f0bf0l_expires_30_days.png"
-                    }
-                    className="w-10 h-10 object-fill"
-                  />
-                  <div className="flex-1">
-                    <div className="flex flex-col items-start self-stretch">
-                      <span className="text-[#101828] text-xs font-bold">
-                        {"Beef Tapa"}
-                      </span>
-                    </div>
-                    <div className="flex flex-col items-start self-stretch">
-                      <span className="text-[#6A7282] text-[11px]">
-                        {"Well done"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center self-stretch gap-[9px]">
-                  <img
-                    src={
-                      "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/nTVjCOahcp/hwknoei3_expires_30_days.png"
-                    }
-                    className="w-10 h-10 object-fill"
-                  />
-                  <div className="flex-1">
-                    <div className="flex flex-col items-start self-stretch">
-                      <span className="text-[#101828] text-xs font-bold">
-                        {"Garlic Rice"}
-                      </span>
-                    </div>
-                    <div className="flex flex-col items-start self-stretch">
-                      <span className="text-[#6A7282] text-[11px]">
-                        {"Medium serving"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center self-stretch gap-[9px]">
-                  <div className="flex flex-col shrink-0 items-start relative">
-                    <img
-                      src={
-                        "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/nTVjCOahcp/3hzvogqe_expires_30_days.png"
-                      }
-                      className="w-10 h-10 object-fill"
-                    />
-                    <div
-                      className="flex flex-col items-start bg-[#00000000] absolute top-0 right-0 pb-1 px-1.5 rounded-[26843500px]"
-                      style={{
-                        boxShadow: "0px 2px 4px #0000001A",
-                      }}
-                    >
-                      <div className="flex flex-col items-start">
-                        <span className="text-white text-[11px] font-bold">
-                          {"2"}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex flex-col items-start self-stretch">
-                      <span className="text-[#101828] text-xs font-bold">
-                        {"Fried Egg"}
-                      </span>
-                    </div>
-                    <div className="flex flex-col items-start self-stretch">
-                      <span className="text-[#6A7282] text-[11px]">
-                        {"Over easy"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center self-stretch ml-5 gap-2">
-                <button
-                  className="flex flex-col shrink-0 items-start bg-[#FFD77A] text-left py-1.5 px-[15px] rounded-xl border-0"
-                  onClick={() => alert("Pressed!")}
-                >
-                  <span className="text-[#2D2D2D] text-xs">{"Pending"}</span>
-                </button>
-                <button
-                  className="flex flex-col shrink-0 items-start bg-[#FFEFEF] text-left py-1.5 px-2.5 rounded-xl border border-solid border-[#EB1313]"
-                  onClick={() => alert("Pressed!")}
-                >
-                  <span className="text-[#EB1313] text-xs">{"Preparing"}</span>
-                </button>
-                <button
-                  className="flex flex-1 justify-center items-center bg-emerald-500 text-left py-1.5 gap-1 rounded-[14px] border-0"
-                  style={{
-                    boxShadow: "0px 1px 2px #0000001A",
-                  }}
-                  onClick={() => alert("Pressed!")}
-                >
-                  <img
-                    src={
-                      "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/nTVjCOahcp/31nf3khq_expires_30_days.png"
-                    }
-                    className="w-3.5 h-3.5 rounded-[14px] object-fill"
-                  />
-                  <span className="text-white text-xs">{"Mark Ready"}</span>
-                </button>
-              </div>
-            </div>
-            <div
-              className="flex-1 bg-white py-[21px] px-5 rounded-2xl border border-solid border-gray-100"
-              style={{
-                boxShadow: "0px 1px 2px #0000001A",
-              }}
-            >
-              <div className="flex justify-between items-center self-stretch mb-3">
-                <div className="flex shrink-0 items-center gap-[9px]">
-                  <div className="flex flex-col shrink-0 items-start">
-                    <span className="text-[#101828] text-base font-bold">
-                      {"#R-4826"}
-                    </span>
-                  </div>
-                  <button
-                    className="flex shrink-0 items-center bg-gray-100 text-left py-0.5 px-2.5 gap-1 rounded-[26843500px] border border-solid border-gray-200"
-                    onClick={() => alert("Pressed!")}
-                  >
-                    <img
-                      src={
-                        "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/nTVjCOahcp/54ltczqr_expires_30_days.png"
-                      }
-                      className="w-3 h-3 rounded-[26843500px] object-fill"
-                    />
-                    <span className="text-[#364153] text-xs">{"Pending"}</span>
-                  </button>
-                </div>
-                <div className="flex shrink-0 items-center bg-orange-50 py-1 px-2.5 gap-[3px] rounded-[10px]">
-                  <img
-                    src={
-                      "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/nTVjCOahcp/vm42d7wf_expires_30_days.png"
-                    }
-                    className="w-3.5 h-3.5 rounded-[10px] object-fill"
-                  />
-                  <div className="flex flex-col shrink-0 items-start">
-                    <span className="text-[#F54900] text-xs font-bold">
-                      {"4:22"}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center self-stretch mb-[13px]">
-                <div className="flex flex-col shrink-0 items-start mr-[9px]">
-                  <span className="text-[#6A7282] text-xs">{"Counter 3"}</span>
-                </div>
-                <div className="flex flex-col shrink-0 items-start mr-[9px]">
-                  <span className="text-[#6A7282] text-xs">{"•"}</span>
-                </div>
-                <div className="flex flex-col shrink-0 items-start mr-2">
-                  <span className="text-[#6A7282] text-xs">{"Takeout"}</span>
-                </div>
-                <div className="flex flex-col shrink-0 items-start mr-[9px]">
-                  <span className="text-[#6A7282] text-xs">{"•"}</span>
-                </div>
-                <div className="flex flex-col shrink-0 items-start">
-                  <span className="text-[#6A7282] text-xs">
-                    {"72% of target time"}
-                  </span>
-                </div>
-              </div>
-              <div className="flex flex-col self-stretch mb-[11px] gap-[9px]">
-                <div className="flex items-center self-stretch gap-[9px]">
-                  <div className="flex flex-col shrink-0 items-start relative">
-                    <img
-                      src={
-                        "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/nTVjCOahcp/i63mscj0_expires_30_days.png"
-                      }
-                      className="w-10 h-10 object-fill"
-                    />
-                    <div
-                      className="flex flex-col items-start bg-[#00000000] absolute top-0 right-0 pb-1 px-1.5 rounded-[26843500px]"
-                      style={{
-                        boxShadow: "0px 2px 4px #0000001A",
-                      }}
-                    >
-                      <div className="flex flex-col items-start">
-                        <span className="text-white text-[11px] font-bold">
-                          {"2"}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex flex-col items-start self-stretch">
-                      <span className="text-[#101828] text-xs font-bold">
-                        {"Halo-Halo"}
-                      </span>
-                    </div>
-                    <div className="flex flex-col items-start self-stretch">
-                      <span className="text-[#6A7282] text-[11px]">
-                        {"Extra ice cream"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center self-stretch gap-[9px]">
-                  <div className="flex flex-col shrink-0 items-start relative">
-                    <img
-                      src={
-                        "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/nTVjCOahcp/pgd9elcn_expires_30_days.png"
-                      }
-                      className="w-10 h-10 object-fill"
-                    />
-                    <div
-                      className="flex flex-col items-start bg-[#00000000] absolute top-0 right-0 pb-1 px-1.5 rounded-[26843500px]"
-                      style={{
-                        boxShadow: "0px 2px 4px #0000001A",
-                      }}
-                    >
-                      <div className="flex flex-col items-start">
-                        <span className="text-white text-[11px] font-bold">
-                          {"3"}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex flex-col items-start self-stretch">
-                      <span className="text-[#101828] text-xs font-bold">
-                        {"Turon"}
-                      </span>
-                    </div>
-                    <div className="flex flex-col items-start self-stretch">
-                      <span className="text-[#6A7282] text-[11px]">
-                        {"With langka"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div
-                className="flex items-start self-stretch bg-[#00000000] py-[11px] px-3 mb-[13px] gap-[7px] rounded-[14px] border border-solid border-orange-400"
-                style={{
-                  boxShadow: "0px 1px 2px #0000001A",
-                }}
-              >
-                <img
-                  src={
-                    "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/nTVjCOahcp/j8wqbygw_expires_30_days.png"
-                  }
-                  className="w-5 h-5 object-fill"
-                />
-                <div className="flex flex-1 flex-col gap-[1px]">
-                  <div className="flex items-center self-stretch gap-1">
-                    <div className="bg-orange-400 w-1 h-1 rounded-[26843500px]"></div>
-                    <span className="text-orange-400 text-[10px] font-bold">
-                      {"AI Special Instructions"}
-                    </span>
-                  </div>
-                  <div className="flex flex-col items-start self-stretch">
-                    <span className="text-amber-800 text-xs">
-                      {"Customer prefers less ice on Halo-Halo"}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center self-stretch py-1.5 gap-2">
-                <button
-                  className="flex flex-col shrink-0 items-start bg-[#FFD77A] text-left py-1.5 px-[15px] rounded-xl border-0"
-                  onClick={() => alert("Pressed!")}
-                >
-                  <span className="text-[#2D2D2D] text-xs">{"Pending"}</span>
-                </button>
-                <button
-                  className="flex flex-col shrink-0 items-start bg-[#FFEFEF] text-left py-1.5 px-2.5 rounded-xl border border-solid border-[#EB1313]"
-                  onClick={() => alert("Pressed!")}
-                >
-                  <span className="text-[#EB1313] text-xs">{"Preparing"}</span>
-                </button>
-                <button
-                  className="flex flex-1 justify-center items-center bg-emerald-500 text-left py-1.5 gap-1 rounded-[14px] border-0"
-                  style={{
-                    boxShadow: "0px 1px 2px #0000001A",
-                  }}
-                  onClick={() => alert("Pressed!")}
-                >
-                  <img
-                    src={
-                      "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/nTVjCOahcp/i1eqt00h_expires_30_days.png"
-                    }
-                    className="w-3.5 h-3.5 rounded-[14px] object-fill"
-                  />
-                  <span className="text-white text-xs">{"Mark Ready"}</span>
-                </button>
-              </div>
-            </div>
+          <div className="flex flex-col justify-center min-w-0">
+            <p className="text-[9px] md:text-[11px] text-success-primary/80 font-bold uppercase tracking-widest mb-0.5 truncate">Ready</p>
+            <p className="text-sm md:text-[19px] font-bold text-text-primary leading-none truncate">Pickup</p>
           </div>
         </div>
-        <div className="flex flex-col self-stretch gap-[11px]">
-          <div className="flex items-center self-stretch gap-2">
-            <img
-              src={
-                "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/nTVjCOahcp/y5g4kqyo_expires_30_days.png"
-              }
-              className="w-4 h-4 object-fill"
-            />
-            <span className="text-[#101828] text-base font-bold">
-              {"Ready for Pickup"}
-            </span>
+
+        <div className="bg-white p-3 md:p-5 rounded-[20px] shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-100 flex items-center gap-3 md:gap-4 transition-transform hover:-translate-y-0.5">
+          <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl bg-brand-primary/20 border border-brand-primary/30 flex items-center justify-center text-brand-primary font-bold text-lg md:text-2xl shadow-sm shrink-0">
+            {orders.filter((o) => o.status !== 'completed').length}
           </div>
-          <div className="flex flex-col items-start self-stretch">
-            <div
-              className="flex flex-col items-start bg-white py-[21px] px-5 rounded-2xl border border-solid border-gray-100"
-              style={{
-                boxShadow: "0px 1px 2px #0000001A",
-              }}
-            >
-              <div className="flex items-center mb-3">
-                <div className="flex shrink-0 items-center mr-[305px] gap-[9px]">
-                  <div className="flex flex-col shrink-0 items-start">
-                    <span className="text-[#101828] text-base font-bold">
-                      {"#R-4824"}
-                    </span>
-                  </div>
-                  <button
-                    className="flex shrink-0 items-center bg-[#10B9811A] text-left py-[3px] px-2.5 gap-1 rounded-[26843500px] border border-solid border-emerald-200"
-                    onClick={() => alert("Pressed!")}
-                  >
-                    <img
-                      src={
-                        "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/nTVjCOahcp/q7znd6yj_expires_30_days.png"
-                      }
-                      className="w-3 h-3 rounded-[26843500px] object-fill"
-                    />
-                    <span className="text-emerald-500 text-xs">{"Ready"}</span>
-                  </button>
-                </div>
-                <div className="flex shrink-0 items-center bg-red-50 py-1 px-2.5 gap-[3px] rounded-[10px]">
-                  <img
-                    src={
-                      "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/nTVjCOahcp/ijzvmrvt_expires_30_days.png"
-                    }
-                    className="w-3.5 h-3.5 rounded-[10px] object-fill"
-                  />
-                  <div className="flex flex-col shrink-0 items-start">
-                    <span className="text-[#E7000B] text-xs font-bold">
-                      {"17:22"}
-                    </span>
-                  </div>
-                </div>
+          <div className="flex flex-col justify-center min-w-0">
+            <p className="text-[9px] md:text-[11px] text-brand-dark/70 font-bold uppercase tracking-widest mb-0.5 truncate">Total</p>
+            <p className="text-sm md:text-[19px] font-bold text-text-primary leading-none truncate">All Orders</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Boards */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 items-start">
+        {/* Pending Column */}
+        <div className="flex flex-col gap-4 bg-white p-4 rounded-2xl border border-gray-100">
+          <div className="flex items-center gap-2 mb-1 px-1">
+            <div className="w-3 h-3 rounded-full bg-gray-400 shadow-sm"></div>
+            <h2 className="text-lg font-bold text-text-primary">Pending Orders</h2>
+            <span className="ml-auto bg-gray-50 border border-gray-200 text-text-secondary px-2.5 py-0.5 rounded-full text-xs font-bold shadow-sm">{pendingOrders.length}</span>
+          </div>
+          <div className="flex flex-col gap-4 overflow-y-auto">
+            {pendingOrders.map(renderOrderCard)}
+            {pendingOrders.length === 0 && (
+              <div className="text-center p-10 text-text-secondary border-2 border-dashed border-gray-200 rounded-xl font-medium">
+                No pending orders
               </div>
-              <div className="flex items-center mb-[13px]">
-                <div className="flex flex-col shrink-0 items-start mr-[9px]">
-                  <span className="text-[#6A7282] text-xs">{"Counter 4"}</span>
-                </div>
-                <div className="flex flex-col shrink-0 items-start mr-[9px]">
-                  <span className="text-[#6A7282] text-xs">{"•"}</span>
-                </div>
-                <div className="flex flex-col shrink-0 items-start mr-[9px]">
-                  <span className="text-[#6A7282] text-xs">{"Dine-in"}</span>
-                </div>
-                <div className="flex flex-col shrink-0 items-start mr-[9px]">
-                  <span className="text-[#6A7282] text-xs">{"•"}</span>
-                </div>
-                <div className="flex flex-col shrink-0 items-start mr-[272px]">
-                  <span className="text-[#6A7282] text-xs">
-                    {"144% of target time"}
-                  </span>
-                </div>
+            )}
+          </div>
+        </div>
+
+        {/* Preparing Column */}
+        <div className="flex flex-col gap-4 bg-white p-4 rounded-2xl border border-gray-100">
+          <div className="flex items-center gap-2 mb-1 px-1">
+            <div className="w-3 h-3 rounded-full bg-brand-accent shadow-sm shadow-brand-accent/30"></div>
+            <h2 className="text-lg font-bold text-text-primary">Preparing Now</h2>
+            <span className="ml-auto bg-brand-accent/5 border border-brand-accent/20 text-brand-accent px-2.5 py-0.5 rounded-full text-xs font-bold shadow-sm">{preparingOrders.length}</span>
+          </div>
+          <div className="flex flex-col gap-4 overflow-y-auto">
+            {preparingOrders.map(renderOrderCard)}
+            {preparingOrders.length === 0 && (
+              <div className="text-center p-10 text-text-secondary border-2 border-dashed border-gray-200 rounded-xl font-medium">
+                No preparing orders
               </div>
-              <div className="flex flex-col items-start mb-[11px] gap-[9px]">
-                <div className="flex items-center gap-[9px]">
-                  <img
-                    src={
-                      "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/nTVjCOahcp/utm4yok4_expires_30_days.png"
-                    }
-                    className="w-10 h-10 object-fill"
-                  />
-                  <div className="flex flex-col shrink-0 items-start">
-                    <div className="flex flex-col items-start pr-[376px]">
-                      <span className="text-[#101828] text-xs font-bold">
-                        {"Sisig Rice Bowl"}
-                      </span>
-                    </div>
-                    <div className="flex flex-col items-start pr-[391px]">
-                      <span className="text-[#6A7282] text-[11px]">
-                        {"Medium spice"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-[9px]">
-                  <div className="flex flex-col shrink-0 items-start relative">
-                    <img
-                      src={
-                        "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/nTVjCOahcp/ytebmt5q_expires_30_days.png"
-                      }
-                      className="w-10 h-10 object-fill"
-                    />
-                    <div
-                      className="flex flex-col items-start bg-[#00000000] absolute top-0 right-0 pb-1 px-1.5 rounded-[26843500px]"
-                      style={{
-                        boxShadow: "0px 2px 4px #0000001A",
-                      }}
-                    >
-                      <div className="flex flex-col items-start">
-                        <span className="text-white text-[11px] font-bold">
-                          {"2"}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex flex-col shrink-0 items-start">
-                    <div className="flex flex-col items-start pr-[368px]">
-                      <span className="text-[#101828] text-xs font-bold">
-                        {"Calamansi Juice"}
-                      </span>
-                    </div>
-                    <div className="flex flex-col items-start pr-[406px]">
-                      <span className="text-[#6A7282] text-[11px]">
-                        {"Less sugar"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
+            )}
+          </div>
+        </div>
+
+        {/* Ready Column */}
+        <div className="flex flex-col gap-4 bg-white p-4 rounded-2xl border border-gray-100">
+          <div className="flex items-center gap-2 mb-1 px-1">
+            <div className="w-3 h-3 rounded-full bg-success-primary shadow-sm shadow-success-secondary"></div>
+            <h2 className="text-lg font-bold text-text-primary">Ready for Pickup</h2>
+            <span className="ml-auto bg-success-primary/5 border border-success-primary/20 text-success-primary px-2.5 py-0.5 rounded-full text-xs font-bold shadow-sm">{readyOrders.length}</span>
+          </div>
+          <div className="flex flex-col gap-4 overflow-y-auto">
+            {readyOrders.map(renderOrderCard)}
+            {readyOrders.length === 0 && (
+              <div className="text-center p-10 text-text-secondary border-2 border-dashed border-gray-200 rounded-xl font-medium">
+                No orders ready
               </div>
-              <div
-                className="flex items-start bg-[#00000000] py-[11px] px-3 mb-3 gap-[7px] rounded-[14px] border border-solid border-orange-400"
-                style={{
-                  boxShadow: "0px 1px 2px #0000001A",
-                }}
-              >
-                <img
-                  src={
-                    "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/nTVjCOahcp/fhd32r2x_expires_30_days.png"
-                  }
-                  className="w-5 h-5 object-fill"
-                />
-                <div className="flex flex-col shrink-0 items-start gap-[1px]">
-                  <div className="flex items-center">
-                    <div className="bg-orange-400 w-1 h-1 mr-1 rounded-[26843500px]"></div>
-                    <span className="text-orange-400 text-[10px] font-bold mr-[314px]">
-                      {"AI Special Instructions"}
-                    </span>
-                  </div>
-                  <div className="flex flex-col items-start pr-[188px]">
-                    <span className="text-amber-800 text-xs">
-                      {"Extra spicy as requested - customer is a regular"}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center py-[5px] gap-2">
-                <button
-                  className="flex flex-col shrink-0 items-start bg-transparent text-left py-1.5 px-[15px] rounded-xl border border-solid border-[#FFC670]"
-                  onClick={() => alert("Pressed!")}
-                >
-                  <span className="text-[#FFC670] text-xs">{"Pending"}</span>
-                </button>
-                <button
-                  className="flex flex-col shrink-0 items-start bg-[#FFEFEF] text-left py-1.5 px-2.5 rounded-xl border border-solid border-[#EB1313]"
-                  onClick={() => alert("Pressed!")}
-                >
-                  <span className="text-[#EB1313] text-xs">{"Preparing"}</span>
-                </button>
-                <button
-                  className="flex shrink-0 items-center bg-emerald-500 text-left py-2 px-[134px] gap-1 rounded-[14px] border border-solid border-emerald-500"
-                  style={{
-                    boxShadow: "0px 2px 4px #0000001A",
-                  }}
-                  onClick={() => alert("Pressed!")}
-                >
-                  <img
-                    src={
-                      "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/nTVjCOahcp/y1lvairj_expires_30_days.png"
-                    }
-                    className="w-3.5 h-3.5 rounded-[14px] object-fill"
-                  />
-                  <span className="text-white text-xs">{"Completed"}</span>
-                </button>
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
     </div>
   );
-};
+}
