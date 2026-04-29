@@ -7,7 +7,8 @@ import {
   Component, 
   IdCard, 
   ArrowRight, 
-  ArrowLeft
+  ArrowLeft,
+  CheckCircle2
 } from "lucide-react";
 import { Button } from "@/components/atoms/Button";
 import { cn } from "@/lib/utils";
@@ -36,27 +37,43 @@ export default function OnboardingPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   
-  // States for validation in Step 1 and 3
-  const [businessData, setBusinessData] = useState({ name: "", email: "" });
+  // Added 'owner' to the initial state
+  const [businessData, setBusinessData] = useState({ name: "", email: "", owner: "" });
   const [contactData, setContactData] = useState({ phoneNumber: "" });
   const [authData, setAuthData] = useState({ email: "", password: "", confirm: "" });
   const [subscriptionData, setSubscriptionData] = useState({ packageId: "starter" });
+  
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   const validateEmail = (email: string) => /\S+@\S+\.\S+/.test(email);
 
   const nextStep = () => {
     setError("");
+    setSuccess("");
+
     // Step 1 Validation
     if (currentStep === 1) {
       if (!businessData.name.trim()) return setError("Business Name is required");
       if (!validateEmail(businessData.email)) return setError("A valid business email is required");
+      // NEW: Validation for Owner / Admin Name
+      if (!businessData.owner?.trim()) return setError("Owner / Admin Name is required");
+      
+      setSuccess(`Verification code sent to ${businessData.email}`);
+      setLoading(true);
+
+      setTimeout(() => {
+        setLoading(false);
+        setSuccess("");
+        setCurrentStep(2);
+      }, 2000);
+      return; 
     }
-    // Step 2 Validation
+
     if (currentStep === 2) {
       if (contactData.phoneNumber.length < 10) return setError("Valid phone number is required");
     }
-    // Step 3 Validation
+
     if (currentStep === 3) {
       if (!validateEmail(authData.email)) return setError("Valid Admin Email is required");
       if (authData.password.length < 8) return setError("Password must be at least 8 characters");
@@ -68,6 +85,7 @@ export default function OnboardingPage() {
 
   const prevStep = () => {
     setError("");
+    setSuccess("");
     setCurrentStep((prev) => Math.max(prev - 1, 1));
   };
   
@@ -83,8 +101,6 @@ export default function OnboardingPage() {
         featureData
       });
       if (res.success) {
-        // Now you might want to sign them in automatically, or redirect to login.
-        // Easiest is to redirect to login.
         router.push("/login?onboarding=pending");
       }
     } catch (err: any) {
@@ -130,7 +146,15 @@ export default function OnboardingPage() {
 
           {(currentStep === 1 || currentStep === 3) && (
             <div className="flex flex-col mt-12 ">
+              {success && (
+                <div className="flex items-center gap-2 text-green-600 bg-green-50 p-3 rounded-lg mb-4 animate-in fade-in slide-in-from-top-2 border border-green-100">
+                  <CheckCircle2 className="w-4 h-4" />
+                  <p className="text-sm font-medium">{success}</p>
+                </div>
+              )}
+
               {error && <p className="text-red-500 text-sm mb-4 animate-in fade-in slide-in-from-top-1">{error}</p>}
+              
               <div className="flex flex-row gap-10"> 
                 {currentStep === 3 && (
                   <Button 
@@ -151,8 +175,8 @@ export default function OnboardingPage() {
                   onClick={nextStep}
                   disabled={loading}
                 >
-                  Continue
-                  <ArrowRight className="w-5 h-5 ml-2" />
+                  {loading && currentStep === 1 ? "Sending Code..." : "Continue"}
+                  {!loading && <ArrowRight className="w-5 h-5 ml-2" />}
                 </Button>
               </div>
             </div>

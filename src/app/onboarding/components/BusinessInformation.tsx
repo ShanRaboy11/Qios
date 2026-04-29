@@ -32,7 +32,7 @@ export function BusinessInformation({ data, setData }: any) {
       />
 
       <FormField
-        label="Owner / Admin Name (Optional)"
+        label={<>Owner / Admin Name <Required /></>}
         placeholder="Owner / Admin Name"
         className="max-w-none"
         value={data.owner || ""}
