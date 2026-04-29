@@ -30,12 +30,12 @@ export async function getTenants() {
       id: t.id,
       name: t.name,
       owner: ownerProfile ? ownerProfile.full_name : "Unknown",
-      type: "Professional", // Fallback, could be added to DB if needed
+      type: "Professional" as "Professional" | "Enterprise" | "Starter",
       joined: new Date(t.created_at).toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: 'numeric' }),
-      status: t.status === "pending" ? "Pending" 
+      status: (t.status === "pending" ? "Pending" 
             : t.status === "approved" ? "Active" 
             : t.status === "rejected" ? "Rejected" 
-            : "Active", // Suspended if we add that later
+            : "Active") as "Active" | "Suspended" | "Pending" | "Rejected",
       rawStatus: t.status,
     };
   });
