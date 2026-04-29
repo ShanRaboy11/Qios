@@ -7,7 +7,7 @@ import { FeatureToggle } from "@/components/molecules/FeatureToggle";
 import { Plus, Search, Shield, ShieldAlert, Check, Copy, Trash2, GripVertical, ShoppingCart, Package, LineChart, QrCode, Users, X, Edit2, KeyRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// --- Types ---
+// types
 type PermissionGroup = {
   [key: string]: boolean;
 };
@@ -35,7 +35,7 @@ type Role = {
   permissions: Permissions;
 };
 
-// --- Initial Data ---
+// initial data
 const DEFAULT_PERMISSIONS: Permissions = {
   auth: {
     "Employee Authentication": false,
@@ -134,18 +134,18 @@ export default function RoleManagementPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState<"permissions" | "employees">("permissions");
   
-  // Modal & Employee states
+  // modal & employee states
   const [isAddEmployeeModalOpen, setIsAddEmployeeModalOpen] = useState(false);
   const [newEmployeeName, setNewEmployeeName] = useState("");
   const [newEmployeeCredentials, setNewEmployeeCredentials] = useState<{username: string, password: string} | null>(null);
   const [employeeSearchQuery, setEmployeeSearchQuery] = useState("");
 
-  // Drag and Drop state
+  // drag and drop state
   const [draggedRoleId, setDraggedRoleId] = useState<string | null>(null);
 
   const activeRole = roles.find((r) => r.id === selectedRoleId);
   
-  // Initialize draft when active role changes
+  // initialize draft when active role changes
   useEffect(() => {
     if (activeRole) {
       setDraftRole(JSON.parse(JSON.stringify(activeRole))); // Deep copy
@@ -232,7 +232,7 @@ export default function RoleManagementPage() {
   const handleAddEmployee = () => {
     if (!draftRole || !newEmployeeName.trim()) return;
 
-    // Generate credentials
+    // generate credentials
     const firstName = newEmployeeName.split(" ")[0].toLowerCase();
     const randomSuffix = Math.floor(1000 + Math.random() * 9000);
     const username = `${firstName}.${randomSuffix}`;
@@ -262,7 +262,7 @@ export default function RoleManagementPage() {
   };
 
   const handleDelete = () => {
-    if (roles.length <= 1) return; // Don't delete last role
+    if (roles.length <= 1) return; // don't delete last role
     const newRoles = roles.filter((r) => r.id !== selectedRoleId);
     setRoles(newRoles);
     setSelectedRoleId(newRoles[0].id);
@@ -272,14 +272,14 @@ export default function RoleManagementPage() {
 
   return (
     <div className="flex flex-col h-full bg-bg-primary overflow-hidden rounded-[32px] border-4 border-white shadow-xl max-w-7xl mx-auto my-8">
-      {/* Header */}
+      {/* header */}
       <div className="flex-shrink-0 px-8 pt-10 pb-6">
         <h1 className="h2 text-text-primary mb-2">Role Management</h1>
         <p className="b1 text-text-secondary">Manage role permissions and access controls</p>
       </div>
 
       <div className="flex flex-1 min-h-0">
-        {/* Sidebar */}
+        {/* sidebar */}
         <div className="w-[320px] flex flex-col flex-shrink-0 border-r-2 border-white/50 bg-white/30 backdrop-blur-md">
           <div className="p-6 pb-4 flex flex-col gap-4">
             <Button
@@ -344,12 +344,12 @@ export default function RoleManagementPage() {
           </div>
         </div>
 
-        {/* Main Panel */}
+        {/* main panel */}
         <div className="flex-1 flex flex-col min-w-0 bg-white/50">
           {draftRole ? (
             <>
-              {/* Role Settings Header */}
-              <div className="p-8 pb-6 border-b-2 border-white/50 flex-shrink-0 flex items-start justify-between bg-white/60">
+              {/* role settings header */}
+              <div className="p-8 pb-6 border-b-2 border-white/50 flex-shrink-0 flex items-start justify-between">
                 <div className="flex-1 max-w-xl flex flex-col gap-6">
                   <div>
                     <label className="b4 font-bold text-text-secondary mb-2 block uppercase tracking-wider">Role Name</label>
@@ -397,8 +397,8 @@ export default function RoleManagementPage() {
                 </div>
               </div>
 
-              {/* Tabs */}
-              <div className="flex gap-6 px-8 border-b-2 border-white/50 bg-white/60 pt-4 flex-shrink-0">
+              {/* tabs */}
+              <div className="flex gap-6 px-8 border-b-2 border-white/50 pt-4 flex-shrink-0">
                 <button 
                   className={cn("pb-3 border-b-2 font-bold b2 transition-colors", activeTab === "permissions" ? "border-brand-primary text-brand-primary" : "border-transparent text-text-secondary hover:text-text-primary")}
                   onClick={() => setActiveTab("permissions")}
@@ -413,13 +413,13 @@ export default function RoleManagementPage() {
                 </button>
               </div>
 
-              {/* Main Tab Content */}
+              {/* main tab content */}
               <div className="flex-1 flex flex-col min-h-0 relative">
                 {activeTab === "permissions" ? (
                   <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
                     <div className="max-w-4xl mx-auto flex flex-col gap-8 pb-4">
                       
-                      {/* Category Sections */}
+                      {/* category sections */}
                       {Object.entries({
                         "Authentication & Roles": { key: "auth" as keyof Permissions, data: draftRole.permissions.auth, icon: <Shield size={18}/> },
                         "Orders & Payments": { key: "orders" as keyof Permissions, data: draftRole.permissions.orders, icon: <ShoppingCart size={18} /> },
@@ -463,12 +463,14 @@ export default function RoleManagementPage() {
                       </div>
                       
                       <div className="bg-white rounded-[24px] shadow-sm border border-black/[0.03] overflow-hidden flex flex-col">
-                         <div className="px-6 py-4 bg-brand-secondary/10 border-b border-black/[0.03] flex items-center justify-between">
+                       <div className="px-6 py-4 bg-brand-secondary/10 border-b border-black/[0.03] flex items-center justify-between">
                            <div className="flex items-center gap-2">
                              <Users size={18} className="text-brand-primary" />
                              <h3 className="b3 font-bold text-text-primary uppercase tracking-wider">Employees with this role</h3>
                            </div>
-                           <div className="relative w-64">
+                         </div>
+                         <div className="p-4 border-b border-black/[0.03]">
+                           <div className="relative w-full">
                              <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
                                <Search size={14} className="text-text-secondary" />
                              </div>
@@ -476,7 +478,7 @@ export default function RoleManagementPage() {
                                placeholder="Search employees..."
                                value={employeeSearchQuery}
                                onChange={(e) => setEmployeeSearchQuery(e.target.value)}
-                               className="pl-9 !py-1.5 !text-sm rounded-lg"
+                               className="pl-9 !py-2 !text-sm rounded-xl"
                              />
                            </div>
                          </div>
@@ -519,8 +521,8 @@ export default function RoleManagementPage() {
                 )}
               </div>
 
-              {/* Global Action Footer */}
-              <div className="p-6 border-t-2 border-white/50 bg-white/80 backdrop-blur-md flex justify-end gap-4 flex-shrink-0 z-10">
+              {/* global action footer */}
+              <div className="p-6 border-t-2 border-white/50 flex justify-end gap-4 flex-shrink-0 z-10">
                 {hasChanges && (
                   <Button variant="ghost" onClick={handleDiscard} className="text-warning-primary hover:bg-warning-secondary">
                     Discard Changes
@@ -544,7 +546,7 @@ export default function RoleManagementPage() {
         </div>
       </div>
       
-      {/* Scrollbar styling for custom-scrollbar class */}
+      {/* scrollbar styling */}
       <style dangerouslySetInnerHTML={{__html: `
         .custom-scrollbar::-webkit-scrollbar {
           width: 6px;
@@ -561,7 +563,7 @@ export default function RoleManagementPage() {
         }
       `}} />
 
-      {/* Add Employee Modal */}
+      {/* add employee modal */}
       {isAddEmployeeModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-text-primary/40 backdrop-blur-sm p-4">
           <div className="bg-white rounded-[32px] w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
