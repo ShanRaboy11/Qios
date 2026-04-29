@@ -85,7 +85,7 @@ export default function OnboardingPage() {
       if (res.success) {
         // Now you might want to sign them in automatically, or redirect to login.
         // Easiest is to redirect to login.
-        router.push("/login?onboarding=success");
+        router.push("/login?onboarding=pending");
       }
     } catch (err: any) {
       setError(err.message || "An error occurred during onboarding.");
