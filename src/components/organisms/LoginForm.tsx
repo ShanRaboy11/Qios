@@ -5,9 +5,9 @@ import { FormField } from "@/components/molecules/FormField";
 import { Button } from "@/components/atoms/Button";
 import { Checkbox } from "@/components/atoms/Checkbox";
 import { Badge } from "@/components/atoms/Badge";
-import { Mail, Lock, AlertCircle, X } from "lucide-react";
+import { Mail, Lock, AlertCircle, X, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 /** Decode a JWT payload for client-side inspection only; this does not verify the token or its claims. */
@@ -24,11 +24,19 @@ function decodeJwtPayload(token: string): Record<string, unknown> {
 
 export const LoginForm = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const onboardingStatus = searchParams?.get("onboarding");
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
 
   const [isLoading, setIsLoading] = useState(false);
+  const [successMsg, setSuccessMsg] = useState<string | null>(
+    onboardingStatus === "pending"
+      ? "Registration successful! Your account is currently pending super admin approval."
+      : null
+  );
   const [error, setError] = useState<string | null>(null);
   const [emailError, setEmailError] = useState(false);
   const [passwordError, setPasswordError] = useState(false);
@@ -43,6 +51,7 @@ export const LoginForm = () => {
 
     // Reset errors
     setError(null);
+    setSuccessMsg(null);
     setEmailError(false);
     setPasswordError(false);
 
@@ -92,22 +101,43 @@ export const LoginForm = () => {
         router.push("/admin/dashboard");
         return;
       }
-      
-      if (jwtRole === "admin" && jwtTenantId) {
-        router.push(`/${jwtTenantId}/dashboard`);
-        return;
-      }
 
-      if (jwtRole === "employee" && jwtTenantId) {
-        router.push(`/${jwtTenantId}/employee/dashboard`);
-        return;
+      if (jwtTenantId) {
+        // Enforce tenant status check
+        const { data: tenant } = await supabase
+          .from("tenants")
+          .select("status")
+          .eq("id", jwtTenantId)
+          .single();
+
+        const status = tenant?.status || "approved";
+
+        if (status !== "approved") {
+          await supabase.auth.signOut();
+          setError(
+            status === "pending"
+              ? "Your business registration is currently pending super admin approval."
+              : "Your business registration has been suspended or rejected. Please contact support."
+          );
+          return;
+        }
+
+        if (jwtRole === "admin") {
+          router.push(`/${jwtTenantId}/dashboard`);
+          return;
+        }
+
+        if (jwtRole === "employee") {
+          router.push(`/${jwtTenantId}/employee/dashboard`);
+          return;
+        }
       }
 
       // Fallback: query the profiles table (requires RLS policy allowing
       // authenticated users to SELECT their own row).
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
-        .select("role, tenant_id")
+        .select("role, tenant_id, tenants(status)")
         .eq("id", signInData.user.id)
         .single();
 
@@ -115,6 +145,18 @@ export const LoginForm = () => {
         setError(
           "Could not load your account profile. Please contact support.",
         );
+        return;
+      }
+      
+      const tenantStatus = (profile.tenants as any)?.status || "approved";
+
+      if (profile.role !== "super_admin" && tenantStatus !== "approved") {
+        await supabase.auth.signOut();
+        if (tenantStatus === "pending") {
+          setError("Your business registration is currently pending super admin approval.");
+        } else {
+          setError("Your business registration has been rejected or suspended. Please contact support.");
+        }
         return;
       }
 
@@ -417,6 +459,17 @@ export const LoginForm = () => {
                 className="w-full justify-center whitespace-normal text-center py-2 animate-in fade-in zoom-in-95"
               >
                 {error}
+              </Badge>
+            )}
+            {successMsg && (
+              <Badge
+                color="success"
+                variant="outline"
+                shape="rounded"
+                leftIcon={<Check size={16} className="shrink-0" />}
+                className="w-full justify-center whitespace-normal text-center py-2 animate-in fade-in zoom-in-95"
+              >
+                {successMsg}
               </Badge>
             )}
             <Button
