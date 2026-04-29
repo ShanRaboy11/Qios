@@ -271,17 +271,17 @@ export default function RoleManagementPage() {
   const filteredRoles = roles.filter((r) => r.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
   return (
-    <div className="flex flex-col h-full bg-bg-primary overflow-hidden rounded-[32px] border-4 border-white shadow-xl max-w-7xl mx-auto my-8">
+    <div className="flex flex-col h-full bg-bg-primary overflow-hidden rounded-2xl md:rounded-[32px] border-4 border-white shadow-xl max-w-7xl mx-4 xl:mx-auto my-4 md:my-8">
       {/* header */}
-      <div className="flex-shrink-0 px-8 pt-10 pb-6">
+      <div className="flex-shrink-0 px-4 md:px-8 pt-6 md:pt-10 pb-4 md:pb-6">
         <h1 className="h2 text-text-primary mb-2">Role Management</h1>
         <p className="b1 text-text-secondary">Manage role permissions and access controls</p>
       </div>
 
-      <div className="flex flex-1 min-h-0">
+      <div className="flex flex-col md:flex-row flex-1 min-h-0">
         {/* sidebar */}
-        <div className="w-[320px] flex flex-col flex-shrink-0 border-r-2 border-white/50 bg-white/30 backdrop-blur-md">
-          <div className="p-6 pb-4 flex flex-col gap-4">
+        <div className="w-full md:w-[320px] flex flex-col flex-shrink-0 border-b-2 md:border-b-0 md:border-r-2 border-white/50 bg-white/30 backdrop-blur-md h-[40%] md:h-auto min-h-[250px]">
+          <div className="p-4 md:p-6 pb-4 flex flex-col gap-4">
             <Button
               variant="primary"
               className="w-full"
@@ -303,7 +303,7 @@ export default function RoleManagementPage() {
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto px-4 pb-6 custom-scrollbar">
+          <div className="flex-1 overflow-y-auto px-2 md:px-4 pb-6 custom-scrollbar">
             <div className="flex flex-col gap-2">
               {filteredRoles.map((role, index) => (
                 <div
@@ -349,9 +349,9 @@ export default function RoleManagementPage() {
           {draftRole ? (
             <>
               {/* role settings header */}
-              <div className="p-8 pb-6 border-b-2 border-white/50 flex-shrink-0 flex items-start justify-between">
-                <div className="flex-1 max-w-xl flex flex-col gap-6">
-                  <div>
+              <div className="p-4 md:p-8 pb-4 md:pb-6 border-b-2 border-white/50 flex-shrink-0 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex-1 w-full max-w-xl flex flex-col sm:flex-row gap-4 md:gap-6">
+                  <div className="flex-1">
                     <label className="b4 font-bold text-text-secondary mb-2 block uppercase tracking-wider">Role Name</label>
                     <Input
                       value={draftRole.name}
@@ -360,7 +360,7 @@ export default function RoleManagementPage() {
                     />
                   </div>
                   
-                  <div>
+                  <div className="flex-1">
                     <label className="b4 font-bold text-text-secondary mb-3 block uppercase tracking-wider">Role Color</label>
                     <div className="flex gap-3 flex-wrap">
                       {PRESET_COLORS.map((color) => (
@@ -380,7 +380,7 @@ export default function RoleManagementPage() {
                   </div>
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex gap-2 self-end sm:self-auto mt-2 sm:mt-0">
                   <Button variant="ghost" size="icon" onClick={handleDuplicate} title="Duplicate Role">
                     <Copy size={18} />
                   </Button>
@@ -398,7 +398,7 @@ export default function RoleManagementPage() {
               </div>
 
               {/* tabs */}
-              <div className="flex gap-6 px-8 border-b-2 border-white/50 pt-4 flex-shrink-0">
+              <div className="flex gap-4 md:gap-6 px-4 md:px-8 border-b-2 border-white/50 pt-4 flex-shrink-0 overflow-x-auto no-scrollbar">
                 <button 
                   className={cn("pb-3 border-b-2 font-bold b2 transition-colors", activeTab === "permissions" ? "border-brand-primary text-brand-primary" : "border-transparent text-text-secondary hover:text-text-primary")}
                   onClick={() => setActiveTab("permissions")}
@@ -416,8 +416,8 @@ export default function RoleManagementPage() {
               {/* main tab content */}
               <div className="flex-1 flex flex-col min-h-0 relative">
                 {activeTab === "permissions" ? (
-                  <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-                    <div className="max-w-4xl mx-auto flex flex-col gap-8 pb-4">
+                  <div className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar">
+                    <div className="max-w-4xl mx-auto flex flex-col gap-6 md:gap-8 pb-4">
                       
                       {/* category sections */}
                       {Object.entries({
@@ -427,8 +427,8 @@ export default function RoleManagementPage() {
                         "Analytics & Dashboards": { key: "analytics" as keyof Permissions, data: draftRole.permissions.analytics, icon: <LineChart size={18} /> },
                         "Miscellaneous": { key: "misc" as keyof Permissions, data: draftRole.permissions.misc, icon: <QrCode size={18} /> },
                       }).map(([categoryName, { key: categoryKey, data, icon }]) => (
-                        <div key={categoryName} className="bg-white rounded-[24px] shadow-sm border border-black/[0.03] overflow-hidden">
-                          <div className="px-6 py-4 bg-brand-secondary/10 border-b border-black/[0.03] flex items-center gap-2">
+                        <div key={categoryName} className="bg-white rounded-xl md:rounded-[24px] shadow-sm border border-black/[0.03] overflow-hidden">
+                          <div className="px-4 md:px-6 py-3 md:py-4 bg-brand-secondary/10 border-b border-black/[0.03] flex items-center gap-2">
                             {icon && <span className="text-brand-primary">{icon}</span>}
                             <h3 className="b3 font-bold text-text-primary uppercase tracking-wider">{categoryName}</h3>
                           </div>
@@ -450,9 +450,9 @@ export default function RoleManagementPage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-                    <div className="max-w-4xl mx-auto flex flex-col gap-6 pb-4">
-                      <div className="bg-white rounded-[24px] shadow-sm border border-black/[0.03] p-8 flex items-center justify-between">
+                  <div className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar">
+                    <div className="max-w-4xl mx-auto flex flex-col gap-4 md:gap-6 pb-4">
+                      <div className="bg-white rounded-xl md:rounded-[24px] shadow-sm border border-black/[0.03] p-6 md:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                         <div>
                           <h3 className="b2 font-bold text-text-primary mb-1">Add Employees</h3>
                           <p className="b4 text-text-secondary">Create a new employee profile to assign them to this role.</p>
@@ -462,8 +462,8 @@ export default function RoleManagementPage() {
                         </Button>
                       </div>
                       
-                      <div className="bg-white rounded-[24px] shadow-sm border border-black/[0.03] overflow-hidden flex flex-col">
-                       <div className="px-6 py-4 bg-brand-secondary/10 border-b border-black/[0.03] flex items-center justify-between">
+                      <div className="bg-white rounded-xl md:rounded-[24px] shadow-sm border border-black/[0.03] overflow-hidden flex flex-col">
+                         <div className="px-4 md:px-6 py-4 bg-brand-secondary/10 border-b border-black/[0.03] flex items-center justify-between">
                            <div className="flex items-center gap-2">
                              <Users size={18} className="text-brand-primary" />
                              <h3 className="b3 font-bold text-text-primary uppercase tracking-wider">Employees with this role</h3>
@@ -487,14 +487,14 @@ export default function RoleManagementPage() {
                               draftRole.employees
                                 .filter(e => e.name.toLowerCase().includes(employeeSearchQuery.toLowerCase()))
                                 .map((employee) => (
-                                <div key={employee.id} className="p-4 px-6 border-b border-black/[0.03] last:border-b-0 flex items-center justify-between hover:bg-black/[0.01]">
-                                  <div className="flex items-center gap-4">
-                                    <div className="w-10 h-10 rounded-full bg-brand-primary/10 flex items-center justify-center text-brand-primary font-bold b2">
+                                <div key={employee.id} className="p-4 md:px-6 border-b border-black/[0.03] last:border-b-0 flex items-center justify-between hover:bg-black/[0.01]">
+                                  <div className="flex items-center gap-3 md:gap-4">
+                                    <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-brand-primary/10 flex items-center justify-center text-brand-primary font-bold b2">
                                       {employee.name.charAt(0).toUpperCase()}
                                     </div>
                                     <div>
                                       <p className="b2 font-bold text-text-primary">{employee.name}</p>
-                                      <p className="b4 text-text-secondary">@{employee.username}</p>
+                                      <p className="b4 text-text-secondary truncate max-w-[120px] sm:max-w-none">@{employee.username}</p>
                                     </div>
                                   </div>
                                   <div className="flex items-center gap-2">
@@ -522,7 +522,7 @@ export default function RoleManagementPage() {
               </div>
 
               {/* global action footer */}
-              <div className="p-6 border-t-2 border-white/50 flex justify-end gap-4 flex-shrink-0 z-10">
+              <div className="p-4 md:p-6 border-t-2 border-white/50 flex justify-end gap-2 md:gap-4 flex-shrink-0 z-10 bg-white/50 md:bg-transparent">
                 {hasChanges && (
                   <Button variant="ghost" onClick={handleDiscard} className="text-warning-primary hover:bg-warning-secondary">
                     Discard Changes
@@ -566,15 +566,15 @@ export default function RoleManagementPage() {
       {/* add employee modal */}
       {isAddEmployeeModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-text-primary/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-[32px] w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            <div className="px-8 py-6 flex items-center justify-between border-b border-black/[0.05]">
+          <div className="bg-white rounded-2xl md:rounded-[32px] w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="px-6 md:px-8 py-4 md:py-6 flex items-center justify-between border-b border-black/[0.05]">
               <h2 className="b2 font-bold text-text-primary">Add New Employee</h2>
-              <button onClick={() => {setIsAddEmployeeModalOpen(false); setNewEmployeeCredentials(null);}} className="text-text-secondary hover:text-text-primary transition-colors">
+              <button onClick={() => {setIsAddEmployeeModalOpen(false); setNewEmployeeCredentials(null);}} className="text-text-secondary hover:text-text-primary transition-colors p-1">
                 <X size={20} />
               </button>
             </div>
             
-            <div className="p-8">
+            <div className="p-6 md:p-8">
               {!newEmployeeCredentials ? (
                 <div className="flex flex-col gap-6">
                   <div>
