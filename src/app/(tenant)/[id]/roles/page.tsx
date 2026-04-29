@@ -1,0 +1,637 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import { Button } from "@/components/atoms/Button";
+import { Input } from "@/components/atoms/Input";
+import { FeatureToggle } from "@/components/molecules/FeatureToggle";
+import { Plus, Search, Shield, ShieldAlert, Check, Copy, Trash2, GripVertical, ShoppingCart, Package, LineChart, QrCode, Users, X, Edit2, KeyRound } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+// --- Types ---
+type PermissionGroup = {
+  [key: string]: boolean;
+};
+
+type Permissions = {
+  auth: PermissionGroup;
+  orders: PermissionGroup;
+  inventory: PermissionGroup;
+  analytics: PermissionGroup;
+  misc: PermissionGroup;
+};
+
+type Employee = {
+  id: string;
+  name: string;
+  username: string;
+  password?: string;
+};
+
+type Role = {
+  id: string;
+  name: string;
+  color: string;
+  employees: Employee[];
+  permissions: Permissions;
+};
+
+// --- Initial Data ---
+const DEFAULT_PERMISSIONS: Permissions = {
+  auth: {
+    "Employee Authentication": false,
+    "Employee Account Management": false,
+    "Role Management Access": false,
+  },
+  orders: {
+    "Order Retrieval": false,
+    "Order Modification": false,
+    "Order Validation": false,
+    "Payment Confirmation": false,
+    "Cancellation & Void Monitoring": false,
+    "Order Queue Management": false,
+    "Order Status Updating": false,
+  },
+  inventory: {
+    "Inventory Monitoring": false,
+    "Stock Deduction Overview": false,
+    "Physical Stock Input": false,
+    "Variance Reports": false,
+    "Shrinkage Alerts": false,
+  },
+  analytics: {
+    "Revenue Dashboard": false,
+    "Operational Analytics": false,
+    "Staff Activity Monitoring": false,
+  },
+  misc: {
+    "QR Code Scanning": false,
+  },
+};
+
+const INITIAL_ROLES: Role[] = [
+  {
+    id: "r1",
+    name: "Admin",
+    color: "bg-warning-primary",
+    employees: [
+      { id: "e1", name: "Alice Johnson", username: "alice.j", password: "password123" },
+      { id: "e2", name: "Bob Smith", username: "bob.s", password: "password123" },
+      { id: "e3", name: "Charlie Davis", username: "charlie.d", password: "password123" },
+    ],
+    permissions: {
+      auth: { "Employee Authentication": true, "Employee Account Management": true, "Role Management Access": true },
+      orders: { "Order Retrieval": true, "Order Modification": true, "Order Validation": true, "Payment Confirmation": true, "Cancellation & Void Monitoring": true, "Order Queue Management": true, "Order Status Updating": true },
+      inventory: { "Inventory Monitoring": true, "Stock Deduction Overview": true, "Physical Stock Input": true, "Variance Reports": true, "Shrinkage Alerts": true },
+      analytics: { "Revenue Dashboard": true, "Operational Analytics": true, "Staff Activity Monitoring": true },
+      misc: { "QR Code Scanning": true },
+    },
+  },
+  {
+    id: "r2",
+    name: "Cashier",
+    color: "bg-brand-secondary",
+    employees: [
+      { id: "e4", name: "David Wilson", username: "david.w", password: "password123" },
+    ],
+    permissions: {
+      auth: { "Employee Authentication": true, "Employee Account Management": false, "Role Management Access": false },
+      orders: { "Order Retrieval": true, "Order Modification": false, "Order Validation": true, "Payment Confirmation": true, "Cancellation & Void Monitoring": false, "Order Queue Management": true, "Order Status Updating": true },
+      inventory: { "Inventory Monitoring": false, "Stock Deduction Overview": false, "Physical Stock Input": false, "Variance Reports": false, "Shrinkage Alerts": false },
+      analytics: { "Revenue Dashboard": false, "Operational Analytics": false, "Staff Activity Monitoring": false },
+      misc: { "QR Code Scanning": true },
+    },
+  },
+  {
+    id: "r3",
+    name: "Kitchen",
+    color: "bg-brand-primary",
+    employees: [],
+    permissions: {
+      auth: { "Employee Authentication": true, "Employee Account Management": false, "Role Management Access": false },
+      orders: { "Order Retrieval": true, "Order Modification": false, "Order Validation": false, "Payment Confirmation": false, "Cancellation & Void Monitoring": false, "Order Queue Management": true, "Order Status Updating": true },
+      inventory: { "Inventory Monitoring": true, "Stock Deduction Overview": true, "Physical Stock Input": false, "Variance Reports": false, "Shrinkage Alerts": false },
+      analytics: { "Revenue Dashboard": false, "Operational Analytics": false, "Staff Activity Monitoring": false },
+      misc: { "QR Code Scanning": false },
+    },
+  },
+];
+
+const PRESET_COLORS = [
+  "bg-warning-primary", // Red
+  "bg-brand-accent", // Pinkish Red
+  "bg-brand-primary", // Orange
+  "bg-brand-secondary", // Yellow
+  "bg-success-primary", // Green
+  "bg-[#3b82f6]", // Blue
+  "bg-[#8b5cf6]", // Purple
+  "bg-text-primary", // Dark
+];
+
+export default function RoleManagementPage() {
+  const [roles, setRoles] = useState<Role[]>(INITIAL_ROLES);
+  const [selectedRoleId, setSelectedRoleId] = useState<string>(roles[0].id);
+  const [draftRole, setDraftRole] = useState<Role | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeTab, setActiveTab] = useState<"permissions" | "employees">("permissions");
+  
+  // Modal & Employee states
+  const [isAddEmployeeModalOpen, setIsAddEmployeeModalOpen] = useState(false);
+  const [newEmployeeName, setNewEmployeeName] = useState("");
+  const [newEmployeeCredentials, setNewEmployeeCredentials] = useState<{username: string, password: string} | null>(null);
+  const [employeeSearchQuery, setEmployeeSearchQuery] = useState("");
+
+  // Drag and Drop state
+  const [draggedRoleId, setDraggedRoleId] = useState<string | null>(null);
+
+  const activeRole = roles.find((r) => r.id === selectedRoleId);
+  
+  // Initialize draft when active role changes
+  useEffect(() => {
+    if (activeRole) {
+      setDraftRole(JSON.parse(JSON.stringify(activeRole))); // Deep copy
+      setEmployeeSearchQuery(""); // Reset search when switching roles
+    }
+  }, [activeRole]);
+
+  const hasChanges = JSON.stringify(activeRole) !== JSON.stringify(draftRole);
+
+  const handlePermissionChange = (category: keyof Permissions, key: string, value: boolean) => {
+    if (!draftRole) return;
+    setDraftRole({
+      ...draftRole,
+      permissions: {
+        ...draftRole.permissions,
+        [category]: {
+          ...draftRole.permissions[category],
+          [key]: value,
+        },
+      },
+    });
+  };
+
+  const handleSave = () => {
+    if (!draftRole) return;
+    setRoles(roles.map((r) => (r.id === draftRole.id ? draftRole : r)));
+  };
+
+  const handleDragStart = (e: React.DragEvent, id: string) => {
+    setDraggedRoleId(id);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+  };
+
+  const handleDrop = (e: React.DragEvent, targetId: string) => {
+    e.preventDefault();
+    if (!draggedRoleId || draggedRoleId === targetId) return;
+
+    const newRoles = [...roles];
+    const draggedIndex = newRoles.findIndex(r => r.id === draggedRoleId);
+    const targetIndex = newRoles.findIndex(r => r.id === targetId);
+
+    const [draggedRole] = newRoles.splice(draggedIndex, 1);
+    newRoles.splice(targetIndex, 0, draggedRole);
+
+    setRoles(newRoles);
+    setDraggedRoleId(null);
+  };
+
+  const handleDiscard = () => {
+    if (activeRole) {
+      setDraftRole(JSON.parse(JSON.stringify(activeRole)));
+    }
+  };
+
+  const handleCreateRole = () => {
+    const newRole: Role = {
+      id: `r${Date.now()}`,
+      name: "New Role",
+      color: PRESET_COLORS[Math.floor(Math.random() * PRESET_COLORS.length)],
+      employees: [],
+      permissions: JSON.parse(JSON.stringify(DEFAULT_PERMISSIONS)),
+    };
+    setRoles([...roles, newRole]);
+    setSelectedRoleId(newRole.id);
+  };
+
+  const handleDuplicate = () => {
+    if (!activeRole) return;
+    const newRole: Role = {
+      ...JSON.parse(JSON.stringify(activeRole)),
+      id: `r${Date.now()}`,
+      name: `${activeRole.name} (Copy)`,
+      employees: [],
+    };
+    setRoles([...roles, newRole]);
+    setSelectedRoleId(newRole.id);
+  };
+
+  const handleAddEmployee = () => {
+    if (!draftRole || !newEmployeeName.trim()) return;
+
+    // Generate credentials
+    const firstName = newEmployeeName.split(" ")[0].toLowerCase();
+    const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+    const username = `${firstName}.${randomSuffix}`;
+    const password = `pass${randomSuffix}!`;
+
+    const newEmployee: Employee = {
+      id: `e${Date.now()}`,
+      name: newEmployeeName,
+      username,
+      password,
+    };
+
+    setDraftRole({
+      ...draftRole,
+      employees: [...draftRole.employees, newEmployee]
+    });
+    setNewEmployeeCredentials({ username, password });
+    setNewEmployeeName("");
+  };
+
+  const handleRemoveEmployee = (empId: string) => {
+    if (!draftRole) return;
+    setDraftRole({
+      ...draftRole,
+      employees: draftRole.employees.filter((e) => e.id !== empId)
+    });
+  };
+
+  const handleDelete = () => {
+    if (roles.length <= 1) return; // Don't delete last role
+    const newRoles = roles.filter((r) => r.id !== selectedRoleId);
+    setRoles(newRoles);
+    setSelectedRoleId(newRoles[0].id);
+  };
+
+  const filteredRoles = roles.filter((r) => r.name.toLowerCase().includes(searchQuery.toLowerCase()));
+
+  return (
+    <div className="flex flex-col h-full bg-bg-primary overflow-hidden rounded-[32px] border-4 border-white shadow-xl max-w-7xl mx-auto my-8">
+      {/* Header */}
+      <div className="flex-shrink-0 px-8 pt-10 pb-6">
+        <h1 className="h2 text-text-primary mb-2">Role Management</h1>
+        <p className="b1 text-text-secondary">Manage role permissions and access controls</p>
+      </div>
+
+      <div className="flex flex-1 min-h-0">
+        {/* Sidebar */}
+        <div className="w-[320px] flex flex-col flex-shrink-0 border-r-2 border-white/50 bg-white/30 backdrop-blur-md">
+          <div className="p-6 pb-4 flex flex-col gap-4">
+            <Button
+              variant="primary"
+              className="w-full"
+              leftIcon={<Plus size={18} />}
+              onClick={handleCreateRole}
+            >
+              New Role
+            </Button>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                <Search size={18} className="text-text-secondary" />
+              </div>
+              <Input
+                placeholder="Search roles..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-12 !py-2.5 rounded-xl !bg-white/60 !border-white/50"
+              />
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto px-4 pb-6 custom-scrollbar">
+            <div className="flex flex-col gap-2">
+              {filteredRoles.map((role, index) => (
+                <div
+                  key={role.id}
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, role.id)}
+                  onDragOver={handleDragOver}
+                  onDrop={(e) => handleDrop(e, role.id)}
+                  onClick={() => setSelectedRoleId(role.id)}
+                  className={cn(
+                    "group flex items-center justify-between p-3 rounded-2xl cursor-pointer transition-all duration-300",
+                    selectedRoleId === role.id
+                      ? "bg-white shadow-md border border-white/60 transform scale-[1.02]"
+                      : "hover:bg-white/40 border border-transparent",
+                    draggedRoleId === role.id && "opacity-50 border-dashed border-2 border-brand-primary"
+                  )}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="cursor-grab text-text-secondary/50 hover:text-text-primary active:cursor-grabbing">
+                      <GripVertical size={16} />
+                    </div>
+                    <div className={cn("w-3 h-3 rounded-full shadow-sm", role.color)} />
+                    <div className="flex flex-col">
+                      <span className={cn(
+                        "b2 font-bold transition-colors",
+                        selectedRoleId === role.id ? "text-text-primary" : "text-text-primary/80"
+                      )}>
+                        {role.name}
+                      </span>
+                      <span className="b5 text-text-secondary">
+                        {role.employees.length} {role.employees.length === 1 ? 'user' : 'users'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Main Panel */}
+        <div className="flex-1 flex flex-col min-w-0 bg-white/50">
+          {draftRole ? (
+            <>
+              {/* Role Settings Header */}
+              <div className="p-8 pb-6 border-b-2 border-white/50 flex-shrink-0 flex items-start justify-between bg-white/60">
+                <div className="flex-1 max-w-xl flex flex-col gap-6">
+                  <div>
+                    <label className="b4 font-bold text-text-secondary mb-2 block uppercase tracking-wider">Role Name</label>
+                    <Input
+                      value={draftRole.name}
+                      onChange={(e) => setDraftRole({ ...draftRole, name: e.target.value })}
+                      className="text-lg font-bold !bg-white/80"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="b4 font-bold text-text-secondary mb-3 block uppercase tracking-wider">Role Color</label>
+                    <div className="flex gap-3 flex-wrap">
+                      {PRESET_COLORS.map((color) => (
+                        <button
+                          key={color}
+                          onClick={() => setDraftRole({ ...draftRole, color })}
+                          className={cn(
+                            "w-8 h-8 rounded-full shadow-md transition-transform duration-200 hover:scale-110 flex items-center justify-center",
+                            color,
+                            draftRole.color === color && "ring-4 ring-brand-primary/30 scale-110"
+                          )}
+                        >
+                          {draftRole.color === color && <Check size={16} className="text-white" />}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button variant="ghost" size="icon" onClick={handleDuplicate} title="Duplicate Role">
+                    <Copy size={18} />
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={handleDelete} 
+                    title="Delete Role"
+                    className="hover:bg-warning-secondary hover:text-warning-primary"
+                    disabled={roles.length <= 1}
+                  >
+                    <Trash2 size={18} />
+                  </Button>
+                </div>
+              </div>
+
+              {/* Tabs */}
+              <div className="flex gap-6 px-8 border-b-2 border-white/50 bg-white/60 pt-4 flex-shrink-0">
+                <button 
+                  className={cn("pb-3 border-b-2 font-bold b2 transition-colors", activeTab === "permissions" ? "border-brand-primary text-brand-primary" : "border-transparent text-text-secondary hover:text-text-primary")}
+                  onClick={() => setActiveTab("permissions")}
+                >
+                  Permissions
+                </button>
+                <button 
+                  className={cn("pb-3 border-b-2 font-bold b2 transition-colors", activeTab === "employees" ? "border-brand-primary text-brand-primary" : "border-transparent text-text-secondary hover:text-text-primary")}
+                  onClick={() => setActiveTab("employees")}
+                >
+                  Manage Employees
+                </button>
+              </div>
+
+              {/* Main Tab Content */}
+              <div className="flex-1 flex flex-col min-h-0 relative">
+                {activeTab === "permissions" ? (
+                  <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+                    <div className="max-w-4xl mx-auto flex flex-col gap-8 pb-4">
+                      
+                      {/* Category Sections */}
+                      {Object.entries({
+                        "Authentication & Roles": { key: "auth" as keyof Permissions, data: draftRole.permissions.auth, icon: <Shield size={18}/> },
+                        "Orders & Payments": { key: "orders" as keyof Permissions, data: draftRole.permissions.orders, icon: <ShoppingCart size={18} /> },
+                        "Inventory": { key: "inventory" as keyof Permissions, data: draftRole.permissions.inventory, icon: <Package size={18} /> },
+                        "Analytics & Dashboards": { key: "analytics" as keyof Permissions, data: draftRole.permissions.analytics, icon: <LineChart size={18} /> },
+                        "Miscellaneous": { key: "misc" as keyof Permissions, data: draftRole.permissions.misc, icon: <QrCode size={18} /> },
+                      }).map(([categoryName, { key: categoryKey, data, icon }]) => (
+                        <div key={categoryName} className="bg-white rounded-[24px] shadow-sm border border-black/[0.03] overflow-hidden">
+                          <div className="px-6 py-4 bg-brand-secondary/10 border-b border-black/[0.03] flex items-center gap-2">
+                            {icon && <span className="text-brand-primary">{icon}</span>}
+                            <h3 className="b3 font-bold text-text-primary uppercase tracking-wider">{categoryName}</h3>
+                          </div>
+                          <div className="p-2 flex flex-col">
+                            {Object.entries(data).map(([permissionName, isEnabled]) => (
+                              <FeatureToggle
+                                key={permissionName}
+                                label={permissionName}
+                                checked={isEnabled}
+                                variant="accent"
+                                onChange={(checked) => handlePermissionChange(categoryKey, permissionName, checked)}
+                                className="!rounded-xl"
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+                    <div className="max-w-4xl mx-auto flex flex-col gap-6 pb-4">
+                      <div className="bg-white rounded-[24px] shadow-sm border border-black/[0.03] p-8 flex items-center justify-between">
+                        <div>
+                          <h3 className="b2 font-bold text-text-primary mb-1">Add Employees</h3>
+                          <p className="b4 text-text-secondary">Create a new employee profile to assign them to this role.</p>
+                        </div>
+                        <Button variant="outline" leftIcon={<Plus size={16} />} onClick={() => setIsAddEmployeeModalOpen(true)}>
+                          Add Employee
+                        </Button>
+                      </div>
+                      
+                      <div className="bg-white rounded-[24px] shadow-sm border border-black/[0.03] overflow-hidden flex flex-col">
+                         <div className="px-6 py-4 bg-brand-secondary/10 border-b border-black/[0.03] flex items-center justify-between">
+                           <div className="flex items-center gap-2">
+                             <Users size={18} className="text-brand-primary" />
+                             <h3 className="b3 font-bold text-text-primary uppercase tracking-wider">Employees with this role</h3>
+                           </div>
+                           <div className="relative w-64">
+                             <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                               <Search size={14} className="text-text-secondary" />
+                             </div>
+                             <Input
+                               placeholder="Search employees..."
+                               value={employeeSearchQuery}
+                               onChange={(e) => setEmployeeSearchQuery(e.target.value)}
+                               className="pl-9 !py-1.5 !text-sm rounded-lg"
+                             />
+                           </div>
+                         </div>
+                         <div className="flex flex-col">
+                           {draftRole.employees.length > 0 ? (
+                              draftRole.employees
+                                .filter(e => e.name.toLowerCase().includes(employeeSearchQuery.toLowerCase()))
+                                .map((employee) => (
+                                <div key={employee.id} className="p-4 px-6 border-b border-black/[0.03] last:border-b-0 flex items-center justify-between hover:bg-black/[0.01]">
+                                  <div className="flex items-center gap-4">
+                                    <div className="w-10 h-10 rounded-full bg-brand-primary/10 flex items-center justify-center text-brand-primary font-bold b2">
+                                      {employee.name.charAt(0).toUpperCase()}
+                                    </div>
+                                    <div>
+                                      <p className="b2 font-bold text-text-primary">{employee.name}</p>
+                                      <p className="b4 text-text-secondary">@{employee.username}</p>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <Button variant="ghost" size="icon" className="hover:bg-warning-secondary hover:text-warning-primary" onClick={() => handleRemoveEmployee(employee.id)}>
+                                      <Trash2 size={16} />
+                                    </Button>
+                                  </div>
+                                </div>
+                              ))
+                           ) : (
+                              <div className="p-8 text-center text-text-secondary b2">
+                                No employees assigned to this role yet.
+                              </div>
+                           )}
+                           {draftRole.employees.length > 0 && draftRole.employees.filter(e => e.name.toLowerCase().includes(employeeSearchQuery.toLowerCase())).length === 0 && (
+                             <div className="p-8 text-center text-text-secondary b2">
+                               No employees match your search.
+                             </div>
+                           )}
+                         </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Global Action Footer */}
+              <div className="p-6 border-t-2 border-white/50 bg-white/80 backdrop-blur-md flex justify-end gap-4 flex-shrink-0 z-10">
+                {hasChanges && (
+                  <Button variant="ghost" onClick={handleDiscard} className="text-warning-primary hover:bg-warning-secondary">
+                    Discard Changes
+                  </Button>
+                )}
+                <Button 
+                  variant={hasChanges ? "primary" : "ghost"}
+                  onClick={handleSave} 
+                  disabled={!hasChanges}
+                  className={cn(!hasChanges && "opacity-50")}
+                >
+                  Save Changes
+                </Button>
+              </div>
+            </>
+          ) : (
+            <div className="flex-1 flex items-center justify-center text-text-secondary b2">
+              Select a role to manage its permissions
+            </div>
+          )}
+        </div>
+      </div>
+      
+      {/* Scrollbar styling for custom-scrollbar class */}
+      <style dangerouslySetInnerHTML={{__html: `
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background-color: rgba(0,0,0,0.1);
+          border-radius: 10px;
+        }
+        .custom-scrollbar:hover::-webkit-scrollbar-thumb {
+          background-color: rgba(0,0,0,0.2);
+        }
+      `}} />
+
+      {/* Add Employee Modal */}
+      {isAddEmployeeModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-text-primary/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-[32px] w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="px-8 py-6 flex items-center justify-between border-b border-black/[0.05]">
+              <h2 className="b2 font-bold text-text-primary">Add New Employee</h2>
+              <button onClick={() => {setIsAddEmployeeModalOpen(false); setNewEmployeeCredentials(null);}} className="text-text-secondary hover:text-text-primary transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="p-8">
+              {!newEmployeeCredentials ? (
+                <div className="flex flex-col gap-6">
+                  <div>
+                    <label className="b4 font-bold text-text-secondary mb-2 block uppercase tracking-wider">Employee Name</label>
+                    <Input 
+                      placeholder="e.g. Jane Doe" 
+                      value={newEmployeeName} 
+                      onChange={(e) => setNewEmployeeName(e.target.value)}
+                      autoFocus
+                    />
+                  </div>
+                  <Button 
+                    variant="primary" 
+                    className="w-full" 
+                    onClick={handleAddEmployee}
+                    disabled={!newEmployeeName.trim()}
+                  >
+                    Generate Credentials & Assign
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-6 text-center">
+                  <div className="w-16 h-16 bg-success-secondary text-success-primary rounded-full flex items-center justify-center mx-auto mb-2">
+                    <Check size={32} strokeWidth={3} />
+                  </div>
+                  <div>
+                    <h3 className="b2 font-bold text-text-primary mb-1">Employee Added Successfully!</h3>
+                    <p className="b4 text-text-secondary">Please copy these generated credentials. The password cannot be recovered later.</p>
+                  </div>
+                  
+                  <div className="bg-bg-primary rounded-2xl p-4 text-left flex flex-col gap-3">
+                    <div className="flex justify-between items-center">
+                      <span className="b4 text-text-secondary font-bold">USERNAME</span>
+                      <span className="b3 text-text-primary font-mono bg-white px-2 py-1 rounded-md border border-black/[0.05]">{newEmployeeCredentials.username}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="b4 text-text-secondary font-bold">PASSWORD</span>
+                      <span className="b3 text-text-primary font-mono bg-white px-2 py-1 rounded-md border border-black/[0.05]">{newEmployeeCredentials.password}</span>
+                    </div>
+                  </div>
+                  
+                  <Button 
+                    variant="outline" 
+                    className="w-full mt-2"
+                    leftIcon={<Copy size={16} />}
+                    onClick={() => {
+                      navigator.clipboard.writeText(`Username: ${newEmployeeCredentials.username}\nPassword: ${newEmployeeCredentials.password}`);
+                      setIsAddEmployeeModalOpen(false);
+                      setNewEmployeeCredentials(null);
+                    }}
+                  >
+                    Copy & Close
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
