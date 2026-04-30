@@ -3,11 +3,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/atoms/Button";
-import { ArrowRight, Menu, X } from "lucide-react";
+import { ArrowRight, Menu, X, User, LogOut, Settings } from "lucide-react";
 
 interface NavbarProps {
   variant?: "filled" | "transparent";
-  type?: "default" | "admin";
+  type?: "default" | "admin" | "tenant";
   activeView?: string;
   onNavigate?: (view: string) => void;
   className?: string;
@@ -22,7 +22,9 @@ export const Navbar = ({
 }: NavbarProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const navRef = useRef<HTMLElement>(null);
+  const profileRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -36,6 +38,13 @@ export const Navbar = ({
         !navRef.current.contains(event.target as Node)
       ) {
         setIsOpen(false);
+      }
+      if (
+        isProfileOpen &&
+        profileRef.current &&
+        !profileRef.current.contains(event.target as Node)
+      ) {
+        setIsProfileOpen(false);
       }
     };
 
@@ -61,7 +70,21 @@ export const Navbar = ({
     { label: "Settings", href: "#", id: "settings" },
   ];
 
-  const links = type === "admin" ? adminLinks : defaultLinks;
+  const tenantLinks = [
+    { label: "Dashboard", href: "#", id: "dashboard" },
+    { label: "Menu Management", href: "#", id: "menu" },
+    { label: "Inventory Configuration", href: "#", id: "inventory" },
+    { label: "Staff Management", href: "#", id: "staff" },
+    { label: "Sales", href: "#", id: "sales" },
+    { label: "Audit Logs", href: "#", id: "audit_logs" },
+  ];
+
+  const links =
+    type === "admin"
+      ? adminLinks
+      : type === "tenant"
+        ? tenantLinks
+        : defaultLinks;
 
   return (
     <nav
@@ -112,14 +135,15 @@ export const Navbar = ({
             key={link.id}
             href={link.href}
             onClick={(e) => {
-              if (type === "admin") {
+              if (type === "admin" || type === "tenant") {
                 e.preventDefault();
                 onNavigate?.(link.id);
               }
             }}
             className={cn(
               "transition-colors font-inter font-medium text-[18px] shrink-0",
-              (type === "admin" && activeView === link.id) ||
+              ((type === "admin" || type === "tenant") &&
+                activeView === link.id) ||
                 (type === "default" && link.id === "home")
                 ? "text-brand-accent"
                 : "text-text-primary hover:text-brand-accent",
@@ -129,7 +153,7 @@ export const Navbar = ({
           </a>
         ))}
 
-        {type !== "admin" && (
+        {type !== "admin" && type !== "tenant" ? (
           <div className="shrink-0">
             <Button
               variant="accent"
@@ -139,6 +163,49 @@ export const Navbar = ({
             >
               Get Started
             </Button>
+          </div>
+        ) : (
+          <div className="shrink-0 relative" ref={profileRef}>
+            <button
+              onClick={() => setIsProfileOpen(!isProfileOpen)}
+              className="w-10 h-10 rounded-full bg-brand-accent flex items-center justify-center border border-brand-accent/20 hover:scale-110 transition-transform duration-300"
+            >
+              <User className="w-5 h-5 text-white" />
+            </button>
+
+            {isProfileOpen && (
+              <div className="absolute right-0 top-[calc(100%+12px)] w-56 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 py-2">
+                <div className="px-4 py-3 border-b border-gray-50 mb-2">
+                  <p className="text-[15px] font-bold text-text-primary truncate">
+                    {type === "admin" ? "Admin User" : "Tenant User"}
+                  </p>
+                  <p className="text-[13px] text-text-secondary truncate mt-0.5">
+                    {type === "admin" ? "admin@qios.com" : "tenant@qios.com"}
+                  </p>
+                </div>
+                <button
+                  className="w-full text-left px-4 py-2.5 text-[14px] text-text-primary hover:bg-gray-50 flex items-center gap-3 transition-colors font-medium"
+                  onClick={() => {
+                    setIsProfileOpen(false);
+                    onNavigate?.("settings");
+                  }}
+                >
+                  <Settings className="w-[18px] h-[18px]" />
+                  Account Settings
+                </button>
+                <div className="h-px bg-gray-50 my-2" />
+                <button
+                  className="w-full text-left px-4 py-2.5 text-[14px] text-[#EF4444] hover:bg-red-50 flex items-center gap-3 transition-colors font-bold"
+                  onClick={() => {
+                    setIsProfileOpen(false);
+                    window.location.href = "/";
+                  }}
+                >
+                  <LogOut className="w-[18px] h-[18px]" />
+                  Log out
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -178,7 +245,7 @@ export const Navbar = ({
             key={link.id}
             href={link.href}
             onClick={(e) => {
-              if (type === "admin") {
+              if (type === "admin" || type === "tenant") {
                 e.preventDefault();
                 onNavigate?.(link.id);
               }
@@ -186,7 +253,8 @@ export const Navbar = ({
             }}
             className={cn(
               "transition-colors font-inter font-medium text-[18px] active:opacity-70",
-              (type === "admin" && activeView === link.id) ||
+              ((type === "admin" || type === "tenant") &&
+                activeView === link.id) ||
                 (type === "default" && link.id === "home")
                 ? "text-brand-accent"
                 : "text-text-primary hover:text-brand-accent active:text-brand-accent",
@@ -195,7 +263,7 @@ export const Navbar = ({
             {link.label}
           </a>
         ))}
-        {type !== "admin" && (
+        {type !== "admin" && type !== "tenant" ? (
           <div className="pt-2">
             <Button
               variant="accent"
@@ -205,6 +273,29 @@ export const Navbar = ({
             >
               Get Started
             </Button>
+          </div>
+        ) : (
+          <div className="pt-4 mt-2 border-t border-gray-100 flex flex-col gap-2">
+            <button
+              className="w-full text-left py-3 px-2 text-[18px] text-text-primary hover:text-brand-accent active:text-brand-accent flex items-center gap-3 transition-colors font-medium rounded-xl hover:bg-gray-50"
+              onClick={() => {
+                setIsOpen(false);
+                onNavigate?.("settings");
+              }}
+            >
+              <Settings className="w-5 h-5" />
+              Account Settings
+            </button>
+            <button
+              className="w-full text-left py-3 px-2 text-[18px] text-[#EF4444] hover:text-[#EF4444] active:text-[#EF4444] flex items-center gap-3 transition-colors font-bold rounded-xl hover:bg-red-50"
+              onClick={() => {
+                setIsOpen(false);
+                window.location.href = "/";
+              }}
+            >
+              <LogOut className="w-5 h-5" />
+              Log out
+            </button>
           </div>
         )}
       </div>
