@@ -1,15 +1,8 @@
 "use client";
 import React, { useState } from "react";
 import { 
-  FileText, 
-  Contact, 
-  ShoppingBag, 
-  Component, 
-  IdCard, 
-  ArrowRight, 
-  ArrowLeft,
-  CheckCircle2,
-  FileCheck 
+  FileText, Contact, ShoppingBag, Component, 
+  IdCard, ArrowRight, ArrowLeft, CheckCircle2, FileCheck 
 } from "lucide-react";
 import { Button } from "@/components/atoms/Button";
 import { cn } from "@/lib/utils";
@@ -77,12 +70,14 @@ export default function OnboardingPage() {
     }
 
     setCurrentStep((prev) => Math.min(prev + 1, steps.length));
+    window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll to top on step change
   };
 
   const prevStep = () => {
     setError("");
     setSuccess("");
     setCurrentStep((prev) => Math.max(prev - 1, 1));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
   
   const handleFinalize = async (featureData: any) => {
@@ -112,21 +107,20 @@ export default function OnboardingPage() {
       <div className="flex flex-col lg:flex-row min-h-screen bg-[var(--color-bg-primary)]">
         <OnboardingSidebar steps={steps} currentStep={currentStep} />
 
-      {/* 
-          CONDITIONAL LAYOUT: 
-          Steps 1-3 use justify-center (Centered vertically)
-          Steps 4-6 use justify-start + pt-28 (Top aligned with padding to avoid overlap)
-      */}
+      {/* MAIN CONTENT AREA */}
       <div className={cn(
         "flex-1 flex flex-col items-center px-6 md:px-16 lg:px-16 xl:px-24 min-h-screen transition-all duration-300",
-        currentStep <= 3 ? "justify-center" : "justify-start pt-28 pb-20"
+        currentStep <= 3 ? "justify-center pt-24 lg:pt-0" : "justify-start pt-52 lg:pt-32 pb-20"
       )}>
+        
+        {/* Title Section */}
         <div className="w-full mb-8 lg:mb-12 text-center">
           <h1 className="text-3xl md:text-4xl lg:h1 text-[var(--color-text-primary)] leading-tight lg:whitespace-nowrap">
             {steps.find(s => s.id === currentStep)?.title}
           </h1>
         </div>
 
+        {/* Content Wrapper */}
         <div className={cn(
           "w-full transition-all duration-500 mx-auto flex flex-col items-center",
           (currentStep === 4 || currentStep === 5 || currentStep === 6) ? "max-w-2xl" : "max-w-[450px]"
@@ -148,27 +142,33 @@ export default function OnboardingPage() {
               <DocumentUpload onNext={nextStep} onBack={prevStep} />
             )}
             
-            {currentStep === 5 && <SubscriptionPackage data={subscriptionData} setData={setSubscriptionData} onNext={nextStep} onBack={prevStep} />}
-            {currentStep === 6 && <FeatureConfig onFinish={handleFinalize} onBack={prevStep} />}
+            {currentStep === 5 && (
+              <SubscriptionPackage data={subscriptionData} setData={setSubscriptionData} onNext={nextStep} onBack={prevStep} />
+            )}
+
+            {currentStep === 6 && (
+              <FeatureConfig onFinish={handleFinalize} onBack={prevStep} />
+            )}
           </div>
 
+          {/* Action Buttons for Step 1 & 3 */}
           {(currentStep === 1 || currentStep === 3) && (
             <div className="flex flex-col mt-12 w-full items-center">
               {success && (
-                <div className="flex items-center gap-2 text-green-600 bg-green-50 p-3 rounded-lg mb-4 animate-in fade-in slide-in-from-top-2 border border-green-100">
+                <div className="flex items-center gap-2 text-green-600 bg-green-50 p-3 rounded-lg mb-4 border border-green-100">
                   <CheckCircle2 className="w-4 h-4" />
                   <p className="text-sm font-medium">{success}</p>
                 </div>
               )}
 
-              {error && <p className="text-red-500 text-sm mb-4 animate-in fade-in slide-in-from-top-1 text-center">{error}</p>}
+              {error && <p className="text-red-500 text-sm mb-4 text-center">{error}</p>}
               
               <div className="flex flex-row gap-6 w-full justify-center"> 
                 {currentStep === 3 && (
                   <Button 
                     variant="ghost" 
                     size="lg" 
-                    className="h-13 px-8 b2 border-neutral-200 text-neutral-500 transition-all" 
+                    className="h-13 px-8 border-neutral-200 text-neutral-500" 
                     onClick={prevStep}
                     disabled={loading}
                   >
@@ -192,7 +192,7 @@ export default function OnboardingPage() {
               </div>
             </div>
           )}
-          {currentStep === 6 && error && <p className="text-red-500 text-sm mt-4 animate-in fade-in slide-in-from-top-1 text-center">{error}</p>}
+          {currentStep === 6 && error && <p className="text-red-500 text-sm mt-4 text-center">{error}</p>}
         </div>
       </div>
     </div>
