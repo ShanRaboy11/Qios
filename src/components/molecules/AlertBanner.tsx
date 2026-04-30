@@ -2,28 +2,39 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
-import { Info } from "lucide-react";
+import { Info, X } from "lucide-react";
 
 export interface AlertBannerProps {
-  message: string;
+  message: React.ReactNode;
   className?: string;
   icon?: React.ReactNode;
+  onClose?: () => void;
 }
 
-export const AlertBanner = ({ message, className, icon }: AlertBannerProps) => {
+export const AlertBanner = ({ message, className, icon, onClose }: AlertBannerProps) => {
   return (
     <div
       className={cn(
-        "w-full flex items-center justify-center p-3 rounded-xl bg-[#FFF6F8] gap-3 text-center border border-[#ec1313]",
+        "w-full flex items-center justify-between p-3 rounded-xl bg-[#FFF6F8] gap-3 border border-[#ec1313]",
         className,
       )}
     >
-      {icon ? (
-        icon
-      ) : (
-        <Info size={16} className="text-warning-primary shrink-0" />
+      <div className="flex items-center gap-3">
+        {icon ? (
+          icon
+        ) : (
+          <Info size={16} className="text-warning-primary shrink-0" />
+        )}
+        <span className="b4 font-semibold text-text-primary">{message}</span>
+      </div>
+      {onClose && (
+        <button
+          onClick={onClose}
+          className="p-1 hover:bg-[#ffe0e0] rounded-lg transition-colors"
+        >
+          <X size={16} className="text-text-primary shrink-0" />
+        </button>
       )}
-      <span className="b4 font-semibold text-text-primary">{message}</span>
     </div>
   );
 };

@@ -60,55 +60,58 @@ export const KPICard = ({
   return (
     <div
       className={cn(
-        "w-full rounded-2xl transition-all duration-200",
+        "w-full rounded-2xl transition-all duration-200 ",
         isFilled
           ? [
               colorStyles[color],
-              "p-6 hover:scale-[1.02] active:scale-[0.98] cursor-pointer text-text-tertiary",
+              "p-4 sm:p-6 hover:scale-[1.02] active:scale-[0.98] cursor-pointer text-text-tertiary",
             ]
-          : "bg-white border-2 border-[#E5E5E5] hover:border-text-secondary/20",
+          : "bg-white border-2 border-[#E5E5E5] hover:border-text-secondary/20 cursor-default",
         className,
       )}
     >
       <div
         className={cn(
-          "flex gap-4 items-start w-full",
+          "flex gap-3 sm:gap-4 items-start w-full",
           !isFilled
-            ? "flex-row-reverse justify-between p-6 pb-2"
+            ? "flex-row-reverse justify-between p-4 pb-2 sm:p-6 sm:pb-2"
             : "flex-row p-0",
         )}
       >
         {/* Icon Container */}
         <div
           className={cn(
-            "h-12 w-12 rounded-xl flex items-center justify-center shrink-0 border transition-all",
+            "h-10 w-10 sm:h-12 sm:w-12 rounded-xl flex items-center justify-center shrink-0 border transition-all",
             isFilled
               ? cn("bg-white border-transparent", iconcolorStyles[color])
               : "bg-brand-primary/10 text-brand-primary border-brand-primary/20",
           )}
         >
-          {displayIcon}
+          {/* We can force the icon to scale using CSS, or rely on its own size. Assuming it has a default size, scaling the container might be enough, but let's add [&>svg]:w-5 [&>svg]:h-5 sm:[&>svg]:w-6 sm:[&>svg]:h-6 */}
+          <div className="flex items-center justify-center [&>svg]:w-5 [&>svg]:h-5 sm:[&>svg]:w-6 sm:[&>svg]:h-6">
+            {displayIcon}
+          </div>
         </div>
 
         {/* Text Area */}
         <div className="flex flex-col flex-grow min-w-0">
-          <div className="flex justify-between items-start w-full gap-2">
-            <div className="flex flex-col">
+          <div className="flex flex-col sm:flex-row sm:justify-between items-start w-full gap-2">
+            <div className="flex flex-col min-w-0 w-full">
               {isFilled ? (
                 <>
-                  <span className="b4 font-medium truncate uppercase tracking-wider text-inherit">
+                  <span className="text-[11px] sm:text-[13px] font-medium truncate uppercase tracking-wider text-inherit">
                     {title}
                   </span>
-                  <span className="mt-1 h4 font-bold truncate text-inherit">
+                  <span className="mt-0.5 sm:mt-1 text-[20px] sm:text-[20px] font-medium truncate text-inherit leading-tight">
                     {value}
                   </span>
                 </>
               ) : (
                 <>
-                  <span className="h4 font-bold text-text-primary leading-tight">
+                  <span className="text-[20px] sm:text-[20px] font-medium text-text-primary leading-tight">
                     {value}
                   </span>
-                  <span className="b1 font-medium text-text-secondary truncate mt-1.5">
+                  <span className="text-[12px] sm:text-[14px] font-medium text-text-secondary truncate mt-1">
                     {title}
                   </span>
                 </>
@@ -118,15 +121,15 @@ export const KPICard = ({
             {isFilled && percentageChange !== undefined && (
               <div
                 className={cn(
-                  "px-2 py-1 rounded-lg b5 font-bold flex items-center gap-1 shrink-0 mt-1",
-                  "bg-text-tertiary",
+                  "px-2 py-0.5 sm:py-1 rounded-md sm:rounded-lg text-[10px] sm:text-[12px] font-bold flex items-center gap-1 shrink-0 mt-1 sm:mt-0",
+                  "bg-text-tertiary w-fit",
                   isPositive ? "text-success-primary" : "text-warning-primary",
                 )}
               >
                 {isPositive ? (
-                  <TrendingUp size={14} />
+                  <TrendingUp size={12} className="sm:w-3.5 sm:h-3.5" />
                 ) : (
-                  <TrendingDown size={14} />
+                  <TrendingDown size={12} className="sm:w-3.5 sm:h-3.5" />
                 )}
                 {isPositive ? "+" : ""}
                 {percentageChange}%
@@ -137,26 +140,28 @@ export const KPICard = ({
       </div>
 
       {!isFilled && description && (
-        <div className="w-full flex flex-col p-6 pt-0 mt-3">
-          <div className="w-full h-[1px] bg-[#E5E5E5] mb-5" />
-          <div className="flex items-center justify-between w-full">
-            <div className="flex items-center gap-2">
+        <div className="w-full flex flex-col p-4 pt-0 sm:p-6 sm:pt-0 mt-2 sm:mt-3">
+          <div className="w-full h-[1px] bg-[#E5E5E5] mb-3 sm:mb-4" />
+          <div className="flex flex-col xl:flex-row xl:items-center justify-between w-full gap-2">
+            <div className="flex items-center gap-1.5 flex-wrap">
               <span
                 className={cn(
-                  "b2 font-black",
+                  "text-[12px] sm:text-[14px] font-black",
                   isPositive ? "text-success-primary" : "text-warning-primary",
                 )}
               >
                 {isPositive ? "+" : ""}
                 {percentageChange}%
               </span>
-              <span className="b2 text-text-secondary">{description}</span>
+              <span className="text-[12px] sm:text-[13px] text-text-secondary truncate">
+                {description}
+              </span>
             </div>
 
             {onViewAll && (
               <button
                 onClick={onViewAll}
-                className="b5 font-bold text-text-secondary hover:text-text-primary underline shrink-0"
+                className="text-[11px] sm:text-[13px] font-bold text-text-secondary hover:text-text-primary underline shrink-0 text-left xl:text-right"
               >
                 View All
               </button>

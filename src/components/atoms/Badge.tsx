@@ -9,7 +9,8 @@ export type BadgeColor =
   | "success"
   | "error"
   | "info"
-  | "secondary";
+  | "secondary"
+  | "warning";
 export type BadgeVariant = "solid" | "subtle" | "outline";
 export type BadgeShape = "pill" | "rounded";
 
@@ -61,6 +62,11 @@ const badgeStyles = {
     solid: "bg-[#8B5CF6] text-white backdrop-blur-sm",
     subtle: "bg-[#8B5CF6]/10 text-[#8B5CF6]",
     outline: "bg-[#8B5CF6]/10 border border-[#8B5CF6] text-[#8B5CF6]",
+  },
+  warning: {
+    solid: "bg-[#F59E0B] text-white backdrop-blur-sm",
+    subtle: "bg-[#F59E0B]/10 text-[#F59E0B]",
+    outline: "bg-[#F59E0B]/10 border border-[#F59E0B] text-[#F59E0B]",
   },
 };
 
