@@ -8,13 +8,15 @@ import {
   IdCard, 
   ArrowRight, 
   ArrowLeft,
-  CheckCircle2
+  CheckCircle2,
+  FileCheck 
 } from "lucide-react";
 import { Button } from "@/components/atoms/Button";
 import { cn } from "@/lib/utils";
 
 import { OnboardingSidebar } from "./components/Sidebar";
 import { BusinessInformation } from "./components/BusinessInformation";
+import { DocumentUpload } from "./components/DocumentUpload";
 import { ContactInformation } from "./components/ContactInformation";
 import { AuthCredentials } from "./components/AuthCredentials";
 import { SubscriptionPackage } from "./components/SubscriptionPackage";
@@ -28,8 +30,9 @@ const steps = [
   { id: 1, title: "Business Information", icon: FileText },
   { id: 2, title: "Contact Information", icon: Contact },
   { id: 3, title: "Authentication Credentials", icon: IdCard },
-  { id: 4, title: "Subscription Package", icon: ShoppingBag },
-  { id: 5, title: "Feature Configuration", icon: Component },
+  { id: 4, title: "Document Requirements", icon: FileCheck },
+  { id: 5, title: "Subscription Package", icon: ShoppingBag },
+  { id: 6, title: "Feature Configuration", icon: Component },
 ];
 
 export default function OnboardingPage() {
@@ -60,7 +63,6 @@ export default function OnboardingPage() {
       setSuccess(`Verification code sent to ${businessData.email}`);
       setLoading(true);
 
-      // Transition to Step 2 after showing the "Code Sent" indication
       setTimeout(() => {
         setLoading(false);
         setSuccess("");
@@ -69,9 +71,7 @@ export default function OnboardingPage() {
       return; 
     }
 
-    // Step 2: Phone validation removed here because the textbox was removed from the UI
-
-    // Step 3 Validation
+    // Step 3 Validation (Authentication Credentials)
     if (currentStep === 3) {
       if (!validateEmail(authData.email)) return setError("Valid Admin Email is required");
       if (authData.password.length < 8) return setError("Password must be at least 8 characters");
@@ -124,7 +124,7 @@ export default function OnboardingPage() {
         {/* Dynamic container width based on step */}
         <div className={cn(
           "w-full transition-all duration-500",
-          currentStep === 4 ? "max-w-2xl" : "max-w-[450px]"
+          (currentStep === 4 || currentStep === 5 || currentStep === 6) ? "max-w-2xl" : "max-w-[450px]"
         )}>
           <div className="min-h-fit">
             {currentStep === 1 && (
@@ -138,11 +138,16 @@ export default function OnboardingPage() {
             {currentStep === 3 && (
               <AuthCredentials data={authData} setData={setAuthData} error={error} />
             )}
+
+            {currentStep === 4 && (
+              <DocumentUpload onNext={nextStep} onBack={prevStep} />
+            )}
             
-            {currentStep === 4 && <SubscriptionPackage data={subscriptionData} setData={setSubscriptionData} onNext={nextStep} onBack={prevStep} />}
-            {currentStep === 5 && <FeatureConfig onFinish={handleFinalize} onBack={prevStep} />}
+            {currentStep === 5 && <SubscriptionPackage data={subscriptionData} setData={setSubscriptionData} onNext={nextStep} onBack={prevStep} />}
+            {currentStep === 6 && <FeatureConfig onFinish={handleFinalize} onBack={prevStep} />}
           </div>
 
+          {/* Shared buttons only for Step 1 and Step 3 */}
           {(currentStep === 1 || currentStep === 3) && (
             <div className="flex flex-col mt-12 ">
               {success && (
@@ -180,7 +185,7 @@ export default function OnboardingPage() {
               </div>
             </div>
           )}
-          {currentStep === 5 && error && <p className="text-red-500 text-sm mt-4 animate-in fade-in slide-in-from-top-1 text-center">{error}</p>}
+          {currentStep === 6 && error && <p className="text-red-500 text-sm mt-4 animate-in fade-in slide-in-from-top-1 text-center">{error}</p>}
         </div>
       </div>
     </div>
