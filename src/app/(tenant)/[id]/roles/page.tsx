@@ -68,6 +68,28 @@ const DEFAULT_PERMISSIONS: Permissions = {
   },
 };
 
+const PERMISSION_DESCRIPTIONS: Record<string, string> = {
+  "Employee Authentication": "Allow users to log into the application.",
+  "Employee Account Management": "Create, edit, and deactivate employee accounts.",
+  "Role Management Access": "Manage roles and configure permissions.",
+  "Order Retrieval": "View and search existing orders.",
+  "Order Modification": "Edit order details after placement.",
+  "Order Validation": "Approve and validate pending orders.",
+  "Payment Confirmation": "Process and confirm payments.",
+  "Cancellation & Void Monitoring": "Cancel orders and monitor voided items.",
+  "Order Queue Management": "Manage the sequence and priority of orders.",
+  "Order Status Updating": "Change the status of active orders.",
+  "Inventory Monitoring": "View current stock levels.",
+  "Stock Deduction Overview": "Monitor automatic stock deductions.",
+  "Physical Stock Input": "Manually adjust and input physical stock counts.",
+  "Variance Reports": "Generate and view discrepancy reports.",
+  "Shrinkage Alerts": "Receive notifications for missing stock.",
+  "Revenue Dashboard": "Access high-level revenue and sales data.",
+  "Operational Analytics": "View metrics on daily operations.",
+  "Staff Activity Monitoring": "Track staff actions and productivity.",
+  "QR Code Scanning": "Use the device camera to scan QR codes.",
+};
+
 const INITIAL_ROLES: Role[] = [
   {
     id: "r1",
@@ -356,24 +378,24 @@ export default function RoleManagementPage() {
                     <Input
                       value={draftRole.name}
                       onChange={(e) => setDraftRole({ ...draftRole, name: e.target.value })}
-                      className="text-lg font-bold !bg-white/80"
+                      className="text-lg font-bold !bg-white/80 !py-1.5 !h-10"
                     />
                   </div>
                   
                   <div className="flex-1">
                     <label className="b4 font-bold text-text-secondary mb-3 block uppercase tracking-wider">Role Color</label>
-                    <div className="flex gap-3 flex-wrap">
+                    <div className="flex gap-2 sm:gap-3 flex-nowrap pb-1">
                       {PRESET_COLORS.map((color) => (
                         <button
                           key={color}
                           onClick={() => setDraftRole({ ...draftRole, color })}
                           className={cn(
-                            "w-8 h-8 rounded-full shadow-md transition-transform duration-200 hover:scale-110 flex items-center justify-center",
+                            "w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0 rounded-full shadow-md transition-transform duration-200 hover:scale-110 flex items-center justify-center",
                             color,
                             draftRole.color === color && "ring-4 ring-brand-primary/30 scale-110"
                           )}
                         >
-                          {draftRole.color === color && <Check size={16} className="text-white" />}
+                          {draftRole.color === color && <Check className="text-white w-3 h-3 sm:w-4 sm:h-4" />}
                         </button>
                       ))}
                     </div>
@@ -437,6 +459,7 @@ export default function RoleManagementPage() {
                               <FeatureToggle
                                 key={permissionName}
                                 label={permissionName}
+                                description={PERMISSION_DESCRIPTIONS[permissionName]}
                                 checked={isEnabled}
                                 variant="accent"
                                 onChange={(checked) => handlePermissionChange(categoryKey, permissionName, checked)}
