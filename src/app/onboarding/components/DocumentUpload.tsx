@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { FileUp, CheckCircle2, Info, X, ArrowRight, ArrowLeft, FileText } from "lucide-react";
+import { FileUp, CheckCircle2, Info, X, ArrowRight, ArrowLeft, FileText, Landmark, Receipt, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/atoms/Button";
 import { Badge } from "@/components/atoms/Badge";
 import { cn } from "@/lib/utils";
@@ -17,30 +17,35 @@ const requirements = [
     title: "DTI or SEC Registration",
     desc: "Sole proprietor or Corporation registration.",
     required: true,
+    icon: Landmark
   },
   {
     id: "permit",
     title: "Mayor’s Permit",
     desc: "Includes local LGU and Barangay permits.",
     required: true,
+    icon: ShieldCheck
   },
   {
     id: "sanitary",
     title: "Sanitary Permit",
     desc: "Health certificates from your local LGU.",
     required: true,
+    icon: FileText
   },
   {
     id: "bir",
     title: "BIR Registration",
     desc: "TIN and Official Receipt compliance.",
     required: true,
+    icon: Receipt
   },
   {
     id: "fda",
     title: "FDA Licensing",
     desc: "For pre-packaged or manufactured food.",
     required: false,
+    icon: FileText
   },
 ];
 
@@ -64,9 +69,8 @@ export function DocumentUpload({ onNext, onBack }: DocumentUploadProps) {
   return (
     <div className="flex flex-col w-full max-w-[850px] mx-auto space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
       
-      {/* Instructional Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white/50 p-6 rounded-[26px] border border-[var(--kds-border-warm)] backdrop-blur-sm">
-        <div className="space-y-1">
+        <div className="space-y-1 text-center md:text-left">
           <h3 className="h4 text-[var(--color-text-primary)] font-bold">Business Documentation</h3>
           <p className="b2 text-[var(--color-text-secondary)]">Please upload the required Philippine legal permits.</p>
         </div>
@@ -75,7 +79,6 @@ export function DocumentUpload({ onNext, onBack }: DocumentUploadProps) {
         </Badge>
       </div>
 
-      {/* Modern Grid Layout */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {requirements.map((req) => (
           <div
@@ -87,7 +90,6 @@ export function DocumentUpload({ onNext, onBack }: DocumentUploadProps) {
                 : "border-neutral-100 hover:border-[var(--color-brand-primary)] hover:shadow-xl hover:shadow-orange-100/30"
             )}
           >
-            {/* Success Background Glow */}
             {uploads[req.id] && (
               <div className="absolute -right-4 -top-4 w-24 h-24 bg-[var(--color-success-secondary)] rounded-full blur-3xl opacity-50" />
             )}
@@ -97,10 +99,13 @@ export function DocumentUpload({ onNext, onBack }: DocumentUploadProps) {
                 <div className="flex items-start justify-between">
                   <div className={cn(
                     "p-3 rounded-xl transition-colors duration-300",
-                    uploads[req.id] ? "bg-[var(--color-success-secondary)] text-[var(--color-success-primary)]" : "bg-neutral-50 text-neutral-400 group-hover:bg-orange-50 group-hover:text-[var(--color-brand-primary)]"
+                    uploads[req.id] 
+                      ? "bg-[var(--color-success-secondary)] text-[var(--color-success-primary)]" 
+                      : "bg-neutral-50 text-neutral-400 group-hover:bg-orange-50 group-hover:text-[var(--color-brand-primary)]"
                   )}>
-                    <FileText size={24} />
+                    <req.icon size={24} />
                   </div>
+                  
                   {req.required && !uploads[req.id] && (
                     <Badge color="error" variant="subtle" shape="pill" className="text-[10px] uppercase tracking-wider font-bold">
                       Required
@@ -125,6 +130,7 @@ export function DocumentUpload({ onNext, onBack }: DocumentUploadProps) {
                     </span>
                     <button 
                       onClick={() => removeFile(req.id)} 
+                      type="button"
                       className="p-2 hover:bg-red-50 text-red-400 hover:text-red-600 rounded-lg transition-all"
                     >
                       <X size={16} />
@@ -149,12 +155,11 @@ export function DocumentUpload({ onNext, onBack }: DocumentUploadProps) {
         ))}
       </div>
 
-      {/* Centered Navigation */}
-      <div className="flex flex-row items-center justify-center gap-8 pt-8">
+      <div className="flex flex-row items-center justify-center gap-4 md:gap-8 pt-8">
         <Button 
           variant="ghost" 
           size="lg"
-          className="h-14 px-10 b2 border-neutral-200 text-neutral-500" 
+          className="h-14 px-6 md:px-10 b2 border-neutral-200 text-neutral-500" 
           onClick={onBack}
         >
           <ArrowLeft className="w-5 h-5 mr-2" />
