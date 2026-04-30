@@ -37,7 +37,6 @@ export default function OnboardingPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   
-  // Added 'owner' to the initial state
   const [businessData, setBusinessData] = useState({ name: "", email: "", owner: "" });
   const [contactData, setContactData] = useState({ phoneNumber: "" });
   const [authData, setAuthData] = useState({ email: "", password: "", confirm: "" });
@@ -56,12 +55,12 @@ export default function OnboardingPage() {
     if (currentStep === 1) {
       if (!businessData.name.trim()) return setError("Business Name is required");
       if (!validateEmail(businessData.email)) return setError("A valid business email is required");
-      // NEW: Validation for Owner / Admin Name
       if (!businessData.owner?.trim()) return setError("Owner / Admin Name is required");
       
       setSuccess(`Verification code sent to ${businessData.email}`);
       setLoading(true);
 
+      // Transition to Step 2 after showing the "Code Sent" indication
       setTimeout(() => {
         setLoading(false);
         setSuccess("");
@@ -70,10 +69,9 @@ export default function OnboardingPage() {
       return; 
     }
 
-    if (currentStep === 2) {
-      if (contactData.phoneNumber.length < 10) return setError("Valid phone number is required");
-    }
+    // Step 2: Phone validation removed here because the textbox was removed from the UI
 
+    // Step 3 Validation
     if (currentStep === 3) {
       if (!validateEmail(authData.email)) return setError("Valid Admin Email is required");
       if (authData.password.length < 8) return setError("Password must be at least 8 characters");
@@ -123,6 +121,7 @@ export default function OnboardingPage() {
           </h1>
         </div>
 
+        {/* Dynamic container width based on step */}
         <div className={cn(
           "w-full transition-all duration-500",
           currentStep === 4 ? "max-w-2xl" : "max-w-[450px]"
