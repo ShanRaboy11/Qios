@@ -137,7 +137,7 @@ export const LoginForm = () => {
       // authenticated users to SELECT their own row).
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
-        .select("role, tenant_id, tenants(status)")
+        .select("role, tenant_id")
         .eq("id", signInData.user.id)
         .single();
 
@@ -148,7 +148,19 @@ export const LoginForm = () => {
         return;
       }
       
-      const tenantStatus = (profile.tenants as any)?.status || "approved";
+      let tenantStatus = "approved";
+      if (profile.tenant_id && profile.role !== "super_admin") {
+        // Try to fetch tenant status, but catch if the column doesn't exist yet
+        const { data: tenantData, error: tenantError } = await supabase
+          .from("tenants")
+          .select("status")
+          .eq("id", profile.tenant_id)
+          .single();
+          
+        if (!tenantError && tenantData?.status) {
+          tenantStatus = tenantData.status;
+        }
+      }
 
       if (profile.role !== "super_admin" && tenantStatus !== "approved") {
         await supabase.auth.signOut();
@@ -274,7 +286,7 @@ export const LoginForm = () => {
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
-                d="M-217.833 12.7109C-301.926 60.1152 -256.814 154.813 -212.615 216.391C-158.226 292.261 -88.9627 367.971 -81.0063 450.878C-72.6605 538.336 -91.715 673.212 -36.0202 760.204C3.33499 821.719 99.876 882.912 198.175 894.246C261.769 901.514 324.212 876.421 377.868 859.238C439.852 839.48 593.829 902.144 634.883 866.572C697.134 812.655 689.719 742.251 680.179 682.479C671.028 624.613 642.076 568.892 595.659 517.444C578.717 498.56 558.772 482.075 541.859 464.271C527.927 449.552 516.983 433.9 511.258 415.024C502.016 384.479 490.84 356.261 476.273 328.537C464.318 305.814 433.646 261.163 425.751 250.66 415.196 239.559 403.15 226.916C374.306 196.776 330.97 164.784 276.512 133.285C208.247 93.9367 141.102 58.0478 72.7066 27.796C-27.8525 -16.8105 -146.545 -27.4381 -217.833 12.7109Z"
+                d="M-217.833 12.7109C-301.926 60.1152 -256.814 154.813 -212.615 216.391C-158.226 292.261 -88.9627 367.971 -81.0063 450.878C-72.6605 538.336 -91.715 673.212 -36.0202 760.204C3.33499 821.719 99.876 882.912 198.175 894.246C261.769 901.514 324.212 876.421 377.868 859.238C439.852 839.48 593.829 902.144 634.883 866.572C697.134 812.655 689.719 742.251 680.179 682.479C671.028 624.613 642.076 568.892 595.659 517.444C578.717 498.56 558.772 482.075 541.859 464.271C527.927 449.552 516.983 433.9 511.258 415.024C502.016 384.479 490.84 356.261 476.273 328.537C464.318 305.814 433.646 261.163 425.751 250.66 C415.196 239.559 403.15 226.916 374.306 196.776 330.97 164.784 276.512 133.285C208.247 93.9367 141.102 58.0478 72.7066 27.796C-27.8525 -16.8105 -146.545 -27.4381 -217.833 12.7109Z"
                 stroke="#FFC670"
                 strokeOpacity="1"
                 strokeWidth="3"
