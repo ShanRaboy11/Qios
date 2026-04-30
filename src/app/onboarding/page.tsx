@@ -54,7 +54,6 @@ export default function OnboardingPage() {
     setError("");
     setSuccess("");
 
-    // Step 1 Validation
     if (currentStep === 1) {
       if (!businessData.name.trim()) return setError("Business Name is required");
       if (!validateEmail(businessData.email)) return setError("A valid business email is required");
@@ -71,7 +70,6 @@ export default function OnboardingPage() {
       return; 
     }
 
-    // Step 3 Validation (Authentication Credentials)
     if (currentStep === 3) {
       if (!validateEmail(authData.email)) return setError("Valid Admin Email is required");
       if (authData.password.length < 8) return setError("Password must be at least 8 characters");
@@ -114,19 +112,26 @@ export default function OnboardingPage() {
       <div className="flex flex-col lg:flex-row min-h-screen bg-[var(--color-bg-primary)]">
         <OnboardingSidebar steps={steps} currentStep={currentStep} />
 
-      <div className="flex-1 flex flex-col justify-center items-center lg:items-start px-6 py-10 md:px-16 lg:px-16 xl:px-24 min-h-screen">
-        <div className="w-full mb-8 lg:mb-12 text-center lg:text-left">
+      {/* 
+          CONDITIONAL LAYOUT: 
+          Steps 1-3 use justify-center (Centered vertically)
+          Steps 4-6 use justify-start + pt-28 (Top aligned with padding to avoid overlap)
+      */}
+      <div className={cn(
+        "flex-1 flex flex-col items-center px-6 md:px-16 lg:px-16 xl:px-24 min-h-screen transition-all duration-300",
+        currentStep <= 3 ? "justify-center" : "justify-start pt-28 pb-20"
+      )}>
+        <div className="w-full mb-8 lg:mb-12 text-center">
           <h1 className="text-3xl md:text-4xl lg:h1 text-[var(--color-text-primary)] leading-tight lg:whitespace-nowrap">
             {steps.find(s => s.id === currentStep)?.title}
           </h1>
         </div>
 
-        {/* Dynamic container width based on step */}
         <div className={cn(
-          "w-full transition-all duration-500",
+          "w-full transition-all duration-500 mx-auto flex flex-col items-center",
           (currentStep === 4 || currentStep === 5 || currentStep === 6) ? "max-w-2xl" : "max-w-[450px]"
         )}>
-          <div className="min-h-fit">
+          <div className="min-h-fit w-full">
             {currentStep === 1 && (
               <BusinessInformation data={businessData} setData={setBusinessData} error={error} />
             )}
@@ -147,9 +152,8 @@ export default function OnboardingPage() {
             {currentStep === 6 && <FeatureConfig onFinish={handleFinalize} onBack={prevStep} />}
           </div>
 
-          {/* Shared buttons only for Step 1 and Step 3 */}
           {(currentStep === 1 || currentStep === 3) && (
-            <div className="flex flex-col mt-12 ">
+            <div className="flex flex-col mt-12 w-full items-center">
               {success && (
                 <div className="flex items-center gap-2 text-green-600 bg-green-50 p-3 rounded-lg mb-4 animate-in fade-in slide-in-from-top-2 border border-green-100">
                   <CheckCircle2 className="w-4 h-4" />
@@ -157,14 +161,14 @@ export default function OnboardingPage() {
                 </div>
               )}
 
-              {error && <p className="text-red-500 text-sm mb-4 animate-in fade-in slide-in-from-top-1">{error}</p>}
+              {error && <p className="text-red-500 text-sm mb-4 animate-in fade-in slide-in-from-top-1 text-center">{error}</p>}
               
-              <div className="flex flex-row gap-10"> 
+              <div className="flex flex-row gap-6 w-full justify-center"> 
                 {currentStep === 3 && (
                   <Button 
                     variant="ghost" 
                     size="lg" 
-                    className="h-13 lg:h-13 px-5 b2 border-neutral-200 text-neutral-500 transition-all" 
+                    className="h-13 px-8 b2 border-neutral-200 text-neutral-500 transition-all" 
                     onClick={prevStep}
                     disabled={loading}
                   >
@@ -175,7 +179,10 @@ export default function OnboardingPage() {
                 <Button 
                   variant="primary" 
                   size="lg" 
-                  className="h-13 lg:h-13 flex-1 b2 font-bold text-lg shadow-xl shadow-orange-200/50 text-[var(--color-text-tertiary)]" 
+                  className={cn(
+                    "h-13 b2 font-bold text-lg shadow-xl shadow-orange-200/50 text-[var(--color-text-tertiary)]",
+                    currentStep === 3 ? "flex-1 max-w-[300px]" : "w-full"
+                  )} 
                   onClick={nextStep}
                   disabled={loading}
                 >

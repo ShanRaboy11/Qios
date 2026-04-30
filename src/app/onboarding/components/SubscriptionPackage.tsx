@@ -117,7 +117,8 @@ export function SubscriptionPackage({
   }[activePackage.variant];
 
   return (
-    <div className="flex flex-col items-center lg:items-start space-y-6 lg:space-y-10 animate-in fade-in slide-in-from-right-8 duration-500 w-full overflow-visible">
+    /* CHANGED: Set items-center globally to center all components */
+    <div className="flex flex-col items-center space-y-6 lg:space-y-10 animate-in fade-in slide-in-from-right-8 duration-500 w-full overflow-visible">
       
       {/* PACKAGE SELECTION TABS */}
       <div className="inline-flex items-center bg-white rounded-[50px] p-1 lg:p-1.5 border border-neutral-100 shadow-sm overflow-x-auto max-w-full">

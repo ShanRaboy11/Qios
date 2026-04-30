@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Required } from "./BusinessInformation";
 import { Button } from "@/components/atoms/Button"; 
-import { ArrowLeft, ChevronLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
 const CustomLockedToggle = ({ 
   isOn, 
@@ -68,11 +68,13 @@ export function FeatureConfig({ onFinish, onBack }: FeatureConfigProps) {
   };
 
   return (
-    <div className="flex flex-col gap-10 animate-in fade-in slide-in-from-right-8 duration-500 w-full max-w-[520px] pb-10">
+    /* CHANGED: added items-center and mx-auto */
+    <div className="flex flex-col items-center gap-10 animate-in fade-in slide-in-from-right-8 duration-500 w-full max-w-[520px] pb-10 mx-auto">
       
       {/*INVENTORY MODE */}
-      <div className="space-y-4">
-        <h3 className="h4 text-[var(--color-text-primary)]">
+      <div className="space-y-4 w-full">
+        {/* CHANGED: added text-center */}
+        <h3 className="h4 text-[var(--color-text-primary)] text-center">
           Inventory Mode Selection <Required />
         </h3>
         <div className="space-y-3">
@@ -105,8 +107,9 @@ export function FeatureConfig({ onFinish, onBack }: FeatureConfigProps) {
       </div>
 
       {/* GENERAL MODE */}
-      <div className="space-y-4">
-        <h3 className="h4 text-[var(--color-text-primary)]">
+      <div className="space-y-4 w-full">
+        {/* CHANGED: added text-center */}
+        <h3 className="h4 text-[var(--color-text-primary)] text-center">
           General Mode Selection
         </h3>
         <div className="space-y-3">
@@ -141,7 +144,8 @@ export function FeatureConfig({ onFinish, onBack }: FeatureConfigProps) {
       </div>
 
       {/* Finalize Button */}
-      <div className="flex flex-row gap-10 pt-4">
+      {/* CHANGED: added justify-center */}
+      <div className="flex flex-row gap-10 pt-4 w-full justify-center">
         <Button 
           variant="ghost" 
           size="lg" 
@@ -154,7 +158,7 @@ export function FeatureConfig({ onFinish, onBack }: FeatureConfigProps) {
         <Button 
           variant="primary" 
           size="lg" 
-          className="h-13 lg:h-13 flex-1 b2 shadow-xl shadow-orange-200/50" 
+          className="h-13 lg:h-13 flex-1 b2 shadow-xl shadow-orange-200/50 max-w-[280px]" 
           onClick={handleFinalize}
         >
           Finalize
