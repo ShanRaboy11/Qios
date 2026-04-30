@@ -93,7 +93,7 @@ const PERMISSION_DESCRIPTIONS: Record<string, string> = {
 const INITIAL_ROLES: Role[] = [
   {
     id: "r1",
-    name: "Admin",
+    name: "Manager",
     color: "bg-warning-primary",
     employees: [
       { id: "e1", name: "Alice Johnson", username: "alice.j", password: "password123" },
@@ -139,14 +139,14 @@ const INITIAL_ROLES: Role[] = [
 ];
 
 const PRESET_COLORS = [
-  "bg-warning-primary", // Red
-  "bg-brand-accent", // Pinkish Red
-  "bg-brand-primary", // Orange
-  "bg-brand-secondary", // Yellow
-  "bg-success-primary", // Green
-  "bg-[#3b82f6]", // Blue
-  "bg-[#8b5cf6]", // Purple
-  "bg-text-primary", // Dark
+  "bg-warning-primary", // red
+  "bg-brand-accent", // pinkish red
+  "bg-brand-primary", // orange
+  "bg-brand-secondary", // yellow
+  "bg-success-primary", // green
+  "bg-[#3b82f6]", // blue
+  "bg-[#8b5cf6]", // purple
+  "bg-text-primary", // dark
 ];
 
 export default function RoleManagementPage() {
@@ -162,6 +162,9 @@ export default function RoleManagementPage() {
   const [newEmployeeCredentials, setNewEmployeeCredentials] = useState<{username: string, password: string} | null>(null);
   const [employeeSearchQuery, setEmployeeSearchQuery] = useState("");
 
+  const [isCreateRoleModalOpen, setIsCreateRoleModalOpen] = useState(false);
+  const [showTemplateReminder, setShowTemplateReminder] = useState(false);
+
   // drag and drop state
   const [draggedRoleId, setDraggedRoleId] = useState<string | null>(null);
 
@@ -170,8 +173,9 @@ export default function RoleManagementPage() {
   // initialize draft when active role changes
   useEffect(() => {
     if (activeRole) {
-      setDraftRole(JSON.parse(JSON.stringify(activeRole))); // Deep copy
-      setEmployeeSearchQuery(""); // Reset search when switching roles
+      setDraftRole(JSON.parse(JSON.stringify(activeRole))); // deep copy
+      setEmployeeSearchQuery(""); // reset search when switching roles
+      setShowTemplateReminder(false);
     }
   }, [activeRole]);
 
@@ -227,16 +231,18 @@ export default function RoleManagementPage() {
     }
   };
 
-  const handleCreateRole = () => {
+  const handleConfirmCreateRole = (templateRole?: Role) => {
     const newRole: Role = {
       id: `r${Date.now()}`,
-      name: "New Role",
-      color: PRESET_COLORS[Math.floor(Math.random() * PRESET_COLORS.length)],
+      name: templateRole ? templateRole.name : "New Role",
+      color: templateRole ? templateRole.color : PRESET_COLORS[Math.floor(Math.random() * PRESET_COLORS.length)],
       employees: [],
-      permissions: JSON.parse(JSON.stringify(DEFAULT_PERMISSIONS)),
+      permissions: templateRole ? JSON.parse(JSON.stringify(templateRole.permissions)) : JSON.parse(JSON.stringify(DEFAULT_PERMISSIONS)),
     };
     setRoles([...roles, newRole]);
     setSelectedRoleId(newRole.id);
+    setIsCreateRoleModalOpen(false);
+    if (templateRole) setShowTemplateReminder(true);
   };
 
   const handleDuplicate = () => {
@@ -308,7 +314,7 @@ export default function RoleManagementPage() {
               variant="primary"
               className="w-full"
               leftIcon={<Plus size={18} />}
-              onClick={handleCreateRole}
+              onClick={() => setIsCreateRoleModalOpen(true)}
             >
               New Role
             </Button>
@@ -440,6 +446,19 @@ export default function RoleManagementPage() {
                 {activeTab === "permissions" ? (
                   <div className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar">
                     <div className="max-w-4xl mx-auto flex flex-col gap-6 md:gap-8 pb-4">
+                      
+                      {showTemplateReminder && (
+                        <div className="bg-warning-secondary/30 border border-warning-primary/30 rounded-xl md:rounded-[24px] p-4 flex items-start gap-3">
+                          <ShieldAlert className="text-warning-primary flex-shrink-0 mt-0.5" size={18} />
+                          <div>
+                            <h4 className="b3 font-bold text-warning-primary">Review Predefined Permissions</h4>
+                            <p className="b4 text-warning-primary/80">You've applied a predefined template. Please review and confirm the access levels below.</p>
+                          </div>
+                          <button onClick={() => setShowTemplateReminder(false)} className="ml-auto text-warning-primary/60 hover:text-warning-primary transition-colors">
+                            <X size={16} />
+                          </button>
+                        </div>
+                      )}
                       
                       {/* category sections */}
                       {Object.entries({
@@ -585,6 +604,54 @@ export default function RoleManagementPage() {
           background-color: rgba(0,0,0,0.2);
         }
       `}} />
+
+      {/* create role modal */}
+      {isCreateRoleModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-text-primary/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl md:rounded-[32px] w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+            <div className="px-6 md:px-8 py-4 md:py-6 flex items-center justify-between border-b border-black/[0.05] flex-shrink-0">
+              <h2 className="b2 font-bold text-text-primary">Create New Role</h2>
+              <button onClick={() => setIsCreateRoleModalOpen(false)} className="text-text-secondary hover:text-text-primary transition-colors p-1">
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="p-6 md:p-8 overflow-y-auto">
+              <p className="b3 text-text-secondary font-semibold mb-6">Choose a predefined template to quickly set up permissions, or start from scratch.</p>
+              
+              <div className="flex flex-col gap-3 mb-6">
+                {INITIAL_ROLES.map((template) => (
+                  <button 
+                    key={template.id}
+                    onClick={() => handleConfirmCreateRole(template)}
+                    className="flex items-center gap-4 p-4 rounded-xl border border-black/[0.05] hover:border-brand-primary/50 hover:bg-brand-primary/5 transition-all text-left group"
+                  >
+                    <div className={cn("w-4 h-4 rounded-full flex-shrink-0", template.color)} />
+                    <div>
+                      <span className="b2 font-bold text-text-primary group-hover:text-brand-primary transition-colors">{template.name} Template</span>
+                      <p className="b4 text-text-secondary">Pre-configured with standard {template.name.toLowerCase()} access.</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+              
+              <div className="relative flex items-center py-2 mb-4">
+                <div className="flex-grow border-t border-black/[0.05]"></div>
+                <span className="flex-shrink-0 mx-4 b4 font-bold text-text-secondary uppercase">or</span>
+                <div className="flex-grow border-t border-black/[0.05]"></div>
+              </div>
+              
+              <Button 
+                variant="outline" 
+                className="w-full" 
+                onClick={() => handleConfirmCreateRole()}
+              >
+                Skip & Start from Scratch
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* add employee modal */}
       {isAddEmployeeModalOpen && (
