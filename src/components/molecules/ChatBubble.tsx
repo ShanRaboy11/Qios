@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 
 export type MessageRole = "system" | "customer";
+export type Reaction = "like" | "dislike" | null;
 
 interface ChatBubbleProps {
   message: string;
@@ -19,6 +20,9 @@ interface ChatBubbleProps {
   role: MessageRole;
   isRead?: boolean;
   className?: string;
+  reaction?: Reaction;
+  onLike?: () => void;
+  onDislike?: () => void;
 }
 
 export const ChatBubble = ({
@@ -27,6 +31,9 @@ export const ChatBubble = ({
   role,
   isRead,
   className,
+  reaction = null,
+  onLike,
+  onDislike,
 }: ChatBubbleProps) => {
   const isSystem = role === "system";
 
@@ -56,18 +63,36 @@ export const ChatBubble = ({
           isSystem ? "items-start" : "items-end",
         )}
       >
-        {/* System Message Icons (Seen in image_5db54a.png) */}
+        {/* System Message Icons */}
         {isSystem && (
           <div className="flex gap-1 mb-[-10px] mr-2 self-end z-10">
             <div className="p-1.5 bg-brand-primary rounded-lg text-white shadow-sm">
               <ClipboardList size={14} />
             </div>
-            <div className="p-1.5 bg-brand-primary rounded-lg text-white shadow-sm">
+            <button
+              onClick={onLike}
+              title="Like"
+              className={cn(
+                "p-1.5 rounded-lg shadow-sm transition-all active:scale-90",
+                reaction === "like"
+                  ? "bg-green-500 text-white"
+                  : "bg-brand-primary text-white hover:bg-green-400",
+              )}
+            >
               <ThumbsUp size={14} />
-            </div>
-            <div className="p-1.5 bg-brand-primary rounded-lg text-white shadow-sm">
+            </button>
+            <button
+              onClick={onDislike}
+              title="Dislike"
+              className={cn(
+                "p-1.5 rounded-lg shadow-sm transition-all active:scale-90",
+                reaction === "dislike"
+                  ? "bg-red-500 text-white"
+                  : "bg-brand-primary text-white hover:bg-red-400",
+              )}
+            >
               <ThumbsDown size={14} />
-            </div>
+            </button>
           </div>
         )}
 
