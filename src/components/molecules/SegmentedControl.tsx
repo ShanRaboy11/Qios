@@ -30,10 +30,10 @@ export const SegmentedControl = ({
             key={option.value}
             onClick={() => onChange(option.value)}
             className={cn(
-              "flex-1 py-3 rounded-xl font-bold text-sm transition-all duration-300 border-2",
+              "flex-1 py-3 rounded-xl font-medium text-sm transition-all duration-300 border-2",
               isActive
                 ? "bg-brand-primary border-brand-primary text-text-primary shadow-sm"
-                : "bg-white border-brand-primary/40 text-brand-primary shadow-sm hover:border-brand-primary"
+                : "bg-white border-brand-primary/40 text-brand-primary shadow-sm hover:border-brand-primary",
             )}
           >
             {option.label}

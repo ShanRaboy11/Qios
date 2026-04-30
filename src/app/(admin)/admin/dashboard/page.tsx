@@ -88,16 +88,12 @@ export default function AdminDashboardPage() {
         />
       </div>
 
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full flex justify-center z-[100]">
-        <div className="w-full">
-          <Navbar
-            variant="transparent"
-            type="admin"
-            activeView={currentView}
-            onNavigate={(view) => handleNavigation(view as ViewState)}
-          />
-        </div>
-      </div>
+      <Navbar
+        variant="transparent"
+        type="admin"
+        activeView={currentView}
+        onNavigate={(view) => handleNavigation(view as ViewState)}
+      />
       <div className="max-w-[1440px] mx-auto flex flex-col p-4 md:p-8 lg:p-12 mt-28 relative z-[90]">
         <AnimatePresence mode="wait">
           {isTransitioning ? (
@@ -223,12 +219,6 @@ export default function AdminDashboardPage() {
                   <h2 className="text-2xl font-bold text-text-primary">
                     Coming Soon
                   </h2>
-                </div>
-                <div className="flex justify-end mt-auto">
-                  <button className="flex items-center gap-2 px-6 py-3 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-colors font-semibold">
-                    <LogOut className="w-5 h-5" />
-                    Logout
-                  </button>
                 </div>
               </div>
             </motion.div>
