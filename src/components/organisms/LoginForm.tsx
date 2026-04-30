@@ -5,9 +5,9 @@ import { FormField } from "@/components/molecules/FormField";
 import { Button } from "@/components/atoms/Button";
 import { Checkbox } from "@/components/atoms/Checkbox";
 import { Badge } from "@/components/atoms/Badge";
-import { Mail, Lock, AlertCircle, X } from "lucide-react";
+import { Mail, Lock, AlertCircle, X, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 /** Decode a JWT payload for client-side inspection only; this does not verify the token or its claims. */
@@ -24,11 +24,19 @@ function decodeJwtPayload(token: string): Record<string, unknown> {
 
 export const LoginForm = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const onboardingStatus = searchParams?.get("onboarding");
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
 
   const [isLoading, setIsLoading] = useState(false);
+  const [successMsg, setSuccessMsg] = useState<string | null>(
+    onboardingStatus === "pending"
+      ? "Registration successful! Your account is currently pending super admin approval."
+      : null
+  );
   const [error, setError] = useState<string | null>(null);
   const [emailError, setEmailError] = useState(false);
   const [passwordError, setPasswordError] = useState(false);
@@ -43,6 +51,7 @@ export const LoginForm = () => {
 
     // Reset errors
     setError(null);
+    setSuccessMsg(null);
     setEmailError(false);
     setPasswordError(false);
 
@@ -92,15 +101,36 @@ export const LoginForm = () => {
         router.push("/admin/dashboard");
         return;
       }
-      
-      if (jwtRole === "admin" && jwtTenantId) {
-        router.push(`/${jwtTenantId}/dashboard`);
-        return;
-      }
 
-      if (jwtRole === "employee" && jwtTenantId) {
-        router.push(`/${jwtTenantId}/employee/dashboard`);
-        return;
+      if (jwtTenantId) {
+        // Enforce tenant status check
+        const { data: tenant } = await supabase
+          .from("tenants")
+          .select("status")
+          .eq("id", jwtTenantId)
+          .single();
+
+        const status = tenant?.status || "approved";
+
+        if (status !== "approved") {
+          await supabase.auth.signOut();
+          setError(
+            status === "pending"
+              ? "Your business registration is currently pending super admin approval."
+              : "Your business registration has been suspended or rejected. Please contact support."
+          );
+          return;
+        }
+
+        if (jwtRole === "admin") {
+          router.push(`/${jwtTenantId}/dashboard`);
+          return;
+        }
+
+        if (jwtRole === "employee") {
+          router.push(`/${jwtTenantId}/employee/dashboard`);
+          return;
+        }
       }
 
       // Fallback: query the profiles table (requires RLS policy allowing
@@ -115,6 +145,30 @@ export const LoginForm = () => {
         setError(
           "Could not load your account profile. Please contact support.",
         );
+        return;
+      }
+      
+      let tenantStatus = "approved";
+      if (profile.tenant_id && profile.role !== "super_admin") {
+        // Try to fetch tenant status, but catch if the column doesn't exist yet
+        const { data: tenantData, error: tenantError } = await supabase
+          .from("tenants")
+          .select("status")
+          .eq("id", profile.tenant_id)
+          .single();
+          
+        if (!tenantError && tenantData?.status) {
+          tenantStatus = tenantData.status;
+        }
+      }
+
+      if (profile.role !== "super_admin" && tenantStatus !== "approved") {
+        await supabase.auth.signOut();
+        if (tenantStatus === "pending") {
+          setError("Your business registration is currently pending super admin approval.");
+        } else {
+          setError("Your business registration has been rejected or suspended. Please contact support.");
+        }
         return;
       }
 
@@ -232,7 +286,7 @@ export const LoginForm = () => {
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
-                d="M-217.833 12.7109C-301.926 60.1152 -256.814 154.813 -212.615 216.391C-158.226 292.261 -88.9627 367.971 -81.0063 450.878C-72.6605 538.336 -91.715 673.212 -36.0202 760.204C3.33499 821.719 99.876 882.912 198.175 894.246C261.769 901.514 324.212 876.421 377.868 859.238C439.852 839.48 593.829 902.144 634.883 866.572C697.134 812.655 689.719 742.251 680.179 682.479C671.028 624.613 642.076 568.892 595.659 517.444C578.717 498.56 558.772 482.075 541.859 464.271C527.927 449.552 516.983 433.9 511.258 415.024C502.016 384.479 490.84 356.261 476.273 328.537C464.318 305.814 433.646 261.163 425.751 250.66 415.196 239.559 403.15 226.916C374.306 196.776 330.97 164.784 276.512 133.285C208.247 93.9367 141.102 58.0478 72.7066 27.796C-27.8525 -16.8105 -146.545 -27.4381 -217.833 12.7109Z"
+                d="M-217.833 12.7109C-301.926 60.1152 -256.814 154.813 -212.615 216.391C-158.226 292.261 -88.9627 367.971 -81.0063 450.878C-72.6605 538.336 -91.715 673.212 -36.0202 760.204C3.33499 821.719 99.876 882.912 198.175 894.246C261.769 901.514 324.212 876.421 377.868 859.238C439.852 839.48 593.829 902.144 634.883 866.572C697.134 812.655 689.719 742.251 680.179 682.479C671.028 624.613 642.076 568.892 595.659 517.444C578.717 498.56 558.772 482.075 541.859 464.271C527.927 449.552 516.983 433.9 511.258 415.024C502.016 384.479 490.84 356.261 476.273 328.537C464.318 305.814 433.646 261.163 425.751 250.66 C415.196 239.559 403.15 226.916 374.306 196.776 330.97 164.784 276.512 133.285C208.247 93.9367 141.102 58.0478 72.7066 27.796C-27.8525 -16.8105 -146.545 -27.4381 -217.833 12.7109Z"
                 stroke="#FFC670"
                 strokeOpacity="1"
                 strokeWidth="3"
@@ -417,6 +471,17 @@ export const LoginForm = () => {
                 className="w-full justify-center whitespace-normal text-center py-2 animate-in fade-in zoom-in-95"
               >
                 {error}
+              </Badge>
+            )}
+            {successMsg && (
+              <Badge
+                color="success"
+                variant="outline"
+                shape="rounded"
+                leftIcon={<Check size={16} className="shrink-0" />}
+                className="w-full justify-center whitespace-normal text-center py-2 animate-in fade-in zoom-in-95"
+              >
+                {successMsg}
               </Badge>
             )}
             <Button

@@ -12,6 +12,8 @@ import { Navbar } from "@/components/organisms/navbar";
 import { LogOut } from "lucide-react";
 
 import { motion, AnimatePresence } from "framer-motion";
+import { useRouter } from "next/navigation";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type ViewState =
   | "dashboard"
@@ -26,6 +28,17 @@ export default function AdminDashboardPage() {
     string | undefined
   >();
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    try {
+      const supabase = createSupabaseBrowserClient();
+      await supabase.auth.signOut();
+    } catch {
+      // ignore if supabase not configured
+    }
+    router.push("/login");
+  };
 
   const handleNavigation = (view: ViewState, tenantFilter?: string) => {
     if (currentView === view && view !== "tenant") return;

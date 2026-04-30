@@ -7,6 +7,8 @@ import { cn } from "@/lib/utils";
 import { Required } from "./BusinessInformation";
 
 interface ContactInformationProps {
+  data: { phoneNumber: string };
+  setData: React.Dispatch<React.SetStateAction<{ phoneNumber: string }>>;
   onNext: () => void;
   onBack: () => void;
 }
@@ -88,8 +90,8 @@ function CountryCodeSelect({ onSelect }: { onSelect: (dial: string) => void }) {
   );
 }
 
-export function ContactInformation({ onNext, onBack }: ContactInformationProps) {
-  const [phoneNumber, setPhoneNumber] = useState("");
+export function ContactInformation({ data, setData, onNext, onBack }: ContactInformationProps) {
+  const [phoneNumber, setPhoneNumber] = useState(data.phoneNumber || "");
   const [isFocused, setIsFocused] = useState(false);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [timeLeft, setTimeLeft] = useState(45);
@@ -131,7 +133,11 @@ export function ContactInformation({ onNext, onBack }: ContactInformationProps) 
             value={phoneNumber}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
-            onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ""))}
+            onChange={(e) => {
+              const val = e.target.value.replace(/\D/g, "");
+              setPhoneNumber(val);
+              setData({ phoneNumber: val });
+            }}
             className="flex-1 px-5 outline-none b2 text-text-primary bg-transparent font-medium"
           />
 

@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { updateTenantStatus } from "@/app/(admin)/admin/tenants/actions";
 import {
   Search,
   MoreVertical,
@@ -84,10 +85,11 @@ export type ActionType =
 
 export interface TenantManagementProps {
   initialStatusFilter?: string;
+  initialTenants?: Tenant[];
 }
 
-export default function TenantManagement({ initialStatusFilter }: TenantManagementProps) {
-  const [tenants, setTenants] = useState<Tenant[]>(INITIAL_DATA);
+export default function TenantManagement({ initialStatusFilter, initialTenants = [] }: TenantManagementProps) {
+  const [tenants, setTenants] = useState<Tenant[]>(initialTenants.length > 0 ? initialTenants : INITIAL_DATA);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState(initialStatusFilter || "All");
   const [typeFilter, setTypeFilter] = useState("All");
@@ -124,31 +126,36 @@ export default function TenantManagement({ initialStatusFilter }: TenantManageme
     setModalOpen(true);
   };
 
-  const confirmAction = () => {
+  const confirmAction = async () => {
     if (!selectedTenant || !actionType) return;
 
-    setTenants((prev) =>
-      prev.map((t) => {
-        if (t.id !== selectedTenant.id) return t;
+    let dbStatus: 'pending' | 'approved' | 'rejected' = 'approved';
+    let newStatus: Tenant["status"] = 'Active';
 
-        let newStatus = t.status;
-        switch (actionType) {
-          case "approve":
-          case "reapprove":
-          case "activate":
-            newStatus = "Active";
-            break;
-          case "reject":
-            newStatus = "Rejected";
-            break;
-          case "deactivate":
-            newStatus = "Suspended";
-            break;
-        }
+    switch (actionType) {
+      case "approve":
+      case "reapprove":
+      case "activate":
+        dbStatus = 'approved';
+        newStatus = 'Active';
+        break;
+      case "reject":
+      case "deactivate":
+        dbStatus = 'rejected';
+        newStatus = 'Rejected';
+        break;
+    }
 
-        return { ...t, status: newStatus };
-      }),
-    );
+    try {
+      await updateTenantStatus(selectedTenant.id, dbStatus);
+      setTenants((prev) =>
+        prev.map((t) =>
+          t.id === selectedTenant.id ? { ...t, status: newStatus } : t
+        )
+      );
+    } catch (err) {
+      console.error('Failed to update status', err);
+    }
 
     setModalOpen(false);
     setSelectedTenant(null);

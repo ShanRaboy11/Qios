@@ -81,8 +81,18 @@ const packages: Package[] = [
   },
 ];
 
-export function SubscriptionPackage({ onNext, onBack }: { onNext: () => void; onBack: () => void }) {
-  const [selectedId, setSelectedId] = useState("starter");
+export function SubscriptionPackage({ 
+  data, 
+  setData, 
+  onNext, 
+  onBack 
+}: { 
+  data: { packageId: string };
+  setData: React.Dispatch<React.SetStateAction<{ packageId: string }>>;
+  onNext: () => void; 
+  onBack: () => void 
+}) {
+  const [selectedId, setSelectedId] = useState(data.packageId || "starter");
   const activePackage = packages.find((p) => p.id === selectedId) || packages[0];
 
   const styles = {
@@ -114,7 +124,10 @@ export function SubscriptionPackage({ onNext, onBack }: { onNext: () => void; on
         {packages.map((pkg) => (
           <button
             key={pkg.id}
-            onClick={() => setSelectedId(pkg.id)}
+            onClick={() => {
+              setSelectedId(pkg.id);
+              setData({ packageId: pkg.id });
+            }}
             className={cn(
               "px-6 py-2 lg:px-7 lg:py-3 rounded-[40px] b3 transition-all duration-300 whitespace-nowrap font-bold",
               selectedId === pkg.id

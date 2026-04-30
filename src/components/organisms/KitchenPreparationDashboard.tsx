@@ -114,12 +114,12 @@ export default function KitchenPreparationDashboard() {
       </div>
 
       <div className="flex items-center gap-2 text-xs text-text-secondary font-medium">
-        <span className="px-2 py-0.5 bg-gray-100 rounded-md">{order.counter}</span>
+        <span className="px-2 py-0.5 bg-gray-100 rounded-md shrink-0">{order.counter}</span>
         <span>•</span>
-        <span>{order.type}</span>
+        <span className="truncate">{order.type}</span>
         <span>•</span>
-        <span className={order.targetTimePercentage > 100 ? 'text-red-500 font-bold' : ''}>
-          {order.targetTimePercentage}% of target
+        <span className={`${order.targetTimePercentage > 100 ? 'text-red-500 font-bold' : ''} shrink-0`}>
+          {order.targetTimePercentage}%
         </span>
       </div>
 
@@ -132,7 +132,7 @@ export default function KitchenPreparationDashboard() {
               </div>
               <div className="flex flex-col">
                 <span className="text-sm font-semibold text-text-primary">{item.name}</span>
-                {item.notes && <span className="text-xs text-text-secondary mt-0.5">{item.notes}</span>}
+                {item.notes && <span className="text-xs text-text-secondary mt-0.5 line-clamp-1">{item.notes}</span>}
               </div>
             </div>
           </div>
@@ -170,55 +170,58 @@ export default function KitchenPreparationDashboard() {
   );
 
   return (
-    <div className="flex flex-col bg-[#F8FAFC] min-h-screen p-4 md:p-6 lg:p-8 gap-8 font-inter">
+    <div className="flex flex-col bg-[#F8FAFC] min-h-screen p-4 md:p-6 lg:p-8 gap-6 md:gap-8 font-inter">
       {/* Dashboard Header Element */}
       <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4 bg-white p-6 rounded-2xl shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-100">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-text-primary font-figtree tracking-tight">Kitchen Operations</h1>
           <p className="text-text-secondary mt-1 text-sm md:text-base font-medium">Real-time active order management system</p>
         </div>
-        <div className="flex items-center gap-3 bg-success-primary/10 px-4 py-2.5 rounded-xl border border-success-primary/20 shadow-sm">
+        <div className="flex items-center gap-3 bg-success-primary/10 px-4 py-2.5 rounded-xl border border-success-primary/20 shadow-sm self-start md:self-auto">
            <span className="w-2.5 h-2.5 rounded-full bg-success-primary animate-pulse"></span>
            <span className="text-sm font-bold text-success-primary tracking-wide">SYSTEM LIVE</span>
         </div>
       </div>
 
-      {/* Top Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-5 rounded-[20px] shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-100 flex items-center gap-4 transition-transform hover:-translate-y-0.5">
-          <div className="w-14 h-14 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center text-text-primary font-bold text-2xl shadow-sm">
+      {/* Top Stats - Updated to grid-cols-2 for 2x2 mobile layout */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+        <div className="bg-white p-3 md:p-5 rounded-[20px] shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-100 flex items-center gap-3 md:gap-4 transition-transform hover:-translate-y-0.5">
+          <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center text-text-primary font-bold text-lg md:text-2xl shadow-sm shrink-0">
             {pendingOrders.length}
           </div>
-          <div className="flex flex-col justify-center">
-            <p className="text-[11px] text-text-secondary font-bold uppercase tracking-widest mb-0.5">Pending</p>
-            <p className="text-[19px] font-bold text-text-primary leading-none">In Queue</p>
+          <div className="flex flex-col justify-center min-w-0">
+            <p className="text-[9px] md:text-[11px] text-text-secondary font-bold uppercase tracking-widest mb-0.5 truncate">Pending</p>
+            <p className="text-sm md:text-[19px] font-bold text-text-primary leading-none truncate">In Queue</p>
           </div>
         </div>
-        <div className="bg-white p-5 rounded-[20px] shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-100 flex items-center gap-4 transition-transform hover:-translate-y-0.5">
-          <div className="w-14 h-14 rounded-xl bg-brand-accent/10 border border-brand-accent/20 flex items-center justify-center text-brand-accent font-bold text-2xl shadow-sm">
+        
+        <div className="bg-white p-3 md:p-5 rounded-[20px] shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-100 flex items-center gap-3 md:gap-4 transition-transform hover:-translate-y-0.5">
+          <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl bg-brand-accent/10 border border-brand-accent/20 flex items-center justify-center text-brand-accent font-bold text-lg md:text-2xl shadow-sm shrink-0">
             {preparingOrders.length}
           </div>
-          <div className="flex flex-col justify-center">
-            <p className="text-[11px] text-brand-accent/80 font-bold uppercase tracking-widest mb-0.5">Preparing</p>
-            <p className="text-[19px] font-bold text-text-primary leading-none">Active Orders</p>
+          <div className="flex flex-col justify-center min-w-0">
+            <p className="text-[9px] md:text-[11px] text-brand-accent/80 font-bold uppercase tracking-widest mb-0.5 truncate">Preparing</p>
+            <p className="text-sm md:text-[19px] font-bold text-text-primary leading-none truncate">Active</p>
           </div>
         </div>
-        <div className="bg-white p-5 rounded-[20px] shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-100 flex items-center gap-4 transition-transform hover:-translate-y-0.5">
-          <div className="w-14 h-14 rounded-xl bg-success-primary/10 border border-success-primary/20 flex items-center justify-center text-success-primary font-bold text-2xl shadow-sm">
+
+        <div className="bg-white p-3 md:p-5 rounded-[20px] shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-100 flex items-center gap-3 md:gap-4 transition-transform hover:-translate-y-0.5">
+          <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl bg-success-primary/10 border border-success-primary/20 flex items-center justify-center text-success-primary font-bold text-lg md:text-2xl shadow-sm shrink-0">
             {readyOrders.length}
           </div>
-          <div className="flex flex-col justify-center">
-            <p className="text-[11px] text-success-primary/80 font-bold uppercase tracking-widest mb-0.5">Ready</p>
-            <p className="text-[19px] font-bold text-text-primary leading-none">For Pickup</p>
+          <div className="flex flex-col justify-center min-w-0">
+            <p className="text-[9px] md:text-[11px] text-success-primary/80 font-bold uppercase tracking-widest mb-0.5 truncate">Ready</p>
+            <p className="text-sm md:text-[19px] font-bold text-text-primary leading-none truncate">Pickup</p>
           </div>
         </div>
-        <div className="bg-white p-5 rounded-[20px] shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-100 flex items-center gap-4 transition-transform hover:-translate-y-0.5">
-          <div className="w-14 h-14 rounded-xl bg-brand-primary/20 border border-brand-primary/30 flex items-center justify-center text-brand-primary font-bold text-2xl shadow-sm">
+
+        <div className="bg-white p-3 md:p-5 rounded-[20px] shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-100 flex items-center gap-3 md:gap-4 transition-transform hover:-translate-y-0.5">
+          <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl bg-brand-primary/20 border border-brand-primary/30 flex items-center justify-center text-brand-primary font-bold text-lg md:text-2xl shadow-sm shrink-0">
             {orders.filter((o) => o.status !== 'completed').length}
           </div>
-          <div className="flex flex-col justify-center">
-            <p className="text-[11px] text-brand-dark/70 font-bold uppercase tracking-widest mb-0.5">Total</p>
-            <p className="text-[19px] font-bold text-text-primary leading-none">All Orders</p>
+          <div className="flex flex-col justify-center min-w-0">
+            <p className="text-[9px] md:text-[11px] text-brand-dark/70 font-bold uppercase tracking-widest mb-0.5 truncate">Total</p>
+            <p className="text-sm md:text-[19px] font-bold text-text-primary leading-none truncate">All Orders</p>
           </div>
         </div>
       </div>
