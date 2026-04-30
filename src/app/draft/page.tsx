@@ -22,6 +22,7 @@ import { RecipeMatrixView } from "@/components/organisms/RecipeMatrixView";
 import { SystemActivity } from "@/components/organisms/SystemActivity";
 import TenantManagement from "@/components/organisms/TenantManagement";
 import { ThresholdSettingsPanel } from "@/components/organisms/ThresholdSettingsPanel";
+import { ChatbotUI } from "@/components/organisms/ChatbotUI";
 
 export default function DraftPage() {
   return (
@@ -96,6 +97,10 @@ export default function DraftPage() {
           <div className="w-full flex items-center justify-center p-12 bg-bg-primary min-h-[700px]">
             <QrScanner />
           </div>
+        </SectionWrapper>
+
+        <SectionWrapper title="Chatbot UI">
+          <ChatbotUI />
         </SectionWrapper>
       </div>
     </Suspense>
