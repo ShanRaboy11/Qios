@@ -36,7 +36,7 @@ export function OnboardingSidebar({ steps, currentStep }: SidebarProps) {
       "bg-gradient-to-br from-[#FFF5E9] via-[#FFD8B1] to-[#FFCC99] border-b lg:border-b-0 lg:border-r border-orange-200"
     )}>
       
-      {/* BACKGROUND ELEMENTS*/}
+      {/* BACKGROUND ELEMENTS */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div 
           className="absolute -top-[5%] -left-[5%] w-[80%] h-[80%] rounded-full opacity-40 blur-[120px] animate-pulse"
