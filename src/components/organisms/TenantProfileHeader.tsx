@@ -17,11 +17,13 @@ export const TenantProfileHeader = ({
   return (
     <div className="flex flex-col gap-6">
       <Link
-        href="/admin/tenants"
+        href="/admin/dashboard?view=tenant"
         className="flex items-center gap-2 text-text-secondary hover:scale-105 transition-all duration-300 w-fit"
       >
         <ArrowLeft className="w-5 h-5" />
-        <span className="text-[15px] font-medium">Back to Tenants</span>
+        <span className="text-[15px] font-medium">
+          Back to Tenant Directory
+        </span>
       </Link>
 
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">

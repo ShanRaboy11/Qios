@@ -155,7 +155,8 @@ export const TenantProfilePage = ({ tenantId }: TenantProfilePageProps) => {
         isOpen: true,
         type: "reject_tenant",
         title: "Reject Tenant",
-        description: "Please provide a reason for rejecting this tenant application.",
+        description:
+          "Please provide a reason for rejecting this tenant application.",
         requireReason: true,
       });
     } else if (newStatus === "Suspended") {
@@ -171,7 +172,7 @@ export const TenantProfilePage = ({ tenantId }: TenantProfilePageProps) => {
 
   const handleUpdateDocumentStatus = (
     docId: string,
-    newStatus: "Approved" | "Revision Requested"
+    newStatus: "Approved" | "Revision Requested",
   ) => {
     if (!tenant) return;
     const doc = tenant.documents.find((d) => d.id === docId);
@@ -199,25 +200,37 @@ export const TenantProfilePage = ({ tenantId }: TenantProfilePageProps) => {
   const confirmAction = () => {
     if (!tenant) return;
     if (modal.type === "approve_tenant" || modal.type === "reactivate_tenant") {
-      setTenant((prev) => prev ? { ...prev, status: "Active" } : null);
+      setTenant((prev) => (prev ? { ...prev, status: "Active" } : null));
     } else if (modal.type === "reject_tenant") {
-      setTenant((prev) => prev ? { ...prev, status: "Rejected" } : null);
+      setTenant((prev) => (prev ? { ...prev, status: "Rejected" } : null));
     } else if (modal.type === "suspend_tenant") {
-      setTenant((prev) => prev ? { ...prev, status: "Suspended" } : null);
+      setTenant((prev) => (prev ? { ...prev, status: "Suspended" } : null));
     } else if (modal.type === "approve_doc" && modal.targetId) {
-      setTenant((prev) => prev ? ({
-        ...prev,
-        documents: prev.documents.map((doc) =>
-          doc.id === modal.targetId ? { ...doc, status: "Approved" } : doc
-        ),
-      }) : null);
+      setTenant((prev) =>
+        prev
+          ? {
+              ...prev,
+              documents: prev.documents.map((doc) =>
+                doc.id === modal.targetId
+                  ? { ...doc, status: "Approved" }
+                  : doc,
+              ),
+            }
+          : null,
+      );
     } else if (modal.type === "revision_doc" && modal.targetId) {
-      setTenant((prev) => prev ? ({
-        ...prev,
-        documents: prev.documents.map((doc) =>
-          doc.id === modal.targetId ? { ...doc, status: "Revision Requested" } : doc
-        ),
-      }) : null);
+      setTenant((prev) =>
+        prev
+          ? {
+              ...prev,
+              documents: prev.documents.map((doc) =>
+                doc.id === modal.targetId
+                  ? { ...doc, status: "Revision Requested" }
+                  : doc,
+              ),
+            }
+          : null,
+      );
     }
 
     closeModal();
@@ -256,9 +269,7 @@ export const TenantProfilePage = ({ tenantId }: TenantProfilePageProps) => {
 
       <Modal isOpen={modal.isOpen} onClose={closeModal} title={modal.title}>
         <div className="flex flex-col gap-6">
-          <p className="text-[15px] text-text-secondary">
-            {modal.description}
-          </p>
+          <p className="text-[15px] text-text-secondary">{modal.description}</p>
 
           {modal.requireReason && (
             <FormField
@@ -271,18 +282,21 @@ export const TenantProfilePage = ({ tenantId }: TenantProfilePageProps) => {
           )}
 
           <div className="flex items-center justify-end gap-3 pt-2">
-            <Button variant="outline" onClick={closeModal}>
+            <Button variant="warning" onClick={closeModal}>
               Cancel
             </Button>
             <Button
               variant={
-                modal.type?.includes("reject") || modal.type?.includes("revision")
-                  ? "outline"
+                modal.type?.includes("reject") ||
+                modal.type?.includes("revision")
+                  ? "primary"
                   : "primary"
               }
               className={
-                modal.type?.includes("reject") || modal.type?.includes("revision") || modal.type?.includes("suspend")
-                  ? "text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300 bg-white"
+                modal.type?.includes("reject") ||
+                modal.type?.includes("revision") ||
+                modal.type?.includes("suspend")
+                  ? ""
                   : ""
               }
               disabled={modal.requireReason && reason.trim() === ""}
@@ -296,4 +310,3 @@ export const TenantProfilePage = ({ tenantId }: TenantProfilePageProps) => {
     </>
   );
 };
-

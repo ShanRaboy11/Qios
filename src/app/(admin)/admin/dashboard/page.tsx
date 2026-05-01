@@ -12,7 +12,7 @@ import { Navbar } from "@/components/organisms/navbar";
 import { LogOut } from "lucide-react";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { useRouter } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type ViewState =
@@ -23,12 +23,25 @@ type ViewState =
   | "settings";
 
 export default function AdminDashboardPage() {
-  const [currentView, setCurrentView] = useState<ViewState>("dashboard");
+  const searchParams = useSearchParams();
+  const initialViewParam = searchParams.get("view") as ViewState | null;
+  const initialView = initialViewParam && ["dashboard", "tenant", "system_activity", "subscription", "settings"].includes(initialViewParam) 
+    ? initialViewParam 
+    : "dashboard";
+
+  const [currentView, setCurrentView] = useState<ViewState>(initialView);
   const [initialTenantFilter, setInitialTenantFilter] = useState<
     string | undefined
   >();
   const [isTransitioning, setIsTransitioning] = useState(false);
   const router = useRouter();
+
+  React.useEffect(() => {
+    const view = searchParams.get("view") as ViewState;
+    if (view && ["dashboard", "tenant", "system_activity", "subscription", "settings"].includes(view) && view !== currentView) {
+      setCurrentView(view);
+    }
+  }, [searchParams]);
 
   const handleLogout = async () => {
     try {
