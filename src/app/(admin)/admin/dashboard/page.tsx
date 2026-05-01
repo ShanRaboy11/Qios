@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import { AdminDashboardHeader } from "@/components/organisms/AdminDashboardHeader";
 import { AdminMetricsRow } from "@/components/organisms/AdminMetricsRow";
 import { AdminChartsSection } from "@/components/organisms/AdminChartsSection";
@@ -12,7 +12,7 @@ import { Navbar } from "@/components/organisms/navbar";
 import { LogOut } from "lucide-react";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { useRouter } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type ViewState =
@@ -23,12 +23,37 @@ type ViewState =
   | "settings";
 
 export default function AdminDashboardPage() {
-  const [currentView, setCurrentView] = useState<ViewState>("dashboard");
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-bg-primary flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-brand-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    }>
+      <AdminDashboardContent />
+    </Suspense>
+  );
+}
+
+function AdminDashboardContent() {
+  const searchParams = useSearchParams();
+  const initialViewParam = searchParams.get("view") as ViewState | null;
+  const initialView = initialViewParam && ["dashboard", "tenant", "system_activity", "subscription", "settings"].includes(initialViewParam) 
+    ? initialViewParam 
+    : "dashboard";
+
+  const [currentView, setCurrentView] = useState<ViewState>(initialView);
   const [initialTenantFilter, setInitialTenantFilter] = useState<
     string | undefined
   >();
   const [isTransitioning, setIsTransitioning] = useState(false);
   const router = useRouter();
+
+  React.useEffect(() => {
+    const view = searchParams.get("view") as ViewState;
+    if (view && ["dashboard", "tenant", "system_activity", "subscription", "settings"].includes(view) && view !== currentView) {
+      setCurrentView(view);
+    }
+  }, [searchParams]);
 
   const handleLogout = async () => {
     try {

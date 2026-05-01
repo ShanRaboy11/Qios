@@ -15,6 +15,7 @@ import { FormField } from "@/components/molecules/FormField";
 import { Dropdown } from "@/components/molecules/Dropdown";
 import { Badge } from "@/components/atoms/Badge";
 import { Button } from "@/components/atoms/Button";
+import Link from "next/link";
 
 interface Tenant {
   id: string;
@@ -88,10 +89,17 @@ export interface TenantManagementProps {
   initialTenants?: Tenant[];
 }
 
-export default function TenantManagement({ initialStatusFilter, initialTenants = [] }: TenantManagementProps) {
-  const [tenants, setTenants] = useState<Tenant[]>(initialTenants.length > 0 ? initialTenants : INITIAL_DATA);
+export default function TenantManagement({
+  initialStatusFilter,
+  initialTenants = [],
+}: TenantManagementProps) {
+  const [tenants, setTenants] = useState<Tenant[]>(
+    initialTenants.length > 0 ? initialTenants : INITIAL_DATA,
+  );
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState(initialStatusFilter || "All");
+  const [statusFilter, setStatusFilter] = useState(
+    initialStatusFilter || "All",
+  );
   const [typeFilter, setTypeFilter] = useState("All");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const filterRef = useRef<HTMLDivElement>(null);
@@ -129,20 +137,20 @@ export default function TenantManagement({ initialStatusFilter, initialTenants =
   const confirmAction = async () => {
     if (!selectedTenant || !actionType) return;
 
-    let dbStatus: 'pending' | 'approved' | 'rejected' = 'approved';
-    let newStatus: Tenant["status"] = 'Active';
+    let dbStatus: "pending" | "approved" | "rejected" = "approved";
+    let newStatus: Tenant["status"] = "Active";
 
     switch (actionType) {
       case "approve":
       case "reapprove":
       case "activate":
-        dbStatus = 'approved';
-        newStatus = 'Active';
+        dbStatus = "approved";
+        newStatus = "Active";
         break;
       case "reject":
       case "deactivate":
-        dbStatus = 'rejected';
-        newStatus = 'Rejected';
+        dbStatus = "rejected";
+        newStatus = "Rejected";
         break;
     }
 
@@ -150,11 +158,11 @@ export default function TenantManagement({ initialStatusFilter, initialTenants =
       await updateTenantStatus(selectedTenant.id, dbStatus);
       setTenants((prev) =>
         prev.map((t) =>
-          t.id === selectedTenant.id ? { ...t, status: newStatus } : t
-        )
+          t.id === selectedTenant.id ? { ...t, status: newStatus } : t,
+        ),
       );
     } catch (err) {
-      console.error('Failed to update status', err);
+      console.error("Failed to update status", err);
     }
 
     setModalOpen(false);
@@ -301,12 +309,7 @@ export default function TenantManagement({ initialStatusFilter, initialTenants =
       {/* Tenant List */}
       <div className="flex flex-col gap-3 mt-3">
         {filteredTenants.map((tenant) => (
-          <TenantCard
-            key={tenant.id}
-            tenant={tenant}
-            onAction={(action) => openModal(tenant, action)}
-            disableActions={modalOpen}
-          />
+          <TenantCard key={tenant.id} tenant={tenant} />
         ))}
         {filteredTenants.length === 0 && (
           <div className="text-center py-12 text-gray-400 bg-white rounded-2xl border border-dashed">
@@ -328,32 +331,12 @@ export default function TenantManagement({ initialStatusFilter, initialTenants =
   );
 }
 
-function TenantCard({
-  tenant,
-  onAction,
-  disableActions,
-}: {
-  tenant: Tenant;
-  onAction: (action: ActionType) => void;
-  disableActions: boolean;
-}) {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setMenuOpen(false);
-      }
-    };
-    if (menuOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [menuOpen]);
-
+function TenantCard({ tenant }: { tenant: Tenant }) {
   return (
-    <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col md:flex-row md:items-center gap-4 transition-all hover:border-orange-100">
+    <Link
+      href={`/admin/tenants/${tenant.id}`}
+      className="group bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col md:flex-row md:items-center gap-4 transition-all hover:border-orange-100 block"
+    >
       <div className="flex items-start md:items-center gap-4 md:w-[60%] shrink-0">
         {/* Logo */}
         <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-orange-300 via-orange-300 to-amber-200 rounded-2xl flex items-center justify-center border-[1.5px] border-white shadow-sm flex-shrink-0">
@@ -363,21 +346,9 @@ function TenantCard({
         {/* Info */}
         <div className="flex flex-col gap-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <h3 className="text-gray-900 text-base sm:text-lg font-semibold tracking-tight truncate">
+            <h3 className="text-gray-900 text-base sm:text-lg font-semibold tracking-tight truncate group-hover:text-brand-accent transition-colors cursor-pointer">
               {tenant.name}
             </h3>
-            <Badge
-              variant="outline"
-              color={
-                tenant.type === "Enterprise"
-                  ? "primary"
-                  : tenant.type === "Professional"
-                    ? "accent"
-                    : "info"
-              }
-            >
-              {tenant.type}
-            </Badge>
           </div>
           <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-500 font-normal">
             <span className="truncate">ID: {tenant.id}</span>
@@ -388,99 +359,54 @@ function TenantCard({
       </div>
 
       <div className="flex flex-row items-center justify-between w-full md:w-auto md:flex-1 gap-3 md:gap-6 border-t border-gray-50 pt-3 md:pt-0 md:border-none mt-2 md:mt-0">
-        <span className="hidden lg:block text-gray-500 text-sm font-normal shrink-0 mr-[20px]">
-          Joined {tenant.joined}
-        </span>
-
-        {/* Status Indicator */}
-        <div className="flex items-center gap-2 sm:min-w-[85px] shrink-0">
-          <div
-            className={cn(
-              "w-2 h-2 rounded-full",
-              tenant.status === "Active" && "bg-success-primary",
-              tenant.status === "Pending" && "bg-brand-secondary",
-              tenant.status === "Suspended" && "bg-gray-500",
-              tenant.status === "Rejected" && "bg-warning-primary",
-            )}
-          />
-          <span
-            className={cn(
-              "text-xs sm:text-sm font-medium",
-              tenant.status === "Active" && "text-success-primary",
-              tenant.status === "Pending" && "text-brand-secondary",
-              tenant.status === "Suspended" && "text-gray-500",
-              tenant.status === "Rejected" && "text-warning-primary",
-            )}
-          >
-            {tenant.status}
+        {/* Left Section: Joined Date & Status Indicator grouped together */}
+        <div className="flex items-center gap-6 shrink-0">
+          <span className="hidden lg:block text-gray-500 text-sm font-normal shrink-0">
+            Joined {tenant.joined}
           </span>
-        </div>
 
-        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 shrink-0 md:ml-auto">
-          <div className="relative" ref={menuRef}>
-            <button
-              onClick={() => setMenuOpen(!menuOpen)}
-              className="flex p-2 hover:bg-gray-50 rounded-lg text-gray-400 transition-colors"
+          {/* Status Indicator placed close to the joined date */}
+          <div className="flex items-center gap-2 sm:min-w-[85px] justify-between">
+            <div
+              className={cn(
+                "w-2 h-2 rounded-full",
+                tenant.status === "Active" && "bg-success-primary",
+                tenant.status === "Pending" && "bg-brand-secondary",
+                tenant.status === "Suspended" && "bg-gray-500",
+                tenant.status === "Rejected" && "bg-warning-primary",
+              )}
+            />
+            <span
+              className={cn(
+                "text-xs sm:text-sm font-medium",
+                tenant.status === "Active" && "text-success-primary",
+                tenant.status === "Pending" && "text-brand-secondary",
+                tenant.status === "Suspended" && "text-gray-500",
+                tenant.status === "Rejected" && "text-warning-primary",
+              )}
             >
-              <MoreVertical className="w-5 h-5" />
-            </button>
-            
-            {menuOpen && (
-              <div className="absolute right-0 top-[110%] w-40 bg-white border border-gray-100 shadow-lg rounded-xl overflow-hidden z-10 py-1">
-                {tenant.status === "Pending" && (
-                  <>
-                    <button
-                      onClick={() => { onAction("approve"); setMenuOpen(false); }}
-                      disabled={disableActions}
-                      className="w-full text-left px-4 py-2 text-sm text-[#22C55E] hover:bg-green-50 disabled:opacity-50 transition-colors"
-                    >
-                      Approve
-                    </button>
-                    <button
-                      onClick={() => { onAction("reject"); setMenuOpen(false); }}
-                      disabled={disableActions}
-                      className="w-full text-left px-4 py-2 text-sm text-warning-primary hover:bg-red-50 disabled:opacity-50 transition-colors"
-                    >
-                      Reject
-                    </button>
-                  </>
-                )}
-
-                {tenant.status === "Rejected" && (
-                  <button
-                    onClick={() => { onAction("reapprove"); setMenuOpen(false); }}
-                    disabled={disableActions}
-                    className="w-full text-left px-4 py-2 text-sm text-brand-secondary hover:bg-orange-50 disabled:opacity-50 transition-colors"
-                  >
-                    Re-Approve
-                  </button>
-                )}
-
-                {tenant.status === "Active" && (
-                  <button
-                    onClick={() => { onAction("deactivate"); setMenuOpen(false); }}
-                    disabled={disableActions}
-                    className="w-full text-left px-4 py-2 text-sm text-warning-primary hover:bg-red-50 disabled:opacity-50 transition-colors"
-                  >
-                    Deactivate
-                  </button>
-                )}
-
-                {tenant.status === "Suspended" && (
-                  <button
-                    onClick={() => { onAction("activate"); setMenuOpen(false); }}
-                    disabled={disableActions}
-                    className="w-full text-left px-4 py-2 text-sm text-[#22C55E] hover:bg-green-50 disabled:opacity-50 transition-colors"
-                  >
-                    Activate
-                  </button>
-                )}
-              </div>
-            )}
+              {tenant.status}
+            </span>
           </div>
         </div>
+
+        {/* Right Section: Badge pushed to the right */}
+        <div className="flex items-center md:ml-auto">
+          <Badge
+            variant="outline"
+            color={
+              tenant.type === "Enterprise"
+                ? "primary"
+                : tenant.type === "Professional"
+                  ? "accent"
+                  : "info"
+            }
+          >
+            {tenant.type}
+          </Badge>
+        </div>
       </div>
-    </div>
+    </Link>
   );
 }
 
