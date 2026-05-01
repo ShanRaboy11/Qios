@@ -14,6 +14,7 @@ import { ContactInformation } from "./components/ContactInformation";
 import { AuthCredentials } from "./components/AuthCredentials";
 import { SubscriptionPackage } from "./components/SubscriptionPackage";
 import { FeatureConfig } from "./components/FeatureConfiguration";
+import { RegistrationSuccessModal } from "./components/RegistrationSuccessModal";
 import { Navbar } from "@/components/organisms/navbar";
 import { Footer } from "@/components/organisms/footer";
 import { processOnboarding, sendContactVerificationCode } from "./actions";
@@ -21,7 +22,7 @@ import { useRouter } from "next/navigation";
 
 const steps = [
   { id: 1, title: "Business Information", icon: FileText },
-  { id: 2, title: "Contact Information", icon: Contact },
+  { id: 2, title: "Contact Verification", icon: Contact },
   { id: 3, title: "Authentication Credentials", icon: IdCard },
   { id: 4, title: "Document Requirements", icon: FileCheck },
   { id: 5, title: "Subscription Package", icon: ShoppingBag },
@@ -33,7 +34,7 @@ export default function OnboardingPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   
-  const [businessData, setBusinessData] = useState({ name: "", email: "", owner: "" });
+  const [businessData, setBusinessData] = useState({ name: "", email: "", owner: "", phoneNumber: "" });
   const [contactData, setContactData] = useState({ phoneNumber: "" });
   const [authData, setAuthData] = useState({ email: "", password: "", confirm: "" });
   const [subscriptionData, setSubscriptionData] = useState({ packageId: "starter" });
@@ -42,6 +43,9 @@ export default function OnboardingPage() {
   
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [registrationData, setRegistrationData] = useState({ businessName: "", businessEmail: "" });
 
   const validateEmail = (email: string) => /\S+@\S+\.\S+/.test(email);
 
@@ -63,6 +67,7 @@ export default function OnboardingPage() {
       if (!businessData.name.trim()) return setError("Business Name is required");
       if (!validateEmail(businessData.email)) return setError("A valid business email is required");
       if (!businessData.owner?.trim()) return setError("Owner / Admin Name is required");
+      if (!businessData.phoneNumber || businessData.phoneNumber.length < 10) return setError("A valid Philippine phone number is required");
 
       setLoading(true);
       try {
@@ -100,20 +105,29 @@ export default function OnboardingPage() {
     try {
       const res = await processOnboarding({
         businessData,
-        contactData,
+        contactData: { phoneNumber: businessData.phoneNumber },
         authData,
         subscriptionData,
         featureData,
         documentData
       });
       if (res.success) {
-        router.push("/login?onboarding=pending");
+        setRegistrationData({
+          businessName: res.businessName,
+          businessEmail: res.businessEmail,
+        });
+        setShowSuccessModal(true);
       }
     } catch (err: any) {
       setError(err.message || "An error occurred during onboarding.");
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleModalClose = () => {
+    setShowSuccessModal(false);
+    router.push("/");
   };
 
   return (
@@ -150,7 +164,6 @@ export default function OnboardingPage() {
                 data={contactData}
                 setData={setContactData}
                 expectedCode={verificationCode}
-                isDev={process.env.NODE_ENV === "development"}
                 onResendCode={dispatchVerificationCode}
                 onBack={prevStep}
                 onVerified={nextStep}
@@ -220,6 +233,13 @@ export default function OnboardingPage() {
       </div>
     </div>
     <Footer />
+    {showSuccessModal && (
+      <RegistrationSuccessModal
+        businessName={registrationData.businessName}
+        businessEmail={registrationData.businessEmail}
+        onClose={handleModalClose}
+      />
+    )}
     </main>
   );
 }

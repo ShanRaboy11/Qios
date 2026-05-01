@@ -9,13 +9,12 @@ interface ContactInformationProps {
   data: { phoneNumber: string };
   setData: React.Dispatch<React.SetStateAction<{ phoneNumber: string }>>;
   expectedCode: string;
-  isDev?: boolean;
   onResendCode: () => Promise<string>;
   onVerified: () => Promise<void> | void;
   onBack: () => void;
 }
 
-export function ContactInformation({ expectedCode, isDev = false, onResendCode, onVerified, onBack }: ContactInformationProps) {
+export function ContactInformation({ expectedCode, onResendCode, onVerified, onBack }: ContactInformationProps) {
   // Timer starts immediately as the code is sent during the transition from Step 1
   const [isTimerRunning, setIsTimerRunning] = useState(true);
   const [timeLeft, setTimeLeft] = useState(45);
@@ -95,31 +94,7 @@ export function ContactInformation({ expectedCode, isDev = false, onResendCode, 
 
         {localError && <p className="text-sm text-red-500 text-center">{localError}</p>}
 
-        {/* Dev mode: Show verification code for testing without SMTP */}
-        {isDev && expectedCode && (
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 w-full text-center">
-            <p className="text-xs text-amber-700 mb-2 font-semibold">🔧 DEV MODE</p>
-            <p className="text-sm text-amber-800 mb-2">Verification Code:</p>
-            <div className="font-mono text-2xl font-bold text-amber-900 tracking-widest">
-              {expectedCode}
-            </div>
-            <p className="text-xs text-amber-700 mt-2">Auto-fill above or enter manually</p>
-          </div>
-        )}
-
-        {/* Add an auto-fill button in dev for convenience */}
-        {isDev && expectedCode && (
-          <button
-            type="button"
-            onClick={() => {
-              const codeArray = expectedCode.split("");
-              setOtp([codeArray[0] || "", codeArray[1] || "", codeArray[2] || "", codeArray[3] || ""]);
-            }}
-            className="text-xs text-amber-600 hover:text-amber-700 underline"
-          >
-            Auto-fill code
-          </button>
-        )}
+        {/* Verification code is not displayed in any environment for security. */}
 
         {/* OTP Inputs */}
         <div className="flex gap-8 justify-center">

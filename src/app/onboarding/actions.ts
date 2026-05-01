@@ -1,6 +1,6 @@
 "use server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { sendContactVerificationEmail } from "@/lib/email";
+import { sendContactVerificationEmail, sendRegistrationSuccessEmail } from "@/lib/email";
 
 export async function sendContactVerificationCode(data: {
   email: string;
@@ -20,17 +20,19 @@ export async function sendContactVerificationCode(data: {
   });
 
   if (!result.success) {
-    // Check if SMTP is configured. If not, this is likely a dev environment
-    const smtpConfigured = process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASSWORD;
-    
-    if (!smtpConfigured) {
-      // Dev environment without SMTP: return code so onboarding can proceed
+    const isDev = process.env.NODE_ENV !== 'production';
+
+    if (isDev && result.reason === 'SMTP_NOT_CONFIGURED') {
+      // Local dev fallback when SMTP is intentionally unavailable.
       console.log('[DEV] SMTP not configured, returning verification code for manual entry');
       return { success: true, verificationCode };
     }
-    
-    // Production or SMTP configured but failed: throw error
-    throw new Error('Failed to send verification code');
+
+    throw new Error(
+      result.reason === 'SMTP_NOT_CONFIGURED'
+        ? 'Email service is not configured. Set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, and SMTP_FROM.'
+        : 'Failed to send verification code. Please check your SMTP credentials and sender address.'
+    );
   }
 
   return {
@@ -131,5 +133,16 @@ export async function processOnboarding(data: {
     throw new Error(profileError.message || "Failed to link user to tenant");
   }
 
-  return { success: true, tenantId, userId };
+  // 4. Send Registration Success Email
+  try {
+    await sendRegistrationSuccessEmail({
+      to: data.businessData.email,
+      businessName: data.businessData.name,
+    });
+  } catch (err) {
+    console.error('Failed to send registration success email:', err);
+    // Don't throw - email failure shouldn't block registration
+  }
+
+  return { success: true, tenantId, userId, businessName: data.businessData.name, businessEmail: data.businessData.email };
 }
