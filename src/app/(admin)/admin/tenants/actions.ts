@@ -41,16 +41,44 @@ export async function getTenants() {
   });
 }
 
-export async function updateTenantStatus(tenantId: string, status: 'pending' | 'approved' | 'rejected') {
+export async function updateTenantStatus(tenantId: string, status: 'pending' | 'approved' | 'rejected', comments?: string) {
   const supabase = createSupabaseAdminClient();
   
+  const updateData: any = { status };
+  if (comments !== undefined) {
+    updateData.admin_comments = comments;
+  }
+
   const { error } = await supabase
     .from("tenants")
-    .update({ status })
+    .update(updateData)
     .eq('id', tenantId);
 
   if (error) {
     throw new Error(error.message);
+  }
+
+  // Find owner to get email for notification (usually 'admin' role in this single-tenant context)
+  const { data: adminProfiles } = await supabase
+    .from("profiles")
+    .select("id, full_name")
+    .eq("tenant_id", tenantId)
+    .eq("role", "admin")
+    .limit(1);
+
+  if (adminProfiles && adminProfiles.length > 0) {
+    const adminId = adminProfiles[0].id;
+    // Get user email using Supabase identity
+    const { data: { user }, error: userError } = await supabase.auth.admin.getUserById(adminId);
+    
+    if (user && user.email && status !== 'pending') {
+      const { sendBusinessVerificationEmail } = await import('@/lib/email');
+      await sendBusinessVerificationEmail({
+        to: user.email,
+        status,
+        comments,
+      });
+    }
   }
 
   revalidatePath("/admin/tenants");
