@@ -37,7 +37,7 @@ export default function OnboardingPage() {
   const [contactData, setContactData] = useState({ phoneNumber: "" });
   const [authData, setAuthData] = useState({ email: "", password: "", confirm: "" });
   const [subscriptionData, setSubscriptionData] = useState({ packageId: "starter" });
-  const [documentData, setDocumentData] = useState<Record<string, {name: string, content: string, type: string}>>({});
+  const [documentData, setDocumentData] = useState<Record<string, File>>({});
   const [verificationCode, setVerificationCode] = useState("");
   
   const [error, setError] = useState("");
@@ -150,6 +150,7 @@ export default function OnboardingPage() {
                 data={contactData}
                 setData={setContactData}
                 expectedCode={verificationCode}
+                isDev={process.env.NODE_ENV === "development"}
                 onResendCode={dispatchVerificationCode}
                 onBack={prevStep}
                 onVerified={nextStep}

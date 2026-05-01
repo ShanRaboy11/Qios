@@ -7,9 +7,9 @@ import { Badge } from "@/components/atoms/Badge";
 import { cn } from "@/lib/utils";
 
 interface DocumentUploadProps {
-  data: Record<string, {name: string, content: string, type: string}>;
-  setData: React.Dispatch<React.SetStateAction<Record<string, {name: string, content: string, type: string}>>>;
-  onNext: () => void;
+  data: Record<string, File>;
+  setData: React.Dispatch<React.SetStateAction<Record<string, File>>>;
+  onNext: () => Promise<void> | void;
   onBack: () => void;
 }
 
@@ -53,18 +53,10 @@ const requirements = [
 
 export function DocumentUpload({ data, setData, onNext, onBack }: DocumentUploadProps) {
   const handleFileChange = (id: string, file: File) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      setData((prev) => ({
-        ...prev,
-        [id]: {
-          name: file.name,
-          type: file.type,
-          content: reader.result as string, // base64 string
-        },
-      }));
-    };
-    reader.readAsDataURL(file);
+    setData((prev) => ({
+      ...prev,
+      [id]: file,
+    }));
   };
 
   const removeFile = (id: string) => {
@@ -75,7 +67,7 @@ export function DocumentUpload({ data, setData, onNext, onBack }: DocumentUpload
 
   const isComplete = requirements
     .filter((r) => r.required)
-    .every((r) => data[r.id]);
+    .every((r) => Boolean(data[r.id]));
 
   return (
     <div className="flex flex-col w-full max-w-[850px] mx-auto space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -134,7 +126,7 @@ export function DocumentUpload({ data, setData, onNext, onBack }: DocumentUpload
               </div>
 
               <div className="mt-auto">
-                {data[req.id]?.name ? (
+                {data[req.id] ? (
                   <div className="flex items-center justify-between bg-neutral-50 p-2 rounded-xl border border-neutral-100 animate-in slide-in-from-left-2">
                     <span className="b4 font-medium text-neutral-600 pl-2 truncate max-w-[150px]">
                       {data[req.id]?.name}
@@ -185,7 +177,7 @@ export function DocumentUpload({ data, setData, onNext, onBack }: DocumentUpload
               ? "shadow-orange-200/50" 
               : "bg-neutral-200 text-white cursor-not-allowed shadow-none"
           )}
-          onClick={() => isComplete && onNext()}
+          onClick={async () => isComplete && await onNext()}
           disabled={!isComplete}
         >
           Continue

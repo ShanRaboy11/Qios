@@ -29,11 +29,6 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // Refresh session if expired - required for Server Components
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
   const isAuthRoute = request.nextUrl.pathname === "/login";
   const isPublicRoute =
     isAuthRoute ||
@@ -43,6 +38,16 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith("/_next") ||
     request.nextUrl.pathname.startsWith("/api") ||
     request.nextUrl.pathname.startsWith("/public");
+
+  // Refresh session if expired - required for Server Components
+  // Skip auth check for public routes to avoid unnecessary network calls
+  let user = null;
+  if (!isPublicRoute) {
+    const {
+      data: { user: authUser },
+    } = await supabase.auth.getUser();
+    user = authUser;
+  }
 
   // Redirect to login if accessing protected routes without session
   if (!user && !isPublicRoute) {
