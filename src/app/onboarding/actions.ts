@@ -6,7 +6,7 @@ export async function sendContactVerificationCode(data: {
   email: string;
   businessName: string;
 }) {
-  const verificationCode = Math.floor(1000 + Math.random() * 9000).toString();
+  const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
   
   // Log generated code in dev mode
   if (process.env.NODE_ENV !== 'production') {
@@ -42,8 +42,7 @@ export async function sendContactVerificationCode(data: {
 }
 
 export async function processOnboarding(data: {
-  businessData: { name: string, email: string },
-  contactData: { phoneNumber: string },
+  businessData: { name: string, email: string, phoneNumber: string },
   authData: { email: string, password: string },
   subscriptionData: { packageId: string },
   featureData: { inventoryMode: string, generalFeatures: any },
@@ -59,7 +58,7 @@ export async function processOnboarding(data: {
     user_metadata: {
       full_name: data.businessData.name,
       business_email: data.businessData.email,
-      phone_number: data.contactData.phoneNumber,
+      phone_number: data.businessData.phoneNumber,
       subscription_plan: data.subscriptionData.packageId,
       features: data.featureData.generalFeatures
     }

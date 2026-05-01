@@ -18,7 +18,7 @@ export function ContactInformation({ expectedCode, onResendCode, onVerified, onB
   // Timer starts immediately as the code is sent during the transition from Step 1
   const [isTimerRunning, setIsTimerRunning] = useState(true);
   const [timeLeft, setTimeLeft] = useState(45);
-  const [otp, setOtp] = useState(["", "", "", ""]);
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [localError, setLocalError] = useState("");
   const otpInputs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -56,7 +56,7 @@ export function ContactInformation({ expectedCode, onResendCode, onVerified, onB
 
     setLocalError("");
     const newCode = await onResendCode();
-    setOtp(["", "", "", ""]);
+    setOtp(["", "", "", "", "", ""]);
     setTimeLeft(45);
     setIsTimerRunning(true);
 
@@ -97,7 +97,7 @@ export function ContactInformation({ expectedCode, onResendCode, onVerified, onB
         {/* Verification code is not displayed in any environment for security. */}
 
         {/* OTP Inputs */}
-        <div className="flex gap-8 justify-center">
+        <div className="flex gap-4 justify-center">
           {otp.map((digit, i) => (
             <input
               key={i}
@@ -106,7 +106,12 @@ export function ContactInformation({ expectedCode, onResendCode, onVerified, onB
               onChange={(e) => {
                 const val = e.target.value.replace(/\D/g, "");
                 const newOtp = [...otp]; newOtp[i] = val; setOtp(newOtp);
-                if (val && i < 3) otpInputs.current[i+1]?.focus();
+                if (val && i < 5) otpInputs.current[i+1]?.focus();
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Backspace" && !digit && i > 0) {
+                  otpInputs.current[i - 1]?.focus();
+                }
               }}
               className={cn(
                 "w-10 h-10 bg-transparent border-b-2 text-center text-2xl outline-none transition-all duration-300",

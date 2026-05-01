@@ -105,7 +105,6 @@ export default function OnboardingPage() {
     try {
       const res = await processOnboarding({
         businessData,
-        contactData: { phoneNumber: businessData.phoneNumber },
         authData,
         subscriptionData,
         featureData,
