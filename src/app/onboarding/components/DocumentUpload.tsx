@@ -7,6 +7,8 @@ import { Badge } from "@/components/atoms/Badge";
 import { cn } from "@/lib/utils";
 
 interface DocumentUploadProps {
+  data: Record<string, {name: string, content: string, type: string}>;
+  setData: React.Dispatch<React.SetStateAction<Record<string, {name: string, content: string, type: string}>>>;
   onNext: () => void;
   onBack: () => void;
 }
@@ -49,22 +51,31 @@ const requirements = [
   },
 ];
 
-export function DocumentUpload({ onNext, onBack }: DocumentUploadProps) {
-  const [uploads, setUploads] = useState<Record<string, string>>({});
-
-  const handleFileChange = (id: string, fileName: string) => {
-    setUploads((prev) => ({ ...prev, [id]: fileName }));
+export function DocumentUpload({ data, setData, onNext, onBack }: DocumentUploadProps) {
+  const handleFileChange = (id: string, file: File) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      setData((prev) => ({
+        ...prev,
+        [id]: {
+          name: file.name,
+          type: file.type,
+          content: reader.result as string, // base64 string
+        },
+      }));
+    };
+    reader.readAsDataURL(file);
   };
 
   const removeFile = (id: string) => {
-    const newUploads = { ...uploads };
-    delete newUploads[id];
-    setUploads(newUploads);
+    const newData = { ...data };
+    delete newData[id];
+    setData(newData);
   };
 
   const isComplete = requirements
     .filter((r) => r.required)
-    .every((r) => uploads[r.id]);
+    .every((r) => data[r.id]);
 
   return (
     <div className="flex flex-col w-full max-w-[850px] mx-auto space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -85,12 +96,12 @@ export function DocumentUpload({ onNext, onBack }: DocumentUploadProps) {
             key={req.id}
             className={cn(
               "group relative p-6 rounded-[24px] border-2 transition-all duration-500 bg-white overflow-hidden",
-              uploads[req.id] 
+              data[req.id]?.name 
                 ? "border-[var(--color-success-primary)] shadow-lg shadow-green-100/50" 
                 : "border-neutral-100 hover:border-[var(--color-brand-primary)] hover:shadow-xl hover:shadow-orange-100/30"
             )}
           >
-            {uploads[req.id] && (
+            {data[req.id]?.name && (
               <div className="absolute -right-4 -top-4 w-24 h-24 bg-[var(--color-success-secondary)] rounded-full blur-3xl opacity-50" />
             )}
 
@@ -99,19 +110,19 @@ export function DocumentUpload({ onNext, onBack }: DocumentUploadProps) {
                 <div className="flex items-start justify-between">
                   <div className={cn(
                     "p-3 rounded-xl transition-colors duration-300",
-                    uploads[req.id] 
+                    data[req.id]?.name 
                       ? "bg-[var(--color-success-secondary)] text-[var(--color-success-primary)]" 
                       : "bg-neutral-50 text-neutral-400 group-hover:bg-orange-50 group-hover:text-[var(--color-brand-primary)]"
                   )}>
                     <req.icon size={24} />
                   </div>
                   
-                  {req.required && !uploads[req.id] && (
+                  {req.required && !data[req.id]?.name && (
                     <Badge color="error" variant="subtle" shape="pill" className="text-[10px] uppercase tracking-wider font-bold">
                       Required
                     </Badge>
                   )}
-                  {uploads[req.id] && (
+                  {data[req.id]?.name && (
                     <CheckCircle2 size={24} className="text-[var(--color-success-primary)] animate-in zoom-in duration-300" />
                   )}
                 </div>
@@ -123,10 +134,10 @@ export function DocumentUpload({ onNext, onBack }: DocumentUploadProps) {
               </div>
 
               <div className="mt-auto">
-                {uploads[req.id] ? (
+                {data[req.id]?.name ? (
                   <div className="flex items-center justify-between bg-neutral-50 p-2 rounded-xl border border-neutral-100 animate-in slide-in-from-left-2">
                     <span className="b4 font-medium text-neutral-600 pl-2 truncate max-w-[150px]">
-                      {uploads[req.id]}
+                      {data[req.id]?.name}
                     </span>
                     <button 
                       onClick={() => removeFile(req.id)} 
@@ -141,7 +152,7 @@ export function DocumentUpload({ onNext, onBack }: DocumentUploadProps) {
                     <input
                       type="file"
                       className="hidden"
-                      onChange={(e) => e.target.files?.[0] && handleFileChange(req.id, e.target.files[0].name)}
+                      onChange={(e) => e.target.files?.[0] && handleFileChange(req.id, e.target.files[0])}
                     />
                     <div className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-neutral-200 rounded-xl hover:border-[var(--color-brand-primary)] hover:bg-orange-50/50 transition-all b3 font-bold text-neutral-400 hover:text-[var(--color-brand-primary)]">
                       <FileUp size={18} />

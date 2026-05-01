@@ -6,7 +6,8 @@ export async function processOnboarding(data: {
   contactData: { phoneNumber: string },
   authData: { email: string, password: string },
   subscriptionData: { packageId: string },
-  featureData: { inventoryMode: string, generalFeatures: any }
+  featureData: { inventoryMode: string, generalFeatures: any },
+  documentData?: Record<string, { name: string, content: string, type: string }>
 }) {
   const supabase = createSupabaseAdminClient();
   
@@ -41,12 +42,44 @@ export async function processOnboarding(data: {
   }
 
   const tenantId = tenantRes.id;
+  
+  // Handle Document Uploads
+  let uploadedUrls: string[] = [];
+  if (data.documentData && Object.keys(data.documentData).length > 0) {
+    for (const [key, file] of Object.entries(data.documentData)) {
+      const base64Data = file.content.split(',')[1];
+      const buffer = Buffer.from(base64Data, 'base64');
+      const filePath = `${tenantId}/${key}-${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.]/g, '')}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('verification-docs')
+        .upload(filePath, buffer, {
+          contentType: file.type,
+          upsert: false
+        });
+        
+      if (!uploadError) {
+        const { data: urlData } = supabase.storage.from('verification-docs').getPublicUrl(filePath);
+        if (urlData?.publicUrl) {
+           uploadedUrls.push(urlData.publicUrl);
+        }
+      } else {
+        console.error("Document upload failed:", uploadError);
+      }
+    }
+    
+    // Update tenant with document urls
+    if (uploadedUrls.length > 0) {
+       await supabase.from('tenants').update({
+         verification_doc_urls: uploadedUrls
+       }).eq('id', tenantId);
+    }
+  }
 
-  // 3. Wait slightly for the profile trigger to run just in case, though it runs in transaction usually.
-  // We can just update it safely
+  // 3. Update the Profile
   const { error: profileError } = await supabase.from('profiles').update({
     tenant_id: tenantId,
-    role: 'super_admin', // maybe 'super_admin' is better for the main tenant owner? actually 'admin' is typical for a tenant owner. Let's use 'super_admin' or 'admin'
+    role: 'admin',
   }).eq('id', userId);
 
   if (profileError) {

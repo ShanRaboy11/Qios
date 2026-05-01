@@ -37,6 +37,7 @@ export default function OnboardingPage() {
   const [contactData, setContactData] = useState({ phoneNumber: "" });
   const [authData, setAuthData] = useState({ email: "", password: "", confirm: "" });
   const [subscriptionData, setSubscriptionData] = useState({ packageId: "starter" });
+  const [documentData, setDocumentData] = useState<Record<string, {name: string, content: string, type: string}>>({});
   
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -89,7 +90,8 @@ export default function OnboardingPage() {
         contactData,
         authData,
         subscriptionData,
-        featureData
+        featureData,
+        documentData
       });
       if (res.success) {
         router.push("/login?onboarding=pending");
@@ -139,7 +141,7 @@ export default function OnboardingPage() {
             )}
 
             {currentStep === 4 && (
-              <DocumentUpload onNext={nextStep} onBack={prevStep} />
+              <DocumentUpload data={documentData} setData={setDocumentData} onNext={nextStep} onBack={prevStep} />
             )}
             
             {currentStep === 5 && (
