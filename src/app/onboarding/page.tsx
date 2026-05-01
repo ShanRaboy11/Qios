@@ -16,7 +16,7 @@ import { SubscriptionPackage } from "./components/SubscriptionPackage";
 import { FeatureConfig } from "./components/FeatureConfiguration";
 import { Navbar } from "@/components/organisms/navbar";
 import { Footer } from "@/components/organisms/footer";
-import { processOnboarding } from "./actions";
+import { processOnboarding, sendContactVerificationCode } from "./actions";
 import { useRouter } from "next/navigation";
 
 const steps = [
@@ -38,13 +38,24 @@ export default function OnboardingPage() {
   const [authData, setAuthData] = useState({ email: "", password: "", confirm: "" });
   const [subscriptionData, setSubscriptionData] = useState({ packageId: "starter" });
   const [documentData, setDocumentData] = useState<Record<string, {name: string, content: string, type: string}>>({});
+  const [verificationCode, setVerificationCode] = useState("");
   
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
   const validateEmail = (email: string) => /\S+@\S+\.\S+/.test(email);
 
-  const nextStep = () => {
+  const dispatchVerificationCode = async () => {
+    const res = await sendContactVerificationCode({
+      email: businessData.email,
+      businessName: businessData.name,
+    });
+
+    setVerificationCode(res.verificationCode);
+    return res.verificationCode;
+  };
+
+  const nextStep = async () => {
     setError("");
     setSuccess("");
 
@@ -52,16 +63,18 @@ export default function OnboardingPage() {
       if (!businessData.name.trim()) return setError("Business Name is required");
       if (!validateEmail(businessData.email)) return setError("A valid business email is required");
       if (!businessData.owner?.trim()) return setError("Owner / Admin Name is required");
-      
-      setSuccess(`Verification code sent to ${businessData.email}`);
-      setLoading(true);
 
-      setTimeout(() => {
-        setLoading(false);
-        setSuccess("");
+      setLoading(true);
+      try {
+        await dispatchVerificationCode();
+        setSuccess(`Verification code sent to ${businessData.email}`);
         setCurrentStep(2);
-      }, 2000);
-      return; 
+      } catch (err: any) {
+        setError(err.message || "Unable to send verification code.");
+      } finally {
+        setLoading(false);
+      }
+      return;
     }
 
     if (currentStep === 3) {
@@ -133,7 +146,14 @@ export default function OnboardingPage() {
             )}
             
             {currentStep === 2 && (
-              <ContactInformation data={contactData} setData={setContactData} onNext={nextStep} onBack={prevStep} />
+              <ContactInformation
+                data={contactData}
+                setData={setContactData}
+                expectedCode={verificationCode}
+                onResendCode={dispatchVerificationCode}
+                onBack={prevStep}
+                onVerified={nextStep}
+              />
             )}
             
             {currentStep === 3 && (

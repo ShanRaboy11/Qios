@@ -8,15 +8,18 @@ import { cn } from "@/lib/utils";
 interface ContactInformationProps {
   data: { phoneNumber: string };
   setData: React.Dispatch<React.SetStateAction<{ phoneNumber: string }>>;
-  onNext: () => void;
+  expectedCode: string;
+  onResendCode: () => Promise<string>;
+  onVerified: () => void;
   onBack: () => void;
 }
 
-export function ContactInformation({ data, setData, onNext, onBack }: ContactInformationProps) {
+export function ContactInformation({ expectedCode, onResendCode, onVerified, onBack }: ContactInformationProps) {
   // Timer starts immediately as the code is sent during the transition from Step 1
   const [isTimerRunning, setIsTimerRunning] = useState(true);
   const [timeLeft, setTimeLeft] = useState(45);
   const [otp, setOtp] = useState(["", "", "", ""]);
+  const [localError, setLocalError] = useState("");
   const otpInputs = useRef<(HTMLInputElement | null)[]>([]);
 
   useEffect(() => {
@@ -28,6 +31,39 @@ export function ContactInformation({ data, setData, onNext, onBack }: ContactInf
   }, [isTimerRunning, timeLeft]);
 
   const isOtpComplete = otp.every(digit => digit !== "");
+  const enteredCode = otp.join("");
+
+  const handleVerify = () => {
+    setLocalError("");
+
+    if (!expectedCode) {
+      setLocalError("Please request a new verification code.");
+      return;
+    }
+
+    if (enteredCode !== expectedCode) {
+      setLocalError("The verification code does not match.");
+      return;
+    }
+
+    onVerified();
+  };
+
+  const handleResend = async () => {
+    if (timeLeft !== 0) {
+      return;
+    }
+
+    setLocalError("");
+    const newCode = await onResendCode();
+    setOtp(["", "", "", ""]);
+    setTimeLeft(45);
+    setIsTimerRunning(true);
+
+    if (!newCode) {
+      setLocalError("Unable to resend the verification code.");
+    }
+  };
 
   return (
     /* items-center centers the content horizontally */
@@ -44,7 +80,7 @@ export function ContactInformation({ data, setData, onNext, onBack }: ContactInf
           </div>
           <button
             type="button"
-            onClick={() => { if (timeLeft === 0) { setTimeLeft(45); setIsTimerRunning(true); }}}
+            onClick={handleResend}
             className={cn(
               "b2 border-b-2 font-bold transition-all",
               timeLeft === 0 
@@ -55,6 +91,8 @@ export function ContactInformation({ data, setData, onNext, onBack }: ContactInf
             Resend Code
           </button>
         </div>
+
+        {localError && <p className="text-sm text-red-500 text-center">{localError}</p>}
 
         {/* OTP Inputs */}
         <div className="flex gap-8 justify-center">
@@ -95,7 +133,7 @@ export function ContactInformation({ data, setData, onNext, onBack }: ContactInf
                 ? "bg-[var(--color-brand-secondary)] text-text-tertiary scale-[1.02]" 
                 : "bg-neutral-300 text-white cursor-not-allowed"
             )}
-            onClick={() => isOtpComplete && onNext()}
+            onClick={handleVerify}
           >
             Continue
             <ArrowRight className="w-5 h-5 ml-2" />

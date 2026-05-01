@@ -1,5 +1,27 @@
 "use server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { sendContactVerificationEmail } from "@/lib/email";
+
+export async function sendContactVerificationCode(data: {
+  email: string;
+  businessName: string;
+}) {
+  const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+  const result = await sendContactVerificationEmail({
+    to: data.email,
+    businessName: data.businessName,
+    code: verificationCode,
+  });
+
+  if (!result.success) {
+    throw new Error("Failed to send verification code");
+  }
+
+  return {
+    success: true,
+    verificationCode,
+  };
+}
 
 export async function processOnboarding(data: {
   businessData: { name: string, email: string },
