@@ -15,6 +15,7 @@ import { FormField } from "@/components/molecules/FormField";
 import { Dropdown } from "@/components/molecules/Dropdown";
 import { Badge } from "@/components/atoms/Badge";
 import { Button } from "@/components/atoms/Button";
+import Link from "next/link";
 
 interface Tenant {
   id: string;
@@ -363,9 +364,11 @@ function TenantCard({
         {/* Info */}
         <div className="flex flex-col gap-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <h3 className="text-gray-900 text-base sm:text-lg font-semibold tracking-tight truncate">
-              {tenant.name}
-            </h3>
+            <Link href={`/admin/tenants/${tenant.id}`}>
+              <h3 className="text-gray-900 text-base sm:text-lg font-semibold tracking-tight truncate hover:text-brand-accent transition-colors cursor-pointer">
+                {tenant.name}
+              </h3>
+            </Link>
             <Badge
               variant="outline"
               color={
