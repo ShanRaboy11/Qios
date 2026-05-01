@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Toggle } from "@/components/atoms/Toggle";
+import { Toggle, ToggleVariant } from "@/components/atoms/Toggle";
 import { cn } from "@/lib/utils";
 
 interface FeatureToggleProps {
@@ -12,6 +12,7 @@ interface FeatureToggleProps {
   onChange?: (checked: boolean) => void;
   disabled?: boolean;
   className?: string;
+  variant?: ToggleVariant;
 }
 
 export const FeatureToggle = ({
@@ -22,6 +23,7 @@ export const FeatureToggle = ({
   onChange,
   disabled,
   className,
+  variant,
 }: FeatureToggleProps) => {
   const [internalChecked, setInternalChecked] = useState(defaultChecked);
   const isChecked =
@@ -70,6 +72,7 @@ export const FeatureToggle = ({
         defaultIsOn={defaultChecked}
         onChange={handleToggle}
         disabled={disabled}
+        variant={variant}
       />
     </div>
   );

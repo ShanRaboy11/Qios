@@ -5,9 +5,11 @@ import { cn } from "@/lib/utils";
 
 interface FooterProps {
   hideSocials?: boolean;
+  variant?: "default" | "admin";
 }
 
-export const Footer = ({ hideSocials }: FooterProps) => {
+export const Footer = ({ hideSocials, variant = "default" }: FooterProps) => {
+  const shouldHideSocials = hideSocials || variant === "admin";
   return (
     <footer
       className="relative w-full max-w-full overflow-hidden bg-white transition-all duration-300
@@ -58,7 +60,7 @@ export const Footer = ({ hideSocials }: FooterProps) => {
           "xl:justify-between xl:items-end",
         )}
       >
-        {!hideSocials && (
+        {!shouldHideSocials && (
           <div className="flex flex-col items-center md:items-end gap-6 mt-4 shrink-0">
             <h2
               className="text-text-primary font-figtree whitespace-nowrap"
