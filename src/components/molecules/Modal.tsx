@@ -31,7 +31,7 @@ export const Modal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
@@ -42,7 +42,7 @@ export const Modal = ({
       <div
         className={cn(
           "relative bg-white rounded-3xl w-full max-w-md shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200",
-          className
+          className,
         )}
       >
         <div className="flex items-center justify-between p-6 border-b border-gray-100">

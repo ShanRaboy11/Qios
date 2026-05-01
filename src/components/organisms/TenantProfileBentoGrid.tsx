@@ -20,20 +20,24 @@ import { Button } from "@/components/atoms/Button";
 import { Badge } from "@/components/atoms/Badge";
 import { KPICard } from "@/components/molecules/KPICard";
 
+import { cn } from "@/lib/utils";
+
 interface TenantProfileBentoGridProps {
   tenant: TenantProfileData;
   onUpdateDocumentStatus: (
     docId: string,
     newStatus: "Approved" | "Revision Requested",
   ) => void;
+  className?: string;
 }
 
 export const TenantProfileBentoGrid = ({
   tenant,
   onUpdateDocumentStatus,
+  className,
 }: TenantProfileBentoGridProps) => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className={cn("grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6", className)}>
       {/* 1. Business Information */}
       <BentoCard
         title="Business Information"

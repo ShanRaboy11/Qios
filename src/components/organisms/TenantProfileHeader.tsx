@@ -5,28 +5,30 @@ import { ArrowLeft, Check, X, Pause, Edit } from "lucide-react";
 import Link from "next/link";
 import { TenantProfileData } from "./TenantProfilePage";
 
+import { cn } from "@/lib/utils";
+
 interface TenantProfileHeaderProps {
   tenant: TenantProfileData;
   onStatusChange: (status: TenantProfileData["status"]) => void;
+  className?: string;
 }
 
 export const TenantProfileHeader = ({
   tenant,
   onStatusChange,
+  className,
 }: TenantProfileHeaderProps) => {
   return (
-    <div className="flex flex-col gap-6">
+    <div className={cn("flex flex-col gap-6", className)}>
       <Link
         href="/admin/dashboard?view=tenant"
-        className="flex items-center gap-2 text-text-secondary hover:scale-105 transition-all duration-300 w-fit"
+        className="flex items-center gap-2 hover:scale-105 transition-all duration-300 w-fit"
       >
         <ArrowLeft className="w-5 h-5" />
-        <span className="text-[15px] font-medium">
-          Back to Tenant Directory
-        </span>
+        <span className="b1 text-text-secondary">Back to Tenant Directory</span>
       </Link>
 
-      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mt-5">
         <div className="flex flex-col gap-3">
           <div className="flex items-center gap-3">
             <h1 className="h1 text-text-primary">{tenant.name}</h1>
@@ -89,10 +91,10 @@ export const TenantProfileHeader = ({
             </Button>
           )}
 
-          <Button variant="outline">
+          {/*<Button variant="outline">
             <Edit className="w-4 h-4 mr-2" />
             Edit Info
-          </Button>
+          </Button>*/}
         </div>
       </div>
     </div>
