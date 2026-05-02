@@ -14,14 +14,15 @@ import { ContactInformation } from "./components/ContactInformation";
 import { AuthCredentials } from "./components/AuthCredentials";
 import { SubscriptionPackage } from "./components/SubscriptionPackage";
 import { FeatureConfig } from "./components/FeatureConfiguration";
+import { RegistrationSuccessModal } from "./components/RegistrationSuccessModal";
 import { Navbar } from "@/components/organisms/navbar";
 import { Footer } from "@/components/organisms/footer";
-import { processOnboarding } from "./actions";
+import { processOnboarding, sendContactVerificationCode } from "./actions";
 import { useRouter } from "next/navigation";
 
 const steps = [
   { id: 1, title: "Business Information", icon: FileText },
-  { id: 2, title: "Contact Information", icon: Contact },
+  { id: 2, title: "Contact Verification", icon: Contact },
   { id: 3, title: "Authentication Credentials", icon: IdCard },
   { id: 4, title: "Document Requirements", icon: FileCheck },
   { id: 5, title: "Subscription Package", icon: ShoppingBag },
@@ -33,17 +34,32 @@ export default function OnboardingPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   
-  const [businessData, setBusinessData] = useState({ name: "", email: "", owner: "" });
+  const [businessData, setBusinessData] = useState({ name: "", email: "", owner: "", phoneNumber: "" });
   const [contactData, setContactData] = useState({ phoneNumber: "" });
   const [authData, setAuthData] = useState({ email: "", password: "", confirm: "" });
   const [subscriptionData, setSubscriptionData] = useState({ packageId: "starter" });
+  const [documentData, setDocumentData] = useState<Record<string, File>>({});
+  const [verificationCode, setVerificationCode] = useState("");
   
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [registrationData, setRegistrationData] = useState({ businessName: "", businessEmail: "" });
 
   const validateEmail = (email: string) => /\S+@\S+\.\S+/.test(email);
 
-  const nextStep = () => {
+  const dispatchVerificationCode = async () => {
+    const res = await sendContactVerificationCode({
+      email: businessData.email,
+      businessName: businessData.name,
+    });
+
+    setVerificationCode(res.verificationCode);
+    return res.verificationCode;
+  };
+
+  const nextStep = async () => {
     setError("");
     setSuccess("");
 
@@ -51,16 +67,19 @@ export default function OnboardingPage() {
       if (!businessData.name.trim()) return setError("Business Name is required");
       if (!validateEmail(businessData.email)) return setError("A valid business email is required");
       if (!businessData.owner?.trim()) return setError("Owner / Admin Name is required");
-      
-      setSuccess(`Verification code sent to ${businessData.email}`);
-      setLoading(true);
+      if (!businessData.phoneNumber || businessData.phoneNumber.length < 10) return setError("A valid Philippine phone number is required");
 
-      setTimeout(() => {
-        setLoading(false);
-        setSuccess("");
+      setLoading(true);
+      try {
+        await dispatchVerificationCode();
+        setSuccess(`Verification code sent to ${businessData.email}`);
         setCurrentStep(2);
-      }, 2000);
-      return; 
+      } catch (err: any) {
+        setError(err.message || "Unable to send verification code.");
+      } finally {
+        setLoading(false);
+      }
+      return;
     }
 
     if (currentStep === 3) {
@@ -86,19 +105,28 @@ export default function OnboardingPage() {
     try {
       const res = await processOnboarding({
         businessData,
-        contactData,
         authData,
         subscriptionData,
-        featureData
+        featureData,
+        documentData
       });
       if (res.success) {
-        router.push("/login?onboarding=pending");
+        setRegistrationData({
+          businessName: res.businessName,
+          businessEmail: res.businessEmail,
+        });
+        setShowSuccessModal(true);
       }
     } catch (err: any) {
       setError(err.message || "An error occurred during onboarding.");
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleModalClose = () => {
+    setShowSuccessModal(false);
+    router.push("/");
   };
 
   return (
@@ -131,7 +159,14 @@ export default function OnboardingPage() {
             )}
             
             {currentStep === 2 && (
-              <ContactInformation data={contactData} setData={setContactData} onNext={nextStep} onBack={prevStep} />
+              <ContactInformation
+                data={contactData}
+                setData={setContactData}
+                expectedCode={verificationCode}
+                onResendCode={dispatchVerificationCode}
+                onBack={prevStep}
+                onVerified={nextStep}
+              />
             )}
             
             {currentStep === 3 && (
@@ -139,7 +174,7 @@ export default function OnboardingPage() {
             )}
 
             {currentStep === 4 && (
-              <DocumentUpload onNext={nextStep} onBack={prevStep} />
+              <DocumentUpload data={documentData} setData={setDocumentData} onNext={nextStep} onBack={prevStep} />
             )}
             
             {currentStep === 5 && (
@@ -197,6 +232,13 @@ export default function OnboardingPage() {
       </div>
     </div>
     <Footer />
+    {showSuccessModal && (
+      <RegistrationSuccessModal
+        businessName={registrationData.businessName}
+        businessEmail={registrationData.businessEmail}
+        onClose={handleModalClose}
+      />
+    )}
     </main>
   );
 }

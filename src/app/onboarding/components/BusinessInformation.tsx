@@ -6,7 +6,7 @@ export const Required = () => (
   <span className="text-[var(--color-warning-primary)] ml-0.5">*</span>
 );
 
-export function BusinessInformation({ data, setData }: any) {
+export function BusinessInformation({ data, setData, error }: any) {
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-right-8 duration-500 w-full max-w-[450px]">
       
@@ -15,7 +15,6 @@ export function BusinessInformation({ data, setData }: any) {
         placeholder="Business Name"
         className="max-w-none"
         value={data.name}
-        // Force the update to the name property
         onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
           setData((prev: any) => ({ ...prev, name: e.target.value }))
         }
@@ -39,6 +38,19 @@ export function BusinessInformation({ data, setData }: any) {
         onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
           setData((prev: any) => ({ ...prev, owner: e.target.value }))
         }
+      />
+
+      <FormField
+        label={<>Contact Number <Required /></>}
+        placeholder="09123456789"
+        type="tel"
+        className="max-w-none"
+        value={data.phoneNumber || ""}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+          const val = e.target.value.replace(/\D/g, "");
+          setData((prev: any) => ({ ...prev, phoneNumber: val }))
+        }}
+        supportiveText="Philippine phone number without +63"
       />
     </div>
   );

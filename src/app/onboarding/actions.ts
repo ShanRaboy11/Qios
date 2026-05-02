@@ -1,12 +1,52 @@
 "use server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { sendContactVerificationEmail, sendRegistrationSuccessEmail } from "@/lib/email";
+
+export async function sendContactVerificationCode(data: {
+  email: string;
+  businessName: string;
+}) {
+  const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+  
+  // Log generated code in dev mode
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`\n[DEV] Verification code generated for ${data.email}: ${verificationCode}\n`);
+  }
+  
+  const result = await sendContactVerificationEmail({
+    to: data.email,
+    businessName: data.businessName,
+    code: verificationCode,
+  });
+
+  if (!result.success) {
+    const isDev = process.env.NODE_ENV !== 'production';
+
+    if (isDev && result.reason === 'SMTP_NOT_CONFIGURED') {
+      // Local dev fallback when SMTP is intentionally unavailable.
+      console.log('[DEV] SMTP not configured, returning verification code for manual entry');
+      return { success: true, verificationCode };
+    }
+
+    throw new Error(
+      result.reason === 'SMTP_NOT_CONFIGURED'
+        ? 'Email service is not configured. Set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, and SMTP_FROM.'
+        : 'Failed to send verification code. Please check your SMTP credentials and sender address.'
+    );
+  }
+
+  return {
+    success: true,
+    verificationCode,
+  };
+}
 
 export async function processOnboarding(data: {
-  businessData: { name: string, email: string },
-  contactData: { phoneNumber: string },
+  businessData: { name: string, email: string, phoneNumber: string },
   authData: { email: string, password: string },
   subscriptionData: { packageId: string },
-  featureData: { inventoryMode: string, generalFeatures: any }
+  featureData: { inventoryMode: string, generalFeatures: any },
+  documentData?: Record<string, File>
 }) {
   const supabase = createSupabaseAdminClient();
   
@@ -18,7 +58,7 @@ export async function processOnboarding(data: {
     user_metadata: {
       full_name: data.businessData.name,
       business_email: data.businessData.email,
-      phone_number: data.contactData.phoneNumber,
+      phone_number: data.businessData.phoneNumber,
       subscription_plan: data.subscriptionData.packageId,
       features: data.featureData.generalFeatures
     }
@@ -41,17 +81,67 @@ export async function processOnboarding(data: {
   }
 
   const tenantId = tenantRes.id;
+  
+  // Handle Document Uploads
+  let uploadedUrls: string[] = [];
+  if (data.documentData && Object.keys(data.documentData).length > 0) {
+    for (const [key, file] of Object.entries(data.documentData)) {
+      try {
+        // File is a web File object passed from the client; use arrayBuffer to get binary content
+        // This avoids client-side base64 serialization and reduces large string transfer.
+        // @ts-ignore - File type has arrayBuffer in runtime
+        const arrayBuffer = await (file as any).arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        const filePath = `${tenantId}/${key}-${Date.now()}-${(file as any).name.replace(/[^a-zA-Z0-9.]/g, '')}`;
 
-  // 3. Wait slightly for the profile trigger to run just in case, though it runs in transaction usually.
-  // We can just update it safely
+        const { error: uploadError } = await supabase.storage
+          .from('verification-docs')
+          .upload(filePath, buffer, {
+            contentType: (file as any).type || 'application/octet-stream',
+            upsert: false,
+          });
+
+        if (!uploadError) {
+          const { data: urlData } = supabase.storage.from('verification-docs').getPublicUrl(filePath);
+          if (urlData?.publicUrl) {
+            uploadedUrls.push(urlData.publicUrl);
+          }
+        } else {
+          console.error('Document upload failed:', uploadError);
+        }
+      } catch (err) {
+        console.error('Document processing failed:', err);
+      }
+    }
+
+    // Update tenant with document urls
+    if (uploadedUrls.length > 0) {
+      await supabase.from('tenants').update({
+        verification_doc_urls: uploadedUrls,
+      }).eq('id', tenantId);
+    }
+  }
+
+  // 3. Update the Profile
   const { error: profileError } = await supabase.from('profiles').update({
     tenant_id: tenantId,
-    role: 'super_admin', // maybe 'super_admin' is better for the main tenant owner? actually 'admin' is typical for a tenant owner. Let's use 'super_admin' or 'admin'
+    role: 'admin',
   }).eq('id', userId);
 
   if (profileError) {
     throw new Error(profileError.message || "Failed to link user to tenant");
   }
 
-  return { success: true, tenantId, userId };
+  // 4. Send Registration Success Email
+  try {
+    await sendRegistrationSuccessEmail({
+      to: data.businessData.email,
+      businessName: data.businessData.name,
+    });
+  } catch (err) {
+    console.error('Failed to send registration success email:', err);
+    // Don't throw - email failure shouldn't block registration
+  }
+
+  return { success: true, tenantId, userId, businessName: data.businessData.name, businessEmail: data.businessData.email };
 }

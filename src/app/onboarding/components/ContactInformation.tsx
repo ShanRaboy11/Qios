@@ -8,15 +8,18 @@ import { cn } from "@/lib/utils";
 interface ContactInformationProps {
   data: { phoneNumber: string };
   setData: React.Dispatch<React.SetStateAction<{ phoneNumber: string }>>;
-  onNext: () => void;
+  expectedCode: string;
+  onResendCode: () => Promise<string>;
+  onVerified: () => Promise<void> | void;
   onBack: () => void;
 }
 
-export function ContactInformation({ data, setData, onNext, onBack }: ContactInformationProps) {
+export function ContactInformation({ expectedCode, onResendCode, onVerified, onBack }: ContactInformationProps) {
   // Timer starts immediately as the code is sent during the transition from Step 1
   const [isTimerRunning, setIsTimerRunning] = useState(true);
   const [timeLeft, setTimeLeft] = useState(45);
-  const [otp, setOtp] = useState(["", "", "", ""]);
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  const [localError, setLocalError] = useState("");
   const otpInputs = useRef<(HTMLInputElement | null)[]>([]);
 
   useEffect(() => {
@@ -28,6 +31,39 @@ export function ContactInformation({ data, setData, onNext, onBack }: ContactInf
   }, [isTimerRunning, timeLeft]);
 
   const isOtpComplete = otp.every(digit => digit !== "");
+  const enteredCode = otp.join("");
+
+  const handleVerify = async () => {
+    setLocalError("");
+
+    if (!expectedCode) {
+      setLocalError("Verification code not received. Please go back and try again.");
+      return;
+    }
+
+    if (enteredCode !== expectedCode) {
+      setLocalError("The verification code does not match.");
+      return;
+    }
+
+    await onVerified();
+  };
+
+  const handleResend = async () => {
+    if (timeLeft !== 0) {
+      return;
+    }
+
+    setLocalError("");
+    const newCode = await onResendCode();
+    setOtp(["", "", "", "", "", ""]);
+    setTimeLeft(45);
+    setIsTimerRunning(true);
+
+    if (!newCode) {
+      setLocalError("Unable to resend the verification code.");
+    }
+  };
 
   return (
     /* items-center centers the content horizontally */
@@ -44,7 +80,7 @@ export function ContactInformation({ data, setData, onNext, onBack }: ContactInf
           </div>
           <button
             type="button"
-            onClick={() => { if (timeLeft === 0) { setTimeLeft(45); setIsTimerRunning(true); }}}
+            onClick={handleResend}
             className={cn(
               "b2 border-b-2 font-bold transition-all",
               timeLeft === 0 
@@ -56,8 +92,12 @@ export function ContactInformation({ data, setData, onNext, onBack }: ContactInf
           </button>
         </div>
 
+        {localError && <p className="text-sm text-red-500 text-center">{localError}</p>}
+
+        {/* Verification code is not displayed in any environment for security. */}
+
         {/* OTP Inputs */}
-        <div className="flex gap-8 justify-center">
+        <div className="flex gap-4 justify-center">
           {otp.map((digit, i) => (
             <input
               key={i}
@@ -66,7 +106,12 @@ export function ContactInformation({ data, setData, onNext, onBack }: ContactInf
               onChange={(e) => {
                 const val = e.target.value.replace(/\D/g, "");
                 const newOtp = [...otp]; newOtp[i] = val; setOtp(newOtp);
-                if (val && i < 3) otpInputs.current[i+1]?.focus();
+                if (val && i < 5) otpInputs.current[i+1]?.focus();
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Backspace" && !digit && i > 0) {
+                  otpInputs.current[i - 1]?.focus();
+                }
               }}
               className={cn(
                 "w-10 h-10 bg-transparent border-b-2 text-center text-2xl outline-none transition-all duration-300",
@@ -95,7 +140,7 @@ export function ContactInformation({ data, setData, onNext, onBack }: ContactInf
                 ? "bg-[var(--color-brand-secondary)] text-text-tertiary scale-[1.02]" 
                 : "bg-neutral-300 text-white cursor-not-allowed"
             )}
-            onClick={() => isOtpComplete && onNext()}
+            onClick={handleVerify}
           >
             Continue
             <ArrowRight className="w-5 h-5 ml-2" />
