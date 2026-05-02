@@ -1,4 +1,4 @@
-import nodemailer from 'nodemailer';
+import nodemailer from "nodemailer";
 
 type SmtpConfig = {
   host: string;
@@ -13,32 +13,32 @@ type SmtpConfig = {
 // Sourced from globals.css / kds design tokens
 
 const B = {
-  gold:        '#ffd77a',   // --kds-gold / --color-brand-secondary
-  goldSoft:    '#fff3da',   // --kds-gold-soft
-  goldMid:     '#c07a00',   // --kds-gold-mid
-  goldDark:    '#9a6200',   // --kds-gold-dark
-  goldDeeper:  '#7a5800',   // --kds-gold-deeper
-  cream:       '#fff9ef',   // --color-bg-primary / --kds-cream
-  creamDark:   '#fdf4e3',
-  border:      '#f0e6d3',   // --kds-border-warm
-  brownDark:   '#5a3a1a',   // --kds-brown-dark
-  brownMid:    '#8b6f47',   // --kds-brown-mid
-  primary:     '#ffc670',   // --color-brand-primary
-  coral:       '#ff5269',   // --color-brand-accent / --kds-coral
-  coralSoft:   '#ffe4e8',   // --kds-coral-soft
-  green:       '#1fad66',   // --kds-green / --color-success-primary
-  greenSoft:   '#e0fad6',   // --kds-green-soft / --color-success-secondary
-  dark:        '#101828',   // --kds-dark
-  muted:       '#6a7282',   // --kds-muted
-  textPrimary:   '#2d2d2d', // --color-text-primary
-  textSecondary: '#707070', // --color-text-secondary
+  gold: "#ffd77a", // --kds-gold / --color-brand-secondary
+  goldSoft: "#fff3da", // --kds-gold-soft
+  goldMid: "#c07a00", // --kds-gold-mid
+  goldDark: "#9a6200", // --kds-gold-dark
+  goldDeeper: "#7a5800", // --kds-gold-deeper
+  cream: "#fff9ef", // --color-bg-primary / --kds-cream
+  creamDark: "#fdf4e3",
+  border: "#f0e6d3", // --kds-border-warm
+  brownDark: "#5a3a1a", // --kds-brown-dark
+  brownMid: "#8b6f47", // --kds-brown-mid
+  primary: "#ffc670", // --color-brand-primary
+  coral: "#ff5269", // --color-brand-accent / --kds-coral
+  coralSoft: "#ffe4e8", // --kds-coral-soft
+  green: "#1fad66", // --kds-green / --color-success-primary
+  greenSoft: "#e0fad6", // --kds-green-soft / --color-success-secondary
+  dark: "#101828", // --kds-dark
+  muted: "#6a7282", // --kds-muted
+  textPrimary: "#2d2d2d", // --color-text-primary
+  textSecondary: "#707070", // --color-text-secondary
 };
 
 // ─── SMTP ─────────────────────────────────────────────────────────────────────
 
 const readSmtpConfig = (): SmtpConfig | null => {
   const host = process.env.SMTP_HOST || process.env.MAIL_HOST;
-  const portRaw = process.env.SMTP_PORT || process.env.MAIL_PORT || '587';
+  const portRaw = process.env.SMTP_PORT || process.env.MAIL_PORT || "587";
   const user = process.env.SMTP_USER || process.env.MAIL_USER;
   const pass =
     process.env.SMTP_PASSWORD ||
@@ -68,12 +68,48 @@ const createTransporter = (config: SmtpConfig) =>
     auth: { user: config.user, pass: config.pass },
   });
 
+const normalizePublicBaseUrl = (value?: string) => {
+  if (!value) return "";
+  const trimmed = value.trim().replace(/\/+$/, "");
+  if (!trimmed) return "";
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+};
+
+const publicBaseUrl = normalizePublicBaseUrl(
+  process.env.NEXT_PUBLIC_SITE_URL ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.SITE_URL ||
+    process.env.VERCEL_PROJECT_PRODUCTION_URL,
+);
+
+const brandFontOtfUrl =
+  process.env.IBRAND_FONT_OTF_URL ||
+  (publicBaseUrl ? `${publicBaseUrl}/fonts/ibrand.otf` : "");
+
+const brandFontSrc = [
+  brandFontOtfUrl ? `url('${brandFontOtfUrl}') format('opentype')` : "",
+]
+  .filter(Boolean)
+  .join(",\n             ");
+
+const brandFontFace = brandFontSrc
+  ? `<style>
+      @font-face {
+        font-family: 'IBrand';
+        src: ${brandFontSrc};
+        font-weight: 700;
+        font-style: normal;
+      }
+    </style>`
+  : "";
+
 // ─── Shared Partials ──────────────────────────────────────────────────────────
 
 /**
  * Outer page shell. Warm parchment background, centred card, global footer.
  */
-const emailWrapper = (body: string) => `
+const emailWrapper = (body: string) =>
+  `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -96,7 +132,8 @@ const emailWrapper = (body: string) => `
         <!-- Card -->
         <table width="600" cellpadding="0" cellspacing="0" role="presentation"
                style="max-width:600px;width:100%;background:#fffdf8;border-radius:20px;overflow:hidden;
-                      box-shadow:0 4px 32px rgba(160,100,30,0.10),0 1px 4px rgba(160,100,30,0.06);">
+                           box-shadow:0 4px 32px rgba(160,100,30,0.12),0 1px 4px rgba(160,100,30,0.06);
+                            border:1px solid rgba(255,215,122,0.2);">
           ${body}
         </table>
 
@@ -121,31 +158,17 @@ const emailWrapper = (body: string) => `
 `.trim();
 
 // ─── Logo ─────────────────────────────────────────────────────────────────────
-// SVG with gradient for modern clients; table-cell fallback for Outlook.
+// Text-only wordmark with Outlook-safe fallback.
 
 const qiosLogo = `
 <!--[if mso]>
-<table cellpadding="0" cellspacing="0" role="presentation"><tr>
-  <td style="width:48px;height:48px;border-radius:12px;background:#ffc670;text-align:center;vertical-align:middle;">
-    <span style="font-size:24px;font-weight:700;color:#fff9ef;font-family:Georgia,serif;line-height:48px;display:inline-block;width:48px;">Q</span>
-  </td>
-</tr></table>
+<strong style="font-size:48px;font-weight:700;font-family:Georgia,serif;color:${B.goldMid};letter-spacing:-0.02em;line-height:1;">Qios</strong>
 <![endif]-->
 <!--[if !mso]><!-->
-<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"
-     style="display:inline-block;vertical-align:middle;">
-  <defs>
-    <linearGradient id="qg" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
-      <stop offset="0%"   stop-color="#ffd77a"/>
-      <stop offset="50%"  stop-color="#ffc670"/>
-      <stop offset="100%" stop-color="#ff5269"/>
-    </linearGradient>
-  </defs>
-  <rect width="48" height="48" rx="12" fill="url(#qg)"/>
-  <text x="24" y="33" text-anchor="middle"
-        font-family="Georgia,serif" font-size="26" font-weight="700"
-        fill="#fff9ef" letter-spacing="-1">Q</text>
-</svg>
+<span style="font-size:48px;font-weight:700;
+             font-family:'IBrand','Figtree','Segoe UI',Arial,sans-serif;
+             color:#ffc670;
+             letter-spacing:-0.02em;line-height:1;display:inline-block;">Qios</span>
 <!--<![endif]-->`;
 
 // ─── Blob decorations ─────────────────────────────────────────────────────────
@@ -198,52 +221,25 @@ const brandHeader = ({
   pillBorder,
   pillColor,
 }: {
-  title:       string;
-  subtitle:    string;
-  pillLabel:   string;
-  pillBg:      string;
-  pillBorder:  string;
-  pillColor:   string;
+  title: string;
+  subtitle: string;
+  pillLabel: string;
+  pillBg: string;
+  pillBorder: string;
+  pillColor: string;
 }) => `
 ${headerBlobs}
 <tr>
   <td style="background:linear-gradient(155deg,#fffdf8 0%,#fff3da 55%,#ffe8c2 100%);
-             padding:32px 40px 28px;border-bottom:1px solid ${B.border};">
+             padding:36px 40px 32px;border-bottom:1px solid ${B.border};">
 
-    <!-- Brand row -->
-    <table cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom:20px;">
-      <tr>
-        <td style="vertical-align:middle;">${qiosLogo}</td>
-        <td style="padding-left:12px;vertical-align:middle;">
-          <!-- Outlook-safe: plain coloured text, no gradient clip -->
-          <!--[if mso]>
-          <span style="font-size:22px;font-weight:700;font-family:Georgia,serif;color:${B.goldMid};letter-spacing:-0.02em;">Qios</span>
-          <![endif]-->
-          <!--[if !mso]><!-->
-          <span style="font-size:22px;font-weight:700;font-family:Georgia,serif;
-                       background:linear-gradient(135deg,#c07a00 0%,#ff5269 100%);
-                       -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-                       color:${B.goldMid};letter-spacing:-0.02em;">Qios</span>
-          <!--<![endif]-->
-        </td>
-      </tr>
-    </table>
-
-    <!-- Pill badge -->
-    <table cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom:12px;">
-      <tr>
-        <td style="background-color:${pillBg};border:1px solid ${pillBorder};
-                   border-radius:20px;padding:3px 14px;">
-          <span style="font-size:11px;font-weight:600;color:${pillColor};
-                       text-transform:uppercase;letter-spacing:0.10em;">${pillLabel}</span>
-        </td>
-      </tr>
-    </table>
+    <!-- Logo -->
+    <p style="margin:0 0 20px;text-align:center;line-height:1;">${qiosLogo}</p>
 
     <!-- Title & subtitle -->
-    <p style="margin:0 0 6px;font-size:22px;font-weight:700;color:${B.textPrimary};
-              line-height:1.3;font-family:'Segoe UI',Arial,sans-serif;">${title}</p>
-    <p style="margin:0;font-size:13px;color:${B.brownMid};line-height:1.5;">${subtitle}</p>
+    <p style="margin:0 0 8px;font-size:24px;font-weight:700;color:${B.textPrimary};
+              line-height:1.3;font-family:'Segoe UI',Arial,sans-serif;text-align:center;">${title}</p>
+    <p style="margin:0;font-size:14px;color:${B.brownMid};line-height:1.5;text-align:center;">${subtitle}</p>
   </td>
 </tr>`;
 
@@ -290,23 +286,25 @@ export const sendContactVerificationEmail = async ({
   businessName,
   code,
 }: {
-  to:           string;
+  to: string;
   businessName: string;
-  code:         string;
+  code: string;
 }) => {
   const smtp = readSmtpConfig();
   if (!smtp) {
     return {
       success: false,
-      reason: 'SMTP_NOT_CONFIGURED' as const,
-      error: new Error('SMTP is not fully configured. Set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, and SMTP_FROM.'),
+      reason: "SMTP_NOT_CONFIGURED" as const,
+      error: new Error(
+        "SMTP is not fully configured. Set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, and SMTP_FROM.",
+      ),
     };
   }
 
-  const digits   = code.split('');
-  const mid      = Math.floor(digits.length / 2);
-  const left     = digits.slice(0, mid);
-  const right    = digits.slice(mid);
+  const digits = code.split("");
+  const mid = Math.floor(digits.length / 2);
+  const left = digits.slice(0, mid);
+  const right = digits.slice(mid);
 
   const tile = (d: string) =>
     `<td style="padding:0 4px;">
@@ -322,12 +320,12 @@ export const sendContactVerificationEmail = async ({
 
   const html = emailWrapper(`
     ${brandHeader({
-      title:      'One step away from your dashboard',
-      subtitle:   'Enter the code below to verify your business email address',
-      pillLabel:  'Secure Action',
-      pillBg:     B.coralSoft,
-      pillBorder: '#ffb3bd',
-      pillColor:  B.coral,
+      title: "One step away from your dashboard",
+      subtitle: "Enter the code below to verify your business email address",
+      pillLabel: "Secure Action",
+      pillBg: B.coralSoft,
+      pillBorder: "#ffb3bd",
+      pillColor: B.coral,
     })}
 
     <tr>
@@ -353,9 +351,9 @@ export const sendContactVerificationEmail = async ({
               </p>
               <table cellpadding="0" cellspacing="0" role="presentation">
                 <tr>
-                  ${left.map(tile).join('')}
+                  ${left.map(tile).join("")}
                   ${sep}
-                  ${right.map(tile).join('')}
+                  ${right.map(tile).join("")}
                 </tr>
               </table>
             </td>
@@ -392,13 +390,17 @@ export const sendContactVerificationEmail = async ({
     const info = await transporter.sendMail({
       from: smtp.from,
       to,
-      subject: 'Verify Your Business Email — Qios',
+      subject: "Verify Your Business Email — Qios",
       html,
     });
     return { success: true as const, messageId: info.messageId };
   } catch (error) {
-    console.error('Error sending verification email:', error);
-    return { success: false as const, reason: 'SMTP_SEND_FAILED' as const, error };
+    console.error("Error sending verification email:", error);
+    return {
+      success: false as const,
+      reason: "SMTP_SEND_FAILED" as const,
+      error,
+    };
   }
 };
 
@@ -409,24 +411,26 @@ export const sendBusinessVerificationEmail = async ({
   status,
   comments,
 }: {
-  to:        string;
-  status:    'approved' | 'rejected';
+  to: string;
+  status: "approved" | "rejected";
   comments?: string | null;
 }) => {
   const smtp = readSmtpConfig();
   if (!smtp) {
     return {
       success: false,
-      reason: 'SMTP_NOT_CONFIGURED' as const,
-      error: new Error('SMTP is not fully configured. Set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, and SMTP_FROM.'),
+      reason: "SMTP_NOT_CONFIGURED" as const,
+      error: new Error(
+        "SMTP is not fully configured. Set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, and SMTP_FROM.",
+      ),
     };
   }
 
-  const isApproved = status === 'approved';
+  const isApproved = status === "approved";
 
   const subject = isApproved
-    ? 'Your Business has been Approved — Qios'
-    : 'Update on Your Business Onboarding — Qios';
+    ? "Your Business has been Approved — Qios"
+    : "Update on Your Business Onboarding — Qios";
 
   // ── Status banner ──
   const statusBanner = isApproved
@@ -478,8 +482,9 @@ export const sendBusinessVerificationEmail = async ({
       </table>`;
 
   // ── Reviewer comments (rejection only) ──
-  const commentsBlock = !isApproved && comments
-    ? `<table width="100%" cellpadding="0" cellspacing="0" role="presentation"
+  const commentsBlock =
+    !isApproved && comments
+      ? `<table width="100%" cellpadding="0" cellspacing="0" role="presentation"
              style="background-color:#fafaf8;border:1px solid #ece9e0;
                     border-radius:8px;margin-bottom:20px;">
         <tr>
@@ -490,7 +495,7 @@ export const sendBusinessVerificationEmail = async ({
           </td>
         </tr>
       </table>`
-    : '';
+      : "";
 
   // ── CTA button ──
   const ctaButton = isApproved
@@ -524,30 +529,35 @@ export const sendBusinessVerificationEmail = async ({
   // ── Next steps (approved only) ──
   const nextSteps = isApproved
     ? `${divider}
-       ${stepRow('1', 'Set up your queue',  'Configure your service types, capacity, and operating hours')}
-       ${stepRow('2', 'Invite your team',   'Add staff members to help manage your customer flow')}
-       ${stepRow('3', 'Go live',            'Share your Qios link and start serving customers today')}`
-    : '';
+       ${stepRow("1", "Set up your queue", "Configure your service types, capacity, and operating hours")}
+       ${stepRow("2", "Invite your team", "Add staff members to help manage your customer flow")}
+       ${stepRow("3", "Go live", "Share your Qios link and start serving customers today")}`
+    : "";
 
   const html = emailWrapper(`
     ${brandHeader({
-      title:     isApproved ? 'Your business is officially verified' : 'Action required on your application',
-      subtitle:  isApproved ? 'Welcome to the Qios merchant network' : 'Your verification requires attention before proceeding',
-      pillLabel: isApproved ? 'Verification Complete' : 'Action Required',
-      pillBg:    isApproved ? B.greenSoft   : B.coralSoft,
-      pillBorder:isApproved ? '#a3e8c6'    : '#ffb3bd',
-      pillColor: isApproved ? '#0a5c34'    : '#9b1c33',
+      title: isApproved
+        ? "Your business is officially verified"
+        : "Action required on your application",
+      subtitle: isApproved
+        ? "Welcome to the Qios merchant network"
+        : "Your verification requires attention before proceeding",
+      pillLabel: isApproved ? "Verification Complete" : "Action Required",
+      pillBg: isApproved ? B.greenSoft : B.coralSoft,
+      pillBorder: isApproved ? "#a3e8c6" : "#ffb3bd",
+      pillColor: isApproved ? "#0a5c34" : "#9b1c33",
     })}
 
     <tr>
       <td style="padding:32px 40px 28px;background:#fffdf8;">
         <p style="margin:0 0 20px;font-size:15px;color:${B.textPrimary};">
-          ${isApproved ? '<strong>Congratulations!</strong>' : 'Hi there,'}
+          ${isApproved ? "<strong>Congratulations!</strong>" : "Hi there,"}
         </p>
         <p style="margin:0 0 20px;font-size:14px;color:${B.textSecondary};line-height:1.7;">
-          ${isApproved
-            ? 'You now have full access to your merchant dashboard &mdash; manage your queue, serve customers, and track your performance in real time.'
-            : 'Thank you for submitting your business verification documents. After reviewing your application, we were unable to approve it at this time.'
+          ${
+            isApproved
+              ? "You now have full access to your merchant dashboard &mdash; manage your queue, serve customers, and track your performance in real time."
+              : "Thank you for submitting your business verification documents. After reviewing your application, we were unable to approve it at this time."
           }
         </p>
 
@@ -556,10 +566,14 @@ export const sendBusinessVerificationEmail = async ({
         ${ctaButton}
         ${nextSteps}
 
-        ${!isApproved ? `<p style="margin:0;font-size:13px;color:#b8a898;line-height:1.6;">
+        ${
+          !isApproved
+            ? `<p style="margin:0;font-size:13px;color:#b8a898;line-height:1.6;">
           If you believe this decision is incorrect or need clarification, our support team is here to help at
           <a href="mailto:support@qios.app" style="color:${B.coral};text-decoration:none;font-weight:600;">support@qios.app</a>.
-        </p>` : ''}
+        </p>`
+            : ""
+        }
       </td>
     </tr>
 
@@ -568,11 +582,20 @@ export const sendBusinessVerificationEmail = async ({
 
   const transporter = createTransporter(smtp);
   try {
-    const info = await transporter.sendMail({ from: smtp.from, to, subject, html });
+    const info = await transporter.sendMail({
+      from: smtp.from,
+      to,
+      subject,
+      html,
+    });
     return { success: true as const, messageId: info.messageId };
   } catch (error) {
-    console.error('Error sending business verification email:', error);
-    return { success: false as const, reason: 'SMTP_SEND_FAILED' as const, error };
+    console.error("Error sending business verification email:", error);
+    return {
+      success: false as const,
+      reason: "SMTP_SEND_FAILED" as const,
+      error,
+    };
   }
 };
 
@@ -582,26 +605,26 @@ export const sendRegistrationSuccessEmail = async ({
   to,
   businessName,
 }: {
-  to:           string;
+  to: string;
   businessName: string;
 }) => {
   const smtp = readSmtpConfig();
   if (!smtp) {
     return {
       success: false,
-      reason: 'SMTP_NOT_CONFIGURED' as const,
-      error: new Error('SMTP is not fully configured.'),
+      reason: "SMTP_NOT_CONFIGURED" as const,
+      error: new Error("SMTP is not fully configured."),
     };
   }
 
   const html = emailWrapper(`
     ${brandHeader({
-      title:      `Thanks for joining Qios!`,
-      subtitle:   'Your registration has been received and is under review',
-      pillLabel:  'Registration Submitted',
-      pillBg:     B.goldSoft,
+      title: `Thanks for joining Qios!`,
+      subtitle: "Your registration has been received and is under review",
+      pillLabel: "Registration Submitted",
+      pillBg: B.goldSoft,
       pillBorder: B.border,
-      pillColor:  B.goldDark,
+      pillColor: B.goldDark,
     })}
 
     <tr>
@@ -614,9 +637,9 @@ export const sendRegistrationSuccessEmail = async ({
           Here's what to expect next:
         </p>
 
-        ${stepRow('1', 'Document review',    "Our team will verify your submitted business documents and information.")}
-        ${stepRow('2', 'Email notification', "You'll receive an update within <strong>2&ndash;3 business days</strong>.")}
-        ${stepRow('3', 'Get started',        "Once approved, you'll have instant access to your full dashboard.")}
+        ${stepRow("1", "Document review", "Our team will verify your submitted business documents and information.")}
+        ${stepRow("2", "Email notification", "You'll receive an update within <strong>2&ndash;3 business days</strong>.")}
+        ${stepRow("3", "Get started", "Once approved, you'll have instant access to your full dashboard.")}
 
         <!-- Callout box -->
         <table width="100%" cellpadding="0" cellspacing="0" role="presentation"
@@ -656,12 +679,16 @@ export const sendRegistrationSuccessEmail = async ({
     const info = await transporter.sendMail({
       from: smtp.from,
       to,
-      subject: 'Registration Submitted — Qios',
+      subject: "Registration Submitted — Qios",
       html,
     });
     return { success: true as const, messageId: info.messageId };
   } catch (error) {
-    console.error('Error sending registration success email:', error);
-    return { success: false as const, reason: 'SMTP_SEND_FAILED' as const, error };
+    console.error("Error sending registration success email:", error);
+    return {
+      success: false as const,
+      reason: "SMTP_SEND_FAILED" as const,
+      error,
+    };
   }
 };
