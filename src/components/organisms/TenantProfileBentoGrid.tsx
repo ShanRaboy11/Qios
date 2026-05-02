@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { BentoCard } from "@/components/molecules/BentoCard";
 import { InfoRow } from "@/components/molecules/InfoRow";
 import {
@@ -9,7 +9,7 @@ import {
   Check,
   AlertCircle,
   FileImage,
-  ExternalLink,
+  Eye,
   ShieldCheck,
   Receipt,
   MapPin,
@@ -36,6 +36,15 @@ export const TenantProfileBentoGrid = ({
   onUpdateDocumentStatus,
   className,
 }: TenantProfileBentoGridProps) => {
+  const [previewDocument, setPreviewDocument] = useState<{
+    url: string;
+    title: string;
+  } | null>(null);
+
+  useEffect(() => {
+    setPreviewDocument(null);
+  }, [tenant.id]);
+
   return (
     <div className={cn("grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6", className)}>
       {/* 1. Business Information */}
@@ -112,14 +121,18 @@ export const TenantProfileBentoGrid = ({
                           </span>
                         </div>
                         {doc.url && (
-                          <a
-                            href={doc.url}
-                            target="_blank"
-                            rel="noreferrer"
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setPreviewDocument({
+                                url: doc.url || "",
+                                title: doc.fileName || doc.title,
+                              })
+                            }
                             className="text-[12px] text-brand-primary font-bold hover:underline flex items-center gap-1 shrink-0"
                           >
-                            View <ExternalLink className="w-3 h-3" />
-                          </a>
+                            View <Eye className="w-3 h-3" />
+                          </button>
                         )}
                       </div>
 
@@ -177,6 +190,31 @@ export const TenantProfileBentoGrid = ({
             );
           })}
         </div>
+
+        {previewDocument && (
+          <div className="mt-5 rounded-2xl border border-gray-100 bg-gray-50/40 p-4 space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <h6 className="text-sm font-semibold text-text-primary truncate">
+                Preview: {previewDocument.title}
+              </h6>
+              <button
+                type="button"
+                onClick={() => setPreviewDocument(null)}
+                className="text-xs font-medium text-text-secondary hover:text-text-primary"
+              >
+                Close Preview
+              </button>
+            </div>
+
+            <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+              <iframe
+                src={previewDocument.url}
+                title={previewDocument.title}
+                className="w-full h-[58vh]"
+              />
+            </div>
+          </div>
+        )}
       </BentoCard>
 
       {/* 3. Subscription Details */}

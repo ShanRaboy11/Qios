@@ -12,7 +12,7 @@ import {
   Search,
   Building2,
   Check,
-  ExternalLink,
+  Eye,
   FileText,
   Loader2,
   X,
@@ -698,6 +698,15 @@ function TenantDetailsModal({
   error: string | null;
   onClose: () => void;
 }) {
+  const [previewDocument, setPreviewDocument] = useState<{
+    url: string;
+    title: string;
+  } | null>(null);
+
+  useEffect(() => {
+    setPreviewDocument(null);
+  }, [tenant?.id, isOpen]);
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -846,15 +855,19 @@ function TenantDetailsModal({
                                   {doc.fileName || "Uploaded file"}
                                 </span>
                                 {doc.url && (
-                                  <a
-                                    href={doc.url}
-                                    target="_blank"
-                                    rel="noreferrer"
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setPreviewDocument({
+                                        url: doc.url || "",
+                                        title: doc.fileName || doc.title,
+                                      })
+                                    }
                                     className="text-xs font-semibold text-brand-primary hover:underline inline-flex items-center gap-1 shrink-0"
                                   >
                                     View
-                                    <ExternalLink className="w-3 h-3" />
-                                  </a>
+                                    <Eye className="w-3 h-3" />
+                                  </button>
                                 )}
                               </div>
                             ) : (
@@ -867,6 +880,31 @@ function TenantDetailsModal({
                       </div>
                     )}
                   </div>
+
+                  {previewDocument && (
+                    <div className="rounded-2xl border border-gray-100 bg-gray-50/40 p-4 space-y-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <h6 className="text-sm font-semibold text-text-primary truncate">
+                          Preview: {previewDocument.title}
+                        </h6>
+                        <button
+                          type="button"
+                          onClick={() => setPreviewDocument(null)}
+                          className="text-xs font-medium text-text-secondary hover:text-text-primary"
+                        >
+                          Close Preview
+                        </button>
+                      </div>
+
+                      <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+                        <iframe
+                          src={previewDocument.url}
+                          title={previewDocument.title}
+                          className="w-full h-[52vh]"
+                        />
+                      </div>
+                    </div>
+                  )}
 
                   {error && (
                     <p className="text-sm text-warning-primary">{error}</p>
