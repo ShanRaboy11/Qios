@@ -91,6 +91,44 @@ function mapTenantStatus(
   return "Active";
 }
 
+function resolveTenantName(tenant: Record<string, unknown>) {
+  const candidateKeys = [
+    "name",
+    "business_name",
+    "tenant_name",
+    "display_name",
+    "company_name",
+    "restaurant_name",
+    "store_name",
+  ];
+
+  for (const key of candidateKeys) {
+    const value = tenant[key];
+    if (typeof value === "string" && value.trim() !== "") {
+      return value;
+    }
+  }
+
+  return "Unnamed Tenant";
+}
+
+function formatJoinedDate(rawCreatedAt: unknown) {
+  if (typeof rawCreatedAt !== "string" && !(rawCreatedAt instanceof Date)) {
+    return "N/A";
+  }
+
+  const date = new Date(rawCreatedAt);
+  if (Number.isNaN(date.getTime())) {
+    return "N/A";
+  }
+
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
 function parseDocumentUrls(raw: unknown): string[] {
   if (Array.isArray(raw)) {
     return raw.filter((url): url is string => typeof url === "string");
@@ -343,10 +381,7 @@ export async function getTenants() {
     .from("tenants")
     .select(
       `
-      id,
-      name,
-      created_at,
-      status,
+      *,
       profiles (
         full_name,
         role
@@ -360,24 +395,15 @@ export async function getTenants() {
   return tenants.map((t) => {
     const profiles = normalizeProfiles(t.profiles);
     const ownerProfile = selectOwnerProfile(profiles);
+
     return {
       id: t.id,
-      name: t.name,
+      name: resolveTenantName(t as Record<string, unknown>),
       owner: ownerProfile?.full_name ?? "Unknown",
       type: "Professional" as "Professional" | "Enterprise" | "Starter",
-      joined: new Date(t.created_at).toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-      }),
-      status: (t.status === "pending"
-        ? "Pending"
-        : t.status === "approved"
-          ? "Active"
-          : t.status === "rejected"
-            ? "Rejected"
-            : "Active") as "Active" | "Suspended" | "Pending" | "Rejected",
-      rawStatus: t.status,
+      joined: formatJoinedDate(t.created_at),
+      status: mapTenantStatus(typeof t.status === "string" ? t.status : null),
+      rawStatus: typeof t.status === "string" ? t.status : "approved",
     };
   });
 }
@@ -391,11 +417,7 @@ export async function getTenantDirectoryDetails(
     .from("tenants")
     .select(
       `
-      id,
-      name,
-      created_at,
-      status,
-      verification_doc_urls,
+      *,
       profiles (
         id,
         full_name,
@@ -422,16 +444,14 @@ export async function getTenantDirectoryDetails(
 
   return {
     id: tenant.id,
-    name: tenant.name,
+    name: resolveTenantName(tenant as Record<string, unknown>),
     owner: ownerProfile?.full_name ?? "Unknown",
     ownerEmail: ownerIdentity.email,
     ownerPhone: ownerIdentity.phone,
-    joined: new Date(tenant.created_at).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    }),
-    status: mapTenantStatus(tenant.status),
+    joined: formatJoinedDate(tenant.created_at),
+    status: mapTenantStatus(
+      typeof tenant.status === "string" ? tenant.status : null,
+    ),
     documents: sortedDocuments,
   };
 }
@@ -445,11 +465,7 @@ export async function getTenantProfileDetails(
     .from("tenants")
     .select(
       `
-      id,
-      name,
-      created_at,
-      status,
-      verification_doc_urls,
+      *,
       profiles (
         id,
         full_name,
@@ -491,17 +507,15 @@ export async function getTenantProfileDetails(
 
   return {
     id: tenant.id,
-    name: tenant.name,
+    name: resolveTenantName(tenant as Record<string, unknown>),
     type: planLabel,
-    status: mapTenantStatus(tenant.status),
+    status: mapTenantStatus(
+      typeof tenant.status === "string" ? tenant.status : null,
+    ),
     owner: ownerProfile?.full_name ?? "Unknown",
     email: ownerIdentity.email ?? "",
     phone: ownerIdentity.phone ?? "",
-    joined: new Date(tenant.created_at).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    }),
+    joined: formatJoinedDate(tenant.created_at),
     plan: planLabel,
     billingCycle: "Monthly",
     features: featureList,

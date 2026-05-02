@@ -19,6 +19,7 @@ import { TenantProfileData } from "./TenantProfilePage";
 import { Button } from "@/components/atoms/Button";
 import { Badge } from "@/components/atoms/Badge";
 import { KPICard } from "@/components/molecules/KPICard";
+import { Modal } from "@/components/molecules/Modal";
 
 import { cn } from "@/lib/utils";
 
@@ -46,7 +47,12 @@ export const TenantProfileBentoGrid = ({
   }, [tenant.id]);
 
   return (
-    <div className={cn("grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6", className)}>
+    <div
+      className={cn(
+        "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6",
+        className,
+      )}
+    >
       {/* 1. Business Information */}
       <BentoCard
         title="Business Information"
@@ -190,31 +196,6 @@ export const TenantProfileBentoGrid = ({
             );
           })}
         </div>
-
-        {previewDocument && (
-          <div className="mt-5 rounded-2xl border border-gray-100 bg-gray-50/40 p-4 space-y-3">
-            <div className="flex items-center justify-between gap-3">
-              <h6 className="text-sm font-semibold text-text-primary truncate">
-                Preview: {previewDocument.title}
-              </h6>
-              <button
-                type="button"
-                onClick={() => setPreviewDocument(null)}
-                className="text-xs font-medium text-text-secondary hover:text-text-primary"
-              >
-                Close Preview
-              </button>
-            </div>
-
-            <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
-              <iframe
-                src={previewDocument.url}
-                title={previewDocument.title}
-                className="w-full h-[58vh]"
-              />
-            </div>
-          </div>
-        )}
       </BentoCard>
 
       {/* 3. Subscription Details */}
@@ -291,6 +272,25 @@ export const TenantProfileBentoGrid = ({
           />
         </div>
       </BentoCard>
+
+      <Modal
+        isOpen={Boolean(previewDocument)}
+        onClose={() => setPreviewDocument(null)}
+        title={
+          previewDocument ? `Preview: ${previewDocument.title}` : "Preview"
+        }
+        className="max-w-5xl md:translate-y-9"
+      >
+        {previewDocument && (
+          <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+            <iframe
+              src={previewDocument.url}
+              title={previewDocument.title}
+              className="w-full h-[65vh]"
+            />
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };
