@@ -164,66 +164,72 @@ export default function OnboardingPage() {
       return setError("Passwords do not match.");
     }
 
-    // Immediately advance UI so the flow feels fast; perform signup and
-    // verification dispatch in the background while the user fills subsequent steps.
-    setCurrentStep(2);
-    // Prefill business email if empty
-    setBusinessData((prev) => ({ ...prev, email: prev.email || authData.email }));
-    scrollToTop();
+    setLoading(true);
+    try {
+      const supabase = createSupabaseBrowserClient();
+      const access = await resolveOnboardingAccess({ email: authData.email });
 
-    // Fire-and-forget background work
-    (async () => {
-      try {
-        const supabase = createSupabaseBrowserClient();
-        const { data, error: signUpError } = await supabase.auth.signUp({
-          email: authData.email,
-          password: authData.password,
-          options: {
-            data: {
-              full_name: businessData.name || authData.email,
-              business_email: businessData.email || authData.email,
-            },
-          },
-        });
-
-        if (signUpError) {
-          const access = await resolveOnboardingAccess({ email: authData.email });
-
-          if (access.status === "resume-onboarding") {
-            setUserId(access.userId || "");
-            setTenantId(access.tenantId || "");
-            await dispatchVerificationCode({
-              email: authData.email,
-              businessName: access.businessName || authData.email,
-            });
-            return;
-          }
-
-          if (access.status === "completed") {
-            setError("This email is already registered.");
-            setCurrentStep(1);
-            return;
-          }
-
-          console.error("Sign up error (background):", signUpError.message || signUpError);
-          return;
+      if (access.status === "resume-onboarding") {
+        setUserId(access.userId || "");
+        setTenantId(access.tenantId || "");
+        setBusinessData((prev) => ({
+          ...prev,
+          name: prev.name || access.businessName || "",
+          email: prev.email || access.businessEmail || authData.email,
+          owner: prev.owner || access.ownerName || "",
+        }));
+        if (access.subscriptionPlan) {
+          setSubscriptionData({ packageId: access.subscriptionPlan });
         }
-
-        const signedUpUserId = data.user?.id;
-        if (!signedUpUserId) {
-          console.error("Sign-up succeeded but no user was returned (background).");
-          return;
-        }
-
-        setUserId(signedUpUserId);
         await dispatchVerificationCode({
           email: authData.email,
-          businessName: businessData.name || authData.email,
+          businessName: access.businessName || authData.email,
         });
-      } catch (err: any) {
-        console.error("Background signup/verification failed:", err);
+        setCurrentStep(2);
+        setBusinessData((prev) => ({ ...prev, email: prev.email || authData.email }));
+        scrollToTop();
+        return;
       }
-    })();
+
+      if (access.status === "completed") {
+        setError("This email is already registered.");
+        return;
+      }
+
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email: authData.email,
+        password: authData.password,
+        options: {
+          data: {
+            full_name: businessData.name || authData.email,
+            business_email: businessData.email || authData.email,
+          },
+        },
+      });
+
+      if (signUpError) {
+        throw new Error(signUpError.message || "Failed to create account. Please try again.");
+      }
+
+      const signedUpUserId = data.user?.id;
+      if (!signedUpUserId) {
+        throw new Error("Account created but no user ID was returned. Please contact support.");
+      }
+
+      setUserId(signedUpUserId);
+      await dispatchVerificationCode({
+        email: authData.email,
+        businessName: businessData.name || authData.email,
+      });
+
+      setCurrentStep(2);
+      setBusinessData((prev) => ({ ...prev, email: prev.email || authData.email }));
+      scrollToTop();
+    } catch (err: any) {
+      setError(err.message || "An error occurred during signup. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleBusinessContinue = async () => {
@@ -242,27 +248,22 @@ export default function OnboardingPage() {
       return setError("Owner / admin name is required.");
     }
 
-    // Advance immediately for a faster UX and persist business info
-    // in the background. Document upload will still validate that a
-    // tenant has been created before accepting files.
-    setSuccess("Saving business information...");
-    setCurrentStep(3);
-    scrollToTop();
+    setLoading(true);
+    try {
+      const res = await saveOnboardingProgress({
+        tenantId: tenantId || undefined,
+        businessData,
+      });
 
-    (async () => {
-      try {
-        const res = await saveOnboardingProgress({
-          tenantId: tenantId || undefined,
-          businessData,
-        });
-        setTenantId(res.tenantId);
-        setSuccess("Business information saved.");
-      } catch (err: any) {
-        // Surface error but keep the user in the flow so they can
-        // continue entering documents; they can go back to retry.
-        setError(err.message || "Unable to save business information.");
-      }
-    })();
+      setTenantId(res.tenantId);
+      setSuccess("Business information saved.");
+      setCurrentStep(3);
+      scrollToTop();
+    } catch (err: any) {
+      setError(err.message || "Unable to save business information.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDocumentContinue = async () => {
@@ -274,15 +275,28 @@ export default function OnboardingPage() {
     }
 
     if (!userId) {
-      return setError("Your account session is missing. Please go back and sign up again.");
+      return setError("Your account was not created successfully. Please go back and try signing up again.");
     }
 
     setLoading(true);
     try {
+      // Convert File objects to base64 strings for server action serialization
+      const filesData: Record<string, { name: string; base64: string; type: string }> = {};
+      for (const [key, file] of Object.entries(documentData)) {
+        const reader = new FileReader();
+        const base64 = await new Promise<string>((resolve) => {
+          reader.onload = () => {
+            const result = reader.result as string;
+            resolve(result.split(",")[1]); // Extract base64 part
+          };
+          reader.readAsDataURL(file);
+        });
+        filesData[key] = { name: file.name, base64, type: file.type };
+      }
+
       const res = await saveDocumentUploads({
         tenantId,
-        userId,
-        files: documentData,
+        filesData,
       });
 
       if (res.success) {
@@ -369,12 +383,17 @@ export default function OnboardingPage() {
         if (access.status === "resume-onboarding" || access.status === "completed") {
           finalTenantId = finalTenantId || access.tenantId || "";
           finalUserId = finalUserId || access.userId || "";
+          // Populate missing data from resolved access
           if (!businessData.name && access.businessName) {
             setBusinessData((prev) => ({
               ...prev,
-              name: prev.name || access.businessName || "",
-              email: prev.email || access.businessEmail || authData.email,
+              name: access.businessName || "",
+              email: access.businessEmail || prev.email || authData.email,
+              owner: access.ownerName || prev.owner || "",
             }));
+          }
+          if (!subscriptionData.packageId && access.subscriptionPlan) {
+            setSubscriptionData({ packageId: access.subscriptionPlan });
           }
         }
       }
@@ -434,6 +453,8 @@ export default function OnboardingPage() {
       ? "max-w-[960px]"
       : currentStep === 6
         ? "max-w-[860px]"
+        : currentStep === 3
+        ? "max-w-[1200px]"
         : currentStep === 4
         ? "max-w-xl"
         : "max-w-[450px]",
@@ -550,6 +571,7 @@ export default function OnboardingPage() {
                 setData={setDocumentData}
                 onNext={handleDocumentContinue}
                 onBack={prevStep}
+                loading={loading}
               />
             )}
 

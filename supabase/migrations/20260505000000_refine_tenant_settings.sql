@@ -45,6 +45,12 @@ BEGIN
         "dashboard_focus": "revenue",
         "supply_logic": "local"
       }'::jsonb;
+
+    ALTER TABLE public.tenants
+      ALTER COLUMN settings DROP NOT NULL;
+
+    ALTER TABLE public.tenants
+      ALTER COLUMN settings SET DEFAULT NULL;
   END IF;
 END $$;
 

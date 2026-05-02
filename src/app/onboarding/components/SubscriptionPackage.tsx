@@ -96,6 +96,13 @@ export function SubscriptionPackage({
   onBack: () => void;
 }) {
   const [selectedId, setSelectedId] = useState(data.packageId || "starter");
+  // Keep local selection in sync when parent updates (user navigates back)
+  React.useEffect(() => {
+    if (data.packageId && data.packageId !== selectedId) {
+      setSelectedId(data.packageId);
+    }
+  }, [data.packageId]);
+
   const activePackage =
     packages.find((p) => p.id === selectedId) || packages[0];
 

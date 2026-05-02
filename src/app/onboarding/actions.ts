@@ -29,8 +29,7 @@ type SaveOnboardingProgressInput = {
 
 type DocumentUploadInput = {
   tenantId: string;
-  userId: string;
-  files: Record<string, File>;
+  filesData: Record<string, { name: string; base64: string; type: string }>;
 };
 
 type OnboardingAccessStatus =
@@ -49,6 +48,9 @@ type ResolveOnboardingAccessResult = {
   tenantId?: string;
   businessName?: string;
   businessEmail?: string;
+  ownerName?: string;
+  subscriptionPlan?: SubscriptionPlan;
+  verificationDocUrls?: string[];
 };
 
 const getSubscriptionPlan = (packageId: string): SubscriptionPlan => {
@@ -89,13 +91,17 @@ const getLatestUserByEmail = async (
   let page = 1;
 
   while (page <= 10) {
-    const { data, error } = await supabase.auth.admin.listUsers({
-      page,
-      perPage: pageSize,
-    });
+    let data;
 
-    if (error) {
-      throw new Error(error.message);
+    try {
+      const result = await supabase.auth.admin.listUsers({
+        page,
+        perPage: pageSize,
+      });
+      data = result.data;
+    } catch (error: any) {
+      console.error("Auth user lookup failed:", error?.message || error);
+      return null;
     }
 
     const user = data.users.find(
@@ -122,14 +128,9 @@ export async function resolveOnboardingAccess(
   const supabase = createSupabaseAdminClient();
   const normalizedEmail = normalizeEmail(email);
 
-  const authUser = await getLatestUserByEmail(supabase, normalizedEmail);
-  if (!authUser) {
-    return { status: "not-found" };
-  }
-
   const { data: tenant, error: tenantError } = await supabase
     .from("tenants")
-    .select("id, business_name, business_email, status")
+    .select("id, business_name, business_email, owner_name, subscription_plan, status, verification_doc_urls")
     .eq("business_email", normalizedEmail)
     .order("updated_at", { ascending: false })
     .limit(1)
@@ -139,22 +140,30 @@ export async function resolveOnboardingAccess(
     throw new Error(tenantError.message);
   }
 
+  const authUser = await getLatestUserByEmail(supabase, normalizedEmail);
+
   if (tenant?.status === "onboarding") {
     return {
       status: "resume-onboarding",
-      userId: authUser.id,
+      userId: authUser?.id,
       tenantId: tenant.id,
       businessName: tenant.business_name || undefined,
       businessEmail: tenant.business_email || normalizedEmail,
+      ownerName: tenant.owner_name || undefined,
+      subscriptionPlan: (tenant.subscription_plan as SubscriptionPlan) || undefined,
+      verificationDocUrls: tenant.verification_doc_urls || undefined,
     };
   }
 
   return {
     status: "completed",
-    userId: authUser.id,
+    userId: authUser?.id,
     tenantId: tenant?.id,
     businessName: tenant?.business_name || undefined,
     businessEmail: tenant?.business_email || normalizedEmail,
+    ownerName: tenant?.owner_name || undefined,
+    subscriptionPlan: (tenant?.subscription_plan as SubscriptionPlan) || undefined,
+    verificationDocUrls: tenant?.verification_doc_urls || undefined,
   };
 }
 
@@ -260,6 +269,7 @@ export async function saveOnboardingProgress(data: SaveOnboardingProgressInput) 
     .insert({
       ...updatePayload,
       business_email: data.businessData?.email || null,
+      ...(updatePayload.settings !== undefined ? { settings: updatePayload.settings } : {}),
     })
     .select("id")
     .single();
@@ -273,37 +283,73 @@ export async function saveOnboardingProgress(data: SaveOnboardingProgressInput) 
 
 export async function saveDocumentUploads(data: DocumentUploadInput) {
   const supabase = createSupabaseAdminClient();
-  const uploadedUrls: string[] = [];
 
-  for (const [key, file] of Object.entries(data.files)) {
+  // Verify tenant exists before attempting upload
+  const { data: tenant, error: tenantCheckError } = await supabase
+    .from("tenants")
+    .select("id")
+    .eq("id", data.tenantId)
+    .maybeSingle();
+
+  if (tenantCheckError) {
+    throw new Error(
+      `Unable to verify your business record: ${tenantCheckError.message}`
+    );
+  }
+
+  if (!tenant) {
+    throw new Error(
+      "Your business record was not found. Please go back and save your business information first."
+    );
+  }
+
+  const uploadedUrls: string[] = [];
+  const uploadErrors: string[] = [];
+
+  for (const [key, fileInfo] of Object.entries(data.filesData)) {
     try {
-      // @ts-ignore - File type has arrayBuffer in runtime
-      const arrayBuffer = await file.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
-      const safeName = file.name.replace(/[^a-zA-Z0-9.]/g, "");
-      const filePath = `${data.userId}/${key}-${Date.now()}-${safeName}`;
+      const buffer = Buffer.from(fileInfo.base64, "base64");
+      const safeName = fileInfo.name.replace(/[^a-zA-Z0-9.]/g, "");
+      const filePath = `${data.tenantId}/${key}-${Date.now()}-${safeName}`;
 
       const { error: uploadError } = await supabase.storage
         .from("verification-docs")
         .upload(filePath, buffer, {
-          contentType: file.type || "application/octet-stream",
+          contentType: fileInfo.type || "application/octet-stream",
           upsert: false,
         });
 
-      if (!uploadError) {
-        const { data: urlData } = supabase.storage
-          .from("verification-docs")
-          .getPublicUrl(filePath);
-
-        if (urlData?.publicUrl) {
-          uploadedUrls.push(urlData.publicUrl);
-        }
-      } else {
-        console.error("Document upload failed:", uploadError);
+      if (uploadError) {
+        const message = `Document upload failed for ${key}: ${uploadError.message}`;
+        console.error(message, uploadError);
+        uploadErrors.push(message);
+        continue;
       }
-    } catch (err) {
-      console.error("Document processing failed:", err);
+
+      const { data: urlData } = supabase.storage
+        .from("verification-docs")
+        .getPublicUrl(filePath);
+
+      if (urlData?.publicUrl) {
+        uploadedUrls.push(urlData.publicUrl);
+      } else {
+        const message = `Document upload completed for ${key} but no public URL was returned.`;
+        console.error(message);
+        uploadErrors.push(message);
+      }
+    } catch (err: any) {
+      const message = `Document processing failed for ${key}: ${err?.message || err}`;
+      console.error(message, err);
+      uploadErrors.push(message);
     }
+  }
+
+  if (uploadErrors.length > 0) {
+    throw new Error(uploadErrors[0]);
+  }
+
+  if (uploadedUrls.length !== Object.keys(data.filesData).length) {
+    throw new Error("Not all verification documents were uploaded successfully.");
   }
 
   const { error } = await supabase.from("tenants").update({

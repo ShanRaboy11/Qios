@@ -22,6 +22,7 @@ interface DocumentUploadProps {
   setData: React.Dispatch<React.SetStateAction<Record<string, File>>>;
   onNext: () => Promise<void> | void;
   onBack: () => void;
+  loading?: boolean;
 }
 
 const requirements = [
@@ -67,6 +68,7 @@ export function DocumentUpload({
   setData,
   onNext,
   onBack,
+  loading = false,
 }: DocumentUploadProps) {
   const handleFileChange = (id: string, file: File) => {
     setData((prev) => ({
@@ -86,8 +88,8 @@ export function DocumentUpload({
     .every((r) => Boolean(data[r.id]));
 
   return (
-    <div className="flex flex-col w-full max-w-[850px] mx-auto space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white/50 p-6 rounded-[26px] border border-[var(--kds-border-warm)] backdrop-blur-sm">
+    <div className="flex flex-col w-full max-w-[1200px] mx-auto space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white/60 p-8 rounded-[28px] border border-[var(--kds-border-warm)] backdrop-blur-sm">
         <div className="space-y-1 text-center md:text-left">
           <h3 className="h4 text-[var(--color-text-primary)] font-bold">
             Business Documentation
@@ -106,12 +108,12 @@ export function DocumentUpload({
         </Badge>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-7">
         {requirements.map((req) => (
           <div
             key={req.id}
             className={cn(
-              "group relative p-6 rounded-[24px] border-2 transition-all duration-500 bg-white overflow-hidden",
+              "group relative p-8 rounded-[24px] border-2 transition-all duration-500 bg-white overflow-hidden",
               data[req.id]?.name
                 ? "border-[var(--color-success-primary)] shadow-lg shadow-green-100/50"
                 : "border-neutral-100 hover:border-[var(--color-brand-primary)] hover:shadow-xl hover:shadow-orange-100/30",
@@ -166,7 +168,7 @@ export function DocumentUpload({
               <div className="mt-auto">
                 {data[req.id] ? (
                   <div className="flex items-center justify-between bg-neutral-50 p-2 rounded-xl border border-neutral-100 animate-in slide-in-from-left-2">
-                    <span className="b4 font-medium text-neutral-600 pl-2 truncate max-w-[150px]">
+                    <span className="b4 font-medium text-neutral-600 pl-2 truncate max-w-[220px]">
                       {data[req.id]?.name}
                     </span>
                     <button
@@ -205,6 +207,7 @@ export function DocumentUpload({
           size="lg"
           className="h-14 px-6 md:px-10 b2 border-neutral-200 text-neutral-500"
           onClick={onBack}
+          disabled={loading}
         >
           <ArrowLeft className="w-5 h-5 mr-2" />
           Back
@@ -214,15 +217,15 @@ export function DocumentUpload({
           size="lg"
           className={cn(
             "flex-1 h-14 b2 max-w-[320px] font-bold text-lg shadow-xl",
-            isComplete
+            isComplete && !loading
               ? "shadow-orange-200/50"
               : "bg-neutral-200 text-white cursor-not-allowed shadow-none",
           )}
-          onClick={async () => isComplete && (await onNext())}
-          disabled={!isComplete}
+          onClick={async () => isComplete && !loading && (await onNext())}
+          disabled={!isComplete || loading}
         >
-          Continue
-          <ArrowRight className="w-5 h-5 ml-2" />
+          {loading ? "Uploading…" : "Continue"}
+          {!loading && <ArrowRight className="w-5 h-5 ml-2" />}
         </Button>
       </div>
     </div>

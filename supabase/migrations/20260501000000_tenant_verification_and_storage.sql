@@ -20,12 +20,30 @@ FOR INSERT
 TO authenticated
 WITH CHECK (bucket_id = 'verification-docs');
 
--- Allow super_admin or owner to view docs
+-- Allow service_role (admin backend) to insert docs
+CREATE POLICY "Allow service_role uploads to verification-docs"
+ON storage.objects
+FOR INSERT
+TO service_role
+WITH CHECK (bucket_id = 'verification-docs');
+
+-- Allow authenticated users to read docs
 CREATE POLICY "Allow authenticated read to verification-docs"
 ON storage.objects
 FOR SELECT
 TO authenticated
 USING (bucket_id = 'verification-docs');
 
--- Note: Finer-grained RLS could be applied so owners only see their own docs,
--- but the server action accessing this might run with service_role.
+-- Allow service_role to read docs
+CREATE POLICY "Allow service_role read to verification-docs"
+ON storage.objects
+FOR SELECT
+TO service_role
+USING (bucket_id = 'verification-docs');
+
+-- Allow service_role to update docs
+CREATE POLICY "Allow service_role update to verification-docs"
+ON storage.objects
+FOR UPDATE
+TO service_role
+WITH CHECK (bucket_id = 'verification-docs');
