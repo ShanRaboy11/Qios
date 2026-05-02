@@ -63,7 +63,6 @@ export async function processOnboarding(data: {
   const supabase = createSupabaseAdminClient();
   const subscriptionPlan = getSubscriptionPlan(data.subscriptionData.packageId);
   const tenantSettings: TenantSettings = {
-    ai_style: data.featureData.aiStyle,
     dashboard_focus: data.featureData.dashboardFocus,
     ...(subscriptionPlan === "enterprise"
       ? { supply_logic: data.featureData.supplyLogic }
