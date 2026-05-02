@@ -1,6 +1,18 @@
 "use server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { sendContactVerificationEmail, sendRegistrationSuccessEmail } from "@/lib/email";
+import type {
+  OperationalSetupConfig,
+  SubscriptionPlan,
+  TenantSettings,
+} from "@/types/tenant";
+
+const getSubscriptionPlan = (packageId: string): SubscriptionPlan => {
+  if (packageId === "basic" || packageId === "starter") return "basic";
+  if (packageId === "business" || packageId === "growth") return "business";
+  if (packageId === "enterprise" || packageId === "enterprises") return "enterprise";
+  return "basic";
+};
 
 export async function sendContactVerificationCode(data: {
   email: string;
@@ -42,13 +54,21 @@ export async function sendContactVerificationCode(data: {
 }
 
 export async function processOnboarding(data: {
-  businessData: { name: string, email: string, phoneNumber: string },
+  businessData: { name: string, email: string, owner: string },
   authData: { email: string, password: string },
   subscriptionData: { packageId: string },
-  featureData: { inventoryMode: string, generalFeatures: any },
+  featureData: OperationalSetupConfig,
   documentData?: Record<string, File>
 }) {
   const supabase = createSupabaseAdminClient();
+  const subscriptionPlan = getSubscriptionPlan(data.subscriptionData.packageId);
+  const tenantSettings: TenantSettings = {
+    ai_style: data.featureData.aiStyle,
+    dashboard_focus: data.featureData.dashboardFocus,
+    ...(subscriptionPlan === "enterprise"
+      ? { supply_logic: data.featureData.supplyLogic }
+      : {}),
+  };
   
   // 1. Create a User in Auth
   const { data: authDataRes, error: authError } = await supabase.auth.admin.createUser({
@@ -58,9 +78,8 @@ export async function processOnboarding(data: {
     user_metadata: {
       full_name: data.businessData.name,
       business_email: data.businessData.email,
-      phone_number: data.businessData.phoneNumber,
-      subscription_plan: data.subscriptionData.packageId,
-      features: data.featureData.generalFeatures
+      subscription_plan: subscriptionPlan,
+      settings: tenantSettings,
     }
   });
 
@@ -73,7 +92,13 @@ export async function processOnboarding(data: {
   // 2. Create the Tenant
   const { data: tenantRes, error: tenantError } = await supabase.from('tenants').insert({
     name: data.businessData.name,
-    inventory_mode: data.featureData.inventoryMode
+    business_email: data.businessData.email,
+    owner_name: data.businessData.owner,
+    inventory_mode: data.featureData.inventoryMode,
+    service_workflow: data.featureData.serviceWorkflow,
+    subscription_plan: subscriptionPlan,
+    settings: tenantSettings,
+    status: 'pending'
   }).select('id').single();
 
   if (tenantError || !tenantRes) {
@@ -114,7 +139,8 @@ export async function processOnboarding(data: {
       }
     }
 
-    // Update tenant with document urls
+    // Update tenant with document urls as JSONB array
+    // Documents are uploaded, but status remains 'pending' until admin reviews
     if (uploadedUrls.length > 0) {
       await supabase.from('tenants').update({
         verification_doc_urls: uploadedUrls,

@@ -1,7 +1,18 @@
 "use client";
 
 import React, { useState } from "react";
-import { FileUp, CheckCircle2, Info, X, ArrowRight, ArrowLeft, FileText, Landmark, Receipt, ShieldCheck } from "lucide-react";
+import {
+  FileUp,
+  CheckCircle2,
+  Info,
+  X,
+  ArrowRight,
+  ArrowLeft,
+  FileText,
+  Landmark,
+  Receipt,
+  ShieldCheck,
+} from "lucide-react";
 import { Button } from "@/components/atoms/Button";
 import { Badge } from "@/components/atoms/Badge";
 import { cn } from "@/lib/utils";
@@ -19,39 +30,44 @@ const requirements = [
     title: "DTI or SEC Registration",
     desc: "Sole proprietor or Corporation registration.",
     required: true,
-    icon: Landmark
+    icon: Landmark,
   },
   {
     id: "permit",
     title: "Mayor’s Permit",
     desc: "Includes local LGU and Barangay permits.",
     required: true,
-    icon: ShieldCheck
+    icon: ShieldCheck,
   },
   {
     id: "sanitary",
     title: "Sanitary Permit",
     desc: "Health certificates from your local LGU.",
     required: true,
-    icon: FileText
+    icon: FileText,
   },
   {
     id: "bir",
     title: "BIR Registration",
     desc: "TIN and Official Receipt compliance.",
     required: true,
-    icon: Receipt
+    icon: Receipt,
   },
   {
     id: "fda",
     title: "FDA Licensing",
     desc: "For pre-packaged or manufactured food.",
     required: false,
-    icon: FileText
+    icon: FileText,
   },
 ];
 
-export function DocumentUpload({ data, setData, onNext, onBack }: DocumentUploadProps) {
+export function DocumentUpload({
+  data,
+  setData,
+  onNext,
+  onBack,
+}: DocumentUploadProps) {
   const handleFileChange = (id: string, file: File) => {
     setData((prev) => ({
       ...prev,
@@ -71,13 +87,21 @@ export function DocumentUpload({ data, setData, onNext, onBack }: DocumentUpload
 
   return (
     <div className="flex flex-col w-full max-w-[850px] mx-auto space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white/50 p-6 rounded-[26px] border border-[var(--kds-border-warm)] backdrop-blur-sm">
         <div className="space-y-1 text-center md:text-left">
-          <h3 className="h4 text-[var(--color-text-primary)] font-bold">Business Documentation</h3>
-          <p className="b2 text-[var(--color-text-secondary)]">Please upload the required Philippine legal permits.</p>
+          <h3 className="h4 text-[var(--color-text-primary)] font-bold">
+            Business Documentation
+          </h3>
+          <p className="b2 text-[var(--color-text-secondary)]">
+            Please upload the required Philippine legal permits.
+          </p>
         </div>
-        <Badge color="info" variant="subtle" shape="pill" leftIcon={<Info size={14} />}>
+        <Badge
+          color="info"
+          variant="subtle"
+          shape="pill"
+          leftIcon={<Info size={14} />}
+        >
           Food Industry Standards
         </Badge>
       </div>
@@ -88,9 +112,9 @@ export function DocumentUpload({ data, setData, onNext, onBack }: DocumentUpload
             key={req.id}
             className={cn(
               "group relative p-6 rounded-[24px] border-2 transition-all duration-500 bg-white overflow-hidden",
-              data[req.id]?.name 
-                ? "border-[var(--color-success-primary)] shadow-lg shadow-green-100/50" 
-                : "border-neutral-100 hover:border-[var(--color-brand-primary)] hover:shadow-xl hover:shadow-orange-100/30"
+              data[req.id]?.name
+                ? "border-[var(--color-success-primary)] shadow-lg shadow-green-100/50"
+                : "border-neutral-100 hover:border-[var(--color-brand-primary)] hover:shadow-xl hover:shadow-orange-100/30",
             )}
           >
             {data[req.id]?.name && (
@@ -100,28 +124,42 @@ export function DocumentUpload({ data, setData, onNext, onBack }: DocumentUpload
             <div className="relative z-10 flex flex-col h-full justify-between gap-6">
               <div className="space-y-3">
                 <div className="flex items-start justify-between">
-                  <div className={cn(
-                    "p-3 rounded-xl transition-colors duration-300",
-                    data[req.id]?.name 
-                      ? "bg-[var(--color-success-secondary)] text-[var(--color-success-primary)]" 
-                      : "bg-neutral-50 text-neutral-400 group-hover:bg-orange-50 group-hover:text-[var(--color-brand-primary)]"
-                  )}>
+                  <div
+                    className={cn(
+                      "p-3 rounded-xl transition-colors duration-300",
+                      data[req.id]?.name
+                        ? "bg-[var(--color-success-secondary)] text-[var(--color-success-primary)]"
+                        : "bg-neutral-50 text-neutral-400 group-hover:bg-orange-50 group-hover:text-[var(--color-brand-primary)]",
+                    )}
+                  >
                     <req.icon size={24} />
                   </div>
-                  
+
                   {req.required && !data[req.id]?.name && (
-                    <Badge color="error" variant="subtle" shape="pill" className="text-[10px] uppercase tracking-wider font-bold">
+                    <Badge
+                      color="error"
+                      variant="subtle"
+                      shape="pill"
+                      className="text-[10px] uppercase tracking-wider font-bold"
+                    >
                       Required
                     </Badge>
                   )}
                   {data[req.id]?.name && (
-                    <CheckCircle2 size={24} className="text-[var(--color-success-primary)] animate-in zoom-in duration-300" />
+                    <CheckCircle2
+                      size={24}
+                      className="text-[var(--color-success-primary)] animate-in zoom-in duration-300"
+                    />
                   )}
                 </div>
 
                 <div>
-                  <h4 className="b2 font-bold text-[var(--color-text-primary)] mb-1">{req.title}</h4>
-                  <p className="b4 text-[var(--color-text-secondary)] leading-relaxed">{req.desc}</p>
+                  <h4 className="b2 font-bold text-[var(--color-text-primary)] mb-1">
+                    {req.title}
+                  </h4>
+                  <p className="b4 text-[var(--color-text-secondary)] leading-relaxed">
+                    {req.desc}
+                  </p>
                 </div>
               </div>
 
@@ -131,8 +169,8 @@ export function DocumentUpload({ data, setData, onNext, onBack }: DocumentUpload
                     <span className="b4 font-medium text-neutral-600 pl-2 truncate max-w-[150px]">
                       {data[req.id]?.name}
                     </span>
-                    <button 
-                      onClick={() => removeFile(req.id)} 
+                    <button
+                      onClick={() => removeFile(req.id)}
                       type="button"
                       className="p-2 hover:bg-red-50 text-red-400 hover:text-red-600 rounded-lg transition-all"
                     >
@@ -144,7 +182,10 @@ export function DocumentUpload({ data, setData, onNext, onBack }: DocumentUpload
                     <input
                       type="file"
                       className="hidden"
-                      onChange={(e) => e.target.files?.[0] && handleFileChange(req.id, e.target.files[0])}
+                      onChange={(e) =>
+                        e.target.files?.[0] &&
+                        handleFileChange(req.id, e.target.files[0])
+                      }
                     />
                     <div className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-neutral-200 rounded-xl hover:border-[var(--color-brand-primary)] hover:bg-orange-50/50 transition-all b3 font-bold text-neutral-400 hover:text-[var(--color-brand-primary)]">
                       <FileUp size={18} />
@@ -159,10 +200,10 @@ export function DocumentUpload({ data, setData, onNext, onBack }: DocumentUpload
       </div>
 
       <div className="flex flex-row items-center justify-center gap-4 md:gap-8 pt-8">
-        <Button 
-          variant="ghost" 
+        <Button
+          variant="ghost"
           size="lg"
-          className="h-14 px-6 md:px-10 b2 border-neutral-200 text-neutral-500" 
+          className="h-14 px-6 md:px-10 b2 border-neutral-200 text-neutral-500"
           onClick={onBack}
         >
           <ArrowLeft className="w-5 h-5 mr-2" />
@@ -173,11 +214,11 @@ export function DocumentUpload({ data, setData, onNext, onBack }: DocumentUpload
           size="lg"
           className={cn(
             "flex-1 h-14 b2 max-w-[320px] font-bold text-lg shadow-xl",
-            isComplete 
-              ? "shadow-orange-200/50" 
-              : "bg-neutral-200 text-white cursor-not-allowed shadow-none"
+            isComplete
+              ? "shadow-orange-200/50"
+              : "bg-neutral-200 text-white cursor-not-allowed shadow-none",
           )}
-          onClick={async () => isComplete && await onNext()}
+          onClick={async () => isComplete && (await onNext())}
           disabled={!isComplete}
         >
           Continue

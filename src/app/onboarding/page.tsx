@@ -13,12 +13,13 @@ import { DocumentUpload } from "./components/DocumentUpload";
 import { ContactInformation } from "./components/ContactInformation";
 import { AuthCredentials } from "./components/AuthCredentials";
 import { SubscriptionPackage } from "./components/SubscriptionPackage";
-import { FeatureConfig } from "./components/FeatureConfiguration";
+import { OperationalSetup } from "./components/OperationalSetup";
 import { RegistrationSuccessModal } from "./components/RegistrationSuccessModal";
 import { Navbar } from "@/components/organisms/navbar";
 import { Footer } from "@/components/organisms/footer";
 import { processOnboarding, sendContactVerificationCode } from "./actions";
 import { useRouter } from "next/navigation";
+import type { OperationalSetupConfig, SubscriptionPlan } from "@/types/tenant";
 
 const steps = [
   { id: 1, title: "Business Information", icon: FileText },
@@ -26,7 +27,7 @@ const steps = [
   { id: 3, title: "Authentication Credentials", icon: IdCard },
   { id: 4, title: "Document Requirements", icon: FileCheck },
   { id: 5, title: "Subscription Package", icon: ShoppingBag },
-  { id: 6, title: "Feature Configuration", icon: Component },
+  { id: 6, title: "Operational Strategy", icon: Component },
 ];
 
 export default function OnboardingPage() {
@@ -48,6 +49,13 @@ export default function OnboardingPage() {
   const [registrationData, setRegistrationData] = useState({ businessName: "", businessEmail: "" });
 
   const validateEmail = (email: string) => /\S+@\S+\.\S+/.test(email);
+
+  const getSelectedPlan = (packageId: string): SubscriptionPlan => {
+    if (packageId === "basic" || packageId === "starter") return "basic";
+    if (packageId === "business" || packageId === "growth") return "business";
+    if (packageId === "enterprise" || packageId === "enterprises") return "enterprise";
+    return "basic";
+  };
 
   const dispatchVerificationCode = async () => {
     const res = await sendContactVerificationCode({
@@ -98,7 +106,7 @@ export default function OnboardingPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
   
-  const handleFinalize = async (featureData: any) => {
+  const handleFinalize = async (featureData: OperationalSetupConfig) => {
     setLoading(true);
     setError("");
     try {
@@ -150,7 +158,11 @@ export default function OnboardingPage() {
         {/* Content Wrapper */}
         <div className={cn(
           "w-full transition-all duration-500 mx-auto flex flex-col items-center",
-          (currentStep === 4 || currentStep === 5 || currentStep === 6) ? "max-w-2xl" : "max-w-[450px]"
+          currentStep === 6
+            ? "max-w-5xl"
+            : currentStep === 4 || currentStep === 5
+              ? "max-w-2xl"
+              : "max-w-[450px]"
         )}>
           <div className="min-h-fit w-full">
             {currentStep === 1 && (
@@ -181,7 +193,12 @@ export default function OnboardingPage() {
             )}
 
             {currentStep === 6 && (
-              <FeatureConfig onFinish={handleFinalize} onBack={prevStep} />
+              <OperationalSetup
+                selectedPlan={getSelectedPlan(subscriptionData.packageId)}
+                onFinish={handleFinalize}
+                onBack={prevStep}
+                loading={loading}
+              />
             )}
           </div>
 
