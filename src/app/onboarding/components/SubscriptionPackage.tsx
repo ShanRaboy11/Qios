@@ -259,7 +259,10 @@ export function SubscriptionPackage({
             "flex-1 h-13 lg:h-13 b2 font-bold text-lg shadow-lg shadow-secondary bg-[var(--color-brand-secondary)] text-white transition-all active:scale-[0.98]",
             activePackage.variant === "business" && "bg-[#ff5269]",
           )}
-          onClick={onNext}
+          onClick={() => {
+            setData({ packageId: selectedId });
+            onNext();
+          }}
         >
           Select {activePackage.name}
         </Button>

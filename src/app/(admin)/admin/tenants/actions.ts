@@ -12,7 +12,7 @@ export async function getTenants() {
     .from("tenants")
     .select(`
       id,
-      name,
+      business_name,
       created_at,
       status,
       profiles (
@@ -28,7 +28,7 @@ export async function getTenants() {
     const ownerProfile = t.profiles.find((p: any) => p.role === 'super_admin' || p.role === 'admin');
     return {
       id: t.id,
-      name: t.name,
+      business_name: t.business_name,
       owner: ownerProfile ? ownerProfile.full_name : "Unknown",
       type: "Professional" as "Professional" | "Enterprise" | "Starter",
       joined: new Date(t.created_at).toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: 'numeric' }),

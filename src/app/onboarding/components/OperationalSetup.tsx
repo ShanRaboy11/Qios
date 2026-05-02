@@ -139,6 +139,8 @@ function OptionGroup<T extends OptionValue>({
   selectedValue,
   options,
   onChange,
+  disabled = false,
+  lockLabel,
 }: {
   title: string;
   icon: React.ComponentType<any>;
@@ -146,18 +148,27 @@ function OptionGroup<T extends OptionValue>({
   selectedValue: T;
   options: OptionCard[];
   onChange: (nextValue: T) => void;
+  disabled?: boolean;
+  lockLabel?: string;
 }) {
   return (
-    <section className="space-y-3 w-full">
+    <section className={cn("space-y-3 w-full", disabled && "opacity-75")}>
       {/* Section Header */}
       <div className="flex items-start gap-3 px-1">
         <div className="mt-0.5 rounded-xl border border-[var(--color-brand-primary)]/15 bg-[var(--color-brand-primary)]/10 p-2 text-[var(--color-brand-primary)] shrink-0">
           <Icon size={16} />
         </div>
         <div>
-          <h3 className="text-sm font-semibold text-[var(--color-text-primary)] leading-tight">
-            {title}
-          </h3>
+          <div className="flex items-center gap-2 flex-wrap">
+            <h3 className="text-sm font-semibold text-[var(--color-text-primary)] leading-tight">
+              {title}
+            </h3>
+            {disabled && lockLabel && (
+              <span className="rounded-full border border-neutral-200 bg-white px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-neutral-400">
+                {lockLabel}
+              </span>
+            )}
+          </div>
           <p className="mt-0.5 text-xs text-[var(--color-text-secondary)] leading-relaxed">
             {description}
           </p>
@@ -179,9 +190,11 @@ function OptionGroup<T extends OptionValue>({
               type="button"
               role="radio"
               aria-checked={selected}
+              disabled={disabled}
               onClick={() => onChange(option.value as T)}
               className={cn(
                 "relative rounded-2xl border-2 p-4 text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-primary)]/30",
+                disabled && "pointer-events-none cursor-not-allowed",
                 selected
                   ? "border-[var(--color-brand-primary)] bg-[var(--color-brand-primary)]/5 shadow-sm"
                   : "border-neutral-200 bg-white hover:border-neutral-300 hover:shadow-sm active:scale-[0.99]",
@@ -231,6 +244,7 @@ export function OperationalSetup({
 
   const entitlements = PLAN_ENTITLEMENTS[selectedPlan];
   const entitlementVariant = selectedPlan === "enterprise" ? "rose" : "amber";
+  const enterpriseOnlySettingsLocked = selectedPlan !== "enterprise";
 
   const updateConfig = <K extends keyof OperationalSetupConfig>(
     key: K,
@@ -311,57 +325,57 @@ export function OperationalSetup({
             />
           </div>
 
-          {(selectedPlan === "business" || selectedPlan === "enterprise") && (
-            <div className="px-5 py-5 sm:px-6 sm:py-6">
-              <OptionGroup
-                title="Primary Metric"
-                icon={BarChart3}
-                description="Choose which dashboard lens should dominate the management experience."
-                selectedValue={config.dashboardFocus}
-                onChange={(value) => updateConfig("dashboardFocus", value)}
-                options={[
-                  {
-                    value: "speed",
-                    title: "Efficiency (Prep Speed)",
-                    description:
-                      "Dashboard prioritizes kitchen fulfillment times and highlights preparation bottlenecks.",
-                  },
-                  {
-                    value: "revenue",
-                    title: "Growth (Customer Behavior)",
-                    description:
-                      "Dashboard prioritizes sales trends, high-margin modifiers, and peak ordering hours.",
-                  },
-                ]}
-              />
-            </div>
-          )}
+          <div className="px-5 py-5 sm:px-6 sm:py-6">
+            <OptionGroup
+              title="Primary Metric"
+              icon={BarChart3}
+              description="Choose which dashboard lens should dominate the management experience."
+              selectedValue={config.dashboardFocus}
+              onChange={(value) => updateConfig("dashboardFocus", value)}
+              disabled={enterpriseOnlySettingsLocked}
+              lockLabel={enterpriseOnlySettingsLocked ? "Enterprise" : undefined}
+              options={[
+                {
+                  value: "speed",
+                  title: "Efficiency (Prep Speed)",
+                  description:
+                    "Dashboard prioritizes kitchen fulfillment times and highlights preparation bottlenecks.",
+                },
+                {
+                  value: "revenue",
+                  title: "Growth (Customer Behavior)",
+                  description:
+                    "Dashboard prioritizes sales trends, high-margin modifiers, and peak ordering hours.",
+                },
+              ]}
+            />
+          </div>
 
-          {selectedPlan === "enterprise" && (
-            <div className="px-5 py-5 sm:px-6 sm:py-6">
-              <OptionGroup
-                title="Multi-Store Logic"
-                icon={Store}
-                description="Decide how inventory should behave when multiple branches are operating."
-                selectedValue={config.supplyLogic}
-                onChange={(value) => updateConfig("supplyLogic", value)}
-                options={[
-                  {
-                    value: "centralized",
-                    title: "Centralized Commissary",
-                    description:
-                      "All branches pull stock from a shared central kitchen or warehouse pool.",
-                  },
-                  {
-                    value: "local",
-                    title: "Independent Units",
-                    description:
-                      "Each location manages its own local suppliers and independent inventory counts.",
-                  },
-                ]}
-              />
-            </div>
-          )}
+          <div className="px-5 py-5 sm:px-6 sm:py-6">
+            <OptionGroup
+              title="Multi-Store Logic"
+              icon={Store}
+              description="Decide how inventory should behave when multiple branches are operating."
+              selectedValue={config.supplyLogic}
+              onChange={(value) => updateConfig("supplyLogic", value)}
+              disabled={enterpriseOnlySettingsLocked}
+              lockLabel={enterpriseOnlySettingsLocked ? "Enterprise" : undefined}
+              options={[
+                {
+                  value: "centralized",
+                  title: "Centralized Commissary",
+                  description:
+                    "All branches pull stock from a shared central kitchen or warehouse pool.",
+                },
+                {
+                  value: "local",
+                  title: "Independent Units",
+                  description:
+                    "Each location manages its own local suppliers and independent inventory counts.",
+                },
+              ]}
+            />
+          </div>
         </div>
       </div>
 

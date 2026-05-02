@@ -5,6 +5,8 @@ export type DashboardFocus = "speed" | "revenue";
 export type SupplyLogic = "centralized" | "local";
 
 export interface TenantSettings {
+  inventory_mode: InventoryMode;
+  service_workflow: ServiceWorkflow;
   dashboard_focus: DashboardFocus;
   supply_logic?: SupplyLogic;
 }

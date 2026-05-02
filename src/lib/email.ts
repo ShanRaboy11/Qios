@@ -318,6 +318,14 @@ export const sendContactVerificationEmail = async ({
   const sep = `<td style="padding:0 8px;vertical-align:middle;font-size:22px;
                            color:${B.border};line-height:56px;">&middot;</td>`;
 
+  const isPersonalized = Boolean(businessName && !businessName.includes("@") && businessName.trim() && businessName.trim() !== to);
+  const subject = isPersonalized ? "Verify Your Business Email — Qios" : "Security Code — Qios";
+
+  const greetingHtml = isPersonalized
+    ? `<p style="margin:0 0 10px;font-size:15px;color:${B.textPrimary};">Hi <strong>${businessName}</strong>,</p>`
+    : `<p style="margin:0 0 10px;font-size:15px;color:${B.textPrimary};">Hello,</p>
+       <p style="margin:0 0 8px;font-size:14px;color:${B.textSecondary};line-height:1.7;">Use the security code below to verify this email address.</p>`;
+
   const html = emailWrapper(`
     ${brandHeader({
       title: "One step away from your dashboard",
@@ -330,13 +338,8 @@ export const sendContactVerificationEmail = async ({
 
     <tr>
       <td style="padding:32px 40px 28px;background:#fffdf8;">
-        <p style="margin:0 0 10px;font-size:15px;color:${B.textPrimary};">
-          Hi <strong>${businessName}</strong>,
-        </p>
-        <p style="margin:0 0 24px;font-size:14px;color:${B.textSecondary};line-height:1.7;">
-          To complete your Qios onboarding, enter this verification code in the app.
-          It confirms that this email address belongs to your business.
-        </p>
+        ${greetingHtml}
+        ${isPersonalized ? `<p style="margin:0 0 24px;font-size:14px;color:${B.textSecondary};line-height:1.7;">To complete your Qios onboarding, enter this verification code in the app. It confirms that this email address belongs to your business.</p>` : ""}
 
         <!-- OTP block -->
         <table width="100%" cellpadding="0" cellspacing="0" role="presentation"

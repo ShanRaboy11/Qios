@@ -31,7 +31,7 @@ export const TenantProfileHeader = ({
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mt-5">
         <div className="flex flex-col gap-3">
           <div className="flex items-center gap-3">
-            <h1 className="h1 text-text-primary">{tenant.name}</h1>
+            <h1 className="h1 text-text-primary">{tenant.business_name}</h1>
             <Badge
               color={
                 tenant.status === "Active"

@@ -13,7 +13,7 @@ import { Footer } from "./footer";
 
 export interface TenantProfileData {
   id: string;
-  name: string;
+  business_name: string;
   type: string;
   status: "Active" | "Pending" | "Suspended" | "Rejected";
   owner: string;
@@ -36,7 +36,7 @@ export interface TenantProfileData {
 
 const MOCK_TENANT: TenantProfileData = {
   id: "TEN-2026-003",
-  name: "Sugbo Mercado Central",
+  business_name: "Sugbo Mercado Central",
   type: "Enterprise",
   status: "Pending",
   owner: "Carlo Reyes",
