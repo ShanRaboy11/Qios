@@ -34,7 +34,7 @@ export default function OnboardingPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   
-  const [businessData, setBusinessData] = useState({ name: "", email: "", owner: "", phoneNumber: "" });
+  const [businessData, setBusinessData] = useState({ name: "", email: "", owner: "" });
   const [contactData, setContactData] = useState({ phoneNumber: "" });
   const [authData, setAuthData] = useState({ email: "", password: "", confirm: "" });
   const [subscriptionData, setSubscriptionData] = useState({ packageId: "starter" });
@@ -67,7 +67,6 @@ export default function OnboardingPage() {
       if (!businessData.name.trim()) return setError("Business Name is required");
       if (!validateEmail(businessData.email)) return setError("A valid business email is required");
       if (!businessData.owner?.trim()) return setError("Owner / Admin Name is required");
-      if (!businessData.phoneNumber || businessData.phoneNumber.length < 10) return setError("A valid Philippine phone number is required");
 
       setLoading(true);
       try {

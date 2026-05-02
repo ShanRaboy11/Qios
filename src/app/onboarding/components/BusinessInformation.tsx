@@ -39,19 +39,6 @@ export function BusinessInformation({ data, setData, error }: any) {
           setData((prev: any) => ({ ...prev, owner: e.target.value }))
         }
       />
-
-      <FormField
-        label={<>Contact Number <Required /></>}
-        placeholder="09123456789"
-        type="tel"
-        className="max-w-none"
-        value={data.phoneNumber || ""}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-          const val = e.target.value.replace(/\D/g, "");
-          setData((prev: any) => ({ ...prev, phoneNumber: val }))
-        }}
-        supportiveText="Philippine phone number without +63"
-      />
     </div>
   );
 }
