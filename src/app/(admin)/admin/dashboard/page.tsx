@@ -24,11 +24,13 @@ type ViewState =
 
 export default function AdminDashboardPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-bg-primary flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-brand-primary border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-bg-primary flex items-center justify-center">
+          <div className="w-8 h-8 border-4 border-brand-primary border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      }
+    >
       <AdminDashboardContent />
     </Suspense>
   );
@@ -37,20 +39,49 @@ export default function AdminDashboardPage() {
 function AdminDashboardContent() {
   const searchParams = useSearchParams();
   const initialViewParam = searchParams.get("view") as ViewState | null;
-  const initialView = initialViewParam && ["dashboard", "tenant", "system_activity", "subscription", "settings"].includes(initialViewParam) 
-    ? initialViewParam 
-    : "dashboard";
+  const initialView =
+    initialViewParam &&
+    [
+      "dashboard",
+      "tenant",
+      "system_activity",
+      "subscription",
+      "settings",
+    ].includes(initialViewParam)
+      ? initialViewParam
+      : "dashboard";
 
   const [currentView, setCurrentView] = useState<ViewState>(initialView);
   const [initialTenantFilter, setInitialTenantFilter] = useState<
     string | undefined
   >();
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const transitionTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
   const router = useRouter();
 
   React.useEffect(() => {
+    return () => {
+      if (transitionTimerRef.current) {
+        clearTimeout(transitionTimerRef.current);
+      }
+    };
+  }, []);
+
+  React.useEffect(() => {
     const view = searchParams.get("view") as ViewState;
-    if (view && ["dashboard", "tenant", "system_activity", "subscription", "settings"].includes(view) && view !== currentView) {
+    if (
+      view &&
+      [
+        "dashboard",
+        "tenant",
+        "system_activity",
+        "subscription",
+        "settings",
+      ].includes(view) &&
+      view !== currentView
+    ) {
       setCurrentView(view);
     }
   }, [searchParams]);
@@ -68,14 +99,18 @@ function AdminDashboardContent() {
   const handleNavigation = (view: ViewState, tenantFilter?: string) => {
     if (currentView === view && view !== "tenant") return;
 
+    if (transitionTimerRef.current) {
+      clearTimeout(transitionTimerRef.current);
+    }
+
     setIsTransitioning(true);
 
-    // Simulate loading delay for skeleton
-    setTimeout(() => {
+    // Keep transitions quick so the directory feels responsive.
+    transitionTimerRef.current = setTimeout(() => {
       setInitialTenantFilter(tenantFilter);
       setCurrentView(view);
       setIsTransitioning(false);
-    }, 600);
+    }, 220);
   };
 
   return (
