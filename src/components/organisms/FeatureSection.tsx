@@ -135,11 +135,11 @@ export default function FeatureSection() {
 
       <div className="max-w-7xl mx-auto relative z-10">
         <div className="mb-12 space-y-3 md:space-y-4">
-          <h1 className="text-[34px] md:h1 text-text-primary tracking-tight leading-tight">
+          <h1 className="max-md:text-[34px] h1 text-text-primary tracking-tight leading-tight">
             Hardware-Free <br className="sm:hidden" />
             <span style={gradientHeaderStyle}>QR Kiosk</span>
           </h1>
-          <p className="text-base md:h4 text-text-secondary max-w-[540px]">
+          <p className="max-md:text-base h4 text-text-secondary max-w-[540px]">
             Turn every smartphone into a powerful ordering terminal. No tablets,
             no stands, no friction.
           </p>
@@ -184,13 +184,11 @@ export default function FeatureSection() {
 
                 <h2 className="font-ibrand font-semibold text-2xl md:text-[38px] leading-[125%] italic text-text-tertiary">
                   "Find me a spicy dinner for two under{" "}
-                  <span className="font-figtree font-bold italic lg:not-italic lg:font-normal">
-                    ₱
-                  </span>
+                  <span className="font-figtree font-bold italic">₱</span>
                   500."
                 </h2>
 
-                <p className="text-sm md:b1 text-white/60 max-w-md mx-auto md:mx-0">
+                <p className="max-md:text-sm b1 text-white/60 max-w-md mx-auto md:mx-0">
                   A natural chat interface that understands context. It
                   recommends, upsells, and modifies orders in real-time.
                 </p>
@@ -217,7 +215,7 @@ export default function FeatureSection() {
               <h4 className="font-figtree font-bold text-lg md:text-[25px] leading-[125%] text-text-primary mt-4 md:mt-6 mb-2 md:mb-3">
                 {features[0].title}
               </h4>
-              <p className="text-xs md:b1 text-text-secondary leading-relaxed">
+              <p className="max-md:text-xs b1 text-text-secondary leading-relaxed">
                 {features[0].description}
               </p>
             </Card>
@@ -226,7 +224,7 @@ export default function FeatureSection() {
               <h4 className="font-figtree font-bold text-lg md:text-[25px] leading-[125%] text-text-primary mt-4 md:mt-6 mb-2 md:mb-3">
                 {features[1].title}
               </h4>
-              <p className="text-xs md:b1 text-text-secondary leading-relaxed">
+              <p className="max-md:text-xs b1 text-text-secondary leading-relaxed">
                 {features[1].description}
               </p>
             </Card>
@@ -238,7 +236,7 @@ export default function FeatureSection() {
               <h4 className="font-figtree font-bold text-lg md:text-[25px] leading-[125%] text-text-primary mt-4 md:mt-6 mb-2 md:mb-3">
                 {features[2].title}
               </h4>
-              <p className="text-xs md:b1 text-text-secondary leading-relaxed">
+              <p className="max-md:text-xs b1 text-text-secondary leading-relaxed">
                 {features[2].description}
               </p>
             </Card>
@@ -249,7 +247,7 @@ export default function FeatureSection() {
               <h4 className="font-figtree font-bold text-lg md:text-[25px] leading-[125%] text-text-primary mt-4 md:mt-6 mb-2 md:mb-3">
                 {features[3].title}
               </h4>
-              <p className="text-xs md:b1 text-text-secondary leading-relaxed">
+              <p className="max-md:text-xs b1 text-text-secondary leading-relaxed">
                 {features[3].description}
               </p>
             </Card>
@@ -260,14 +258,14 @@ export default function FeatureSection() {
               <h4 className="font-figtree font-bold text-lg md:text-[25px] leading-[125%] text-text-primary mt-4 md:mt-6 mb-2 md:mb-3">
                 {features[4].title}
               </h4>
-              <p className="text-xs md:b1 text-text-secondary leading-relaxed">
+              <p className="max-md:text-xs b1 text-text-secondary leading-relaxed">
                 {features[4].description}
               </p>
             </Card>
           </div>
         </div>
       </div>
-      <div className="absolute bottom-0 inset-x-0 h-48 bg-gradient-to-t from-bg-primary via-bg-primary/50 to-transparent pointer-events-none z-[10]" />
+      <div className="absolute bottom-0 inset-x-0 h-48 bg-gradient-to-t from-bg-primary via-bg-primary/50 to-transparent pointer-events-none z-0" />
     </section>
   );
 }
