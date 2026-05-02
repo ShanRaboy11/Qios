@@ -3,17 +3,14 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import {
-  getTenantDirectoryDetails,
   getTenants,
   updateTenantStatus,
-  type TenantDirectoryDetails,
 } from "@/app/(admin)/admin/tenants/actions";
+import { useRouter } from "next/navigation";
 import {
   Search,
   Building2,
   Check,
-  Eye,
-  FileText,
   Loader2,
   X,
   SlidersHorizontal,
@@ -22,7 +19,6 @@ import { FormField } from "@/components/molecules/FormField";
 import { Dropdown } from "@/components/molecules/Dropdown";
 import { Badge } from "@/components/atoms/Badge";
 import { Button } from "@/components/atoms/Button";
-import { AnimatePresence, motion } from "framer-motion";
 
 interface Tenant {
   id: string;
@@ -87,67 +83,10 @@ const INITIAL_DATA: Tenant[] = [
 let tenantCache: Tenant[] | null = null;
 let tenantCacheTimestamp = 0;
 const TENANT_CACHE_TTL_MS = 30_000;
-const TENANT_DETAILS_CACHE_TTL_MS = 90_000;
-const tenantDetailsCache = new Map<
-  string,
-  { data: TenantDirectoryDetails; timestamp: number }
->();
-const tenantDetailsRequests = new Map<
-  string,
-  Promise<TenantDirectoryDetails>
->();
 
 function updateTenantCache(nextTenants: Tenant[]) {
   tenantCache = nextTenants;
   tenantCacheTimestamp = Date.now();
-}
-
-function getCachedTenantDetails(
-  tenantId: string,
-): TenantDirectoryDetails | null {
-  const cached = tenantDetailsCache.get(tenantId);
-  if (!cached) return null;
-
-  if (Date.now() - cached.timestamp > TENANT_DETAILS_CACHE_TTL_MS) {
-    tenantDetailsCache.delete(tenantId);
-    return null;
-  }
-
-  return cached.data;
-}
-
-function updateTenantDetailsCache(details: TenantDirectoryDetails) {
-  tenantDetailsCache.set(details.id, {
-    data: details,
-    timestamp: Date.now(),
-  });
-}
-
-async function fetchTenantDetailsWithCache(
-  tenantId: string,
-  forceRefresh = false,
-): Promise<TenantDirectoryDetails> {
-  const cached = getCachedTenantDetails(tenantId);
-  if (cached && !forceRefresh) {
-    return cached;
-  }
-
-  const existingRequest = tenantDetailsRequests.get(tenantId);
-  if (existingRequest) {
-    return existingRequest;
-  }
-
-  const request = getTenantDirectoryDetails(tenantId)
-    .then((details) => {
-      updateTenantDetailsCache(details);
-      return details;
-    })
-    .finally(() => {
-      tenantDetailsRequests.delete(tenantId);
-    });
-
-  tenantDetailsRequests.set(tenantId, request);
-  return request;
 }
 
 export type ActionType =
@@ -166,6 +105,7 @@ export default function TenantManagement({
   initialStatusFilter,
   initialTenants = [],
 }: TenantManagementProps) {
+  const router = useRouter();
   const [tenants, setTenants] = useState<Tenant[]>(() => {
     if (initialTenants.length > 0) return initialTenants;
     return tenantCache ?? [];
@@ -277,13 +217,6 @@ export default function TenantManagement({
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
   const [actionType, setActionType] = useState<ActionType | null>(null);
-  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
-  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
-  const [tenantDetails, setTenantDetails] =
-    useState<TenantDirectoryDetails | null>(null);
-  const [tenantDetailsError, setTenantDetailsError] = useState<string | null>(
-    null,
-  );
 
   const openModal = (tenant: Tenant, action: ActionType) => {
     setSelectedTenant(tenant);
@@ -327,57 +260,12 @@ export default function TenantManagement({
     setActionType(null);
   };
 
-  const handleTenantClick = async (tenant: Tenant) => {
-    setIsDetailsModalOpen(true);
-    setTenantDetailsError(null);
-
-    const cachedDetails = getCachedTenantDetails(tenant.id);
-    if (cachedDetails) {
-      setTenantDetails(cachedDetails);
-      setIsLoadingDetails(false);
-    } else {
-      setIsLoadingDetails(true);
-      setTenantDetails(null);
-    }
-
-    try {
-      const details = await fetchTenantDetailsWithCache(
-        tenant.id,
-        !cachedDetails,
-      );
-      setTenantDetails(details);
-    } catch (error) {
-      console.error("Failed to load tenant details", error);
-      if (cachedDetails) {
-        setTenantDetails(cachedDetails);
-        setTenantDetailsError(
-          "Showing cached details. Unable to refresh right now.",
-        );
-      } else {
-        setTenantDetailsError(
-          "Unable to load this tenant's details right now.",
-        );
-        setTenantDetails({
-          id: tenant.id,
-          name: tenant.name,
-          owner: tenant.owner,
-          ownerEmail: null,
-          ownerPhone: null,
-          joined: tenant.joined,
-          status: tenant.status,
-          documents: [],
-        });
-      }
-    } finally {
-      setIsLoadingDetails(false);
-    }
+  const handleTenantClick = (tenant: Tenant) => {
+    router.push(`/admin/tenants/${tenant.id}`);
   };
 
   const prefetchTenantDetails = (tenantId: string) => {
-    if (getCachedTenantDetails(tenantId)) return;
-    void fetchTenantDetailsWithCache(tenantId).catch(() => {
-      // Silent prefetch failure: click handler handles user-facing errors.
-    });
+    void router.prefetch(`/admin/tenants/${tenantId}`);
   };
 
   const filteredTenants = useMemo(() => {
@@ -555,18 +443,6 @@ export default function TenantManagement({
         )}
       </div>
 
-      <TenantDetailsModal
-        isOpen={isDetailsModalOpen}
-        isLoading={isLoadingDetails}
-        tenant={tenantDetails}
-        error={tenantDetailsError}
-        onClose={() => {
-          setIsDetailsModalOpen(false);
-          setTenantDetails(null);
-          setTenantDetailsError(null);
-        }}
-      />
-
       {/* Confirmation Modal */}
       {modalOpen && selectedTenant && actionType && (
         <ConfirmationModal
@@ -682,240 +558,6 @@ function TenantCard({
         </div>
       </div>
     </button>
-  );
-}
-
-function TenantDetailsModal({
-  isOpen,
-  isLoading,
-  tenant,
-  error,
-  onClose,
-}: {
-  isOpen: boolean;
-  isLoading: boolean;
-  tenant: TenantDirectoryDetails | null;
-  error: string | null;
-  onClose: () => void;
-}) {
-  const [previewDocument, setPreviewDocument] = useState<{
-    url: string;
-    title: string;
-  } | null>(null);
-
-  useEffect(() => {
-    setPreviewDocument(null);
-  }, [tenant?.id, isOpen]);
-
-  return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          className="fixed inset-0 z-[120] flex items-start justify-center bg-black/45 backdrop-blur-sm p-4 pt-14 md:pt-20"
-          onClick={onClose}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.18, ease: "easeOut" }}
-        >
-          <motion.div
-            className="bg-white rounded-[24px] w-full max-w-4xl shadow-xl max-h-[84vh] overflow-hidden"
-            onClick={(event) => event.stopPropagation()}
-            initial={{ opacity: 0, y: 16, scale: 0.985 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 12, scale: 0.99 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-          >
-            <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
-              <div>
-                <h3 className="text-[20px] font-bold text-[#2D2D2D]">
-                  Tenant Details
-                </h3>
-                <p className="text-[13px] text-text-secondary">
-                  Business profile and submitted verification documents.
-                </p>
-              </div>
-              <button
-                onClick={onClose}
-                className="p-2 text-text-secondary hover:text-text-primary hover:bg-gray-50 rounded-full transition-colors"
-                aria-label="Close tenant details modal"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="p-5 overflow-y-auto max-h-[calc(84vh-80px)]">
-              {isLoading && (
-                <div className="flex items-center justify-center gap-2 py-12 text-text-secondary">
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                  <span>Loading tenant details...</span>
-                </div>
-              )}
-
-              {!isLoading && tenant && (
-                <div className="space-y-6">
-                  <div className="rounded-2xl border border-gray-100 bg-gray-50/40 p-5">
-                    <div className="flex items-center justify-between gap-4 mb-4">
-                      <div>
-                        <h4 className="text-[18px] font-semibold text-text-primary">
-                          {tenant.name}
-                        </h4>
-                        <p className="text-sm text-text-secondary">
-                          ID: {tenant.id}
-                        </p>
-                      </div>
-                      <Badge
-                        variant="outline"
-                        color={
-                          tenant.status === "Active"
-                            ? "success"
-                            : tenant.status === "Pending"
-                              ? "primary"
-                              : tenant.status === "Rejected"
-                                ? "error"
-                                : "info"
-                        }
-                      >
-                        {tenant.status}
-                      </Badge>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <span className="text-text-secondary">Owner</span>
-                        <p className="font-medium text-text-primary">
-                          {tenant.owner}
-                        </p>
-                      </div>
-                      <div>
-                        <span className="text-text-secondary">Email</span>
-                        <p className="font-medium text-text-primary">
-                          {tenant.ownerEmail || "Not available"}
-                        </p>
-                      </div>
-                      <div>
-                        <span className="text-text-secondary">Phone</span>
-                        <p className="font-medium text-text-primary">
-                          {tenant.ownerPhone || "Not available"}
-                        </p>
-                      </div>
-                      <div>
-                        <span className="text-text-secondary">Joined</span>
-                        <p className="font-medium text-text-primary">
-                          {tenant.joined}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h5 className="text-[16px] font-semibold text-text-primary">
-                        Verification Documents
-                      </h5>
-                      <span className="text-xs text-text-secondary">
-                        {tenant.documents.filter((doc) => doc.submitted).length}{" "}
-                        submitted
-                      </span>
-                    </div>
-
-                    {tenant.documents.length === 0 ? (
-                      <div className="rounded-2xl border border-dashed border-gray-200 p-6 text-center text-sm text-text-secondary">
-                        No submitted documents found.
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {tenant.documents.map((doc) => (
-                          <div
-                            key={doc.id}
-                            className="rounded-2xl border border-gray-100 bg-white p-4 flex flex-col gap-3"
-                          >
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="flex items-start gap-2 min-w-0">
-                                <FileText className="w-4 h-4 mt-0.5 text-text-secondary shrink-0" />
-                                <div className="min-w-0">
-                                  <p className="text-sm font-semibold text-text-primary truncate">
-                                    {doc.title}
-                                  </p>
-                                  <p className="text-xs text-text-secondary leading-snug mt-1">
-                                    {doc.description}
-                                  </p>
-                                </div>
-                              </div>
-                              {doc.required && (
-                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase text-red-600 bg-red-50">
-                                  Required
-                                </span>
-                              )}
-                            </div>
-
-                            {doc.submitted ? (
-                              <div className="flex items-center justify-between gap-2 rounded-xl border border-green-100 bg-green-50/60 px-3 py-2">
-                                <span className="text-xs font-medium text-green-800 truncate">
-                                  {doc.fileName || "Uploaded file"}
-                                </span>
-                                {doc.url && (
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      setPreviewDocument({
-                                        url: doc.url || "",
-                                        title: doc.fileName || doc.title,
-                                      })
-                                    }
-                                    className="text-xs font-semibold text-brand-primary hover:underline inline-flex items-center gap-1 shrink-0"
-                                  >
-                                    View
-                                    <Eye className="w-3 h-3" />
-                                  </button>
-                                )}
-                              </div>
-                            ) : (
-                              <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 px-3 py-2 text-xs text-text-secondary text-center">
-                                Not submitted
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {previewDocument && (
-                    <div className="rounded-2xl border border-gray-100 bg-gray-50/40 p-4 space-y-3">
-                      <div className="flex items-center justify-between gap-3">
-                        <h6 className="text-sm font-semibold text-text-primary truncate">
-                          Preview: {previewDocument.title}
-                        </h6>
-                        <button
-                          type="button"
-                          onClick={() => setPreviewDocument(null)}
-                          className="text-xs font-medium text-text-secondary hover:text-text-primary"
-                        >
-                          Close Preview
-                        </button>
-                      </div>
-
-                      <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
-                        <iframe
-                          src={previewDocument.url}
-                          title={previewDocument.title}
-                          className="w-full h-[52vh]"
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  {error && (
-                    <p className="text-sm text-warning-primary">{error}</p>
-                  )}
-                </div>
-              )}
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
   );
 }
 
