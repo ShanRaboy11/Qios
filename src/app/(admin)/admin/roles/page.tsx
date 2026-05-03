@@ -12,11 +12,8 @@ import {
   Copy,
   Trash2,
   GripVertical,
-  Utensils,
-  Store,
   LineChart,
   Package,
-  Link2,
   X,
   Smartphone,
   Users,
@@ -421,7 +418,7 @@ export default function SubscriptionManagementPage() {
                 <Search size={18} className="text-text-secondary" />
               </div>
               <Input
-                placeholder="Search plans..."
+                placeholder="Search plans"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-12 !py-2.5 rounded-xl !bg-white/60 !border-white/50"
@@ -497,7 +494,7 @@ export default function SubscriptionManagementPage() {
                         onChange={(e) =>
                           setDraftPlan({ ...draftPlan, name: e.target.value })
                         }
-                        className="text-lg font-bold !bg-white/80 !py-1.5 !h-10"
+                        className="text-lg !bg-white/80 !py-1.5 !h-10"
                       />
                     </div>
                     <div className="flex-1">
