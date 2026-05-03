@@ -67,7 +67,6 @@ export const Navbar = ({
     { label: "Tenant Directory", href: "#", id: "tenant" },
     { label: "Subscription and Plans", href: "#", id: "subscription" },
     { label: "System Activity", href: "#", id: "system_activity" },
-    { label: "Settings", href: "#", id: "settings" },
   ];
 
   const tenantLinks = [
