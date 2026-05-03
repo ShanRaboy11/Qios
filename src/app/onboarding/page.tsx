@@ -1,8 +1,8 @@
 "use client";
+
 import React, { useState } from "react";
 import {
   Building2,
-  FileText,
   ShoppingBag,
   Component,
   IdCard,
@@ -11,6 +11,7 @@ import {
   CheckCircle2,
   FileCheck,
   ShieldCheck,
+  ClipboardCheck,
 } from "lucide-react";
 import { Button } from "@/components/atoms/Button";
 import { cn } from "@/lib/utils";
@@ -21,31 +22,34 @@ import { DocumentUpload } from "./components/DocumentUpload";
 import { AuthCredentials } from "./components/AuthCredentials";
 import { SubscriptionPackage } from "./components/SubscriptionPackage";
 import { OperationalSetup } from "./components/OperationalSetup";
-import { FinalOTPVerification } from "./components/ContactInformation";
+import { ContactInformation } from "./components/ContactInformation";
+import { ReviewSummary } from "./components/ReviewSummary";
 import { RegistrationSuccessModal } from "./components/RegistrationSuccessModal";
 import { Navbar } from "@/components/organisms/navbar";
 import { Footer } from "@/components/organisms/footer";
 import {
   processOnboarding,
   resolveOnboardingAccess,
+  sendContactVerificationCode,
+  createDevOnboardingAuthUser,
+  saveBusinessInformation,
   saveDocumentUploads,
   saveOnboardingProgress,
-  sendContactVerificationCode,
 } from "./actions";
 import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { OperationalSetupConfig, SubscriptionPlan } from "@/types/tenant";
 
 const steps = [
-  { id: 1, title: "Auth Credentials", icon: IdCard },
-  { id: 2, title: "Business Information", icon: Building2 },
-  { id: 3, title: "Document Requirements", icon: FileCheck },
-  { id: 4, title: "Subscription Package", icon: ShoppingBag },
-  { id: 5, title: "Operational Strategy", icon: Component },
-  { id: 6, title: "Final Review & OTP Verification", icon: ShieldCheck },
+  { id: 1, title: "Account Creation", icon: IdCard },
+  { id: 2, title: "Identity Verification", icon: ShieldCheck },
+  { id: 3, title: "Business Information", icon: Building2 },
+  { id: 4, title: "Document Requirements", icon: FileCheck },
+  { id: 5, title: "Subscription Package", icon: ShoppingBag },
+  { id: 6, title: "Operational Strategy", icon: Component },
+  { id: 7, title: "Application Summary", icon: ClipboardCheck },
 ];
 
-// Mobile step progress bar
 function MobileStepBar({
   currentStep,
   totalSteps,
@@ -74,7 +78,6 @@ function MobileStepBar({
           {currentStep} of {totalSteps}
         </span>
       </div>
-      {/* Progress bar */}
       <div className="h-1.5 w-full rounded-full bg-neutral-100 overflow-hidden">
         <div
           className="h-full rounded-full bg-[var(--color-brand-primary)] transition-all duration-500 ease-out"
@@ -128,10 +131,13 @@ export default function OnboardingPage() {
   const getSelectedPlan = (packageId: string): SubscriptionPlan => {
     if (packageId === "basic" || packageId === "starter") return "basic";
     if (packageId === "business" || packageId === "growth") return "business";
-    if (packageId === "enterprise" || packageId === "enterprises")
+    if (packageId === "enterprise" || packageId === "enterprises") {
       return "enterprise";
+    }
     return "basic";
   };
+
+  const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
   const dispatchVerificationCode = async ({
     email = businessData.email || authData.email,
@@ -148,7 +154,50 @@ export default function OnboardingPage() {
     return res.verificationCode;
   };
 
-  const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
+  const hydrateFromAccess = (access: Awaited<ReturnType<typeof resolveOnboardingAccess>>) => {
+    setUserId(access.userId || "");
+    setTenantId(access.tenantId || "");
+
+    setBusinessData((prev) => ({
+      ...prev,
+      name: prev.name || access.businessName || "",
+      email: prev.email || access.businessEmail || authData.email,
+      owner: prev.owner || access.ownerName || "",
+    }));
+
+    if (access.subscriptionPlan) {
+      setSubscriptionData({ packageId: access.subscriptionPlan });
+    }
+
+    if (access.operationalSetup) {
+      setOperationalData((prev) => ({
+        ...prev,
+        ...access.operationalSetup,
+      }));
+    }
+  };
+
+  const loginAndResume = async (
+    access: Awaited<ReturnType<typeof resolveOnboardingAccess>>,
+  ) => {
+    const supabase = createSupabaseBrowserClient();
+    const { data, error: signInError } = await supabase.auth.signInWithPassword({
+      email: authData.email,
+      password: authData.password,
+    });
+
+    if (signInError || !data.user) {
+      throw new Error(
+        "This account already exists. Please use the correct password to continue onboarding.",
+      );
+    }
+
+    setUserId(data.user.id);
+    hydrateFromAccess(access);
+    setCurrentStep(Math.max(access.nextStep || 3, 3));
+    setSuccess("Welcome back. Continuing your saved onboarding progress.");
+    scrollToTop();
+  };
 
   const handleAuthContinue = async () => {
     setError("");
@@ -169,67 +218,105 @@ export default function OnboardingPage() {
       const supabase = createSupabaseBrowserClient();
       const access = await resolveOnboardingAccess({ email: authData.email });
 
-      if (access.status === "resume-onboarding") {
-        setUserId(access.userId || "");
-        setTenantId(access.tenantId || "");
-        setBusinessData((prev) => ({
-          ...prev,
-          name: prev.name || access.businessName || "",
-          email: prev.email || access.businessEmail || authData.email,
-          owner: prev.owner || access.ownerName || "",
-        }));
-        if (access.subscriptionPlan) {
-          setSubscriptionData({ packageId: access.subscriptionPlan });
-        }
-        await dispatchVerificationCode({
-          email: authData.email,
-          businessName: access.businessName || authData.email,
-        });
-        setCurrentStep(2);
-        setBusinessData((prev) => ({ ...prev, email: prev.email || authData.email }));
-        scrollToTop();
-        return;
-      }
-
       if (access.status === "completed") {
-        setError("This email is already registered.");
+        setError("This email is already registered and onboarding has been submitted.");
         return;
       }
 
-      const { data, error: signUpError } = await supabase.auth.signUp({
-        email: authData.email,
-        password: authData.password,
-        options: {
-          data: {
-            full_name: businessData.name || authData.email,
-            business_email: businessData.email || authData.email,
-          },
-        },
-      });
-
-      if (signUpError) {
-        throw new Error(signUpError.message || "Failed to create account. Please try again.");
+      if (access.userExists && access.userVerified) {
+        await loginAndResume(access);
+        return;
       }
 
-      const signedUpUserId = data.user?.id;
-      if (!signedUpUserId) {
-        throw new Error("Account created but no user ID was returned. Please contact support.");
+      if (process.env.NODE_ENV !== "production") {
+        const devUser = await createDevOnboardingAuthUser({
+          email: authData.email,
+          password: authData.password,
+        });
+
+        setUserId(devUser.userId);
+      } else {
+        const { data, error: signUpError } = await supabase.auth.signUp({
+          email: authData.email,
+          password: authData.password,
+        });
+
+        if (signUpError) {
+          const msg = signUpError.message || "";
+
+          if (/already/i.test(msg) || /exists/i.test(msg)) {
+            const refreshedAccess = await resolveOnboardingAccess({ email: authData.email });
+
+            if (refreshedAccess.userVerified) {
+              await loginAndResume(refreshedAccess);
+              return;
+            }
+
+            hydrateFromAccess(refreshedAccess);
+            await dispatchVerificationCode({
+              email: authData.email,
+              businessName: refreshedAccess.businessName || authData.email,
+            });
+            setCurrentStep(2);
+            setSuccess("Account found. Verify your email OTP to continue.");
+            scrollToTop();
+            return;
+          }
+
+          throw new Error(signUpError.message || "Failed to create account. Please try again.");
+        }
+
+        if (data.user?.id) {
+          setUserId(data.user.id);
+        }
       }
 
-      setUserId(signedUpUserId);
       await dispatchVerificationCode({
         email: authData.email,
         businessName: businessData.name || authData.email,
       });
 
-      setCurrentStep(2);
       setBusinessData((prev) => ({ ...prev, email: prev.email || authData.email }));
+      setCurrentStep(2);
+      setSuccess("Enter the 6-digit OTP sent to your email.");
       scrollToTop();
     } catch (err: any) {
       setError(err.message || "An error occurred during signup. Please try again.");
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleOtpVerification = async () => {
+    setError("");
+    setSuccess("");
+
+    setLoading(true);
+    try {
+      if (!userId) {
+        const access = await resolveOnboardingAccess({ email: authData.email });
+        if (access.userId) {
+          setUserId(access.userId);
+        } else {
+          throw new Error("Could not resolve your account. Please return to Step 1 and try again.");
+        }
+      }
+
+      setCurrentStep(3);
+      scrollToTop();
+    } catch (err: any) {
+      setError(err.message || "Unable to verify OTP.");
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOtpResend = async () => {
+    return dispatchVerificationCode({
+      email: authData.email,
+      businessName: businessData.name || authData.email,
+    });
   };
 
   const handleBusinessContinue = async () => {
@@ -250,14 +337,19 @@ export default function OnboardingPage() {
 
     setLoading(true);
     try {
-      const res = await saveOnboardingProgress({
+      const res = await saveBusinessInformation({
         tenantId: tenantId || undefined,
-        businessData,
+        userId,
+        businessData: {
+          name: businessData.name,
+          email: businessData.email,
+          owner: businessData.owner,
+        },
       });
 
       setTenantId(res.tenantId);
       setSuccess("Business information saved.");
-      setCurrentStep(3);
+      setCurrentStep(4);
       scrollToTop();
     } catch (err: any) {
       setError(err.message || "Unable to save business information.");
@@ -275,19 +367,18 @@ export default function OnboardingPage() {
     }
 
     if (!userId) {
-      return setError("Your account was not created successfully. Please go back and try signing up again.");
+      return setError("Please verify your account before uploading documents.");
     }
 
     setLoading(true);
     try {
-      // Convert File objects to base64 strings for server action serialization
       const filesData: Record<string, { name: string; base64: string; type: string }> = {};
       for (const [key, file] of Object.entries(documentData)) {
         const reader = new FileReader();
         const base64 = await new Promise<string>((resolve) => {
           reader.onload = () => {
             const result = reader.result as string;
-            resolve(result.split(",")[1]); // Extract base64 part
+            resolve(result.split(",")[1]);
           };
           reader.readAsDataURL(file);
         });
@@ -296,12 +387,13 @@ export default function OnboardingPage() {
 
       const res = await saveDocumentUploads({
         tenantId,
+        userId,
         filesData,
       });
 
       if (res.success) {
         setSuccess("Documents uploaded and saved.");
-        setCurrentStep(4);
+        setCurrentStep(5);
         scrollToTop();
       }
     } catch (err: any) {
@@ -323,13 +415,12 @@ export default function OnboardingPage() {
     try {
       const res = await saveOnboardingProgress({
         tenantId,
-        businessData,
         subscriptionData,
       });
 
       setTenantId(res.tenantId);
       setSuccess("Subscription package saved.");
-      setCurrentStep(5);
+      setCurrentStep(6);
       scrollToTop();
     } catch (err: any) {
       setError(err.message || "Unable to save subscription package.");
@@ -351,14 +442,12 @@ export default function OnboardingPage() {
       setOperationalData(featureData);
       const res = await saveOnboardingProgress({
         tenantId,
-        businessData,
-        subscriptionData,
         featureData,
       });
 
       setTenantId(res.tenantId);
       setSuccess("Operational strategy saved.");
-      setCurrentStep(6);
+      setCurrentStep(7);
       scrollToTop();
     } catch (err: any) {
       setError(err.message || "Unable to save operational strategy.");
@@ -367,48 +456,21 @@ export default function OnboardingPage() {
     }
   };
 
-  const handleFinalOtpVerified = async () => {
+  const handleSubmitApplication = async () => {
     setLoading(true);
     setError("");
 
     try {
-      let finalTenantId = tenantId;
-      let finalUserId = userId;
-
-      if (!finalTenantId || !finalUserId) {
-        const access = await resolveOnboardingAccess({
-          email: businessData.email || authData.email,
-        });
-
-        if (access.status === "resume-onboarding" || access.status === "completed") {
-          finalTenantId = finalTenantId || access.tenantId || "";
-          finalUserId = finalUserId || access.userId || "";
-          // Populate missing data from resolved access
-          if (!businessData.name && access.businessName) {
-            setBusinessData((prev) => ({
-              ...prev,
-              name: access.businessName || "",
-              email: access.businessEmail || prev.email || authData.email,
-              owner: access.ownerName || prev.owner || "",
-            }));
-          }
-          if (!subscriptionData.packageId && access.subscriptionPlan) {
-            setSubscriptionData({ packageId: access.subscriptionPlan });
-          }
-        }
-      }
-
-      if (!finalTenantId || !finalUserId) {
-        throw new Error("Your registration session is incomplete. Please go back and continue again.");
+      if (!tenantId) {
+        throw new Error("Your onboarding session is incomplete. Please continue from business information.");
       }
 
       const res = await processOnboarding({
-        tenantId: finalTenantId,
-        userId: finalUserId,
+        tenantId,
         businessData,
-        authData,
         subscriptionData,
         featureData: operationalData,
+        userId,
       });
 
       if (res.success) {
@@ -425,12 +487,20 @@ export default function OnboardingPage() {
     }
   };
 
-  const handleChangeEmail = () => {
+  const handleChangeEmail = async () => {
     setError("");
     setSuccess("");
     setVerificationCode("");
     setTenantId("");
     setUserId("");
+
+    try {
+      const supabase = createSupabaseBrowserClient();
+      await supabase.auth.signOut();
+    } catch {
+      // no-op
+    }
+
     setCurrentStep(1);
     scrollToTop();
   };
@@ -447,48 +517,42 @@ export default function OnboardingPage() {
     router.push("/");
   };
 
-  // Determine content width per step
   const contentMaxWidth = cn(
-    currentStep === 5
+    currentStep === 6
       ? "max-w-[960px]"
-      : currentStep === 6
-        ? "max-w-[860px]"
-        : currentStep === 3
-        ? "max-w-[1200px]"
+      : currentStep === 7
+        ? "max-w-[960px]"
         : currentStep === 4
-        ? "max-w-xl"
-        : "max-w-[450px]",
+          ? "max-w-[1200px]"
+          : currentStep === 5
+            ? "max-w-xl"
+            : "max-w-[450px]",
   );
 
   return (
     <main className="flex flex-col min-h-screen bg-[var(--color-bg-primary)] w-full overflow-x-hidden">
       <Navbar variant="transparent" />
 
-      {/* pt-[72px] offsets the fixed/sticky navbar so content is never hidden beneath it */}
       <div className="flex flex-1 flex-col lg:flex-row pt-[72px]">
-        {/* Sidebar — visible on desktop only */}
         <OnboardingSidebar steps={steps} currentStep={currentStep} />
 
-        {/* Mobile progress bar */}
         <MobileStepBar currentStep={currentStep} totalSteps={steps.length} />
 
-        {/* ── MAIN CONTENT ── */}
         <div
           className={cn(
             "flex-1 flex flex-col items-center px-4 sm:px-6 md:px-10 lg:px-12 xl:px-24",
-            currentStep <= 2
+            currentStep <= 3
               ? "justify-center min-h-[calc(100vh-72px)]"
               : "justify-start pt-12 pb-20",
           )}
         >
-          {/* Step title */}
           <div className="w-full mb-8 text-center">
             <h1 className="text-3xl md:text-4xl font-bold text-[var(--color-text-primary)]">
               {steps.find((s) => s.id === currentStep)?.title}
             </h1>
           </div>
 
-          {(success || error) && currentStep <= 2 && (
+          {(success || error) && currentStep <= 3 && (
             <div className="w-full max-w-[450px] mb-6 space-y-3">
               {success && (
                 <div className="flex items-center gap-2 w-full text-green-700 bg-green-50 border border-green-100 rounded-xl px-4 py-3">
@@ -504,68 +568,69 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* Content wrapper */}
           <div className={cn("w-full mx-auto", contentMaxWidth)}>
             {currentStep === 1 && (
-              <AuthCredentials
-                data={authData}
-                setData={setAuthData}
-                error={error}
-              />
-            )}
-
-            {currentStep === 1 && (
-              <div className="mt-8 flex flex-col items-center w-full">
-                <div className="flex flex-row gap-3 w-full">
-                  <Button
-                    variant="primary"
-                    size="lg"
-                    className="h-12 flex-1 text-sm font-bold shadow-lg shadow-orange-200/40"
-                    onClick={handleAuthContinue}
-                  >
-                    Continue
-                    <ArrowRight className="h-4 w-4 ml-1.5" />
-                  </Button>
+              <>
+                <AuthCredentials data={authData} setData={setAuthData} error={error} />
+                <div className="mt-8 flex flex-col items-center w-full">
+                  <div className="flex flex-row gap-3 w-full">
+                    <Button
+                      variant="primary"
+                      size="lg"
+                      className="h-12 flex-1 text-sm font-bold shadow-lg shadow-orange-200/40"
+                      onClick={handleAuthContinue}
+                      disabled={loading}
+                    >
+                      {loading ? "Creating..." : "Continue"}
+                      {!loading && <ArrowRight className="h-4 w-4 ml-1.5" />}
+                    </Button>
+                  </div>
                 </div>
-              </div>
+              </>
             )}
 
             {currentStep === 2 && (
-              <BusinessInformation
-                data={businessData}
-                setData={setBusinessData}
-                error={error}
-              />
-            )}
-
-            {currentStep === 2 && (
-              <div className="mt-8 flex flex-col items-center w-full">
-                <div className="flex flex-row gap-3 w-full">
-                  <Button
-                    variant="ghost"
-                    size="lg"
-                    className="h-12 shrink-0 border-neutral-200 px-4 text-sm text-neutral-500"
-                    onClick={prevStep}
-                    disabled={loading}
-                  >
-                    <ArrowLeft className="h-4 w-4 mr-1.5" />
-                    Back
-                  </Button>
-                  <Button
-                    variant="primary"
-                    size="lg"
-                    className="h-12 flex-1 text-sm font-bold shadow-lg shadow-orange-200/40"
-                    onClick={handleBusinessContinue}
-                    disabled={loading}
-                  >
-                    {loading ? "Saving…" : "Continue"}
-                    {!loading && <ArrowRight className="h-4 w-4 ml-1.5" />}
-                  </Button>
-                </div>
-              </div>
+              <>
+                <ContactInformation
+                  expectedCode={verificationCode}
+                  onResendCode={handleOtpResend}
+                  onVerified={handleOtpVerification}
+                  onBack={prevStep}
+                />
+              </>
             )}
 
             {currentStep === 3 && (
+              <>
+                <BusinessInformation data={businessData} setData={setBusinessData} error={error} />
+                <div className="mt-8 flex flex-col items-center w-full">
+                  <div className="flex flex-row gap-3 w-full">
+                    <Button
+                      variant="ghost"
+                      size="lg"
+                      className="h-12 shrink-0 border-neutral-200 px-4 text-sm text-neutral-500"
+                      onClick={prevStep}
+                      disabled={loading}
+                    >
+                      <ArrowLeft className="h-4 w-4 mr-1.5" />
+                      Back
+                    </Button>
+                    <Button
+                      variant="primary"
+                      size="lg"
+                      className="h-12 flex-1 text-sm font-bold shadow-lg shadow-orange-200/40"
+                      onClick={handleBusinessContinue}
+                      disabled={loading}
+                    >
+                      {loading ? "Saving..." : "Continue"}
+                      {!loading && <ArrowRight className="h-4 w-4 ml-1.5" />}
+                    </Button>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {currentStep === 4 && (
               <DocumentUpload
                 data={documentData}
                 setData={setDocumentData}
@@ -575,7 +640,7 @@ export default function OnboardingPage() {
               />
             )}
 
-            {currentStep === 4 && (
+            {currentStep === 5 && (
               <SubscriptionPackage
                 data={subscriptionData}
                 setData={setSubscriptionData}
@@ -584,7 +649,7 @@ export default function OnboardingPage() {
               />
             )}
 
-            {currentStep === 5 && (
+            {currentStep === 6 && (
               <OperationalSetup
                 selectedPlan={getSelectedPlan(subscriptionData.packageId)}
                 onFinish={handleOperationalContinue}
@@ -593,19 +658,14 @@ export default function OnboardingPage() {
               />
             )}
 
-            {currentStep === 6 && (
-              <FinalOTPVerification
-                businessName={businessData.name}
+            {currentStep === 7 && (
+              <ReviewSummary
+                businessData={businessData}
                 selectedPlan={getSelectedPlan(subscriptionData.packageId)}
-                expectedCode={verificationCode}
-                onResendCode={() =>
-                  dispatchVerificationCode({
-                    email: businessData.email || authData.email,
-                    businessName: businessData.name || businessData.email || authData.email,
-                  })
-                }
-                onVerified={handleFinalOtpVerified}
-                onChangeEmail={handleChangeEmail}
+                operationalData={operationalData}
+                onBack={prevStep}
+                onSubmit={handleSubmitApplication}
+                loading={loading}
               />
             )}
           </div>

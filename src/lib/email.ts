@@ -1,12 +1,17 @@
 import nodemailer from "nodemailer";
 
+const isDevelopment = process.env.NODE_ENV !== "production";
+
 type SmtpConfig = {
   host: string;
   port: number;
   secure: boolean;
   user: string;
   pass: string;
-  from: string;
+  from: {
+    name: string;
+    address: string;
+  };
 };
 
 // ─── Brand Tokens ─────────────────────────────────────────────────────────────
@@ -45,9 +50,20 @@ const readSmtpConfig = (): SmtpConfig | null => {
     process.env.SMTP_PASS ||
     process.env.MAIL_PASSWORD ||
     process.env.MAIL_PASS;
-  const from = process.env.SMTP_FROM || process.env.MAIL_FROM || user;
+  const fromName =
+    process.env.SMTP_FROM_NAME ||
+    process.env.MAIL_FROM_NAME ||
+    "Qios";
+  const fromAddress =
+    process.env.SMTP_USER ||
+    process.env.SMTP_FROM_EMAIL ||
+    process.env.MAIL_FROM_EMAIL ||
+    user ||
+    process.env.SMTP_FROM ||
+    process.env.MAIL_FROM ||
+    "";
 
-  if (!host || !user || !pass || !from) return null;
+  if (!host || !user || !pass || !fromAddress) return null;
 
   const port = Number.parseInt(portRaw, 10);
   return {
@@ -56,7 +72,10 @@ const readSmtpConfig = (): SmtpConfig | null => {
     secure: port === 465,
     user,
     pass,
-    from,
+    from: {
+      name: fromName,
+      address: fromAddress,
+    },
   };
 };
 
@@ -301,6 +320,11 @@ export const sendContactVerificationEmail = async ({
     };
   }
 
+  if (isDevelopment) {
+    console.log(`[DEV EMAIL] Verification code for ${to}: ${code}`);
+    return { success: true as const, messageId: `dev-otp-${Date.now()}` };
+  }
+
   const digits = code.split("");
   const mid = Math.floor(digits.length / 2);
   const left = digits.slice(0, mid);
@@ -427,6 +451,11 @@ export const sendBusinessVerificationEmail = async ({
         "SMTP is not fully configured. Set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, and SMTP_FROM.",
       ),
     };
+  }
+
+  if (isDevelopment) {
+    console.log(`[DEV EMAIL] Business verification email skipped for ${to} (${status})`);
+    return { success: true as const, messageId: `dev-business-${Date.now()}` };
   }
 
   const isApproved = status === "approved";
@@ -618,6 +647,11 @@ export const sendRegistrationSuccessEmail = async ({
       reason: "SMTP_NOT_CONFIGURED" as const,
       error: new Error("SMTP is not fully configured."),
     };
+  }
+
+  if (isDevelopment) {
+    console.log(`[DEV EMAIL] Registration success email skipped for ${to} (${businessName})`);
+    return { success: true as const, messageId: `dev-success-${Date.now()}` };
   }
 
   const html = emailWrapper(`

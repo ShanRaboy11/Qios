@@ -1,4 +1,5 @@
 "use server";
+
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { sendContactVerificationEmail, sendRegistrationSuccessEmail } from "@/lib/email";
 import type {
@@ -27,16 +28,23 @@ type SaveOnboardingProgressInput = {
   documentUrls?: string[];
 };
 
+type SaveBusinessInformationInput = {
+  tenantId?: string;
+  userId: string;
+  businessData: {
+    name: string;
+    email: string;
+    owner: string;
+  };
+};
+
 type DocumentUploadInput = {
   tenantId: string;
+  userId: string;
   filesData: Record<string, { name: string; base64: string; type: string }>;
 };
 
-type OnboardingAccessStatus =
-  | "new"
-  | "resume-onboarding"
-  | "completed"
-  | "not-found";
+type OnboardingAccessStatus = "new" | "resume-onboarding" | "completed";
 
 type ResolveOnboardingAccessInput = {
   email: string;
@@ -44,6 +52,9 @@ type ResolveOnboardingAccessInput = {
 
 type ResolveOnboardingAccessResult = {
   status: OnboardingAccessStatus;
+  userExists: boolean;
+  userVerified: boolean;
+  nextStep?: number;
   userId?: string;
   tenantId?: string;
   businessName?: string;
@@ -51,6 +62,7 @@ type ResolveOnboardingAccessResult = {
   ownerName?: string;
   subscriptionPlan?: SubscriptionPlan;
   verificationDocUrls?: string[];
+  operationalSetup?: PartialOperationalSetupConfig;
 };
 
 const getSubscriptionPlan = (packageId: string): SubscriptionPlan => {
@@ -80,6 +92,67 @@ const buildTenantSettings = (
   }
 
   return settings;
+};
+
+const parseOperationalSetup = (
+  settings: Record<string, unknown> | null,
+): PartialOperationalSetupConfig => {
+  if (!settings) {
+    return {};
+  }
+
+  const inventoryMode = settings.inventory_mode;
+  const serviceWorkflow = settings.service_workflow;
+  const dashboardFocus = settings.dashboard_focus;
+  const supplyLogic = settings.supply_logic;
+
+  return {
+    ...(typeof inventoryMode === "string" ? { inventoryMode } : {}),
+    ...(typeof serviceWorkflow === "string" ? { serviceWorkflow } : {}),
+    ...(typeof dashboardFocus === "string" ? { dashboardFocus } : {}),
+    ...(typeof supplyLogic === "string" ? { supplyLogic } : {}),
+  } as PartialOperationalSetupConfig;
+};
+
+const deriveNextStep = (tenant: {
+  business_name: string | null;
+  business_email: string | null;
+  owner_name: string | null;
+  subscription_plan: SubscriptionPlan | null;
+  verification_doc_urls: string[] | null;
+  settings: Record<string, unknown> | null;
+}) => {
+  const hasBusinessCore =
+    Boolean(tenant.business_name?.trim()) &&
+    Boolean(tenant.business_email?.trim()) &&
+    Boolean(tenant.owner_name?.trim());
+
+  if (!hasBusinessCore) {
+    return 3;
+  }
+
+  const hasVerificationDocs = Array.isArray(tenant.verification_doc_urls)
+    ? tenant.verification_doc_urls.length > 0
+    : false;
+
+  if (!hasVerificationDocs) {
+    return 4;
+  }
+
+  if (!tenant.subscription_plan) {
+    return 5;
+  }
+
+  const settings = tenant.settings || {};
+  const hasOperationalSetup = Boolean(
+    settings.inventory_mode && settings.service_workflow && settings.dashboard_focus,
+  );
+
+  if (!hasOperationalSetup) {
+    return 6;
+  }
+
+  return 7;
 };
 
 const getLatestUserByEmail = async (
@@ -122,6 +195,44 @@ const getLatestUserByEmail = async (
   return null;
 };
 
+export async function createDevOnboardingAuthUser(input: {
+  email: string;
+  password: string;
+}) {
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("Dev-only auth helper cannot run in production.");
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const normalizedEmail = normalizeEmail(input.email);
+  const existingUser = await getLatestUserByEmail(supabase, normalizedEmail);
+
+  if (existingUser) {
+    const { data, error } = await supabase.auth.admin.updateUserById(existingUser.id, {
+      password: input.password,
+      email_confirm: true,
+    });
+
+    if (error || !data.user) {
+      throw new Error(error?.message || "Failed to update the local onboarding account.");
+    }
+
+    return { userId: data.user.id };
+  }
+
+  const { data, error } = await supabase.auth.admin.createUser({
+    email: normalizedEmail,
+    password: input.password,
+    email_confirm: true,
+  });
+
+  if (error || !data.user) {
+    throw new Error(error?.message || "Failed to create the local onboarding account.");
+  }
+
+  return { userId: data.user.id };
+}
+
 export async function resolveOnboardingAccess(
   { email }: ResolveOnboardingAccessInput,
 ): Promise<ResolveOnboardingAccessResult> {
@@ -130,7 +241,9 @@ export async function resolveOnboardingAccess(
 
   const { data: tenant, error: tenantError } = await supabase
     .from("tenants")
-    .select("id, business_name, business_email, owner_name, subscription_plan, status, verification_doc_urls")
+    .select(
+      "id, business_name, business_email, owner_name, subscription_plan, status, verification_doc_urls, settings",
+    )
     .eq("business_email", normalizedEmail)
     .order("updated_at", { ascending: false })
     .limit(1)
@@ -141,29 +254,72 @@ export async function resolveOnboardingAccess(
   }
 
   const authUser = await getLatestUserByEmail(supabase, normalizedEmail);
+  const userExists = Boolean(authUser);
+  const userVerified = Boolean(authUser?.email_confirmed_at);
 
   if (tenant?.status === "onboarding") {
     return {
       status: "resume-onboarding",
+      userExists,
+      userVerified,
+      nextStep: deriveNextStep({
+        business_name: tenant.business_name,
+        business_email: tenant.business_email,
+        owner_name: tenant.owner_name,
+        subscription_plan: tenant.subscription_plan as SubscriptionPlan,
+        verification_doc_urls: (tenant.verification_doc_urls as string[]) || [],
+        settings: (tenant.settings as Record<string, unknown> | null) || null,
+      }),
       userId: authUser?.id,
       tenantId: tenant.id,
       businessName: tenant.business_name || undefined,
       businessEmail: tenant.business_email || normalizedEmail,
       ownerName: tenant.owner_name || undefined,
       subscriptionPlan: (tenant.subscription_plan as SubscriptionPlan) || undefined,
-      verificationDocUrls: tenant.verification_doc_urls || undefined,
+      verificationDocUrls: (tenant.verification_doc_urls as string[]) || undefined,
+      operationalSetup: parseOperationalSetup(
+        (tenant.settings as Record<string, unknown> | null) || null,
+      ),
+    };
+  }
+
+  if (tenant) {
+    return {
+      status: "completed",
+      userExists,
+      userVerified,
+      nextStep: 7,
+      userId: authUser?.id,
+      tenantId: tenant.id,
+      businessName: tenant.business_name || undefined,
+      businessEmail: tenant.business_email || normalizedEmail,
+      ownerName: tenant.owner_name || undefined,
+      subscriptionPlan: (tenant.subscription_plan as SubscriptionPlan) || undefined,
+      verificationDocUrls: (tenant.verification_doc_urls as string[]) || undefined,
+      operationalSetup: parseOperationalSetup(
+        (tenant.settings as Record<string, unknown> | null) || null,
+      ),
+    };
+  }
+
+  if (userExists && userVerified) {
+    return {
+      status: "resume-onboarding",
+      userExists,
+      userVerified,
+      nextStep: 3,
+      userId: authUser?.id,
+      businessEmail: normalizedEmail,
     };
   }
 
   return {
-    status: "completed",
+    status: "new",
+    userExists,
+    userVerified,
+    nextStep: 1,
     userId: authUser?.id,
-    tenantId: tenant?.id,
-    businessName: tenant?.business_name || undefined,
-    businessEmail: tenant?.business_email || normalizedEmail,
-    ownerName: tenant?.owner_name || undefined,
-    subscriptionPlan: (tenant?.subscription_plan as SubscriptionPlan) || undefined,
-    verificationDocUrls: tenant?.verification_doc_urls || undefined,
+    businessEmail: normalizedEmail,
   };
 }
 
@@ -172,12 +328,16 @@ export async function sendContactVerificationCode(data: {
   businessName: string;
 }) {
   const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-  
-  // Log generated code in dev mode
-  if (process.env.NODE_ENV !== 'production') {
+  const isDev = process.env.NODE_ENV !== "production";
+
+  if (isDev) {
     console.log(`\n[DEV] Verification code generated for ${data.email}: ${verificationCode}\n`);
+    return {
+      success: true,
+      verificationCode,
+    };
   }
-  
+
   const result = await sendContactVerificationEmail({
     to: data.email,
     businessName: data.businessName,
@@ -185,18 +345,10 @@ export async function sendContactVerificationCode(data: {
   });
 
   if (!result.success) {
-    const isDev = process.env.NODE_ENV !== 'production';
-
-    if (isDev && result.reason === 'SMTP_NOT_CONFIGURED') {
-      // Local dev fallback when SMTP is intentionally unavailable.
-      console.log('[DEV] SMTP not configured, returning verification code for manual entry');
-      return { success: true, verificationCode };
-    }
-
     throw new Error(
-      result.reason === 'SMTP_NOT_CONFIGURED'
-        ? 'Email service is not configured. Set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, and SMTP_FROM.'
-        : 'Failed to send verification code. Please check your SMTP credentials and sender address.'
+      result.reason === "SMTP_NOT_CONFIGURED"
+        ? "Email service is not configured. Set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, and SMTP_FROM."
+        : "Failed to send verification code. Please check SMTP credentials and sender address.",
     );
   }
 
@@ -206,22 +358,123 @@ export async function sendContactVerificationCode(data: {
   };
 }
 
-export async function saveOnboardingProgress(data: SaveOnboardingProgressInput) {
+export async function saveBusinessInformation(data: SaveBusinessInformationInput) {
   const supabase = createSupabaseAdminClient();
-  const normalizedEmail = normalizeEmail(data.businessData?.email || "");
+  const userId = data.userId;
 
-  const { data: existingTenant, error: lookupError } = data.tenantId
-    ? { data: null, error: null }
-    : await supabase
-        .from("tenants")
-        .select("id")
-        .eq("business_email", normalizedEmail)
-        .maybeSingle();
-
-  if (lookupError) {
-    throw new Error(lookupError.message);
+  if (!userId) {
+    throw new Error("User account was not created. Please return to Step 1.");
   }
 
+  const normalizedEmail = normalizeEmail(data.businessData.email);
+
+  const updatePayload = {
+    business_name: data.businessData.name.trim(),
+    business_email: normalizedEmail,
+    owner_name: data.businessData.owner.trim(),
+    status: "onboarding",
+  };
+
+  const tenantId = data.tenantId;
+
+  if (tenantId) {
+    const { error: updateError } = await supabase
+      .from("tenants")
+      .update(updatePayload)
+      .eq("id", tenantId);
+
+    if (updateError) {
+      throw new Error(updateError.message);
+    }
+
+    const { error: profileUpdateError } = await supabase
+      .from("profiles")
+      .update({ tenant_id: tenantId, role: "admin" })
+      .eq("id", userId);
+
+    if (profileUpdateError) {
+      throw new Error(profileUpdateError.message);
+    }
+
+    return { success: true, tenantId };
+  }
+
+  const { data: existingTenant, error: existingTenantError } = await supabase
+    .from("tenants")
+    .select("id")
+    .eq("business_email", normalizedEmail)
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (existingTenantError) {
+    throw new Error(existingTenantError.message);
+  }
+
+  let finalTenantId = existingTenant?.id;
+
+  if (finalTenantId) {
+    const { error: updateError } = await supabase
+      .from("tenants")
+      .update(updatePayload)
+      .eq("id", finalTenantId);
+
+    if (updateError) {
+      throw new Error(updateError.message);
+    }
+  } else {
+    const { data: createdTenant, error: createError } = await supabase
+      .from("tenants")
+      .insert(updatePayload)
+      .select("id")
+      .single();
+
+    if (createError || !createdTenant?.id) {
+      throw new Error(createError?.message || "Unable to create tenant record.");
+    }
+
+    finalTenantId = createdTenant.id;
+  }
+
+  const { data: existingProfile, error: profileLookupError } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (profileLookupError) {
+    throw new Error(profileLookupError.message);
+  }
+
+  if (existingProfile) {
+    const { error: profileUpdateError } = await supabase
+      .from("profiles")
+      .update({ tenant_id: finalTenantId, role: "admin" })
+      .eq("id", userId);
+
+    if (profileUpdateError) {
+      throw new Error(profileUpdateError.message);
+    }
+  } else {
+    const fallbackName = data.businessData.owner?.trim() || data.businessData.email || "Admin";
+
+    const { error: profileInsertError } = await supabase.from("profiles").insert({
+      id: userId,
+      tenant_id: finalTenantId,
+      role: "admin",
+      full_name: fallbackName,
+    });
+
+    if (profileInsertError) {
+      throw new Error(profileInsertError.message);
+    }
+  }
+
+  return { success: true, tenantId: finalTenantId };
+}
+
+export async function saveOnboardingProgress(data: SaveOnboardingProgressInput) {
+  const supabase = createSupabaseAdminClient();
   const updatePayload: Record<string, unknown> = { status: "onboarding" };
 
   if (data.businessData?.name) {
@@ -229,7 +482,7 @@ export async function saveOnboardingProgress(data: SaveOnboardingProgressInput) 
   }
 
   if (data.businessData?.email) {
-    updatePayload.business_email = data.businessData.email;
+    updatePayload.business_email = normalizeEmail(data.businessData.email);
   }
 
   if (data.businessData?.owner) {
@@ -249,58 +502,57 @@ export async function saveOnboardingProgress(data: SaveOnboardingProgressInput) 
     updatePayload.verification_doc_urls = data.documentUrls;
   }
 
-  const tenantId = data.tenantId || existingTenant?.id;
-
-  if (tenantId) {
-    const { error } = await supabase
-      .from("tenants")
-      .update(updatePayload)
-      .eq("id", tenantId);
-
-    if (error) {
-      throw new Error(error.message);
-    }
-
-    return { success: true, tenantId };
+  if (!data.tenantId) {
+    throw new Error("Missing tenant record. Please complete business information first.");
   }
 
-  const { data: tenant, error } = await supabase
+  const { error } = await supabase
     .from("tenants")
-    .insert({
-      ...updatePayload,
-      business_email: data.businessData?.email || null,
-      ...(updatePayload.settings !== undefined ? { settings: updatePayload.settings } : {}),
-    })
-    .select("id")
-    .single();
+    .update(updatePayload)
+    .eq("id", data.tenantId);
 
   if (error) {
     throw new Error(error.message);
   }
 
-  return { success: true, tenantId: tenant.id };
+  return { success: true, tenantId: data.tenantId };
 }
 
 export async function saveDocumentUploads(data: DocumentUploadInput) {
   const supabase = createSupabaseAdminClient();
+  if (!data.userId) {
+    throw new Error("User account was not created. Please return to Step 1.");
+  }
 
-  // Verify tenant exists before attempting upload
-  const { data: tenant, error: tenantCheckError } = await supabase
+  const { data: tenant, error: tenantError } = await supabase
     .from("tenants")
     .select("id")
     .eq("id", data.tenantId)
     .maybeSingle();
 
-  if (tenantCheckError) {
-    throw new Error(
-      `Unable to verify your business record: ${tenantCheckError.message}`
-    );
+  if (tenantError || !tenant) {
+    throw new Error("Tenant record is missing. Please complete business information first.");
   }
 
-  if (!tenant) {
-    throw new Error(
-      "Your business record was not found. Please go back and save your business information first."
-    );
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("tenant_id")
+    .eq("id", data.userId)
+    .maybeSingle();
+
+  if (profileError) {
+    throw new Error(profileError.message);
+  }
+
+  if (!profile || profile.tenant_id !== data.tenantId) {
+    const { error: profileLinkError } = await supabase
+      .from("profiles")
+      .update({ tenant_id: data.tenantId, role: "admin" })
+      .eq("id", data.userId);
+
+    if (profileLinkError) {
+      throw new Error(profileLinkError.message);
+    }
   }
 
   const uploadedUrls: string[] = [];
@@ -309,8 +561,8 @@ export async function saveDocumentUploads(data: DocumentUploadInput) {
   for (const [key, fileInfo] of Object.entries(data.filesData)) {
     try {
       const buffer = Buffer.from(fileInfo.base64, "base64");
-      const safeName = fileInfo.name.replace(/[^a-zA-Z0-9.]/g, "");
-      const filePath = `${data.tenantId}/${key}-${Date.now()}-${safeName}`;
+      const safeName = fileInfo.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+      const filePath = `${data.userId}/${key}-${safeName}`;
 
       const { error: uploadError } = await supabase.storage
         .from("verification-docs")
@@ -320,27 +572,18 @@ export async function saveDocumentUploads(data: DocumentUploadInput) {
         });
 
       if (uploadError) {
-        const message = `Document upload failed for ${key}: ${uploadError.message}`;
-        console.error(message, uploadError);
-        uploadErrors.push(message);
+        uploadErrors.push(`Document upload failed for ${key}: ${uploadError.message}`);
         continue;
       }
 
-      const { data: urlData } = supabase.storage
-        .from("verification-docs")
-        .getPublicUrl(filePath);
-
+      const { data: urlData } = supabase.storage.from("verification-docs").getPublicUrl(filePath);
       if (urlData?.publicUrl) {
         uploadedUrls.push(urlData.publicUrl);
       } else {
-        const message = `Document upload completed for ${key} but no public URL was returned.`;
-        console.error(message);
-        uploadErrors.push(message);
+        uploadErrors.push(`Document upload completed for ${key} but no public URL was returned.`);
       }
     } catch (err: any) {
-      const message = `Document processing failed for ${key}: ${err?.message || err}`;
-      console.error(message, err);
-      uploadErrors.push(message);
+      uploadErrors.push(`Document processing failed for ${key}: ${err?.message || err}`);
     }
   }
 
@@ -352,10 +595,13 @@ export async function saveDocumentUploads(data: DocumentUploadInput) {
     throw new Error("Not all verification documents were uploaded successfully.");
   }
 
-  const { error } = await supabase.from("tenants").update({
-    verification_doc_urls: uploadedUrls,
-    status: "onboarding",
-  }).eq("id", data.tenantId);
+  const { error } = await supabase
+    .from("tenants")
+    .update({
+      verification_doc_urls: uploadedUrls,
+      status: "onboarding",
+    })
+    .eq("id", data.tenantId);
 
   if (error) {
     throw new Error(error.message);
@@ -366,11 +612,10 @@ export async function saveDocumentUploads(data: DocumentUploadInput) {
 
 export async function processOnboarding(data: {
   tenantId: string;
-  userId: string;
   businessData: { name: string; email: string; owner: string };
-  authData: { email: string; password?: string };
   subscriptionData: { packageId: string };
   featureData: OperationalSetupConfig;
+  userId?: string;
 }) {
   const supabase = createSupabaseAdminClient();
   const subscriptionPlan = getSubscriptionPlan(data.subscriptionData.packageId);
@@ -383,85 +628,47 @@ export async function processOnboarding(data: {
       : {}),
   };
 
-  const { error: tenantError } = await supabase.from("tenants").update({
-    business_name: data.businessData.name,
-    business_email: data.businessData.email,
-    owner_name: data.businessData.owner,
-    subscription_plan: subscriptionPlan,
-    settings: tenantSettings,
-    status: "pending",
-  }).eq("id", data.tenantId);
+  const { error: tenantError } = await supabase
+    .from("tenants")
+    .update({
+      business_name: data.businessData.name,
+      business_email: normalizeEmail(data.businessData.email),
+      owner_name: data.businessData.owner,
+      subscription_plan: subscriptionPlan,
+      settings: tenantSettings,
+      status: "pending",
+    })
+    .eq("id", data.tenantId);
 
   if (tenantError) {
     throw new Error(tenantError.message || "Failed to finalize tenant");
   }
 
-  // Ensure the auth user exists and mark email confirmed. If the provided
-  // userId is missing or the user cannot be found, attempt to resolve by
-  // email and create the user if necessary.
-  let targetUserId = data.userId;
+  if (data.userId) {
+    const ownerName = data.businessData.owner.trim();
 
-  const userUpdatePayload = {
-    email_confirm: true,
-    user_metadata: {
-      full_name: data.businessData.name,
-      business_email: data.businessData.email,
-      subscription_plan: subscriptionPlan,
-      settings: tenantSettings,
-    },
-  };
+    const { error: authError } = await supabase.auth.admin.updateUserById(data.userId, {
+      user_metadata: {
+        full_name: ownerName,
+        display_name: ownerName,
+      },
+    });
 
-  let confirmError: any = null;
-
-  if (targetUserId) {
-    const res = await supabase.auth.admin.updateUserById(targetUserId, userUpdatePayload as any);
-    confirmError = res.error;
-  } else {
-    confirmError = { message: "User id not provided" };
-  }
-
-  if (confirmError) {
-    // Try to find existing auth user by email
-    try {
-      const found = await getLatestUserByEmail(supabase, data.authData.email);
-      if (found) {
-        targetUserId = found.id;
-        const res2 = await supabase.auth.admin.updateUserById(targetUserId, userUpdatePayload as any);
-        confirmError = res2.error;
-      } else {
-        // Create user as last resort
-        const createRes = await supabase.auth.admin.createUser({
-          email: data.authData.email,
-          password: data.authData.password,
-          email_confirm: true,
-          user_metadata: userUpdatePayload.user_metadata,
-        } as any);
-
-        if (createRes.error) {
-          confirmError = createRes.error;
-        } else {
-          // createRes may contain user in different shapes depending on client
-          const createdId = (createRes as any).user?.id || (createRes as any).data?.user?.id;
-          if (createdId) targetUserId = createdId;
-          confirmError = null;
-        }
-      }
-    } catch (err: any) {
-      confirmError = err;
+    if (authError) {
+      throw new Error(authError.message || "Failed to sync auth profile metadata.");
     }
-  }
 
-  if (confirmError) {
-    throw new Error(confirmError.message || "Failed to confirm or create user email");
-  }
+    const { error: profileSyncError } = await supabase
+      .from("profiles")
+      .update({
+        role: "admin",
+        full_name: ownerName,
+      })
+      .eq("id", data.userId);
 
-  const { error: profileError } = await supabase.from("profiles").update({
-    tenant_id: data.tenantId,
-    role: "admin",
-  }).eq("id", targetUserId);
-
-  if (profileError) {
-    throw new Error(profileError.message || "Failed to link user to tenant");
+    if (profileSyncError) {
+      throw new Error(profileSyncError.message || "Failed to sync profile metadata.");
+    }
   }
 
   try {
@@ -476,7 +683,6 @@ export async function processOnboarding(data: {
   return {
     success: true,
     tenantId: data.tenantId,
-    userId: data.userId,
     businessName: data.businessData.name,
     businessEmail: data.businessData.email,
   };
