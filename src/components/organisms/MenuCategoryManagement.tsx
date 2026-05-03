@@ -123,9 +123,7 @@ const MenuCategoryManagement = () => {
   // global state
   const [categories, setCategories] = useState<Category[]>(INITIAL_CATEGORIES);
   const [items, setItems] = useState<MenuItem[]>(INITIAL_ITEMS);
-  const [expandedCategories, setExpandedCategories] = useState<string[]>([
-    "1",
-  ]);
+  const [expandedCategories, setExpandedCategories] = useState<string[]>(["1"]);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
   // dashboard state
@@ -145,7 +143,7 @@ const MenuCategoryManagement = () => {
 
   // drag state
   const [draggedCategoryId, setDraggedCategoryId] = useState<string | null>(
-    null
+    null,
   );
 
   // crop modal state
@@ -218,28 +216,29 @@ const MenuCategoryManagement = () => {
 
   const toggleCategory = (id: string) => {
     setExpandedCategories((prev) =>
-      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id],
     );
   };
 
   // derived data
-  const hasChanges =
-    JSON.stringify(originalItem) !== JSON.stringify(draftItem);
+  const hasChanges = JSON.stringify(originalItem) !== JSON.stringify(draftItem);
 
   const isValidDraft =
     draftItem?.name?.trim() !== "" &&
     draftItem?.price?.trim() !== "" &&
     !!draftItem?.image &&
-    draftItem?.sizes.every((s) => s.name.trim() !== "" && s.price.trim() !== "") &&
+    draftItem?.sizes.every(
+      (s) => s.name.trim() !== "" && s.price.trim() !== "",
+    ) &&
     (!draftItem?.addonsEnabled ||
       draftItem?.addons.every(
-        (a) => a.name.trim() !== "" && a.price.trim() !== ""
+        (a) => a.name.trim() !== "" && a.price.trim() !== "",
       ));
 
   // selection handlers
   const toggleSelection = (id: string) => {
     setSelectedItems((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
     );
   };
 
@@ -298,7 +297,7 @@ const MenuCategoryManagement = () => {
 
   const handleNumberInput = (
     e: React.ChangeEvent<HTMLInputElement>,
-    callback: (val: string) => void
+    callback: (val: string) => void,
   ) => {
     const val = e.target.value;
     if (val === "" || /^[0-9]*\.?[0-9]*$/.test(val)) {
@@ -334,17 +333,17 @@ const MenuCategoryManagement = () => {
   // crop mathematical bounds & rendering
   const coverScale = Math.max(
     CROP_CONTAINER_SIZE / imageNativeSize.w,
-    CROP_CONTAINER_SIZE / imageNativeSize.h
+    CROP_CONTAINER_SIZE / imageNativeSize.h,
   );
   const renderedWidth = imageNativeSize.w * coverScale;
   const renderedHeight = imageNativeSize.h * coverScale;
   const maxPanX = Math.max(
     0,
-    (renderedWidth * cropScale - CROP_CONTAINER_SIZE) / 2
+    (renderedWidth * cropScale - CROP_CONTAINER_SIZE) / 2,
   );
   const maxPanY = Math.max(
     0,
-    (renderedHeight * cropScale - CROP_CONTAINER_SIZE) / 2
+    (renderedHeight * cropScale - CROP_CONTAINER_SIZE) / 2,
   );
 
   // automatically restrict bounds if zooming out
@@ -419,7 +418,7 @@ const MenuCategoryManagement = () => {
           className={cn(
             "flex-1 transition-all duration-500 w-full",
             draftItem &&
-              "opacity-50 blur-[2px] pointer-events-none select-none lg:max-w-[60%]"
+              "opacity-50 blur-[2px] pointer-events-none select-none lg:max-w-[60%]",
           )}
         >
           {/* overlay to fully block interactions when drawer is open */}
@@ -441,7 +440,7 @@ const MenuCategoryManagement = () => {
                     Manage categories and items for your menu
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="hidden sm:flex items-center gap-2">
                   <Button
                     variant="primary"
                     onClick={() => setIsCategoryModalOpen(true)}
@@ -453,8 +452,8 @@ const MenuCategoryManagement = () => {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between gap-4">
-                <div className="relative flex-1 max-w-md">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+                <div className="relative flex-1 max-w-md w-full">
                   <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
                     <Search size={18} className="text-text-secondary" />
                   </div>
@@ -462,33 +461,42 @@ const MenuCategoryManagement = () => {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search all items"
-                    className="pl-12 !py-2.5 rounded-xl !bg-white/80 b2"
+                    className="pl-12 !py-2.5 rounded-xl !bg-white/80 b2 w-full"
                   />
                 </div>
 
-                <div className="flex items-center gap-1 bg-white/80 p-1 rounded-xl shadow-sm border border-black/5">
-                  <button
-                    onClick={() => setViewMode("grid")}
-                    className={cn(
-                      "p-2 rounded-lg transition-colors",
-                      viewMode === "grid"
-                        ? "bg-brand-primary text-white shadow-sm"
-                        : "text-text-secondary hover:text-text-primary hover:bg-black/5"
-                    )}
+                <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
+                  <Button
+                    variant="primary"
+                    onClick={() => setIsCategoryModalOpen(true)}
+                    className="sm:hidden flex-1 justify-center b3 py-2 h-auto"
                   >
-                    <LayoutGrid size={18} />
-                  </button>
-                  <button
-                    onClick={() => setViewMode("list")}
-                    className={cn(
-                      "p-2 rounded-lg transition-colors",
-                      viewMode === "list"
-                        ? "bg-brand-primary text-white shadow-sm"
-                        : "text-text-secondary hover:text-text-primary hover:bg-black/5"
-                    )}
-                  >
-                    <ListIcon size={18} />
-                  </button>
+                    <Plus size={18} className="mr-1" /> Create Category
+                  </Button>
+                  <div className="flex items-center gap-1 bg-white/80 p-1 rounded-xl shadow-sm border border-black/5 flex-shrink-0">
+                    <button
+                      onClick={() => setViewMode("grid")}
+                      className={cn(
+                        "p-2 rounded-lg transition-colors",
+                        viewMode === "grid"
+                          ? "bg-brand-primary text-white shadow-sm"
+                          : "text-text-secondary hover:text-text-primary hover:bg-black/5",
+                      )}
+                    >
+                      <LayoutGrid size={18} />
+                    </button>
+                    <button
+                      onClick={() => setViewMode("list")}
+                      className={cn(
+                        "p-2 rounded-lg transition-colors",
+                        viewMode === "list"
+                          ? "bg-brand-primary text-white shadow-sm"
+                          : "text-text-secondary hover:text-text-primary hover:bg-black/5",
+                      )}
+                    >
+                      <ListIcon size={18} />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -497,7 +505,7 @@ const MenuCategoryManagement = () => {
             <div
               className={cn(
                 "flex-1 p-6 md:p-8 custom-scrollbar",
-                draftItem ? "overflow-hidden" : "overflow-y-auto"
+                draftItem ? "overflow-hidden" : "overflow-y-auto",
               )}
             >
               {categories.length === 0 ? (
@@ -511,7 +519,7 @@ const MenuCategoryManagement = () => {
                   const catItems = items.filter(
                     (i) =>
                       i.categoryId === cat.id &&
-                      i.name.toLowerCase().includes(searchQuery.toLowerCase())
+                      i.name.toLowerCase().includes(searchQuery.toLowerCase()),
                   );
                   const isExpanded = expandedCategories.includes(cat.id);
 
@@ -528,7 +536,7 @@ const MenuCategoryManagement = () => {
                       className={cn(
                         "bg-white rounded-[24px] border border-[#E5E5E5] mb-6 shadow-sm transition-all text-left group/accordion",
                         draggedCategoryId === cat.id &&
-                          "opacity-50 border-dashed border-2 border-brand-primary"
+                          "opacity-50 border-dashed border-2 border-brand-primary",
                       )}
                     >
                       {/* accordion header */}
@@ -538,10 +546,70 @@ const MenuCategoryManagement = () => {
                           "p-4 md:px-6 md:py-4 flex flex-col md:flex-row items-start overflow-hidden md:items-center justify-between cursor-pointer transition-colors gap-4 md:gap-0 bg-brand-secondary/70",
                           isExpanded
                             ? "rounded-t-[24px] border-b border-[#E5E5E5]"
-                            : "rounded-[24px]"
+                            : "rounded-[24px]",
                         )}
                       >
-                        <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-start">
+                        {/* mobile layout */}
+                        <div className="flex md:hidden flex-col w-full gap-3">
+                          <div className="flex items-center justify-between w-full">
+                            <div className="flex items-center gap-2">
+                              <div className="cursor-grab text-text-secondary/30 hover:text-text-primary active:cursor-grabbing">
+                                <GripVertical size={20} />
+                              </div>
+                              <h3 className="text-xl font-extrabold text-text-primary leading-tight">
+                                {cat.name}
+                              </h3>
+                            </div>
+                            <div
+                              className="flex items-center gap-1 shrink-0"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <button
+                                onClick={() => handleCreateNewItem(cat.id)}
+                                className="w-10 h-10 flex items-center justify-center text-brand-accent bg-brand-accent/10 rounded-xl transition-colors"
+                              >
+                                <Plus size={18} />
+                              </button>
+                              <button
+                                onClick={(e) => handleDeleteCategory(e, cat.id)}
+                                className="w-10 h-10 flex items-center justify-center text-warning-primary bg-warning-primary/10 rounded-xl transition-colors"
+                              >
+                                <Trash2 size={18} />
+                              </button>
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-between w-full pl-7">
+                            <Badge
+                              color="secondary"
+                              variant="subtle"
+                              shape="pill"
+                              className="w-fit text-[11px] font-bold px-3 py-1"
+                            >
+                              {
+                                items.filter((i) => i.categoryId === cat.id)
+                                  .length
+                              }{" "}
+                              Items
+                            </Badge>
+                            <div
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleCategory(cat.id);
+                              }}
+                              className="p-1 cursor-pointer"
+                            >
+                              <ChevronDown
+                                className={cn(
+                                  "text-text-secondary transition-transform duration-300",
+                                  isExpanded && "rotate-180",
+                                )}
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* desktop layout */}
+                        <div className="hidden md:flex items-center gap-4 w-full md:w-auto justify-between md:justify-start">
                           <div className="flex items-center gap-3">
                             <div className="cursor-grab text-text-secondary/30 hover:text-text-primary active:cursor-grabbing mr-1">
                               <GripVertical size={20} />
@@ -556,14 +624,18 @@ const MenuCategoryManagement = () => {
                                 shape="pill"
                                 className="w-fit text-[11px] font-bold px-3 py-1"
                               >
-                                {items.filter((i) => i.categoryId === cat.id).length} Items
+                                {
+                                  items.filter((i) => i.categoryId === cat.id)
+                                    .length
+                                }{" "}
+                                Items
                               </Badge>
                             </div>
                           </div>
                         </div>
 
                         <div
-                          className="flex items-center gap-3 shrink-0"
+                          className="hidden md:flex items-center gap-3 shrink-0"
                           onClick={(e) => e.stopPropagation()}
                         >
                           <button
@@ -592,7 +664,7 @@ const MenuCategoryManagement = () => {
                             <ChevronDown
                               className={cn(
                                 "text-text-secondary transition-transform duration-300",
-                                isExpanded && "rotate-180"
+                                isExpanded && "rotate-180",
                               )}
                             />
                           </div>
@@ -613,7 +685,7 @@ const MenuCategoryManagement = () => {
                                 "grid gap-6",
                                 draftItem
                                   ? "grid-cols-1 xl:grid-cols-2"
-                                  : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                                  : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4",
                               )}
                             >
                               {catItems.map((item) => (
@@ -692,11 +764,11 @@ const MenuCategoryManagement = () => {
                                 <div
                                   key={item.id}
                                   onClick={() => handleOpenDrawer(item)}
-                                  className="bg-white rounded-2xl border border-black/5 p-2.5 flex items-center gap-4 shadow-sm hover:shadow-md hover:border-brand-primary/30 transition-all cursor-pointer group relative pl-5"
+                                  className="bg-white rounded-2xl border border-black/5 p-3 md:p-2.5 flex flex-col md:flex-row md:items-center gap-3 md:gap-4 shadow-sm hover:shadow-md hover:border-brand-primary/30 transition-all cursor-pointer group relative pl-5"
                                 >
                                   {/* select checkbox with a little left margin */}
                                   <div
-                                    className="z-20 bg-white rounded-[4px] flex items-center justify-center"
+                                    className="absolute left-4 top-4 md:relative md:top-auto md:left-auto md:translate-y-0 z-20 bg-white rounded-[4px] flex items-center justify-center"
                                     onClick={(e) => e.stopPropagation()}
                                   >
                                     <Checkbox
@@ -705,7 +777,37 @@ const MenuCategoryManagement = () => {
                                     />
                                   </div>
 
-                                  <div className="w-14 h-14 rounded-xl bg-black/5 flex-shrink-0 flex items-center justify-center overflow-hidden relative ml-2">
+                                  {/* mobile list layout */}
+                                  <div className="flex md:hidden flex-col gap-1 w-full pl-8">
+                                    <h4 className="b2 font-bold text-text-primary truncate">
+                                      {item.name}
+                                    </h4>
+                                    <div className="font-bold text-brand-accent text-lg">
+                                      ₱{item.price}
+                                    </div>
+                                    <div className="flex gap-2 mt-1">
+                                      {!item.isAvailable && (
+                                        <Badge
+                                          color="error"
+                                          variant="subtle"
+                                          className="px-2 py-0.5 text-[11px] font-bold"
+                                        >
+                                          Unavailable
+                                        </Badge>
+                                      )}
+                                      {item.aiSynced && (
+                                        <Badge
+                                          color="success"
+                                          variant="subtle"
+                                          className="px-2 py-0.5 text-[11px] font-bold"
+                                        >
+                                          AI Synced
+                                        </Badge>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  <div className="hidden md:flex w-14 h-14 rounded-xl bg-black/5 flex-shrink-0 items-center justify-center overflow-hidden relative ml-2">
                                     {item.image ? (
                                       <img
                                         src={item.image}
@@ -719,7 +821,7 @@ const MenuCategoryManagement = () => {
                                       />
                                     )}
                                   </div>
-                                  <div className="flex-1 min-w-0 flex flex-col justify-center">
+                                  <div className="hidden md:flex flex-1 min-w-0 flex-col justify-center">
                                     <div className="flex items-center gap-2 mb-1">
                                       <h4 className="b2 font-bold text-text-primary group-hover:text-brand-primary transition-colors truncate">
                                         {item.name}
@@ -747,7 +849,7 @@ const MenuCategoryManagement = () => {
                                       {item.description}
                                     </p>
                                   </div>
-                                  <div className="font-bold text-brand-accent text-lg flex-shrink-0 pl-4 border-l border-black/5 min-w-[130px] max-w-[180px] text-right truncate">
+                                  <div className="hidden md:block font-bold text-brand-accent text-lg flex-shrink-0 pl-4 border-l border-black/5 min-w-[130px] max-w-[180px] text-right truncate">
                                     ₱{item.price}
                                   </div>
                                 </div>
@@ -798,7 +900,13 @@ const MenuCategoryManagement = () => {
 
         {/* right side: drawer (40% flush right, rounded left corners) */}
         {draftItem && (
-          <div className="fixed inset-y-0 right-0 w-full lg:w-[40%] bg-bg-primary shadow-2xl rounded-l-[40px] rounded-r-none flex flex-col animate-in slide-in-from-right duration-500 z-50 overflow-hidden border-4 border-r-0 border-white">
+          <div
+            className={cn(
+              "fixed bg-bg-primary shadow-2xl flex flex-col z-50 overflow-hidden duration-500 animate-in border-white",
+              "inset-x-0 bottom-0 top-16 w-full rounded-t-[32px] rounded-b-none slide-in-from-bottom border-t-4 border-x-0 border-b-0",
+              "lg:top-0 lg:inset-y-0 lg:right-0 lg:left-auto lg:w-[40%] lg:rounded-l-[40px] lg:rounded-r-none lg:slide-in-from-right lg:border-4 lg:border-r-0",
+            )}
+          >
             {/* drawer header */}
             <div className="bg-brand-secondary p-5 flex-shrink-0 relative flex flex-col gap-2">
               <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
@@ -855,7 +963,7 @@ const MenuCategoryManagement = () => {
                         "w-48 h-48 rounded-2xl flex flex-col items-center justify-center cursor-pointer overflow-hidden group relative shadow-inner transition-colors bg-white/40 hover:bg-white/60",
                         draftItem.image
                           ? "border-0"
-                          : "border-2 border-dashed border-black/10 hover:border-brand-primary"
+                          : "border-2 border-dashed border-black/10 hover:border-brand-primary",
                       )}
                       onClick={() => fileInputRef.current?.click()}
                     >
@@ -1033,7 +1141,7 @@ const MenuCategoryManagement = () => {
                         onClick={() =>
                           updateDraft(
                             "sizes",
-                            draftItem.sizes.filter((s) => s.id !== size.id)
+                            draftItem.sizes.filter((s) => s.id !== size.id),
                           )
                         }
                         className="p-2 text-text-secondary hover:bg-warning-secondary hover:text-warning-primary rounded-xl transition-colors mt-1"
@@ -1053,7 +1161,7 @@ const MenuCategoryManagement = () => {
                           description: "",
                           price: "",
                         },
-                      ],)
+                      ])
                     }
                     className="w-full border border-dashed border-black/10 hover:border-brand-primary hover:bg-brand-primary/5 text-text-secondary hover:text-brand-primary rounded-2xl py-3 mt-2 b2"
                   >
@@ -1146,8 +1254,8 @@ const MenuCategoryManagement = () => {
                               updateDraft(
                                 "addons",
                                 draftItem.addons.filter(
-                                  (m) => m.id !== addon.id
-                                )
+                                  (m) => m.id !== addon.id,
+                                ),
                               )
                             }
                             className="p-2 text-text-secondary hover:bg-warning-secondary hover:text-warning-primary rounded-xl transition-colors mt-1"
@@ -1192,7 +1300,7 @@ const MenuCategoryManagement = () => {
                             "w-full border border-dashed rounded-2xl py-3 transition-colors b2",
                             isLinkDropdownOpen
                               ? "border-brand-primary bg-brand-primary/5 text-brand-primary"
-                              : "border-black/10 hover:border-brand-primary hover:bg-brand-primary/5 text-text-secondary hover:text-brand-primary"
+                              : "border-black/10 hover:border-brand-primary hover:bg-brand-primary/5 text-text-secondary hover:text-brand-primary",
                           )}
                         >
                           Link Menu Item{" "}
@@ -1200,7 +1308,7 @@ const MenuCategoryManagement = () => {
                             size={16}
                             className={cn(
                               "ml-2 transition-transform duration-300",
-                              isLinkDropdownOpen && "rotate-180"
+                              isLinkDropdownOpen && "rotate-180",
                             )}
                           />
                         </Button>
@@ -1209,7 +1317,7 @@ const MenuCategoryManagement = () => {
                         {isLinkDropdownOpen && (
                           <div
                             className={cn(
-                              "absolute top-[calc(100%+8px)] left-0 z-50 bg-white border-2 border-[#E5E5E5] rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-300 w-full"
+                              "absolute top-[calc(100%+8px)] left-0 z-50 bg-white border-2 border-[#E5E5E5] rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-300 w-full",
                             )}
                           >
                             <ul className="max-h-[240px] overflow-y-auto">
@@ -1223,7 +1331,7 @@ const MenuCategoryManagement = () => {
                                     key={option.value}
                                     onClick={() => {
                                       const selectedItem = items.find(
-                                        (i) => i.id === option.value
+                                        (i) => i.id === option.value,
                                       );
                                       if (selectedItem) {
                                         updateDraft("addons", [
@@ -1232,7 +1340,8 @@ const MenuCategoryManagement = () => {
                                             id: `addon_${Date.now()}`,
                                             itemId: selectedItem.id,
                                             name: selectedItem.name,
-                                            description: selectedItem.description,
+                                            description:
+                                              selectedItem.description,
                                             price: selectedItem.price,
                                           },
                                         ]);
@@ -1246,7 +1355,7 @@ const MenuCategoryManagement = () => {
                                       index === 0 && "rounded-t-[14px]",
                                       index === dropdownOptions.length - 1 &&
                                         "rounded-b-[14px]",
-                                      "text-text-primary border-b border-black/5 last:border-0"
+                                      "text-text-primary border-b border-black/5 last:border-0",
                                     )}
                                   >
                                     {option.label}
@@ -1292,7 +1401,7 @@ const MenuCategoryManagement = () => {
                 disabled={!hasChanges || !isValidDraft}
                 className={cn(
                   (!hasChanges || !isValidDraft) && "opacity-50",
-                  "w-full sm:w-auto b3"
+                  "w-full sm:w-auto b3",
                 )}
               >
                 Save Changes
@@ -1356,9 +1465,7 @@ const MenuCategoryManagement = () => {
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200 select-none">
           <div className="bg-bg-primary rounded-2xl md:rounded-[32px] w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]">
             <div className="px-6 md:px-8 py-4 md:py-6 flex items-center justify-between border-b border-black/[0.05] flex-shrink-0">
-              <h2 className="b2 font-bold text-text-primary">
-                Adjust Image
-              </h2>
+              <h2 className="b2 font-bold text-text-primary">Adjust Image</h2>
               <button
                 onClick={() => setCropModalImage(null)}
                 className="text-text-secondary hover:text-text-primary transition-colors p-1"
