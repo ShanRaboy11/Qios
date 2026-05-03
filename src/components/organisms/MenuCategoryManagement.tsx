@@ -1,11 +1,10 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
 import { Toggle } from "@/components/atoms/Toggle";
 import { Badge } from "@/components/atoms/Badge";
-import { Dropdown } from "@/components/molecules/Dropdown";
 import {
   GripVertical,
   Plus,
@@ -18,6 +17,9 @@ import {
   LayoutGrid,
   List as ListIcon,
   X,
+  ChevronDown,
+  ZoomIn,
+  ZoomOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -130,14 +132,30 @@ const MenuCategoryManagement = () => {
   const [originalItem, setOriginalItem] = useState<MenuItem | null>(null);
   const [draftItem, setDraftItem] = useState<MenuItem | null>(null);
 
+  // dropdown state for linking existing items
+  const [isLinkDropdownOpen, setIsLinkDropdownOpen] = useState(false);
+
   // drag state
   const [draggedCategoryId, setDraggedCategoryId] = useState<string | null>(
-    null
+    null,
   );
 
   // crop modal state
   const [cropModalImage, setCropModalImage] = useState<string | null>(null);
+  const [cropScale, setCropScale] = useState(1);
+  const [cropPan, setCropPan] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStart = useRef({ x: 0, y: 0 });
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (isLinkDropdownOpen) setIsLinkDropdownOpen(false);
+    };
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, [isLinkDropdownOpen]);
 
   // handlers for category drag and drop
   const handleDragStartCategory = (e: React.DragEvent, id: string) => {
@@ -169,12 +187,11 @@ const MenuCategoryManagement = () => {
   const filteredItems = items.filter(
     (item) =>
       item.categoryId === selectedCategory &&
-      item.name.toLowerCase().includes(searchQuery.toLowerCase())
+      item.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
   const activeCategory = categories.find((c) => c.id === selectedCategory);
 
-  const hasChanges =
-    JSON.stringify(originalItem) !== JSON.stringify(draftItem);
+  const hasChanges = JSON.stringify(originalItem) !== JSON.stringify(draftItem);
 
   // drawer handlers
   const handleOpenDrawer = (item: MenuItem) => {
@@ -220,12 +237,30 @@ const MenuCategoryManagement = () => {
     setDraftItem({ ...draftItem, [field]: value });
   };
 
+  const handleNumberInput = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    callback: (val: string) => void,
+  ) => {
+    const val = e.target.value;
+    if (val === "" || /^\\d*\\.?\\d*$/.test(val)) {
+      callback(val);
+    }
+  };
+
   // image handlers
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        alert("File size exceeds 5MB limit.");
+        return;
+      }
       const reader = new FileReader();
-      reader.onload = (e) => setCropModalImage(e.target?.result as string);
+      reader.onload = (e) => {
+        setCropModalImage(e.target?.result as string);
+        setCropScale(1);
+        setCropPan({ x: 0, y: 0 });
+      };
       reader.readAsDataURL(file);
     }
     if (fileInputRef.current) fileInputRef.current.value = "";
@@ -233,10 +268,26 @@ const MenuCategoryManagement = () => {
 
   const confirmImageCrop = () => {
     if (cropModalImage) {
+      // In a real app, we'd apply a canvas crop here using scale/pan state.
+      // For the UI demo, we save the image.
       updateDraft("image", cropModalImage);
     }
     setCropModalImage(null);
   };
+
+  // crop interactions
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    dragStart.current = { x: e.clientX - cropPan.x, y: e.clientY - cropPan.y };
+  };
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return;
+    setCropPan({
+      x: e.clientX - dragStart.current.x,
+      y: e.clientY - dragStart.current.y,
+    });
+  };
+  const handleMouseUp = () => setIsDragging(false);
 
   // formatting options for the addon dropdown
   const dropdownOptions = items
@@ -250,14 +301,15 @@ const MenuCategoryManagement = () => {
         <div
           className={cn(
             "flex-1 transition-all duration-500 grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8",
-            draftItem && "opacity-50 blur-[2px] pointer-events-none lg:max-w-[60%]"
+            draftItem &&
+              "opacity-50 blur-[2px] pointer-events-none select-none overflow-hidden lg:max-w-[60%]",
           )}
         >
           {/* category navigator (sidebar) */}
           <aside
             className={cn(
               "flex flex-col border-4 border-white rounded-[32px] md:rounded-[40px] bg-white/30 backdrop-blur-md shadow-xl overflow-hidden h-[85vh]",
-              draftItem ? "lg:col-span-4" : "lg:col-span-3"
+              draftItem ? "lg:col-span-4" : "lg:col-span-3",
             )}
           >
             <div className="p-6 pb-4 flex flex-col gap-4">
@@ -296,7 +348,7 @@ const MenuCategoryManagement = () => {
                         ? "bg-white shadow-md border border-white/60 transform scale-[1.02]"
                         : "hover:bg-white/40 border border-transparent",
                       draggedCategoryId === cat.id &&
-                        "opacity-50 border-dashed border-2 border-brand-primary"
+                        "opacity-50 border-dashed border-2 border-brand-primary",
                     )}
                   >
                     <div className="flex items-center gap-3">
@@ -308,7 +360,7 @@ const MenuCategoryManagement = () => {
                           "b2 font-bold transition-colors",
                           selectedCategory === cat.id
                             ? "text-text-primary"
-                            : "text-text-primary/80"
+                            : "text-text-primary/80",
                         )}
                       >
                         {cat.name}
@@ -327,7 +379,7 @@ const MenuCategoryManagement = () => {
           <main
             className={cn(
               "flex flex-col min-w-0 border-4 border-white rounded-[32px] md:rounded-[40px] shadow-xl overflow-hidden relative h-[85vh]",
-              draftItem ? "lg:col-span-8" : "lg:col-span-9"
+              draftItem ? "lg:col-span-8" : "lg:col-span-9",
             )}
           >
             {/* dashboard header */}
@@ -370,7 +422,7 @@ const MenuCategoryManagement = () => {
                       "p-2 rounded-lg transition-colors",
                       viewMode === "grid"
                         ? "bg-brand-primary text-white shadow-sm"
-                        : "text-text-secondary hover:text-text-primary hover:bg-black/5"
+                        : "text-text-secondary hover:text-text-primary hover:bg-black/5",
                     )}
                   >
                     <LayoutGrid size={18} />
@@ -381,7 +433,7 @@ const MenuCategoryManagement = () => {
                       "p-2 rounded-lg transition-colors",
                       viewMode === "list"
                         ? "bg-brand-primary text-white shadow-sm"
-                        : "text-text-secondary hover:text-text-primary hover:bg-black/5"
+                        : "text-text-secondary hover:text-text-primary hover:bg-black/5",
                     )}
                   >
                     <ListIcon size={18} />
@@ -517,8 +569,8 @@ const MenuCategoryManagement = () => {
         {/* right side: drawer (40% flush right, rounded left corners) */}
         {draftItem && (
           <div className="fixed inset-y-0 right-0 w-full lg:w-[40%] bg-bg-primary shadow-2xl rounded-l-[40px] rounded-r-none flex flex-col animate-in slide-in-from-right duration-500 z-50 overflow-hidden border-4 border-r-0 border-white">
-            {/* drawer header */}
-            <div className="bg-brand-secondary p-8 flex-shrink-0 relative flex flex-col gap-4">
+            {/* drawer header - reduced padding */}
+            <div className="bg-brand-secondary p-5 flex-shrink-0 relative flex flex-col gap-2">
               <button
                 onClick={handleCloseDrawer}
                 className="absolute top-4 right-4 p-2 bg-black/5 hover:bg-black/10 rounded-full text-text-primary transition-colors"
@@ -538,112 +590,125 @@ const MenuCategoryManagement = () => {
                       <Sparkles size={14} className="animate-pulse" />
                     )
                   }
-                  className="shadow-sm mt-4"
+                  className="shadow-sm mt-2"
                 >
                   {draftItem.aiSynced ? "AI Synced" : "Syncing to Gemini..."}
                 </Badge>
               </div>
             </div>
 
-            {/* drawer body - form layout */}
-            <div className="flex-1 overflow-y-auto p-8 bg-bg-primary custom-scrollbar flex flex-col gap-6">
-              
-              {/* image upload form */}
-              <div>
-                <label className="b4 font-bold text-text-secondary uppercase tracking-widest block mb-2">
-                  Item Image
-                </label>
-                <div
-                  className="w-full aspect-video rounded-2xl border-2 border-dashed border-black/10 bg-white/40 hover:bg-white/60 transition-colors flex flex-col items-center justify-center cursor-pointer overflow-hidden group relative shadow-inner"
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  {draftItem.image ? (
-                    <img
-                      src={draftItem.image}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                    />
-                  ) : (
-                    <>
-                      <ImageIcon
-                        size={32}
-                        className="text-black/20 group-hover:text-brand-primary transition-colors mb-2"
+            {/* drawer body - compact form layout */}
+            <div className="flex-1 overflow-y-auto p-6 bg-bg-primary custom-scrollbar flex flex-col gap-8">
+              {/* compact top section: image + core info */}
+              <div className="flex flex-col sm:flex-row gap-5 items-start">
+                {/* 1:1 image upload */}
+                <div className="flex flex-col gap-2 w-32 flex-shrink-0">
+                  <div
+                    className="w-32 h-32 rounded-2xl border-2 border-dashed border-black/10 bg-white/40 hover:bg-white/60 transition-colors flex flex-col items-center justify-center cursor-pointer overflow-hidden group relative shadow-inner"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    {draftItem.image ? (
+                      <img
+                        src={draftItem.image}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                       />
-                      <span className="b4 font-bold text-text-secondary uppercase">
-                        Click to upload
-                      </span>
-                      <span className="text-[10px] text-text-secondary/60 mt-1">
-                        jpg, jpeg, png
-                      </span>
-                    </>
-                  )}
+                    ) : (
+                      <>
+                        <ImageIcon
+                          size={24}
+                          className="text-black/20 group-hover:text-brand-primary transition-colors mb-1"
+                        />
+                        <span className="text-[10px] font-bold text-text-secondary uppercase">
+                          Upload
+                        </span>
+                      </>
+                    )}
+                  </div>
+                  <span className="text-[9px] font-medium text-text-secondary/60 text-center uppercase tracking-wider">
+                    Max 5MB (JPG, PNG)
+                  </span>
+                  <input
+                    type="file"
+                    className="hidden"
+                    ref={fileInputRef}
+                    accept="image/jpeg, image/png, image/jpg"
+                    onChange={handleImageSelect}
+                  />
                 </div>
-                <input
-                  type="file"
-                  className="hidden"
-                  ref={fileInputRef}
-                  accept="image/jpeg, image/png, image/jpg"
-                  onChange={handleImageSelect}
-                />
-              </div>
 
-              {/* name & description form */}
-              <div className="flex flex-col gap-4">
-                <div>
-                  <label className="b4 font-bold text-text-secondary uppercase tracking-widest block mb-2">
-                    Item Name
-                  </label>
-                  <Input
-                    value={draftItem.name}
-                    onChange={(e) => updateDraft("name", e.target.value)}
-                    placeholder="e.g. Chicken Adobo"
-                    className="bg-white/80 !py-2.5 shadow-sm border border-black/5"
-                  />
-                </div>
-                <div>
-                  <label className="b4 font-bold text-text-secondary uppercase tracking-widest block mb-2">
-                    Description
-                  </label>
-                  <Input
-                    value={draftItem.description}
-                    onChange={(e) => updateDraft("description", e.target.value)}
-                    placeholder="Brief description"
-                    className="bg-white/80 !py-2.5 shadow-sm border border-black/5"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
+                {/* right side info */}
+                <div className="flex-1 flex flex-col gap-4 w-full">
                   <div>
-                    <label className="b4 font-bold text-text-secondary uppercase tracking-widest block mb-2">
-                      Price (₱)
+                    <label className="text-xs font-bold text-text-secondary uppercase tracking-widest block mb-1">
+                      Item Name
                     </label>
                     <Input
-                      type="number"
-                      value={draftItem.price}
-                      onChange={(e) => updateDraft("price", e.target.value)}
-                      placeholder="0.00"
-                      className="bg-white/80 !py-2.5 shadow-sm border border-black/5"
+                      value={draftItem.name}
+                      onChange={(e) => updateDraft("name", e.target.value)}
+                      placeholder="e.g. Chicken Adobo"
+                      className="bg-white/80"
                     />
                   </div>
                   <div>
-                    <label className="b4 font-bold text-text-secondary uppercase tracking-widest block mb-2">
-                      Availability
+                    <label className="text-xs font-bold text-text-secondary uppercase tracking-widest flex justify-between mb-1">
+                      <span>Description</span>
+                      <span className="text-black/40 normal-case font-medium">
+                        {draftItem.description.length}/150
+                      </span>
                     </label>
-                    <div className="h-[46px] flex items-center bg-white/80 rounded-xl px-4 shadow-sm border border-black/5">
-                      <Toggle
-                        isOn={draftItem.isAvailable}
-                        onChange={(val) => updateDraft("isAvailable", val)}
-                        variant="accent"
+                    <textarea
+                      value={draftItem.description}
+                      onChange={(e) => {
+                        if (e.target.value.length <= 150) {
+                          updateDraft("description", e.target.value);
+                        }
+                      }}
+                      placeholder="Brief description"
+                      className="w-full bg-white/80 border-2 border-[#E5E5E5] rounded-xl p-3 text-sm focus:border-brand-primary outline-none transition-colors resize-none h-20 custom-scrollbar shadow-sm"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-bold text-text-secondary uppercase tracking-widest block mb-1">
+                        Price (₱)
+                      </label>
+                      <Input
+                        value={draftItem.price}
+                        onChange={(e) =>
+                          handleNumberInput(e, (val) =>
+                            updateDraft("price", val),
+                          )
+                        }
+                        inputMode="decimal"
+                        placeholder="0.00"
+                        className="bg-white/80"
                       />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-text-secondary uppercase tracking-widest block mb-1">
+                        Availability
+                      </label>
+                      <div className="flex items-center h-[42px]">
+                        <Toggle
+                          isOn={draftItem.isAvailable}
+                          onChange={(val) => updateDraft("isAvailable", val)}
+                          variant="accent"
+                        />
+                        <span className="ml-3 text-sm font-medium text-text-secondary">
+                          {draftItem.isAvailable ? "Available" : "Hidden"}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="w-full h-px bg-black/10 my-2" />
+              <div className="w-full h-px bg-black/10" />
 
               {/* sizes form section */}
               <div>
                 <div className="flex items-center gap-3 mb-4">
-                  <h4 className="b4 font-bold text-text-secondary uppercase tracking-widest">
+                  <h4 className="text-sm font-bold text-text-secondary uppercase tracking-widest">
                     Size Options
                   </h4>
                   <Badge
@@ -684,28 +749,37 @@ const MenuCategoryManagement = () => {
                             placeholder="Description (optional)"
                             className="!py-1.5 flex-1"
                           />
-                          <Input
-                            value={size.price}
-                            onChange={(e) => {
-                              const newSizes = [...draftItem.sizes];
-                              newSizes[index].price = e.target.value;
-                              updateDraft("sizes", newSizes);
-                            }}
-                            placeholder="Free"
-                            className="!py-1.5 w-20 text-right"
-                          />
+                          <div className="relative w-32">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-sm font-medium">
+                              ₱
+                            </span>
+                            <Input
+                              value={size.price}
+                              onChange={(e) => {
+                                const newSizes = [...draftItem.sizes];
+                                const val = e.target.value;
+                                if (val === "" || /^\\d*\\.?\\d*$/.test(val)) {
+                                  newSizes[index].price = val;
+                                  updateDraft("sizes", newSizes);
+                                }
+                              }}
+                              inputMode="decimal"
+                              placeholder="0.00"
+                              className="!py-1.5 w-full pl-7"
+                            />
+                          </div>
                         </div>
                       </div>
                       <button
                         onClick={() =>
                           updateDraft(
                             "sizes",
-                            draftItem.sizes.filter((s) => s.id !== size.id)
+                            draftItem.sizes.filter((s) => s.id !== size.id),
                           )
                         }
-                        className="text-error-primary/30 hover:text-error-primary p-2 transition-colors mt-1"
+                        className="p-2 text-text-secondary hover:text-white hover:bg-error-primary rounded-xl transition-colors mt-1"
                       >
-                        <Trash2 size={16} />
+                        <Trash2 size={18} />
                       </button>
                     </div>
                   ))}
@@ -729,13 +803,13 @@ const MenuCategoryManagement = () => {
                 </div>
               </div>
 
-              <div className="w-full h-px bg-black/10 my-2" />
+              <div className="w-full h-px bg-black/10" />
 
               {/* add-ons form section */}
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <h4 className="b4 font-bold text-text-secondary uppercase tracking-widest">
+                    <h4 className="text-sm font-bold text-text-secondary uppercase tracking-widest">
                       Add-ons
                     </h4>
                     <Badge
@@ -784,62 +858,142 @@ const MenuCategoryManagement = () => {
                                 placeholder="Description (optional)"
                                 className="!py-1.5 flex-1"
                               />
-                              <Input
-                                value={addon.price}
-                                onChange={(e) => {
-                                  const newAddons = [...draftItem.addons];
-                                  newAddons[index].price = e.target.value;
-                                  updateDraft("addons", newAddons);
-                                }}
-                                placeholder="+₱0.00"
-                                className="!py-1.5 w-20 text-right"
-                              />
+                              <div className="relative w-32">
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-sm font-medium">
+                                  +₱
+                                </span>
+                                <Input
+                                  value={addon.price}
+                                  onChange={(e) => {
+                                    const newAddons = [...draftItem.addons];
+                                    const val = e.target.value;
+                                    if (
+                                      val === "" ||
+                                      /^\\d*\\.?\\d*$/.test(val)
+                                    ) {
+                                      newAddons[index].price = val;
+                                      updateDraft("addons", newAddons);
+                                    }
+                                  }}
+                                  inputMode="decimal"
+                                  placeholder="0.00"
+                                  className="!py-1.5 w-full pl-8 text-right"
+                                />
+                              </div>
                             </div>
                           </div>
                           <button
                             onClick={() =>
                               updateDraft(
                                 "addons",
-                                draftItem.addons.filter((m) => m.id !== addon.id)
+                                draftItem.addons.filter(
+                                  (m) => m.id !== addon.id,
+                                ),
                               )
                             }
-                            className="text-error-primary/30 hover:text-error-primary p-2 transition-colors mt-1"
+                            className="p-2 text-text-secondary hover:text-white hover:bg-error-primary rounded-xl transition-colors mt-1"
                           >
-                            <Trash2 size={16} />
+                            <Trash2 size={18} />
                           </button>
                         </div>
                       ))}
                     </div>
 
-                    {/* add-on dropdown linking */}
-                    <div className="p-4 bg-black/5 rounded-2xl flex flex-col gap-3">
-                      <span className="text-xs font-bold text-text-secondary uppercase tracking-widest">
-                        Link Existing Menu Item
-                      </span>
-                      <Dropdown
-                        label=""
-                        placeholder="Select item to link as add-on..."
-                        value=""
-                        options={dropdownOptions}
-                        onSelect={(opt) => {
-                          const selectedItem = items.find(
-                            (i) => i.id === opt.value
-                          );
-                          if (selectedItem) {
-                            updateDraft("addons", [
-                              ...draftItem.addons,
-                              {
-                                id: `addon_${Date.now()}`,
-                                itemId: selectedItem.id,
-                                name: selectedItem.name,
-                                description: selectedItem.description,
-                                price: selectedItem.price,
-                              },
-                            ]);
+                    {/* add-on actions */}
+                    <div className="flex gap-3 mt-2">
+                      <Button
+                        variant="ghost"
+                        onClick={() =>
+                          updateDraft("addons", [
+                            ...draftItem.addons,
+                            {
+                              id: `addon_${Date.now()}`,
+                              itemId: "",
+                              name: "",
+                              description: "",
+                              price: "",
+                            },
+                          ])
+                        }
+                        className="flex-1 border border-dashed border-black/10 hover:border-brand-primary hover:bg-brand-primary/5 text-text-secondary hover:text-brand-primary rounded-2xl py-3"
+                      >
+                        <Plus size={16} className="mr-2" /> Create New
+                      </Button>
+
+                      <div
+                        className="flex-1 relative"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Button
+                          variant="ghost"
+                          onClick={() =>
+                            setIsLinkDropdownOpen(!isLinkDropdownOpen)
                           }
-                        }}
-                        className="bg-white max-w-none shadow-sm"
-                      />
+                          className={cn(
+                            "w-full border border-dashed rounded-2xl py-3 transition-colors",
+                            isLinkDropdownOpen
+                              ? "border-brand-primary bg-brand-primary/5 text-brand-primary"
+                              : "border-black/10 hover:border-brand-primary hover:bg-brand-primary/5 text-text-secondary hover:text-brand-primary",
+                          )}
+                        >
+                          Link Menu Item{" "}
+                          <ChevronDown
+                            size={16}
+                            className={cn(
+                              "ml-2 transition-transform duration-300",
+                              isLinkDropdownOpen && "rotate-180",
+                            )}
+                          />
+                        </Button>
+
+                        {/* Flexible Dropdown List (User Snippet Based) */}
+                        {isLinkDropdownOpen && (
+                          <div
+                            className={cn(
+                              "absolute top-[calc(100%+8px)] left-0 z-50 bg-white border-2 border-[#E5E5E5] rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-300 w-full",
+                            )}
+                          >
+                            <ul className="max-h-[240px] overflow-y-auto custom-scrollbar py-1">
+                              {dropdownOptions.length === 0 ? (
+                                <li className="px-4 py-4 text-sm text-text-secondary text-center">
+                                  No items available
+                                </li>
+                              ) : (
+                                dropdownOptions.map((option, index) => (
+                                  <li
+                                    key={option.value}
+                                    onClick={() => {
+                                      const selectedItem = items.find(
+                                        (i) => i.id === option.value,
+                                      );
+                                      if (selectedItem) {
+                                        updateDraft("addons", [
+                                          ...draftItem.addons,
+                                          {
+                                            id: `addon_${Date.now()}`,
+                                            itemId: selectedItem.id,
+                                            name: selectedItem.name,
+                                            description:
+                                              selectedItem.description,
+                                            price: selectedItem.price,
+                                          },
+                                        ]);
+                                      }
+                                      setIsLinkDropdownOpen(false);
+                                    }}
+                                    className={cn(
+                                      "cursor-pointer transition-colors px-4 py-3 text-sm hover:bg-slate-50 border-b border-black/5 last:border-0",
+                                      "text-text-primary font-medium",
+                                    )}
+                                  >
+                                    {option.label}
+                                  </li>
+                                ))
+                              )}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -853,13 +1007,17 @@ const MenuCategoryManagement = () => {
                   <span className="b2 font-bold text-text-primary">
                     Unsaved changes
                   </span>
-                  <span className="b4 text-text-secondary">Modified item configuration</span>
+                  <span className="b4 text-text-secondary">
+                    Modified item configuration
+                  </span>
                 </div>
               )}
               {hasChanges && (
                 <Button
                   variant="ghost"
-                  onClick={() => setDraftItem(JSON.parse(JSON.stringify(originalItem)))}
+                  onClick={() =>
+                    setDraftItem(JSON.parse(JSON.stringify(originalItem)))
+                  }
                   className="text-warning-primary hover:bg-warning-secondary w-full sm:w-auto"
                 >
                   Discard
@@ -880,19 +1038,29 @@ const MenuCategoryManagement = () => {
 
       {/* image crop modal */}
       {cropModalImage && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200 select-none">
           <div className="bg-bg-primary rounded-[32px] p-6 md:p-8 max-w-lg w-full flex flex-col gap-6 shadow-2xl animate-in zoom-in-95 duration-300">
             <div>
               <h3 className="h3 text-text-primary">Adjust Image</h3>
               <p className="b1 text-text-secondary mt-1">
-                Crop or re-center your menu item image.
+                Zoom, crop, or re-center your menu item image.
               </p>
             </div>
-            
-            <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-black/5 flex items-center justify-center group cursor-move">
+
+            <div
+              className="relative aspect-square w-full rounded-2xl overflow-hidden bg-black/5 flex items-center justify-center group cursor-move shadow-inner"
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseUp}
+            >
               <img
                 src={cropModalImage}
-                className="w-full h-full object-cover scale-110"
+                style={{
+                  transform: `translate(${cropPan.x}px, ${cropPan.y}px) scale(${cropScale})`,
+                  transition: isDragging ? "none" : "transform 0.1s ease-out",
+                }}
+                className="w-full h-full object-cover origin-center pointer-events-none"
                 alt="Crop preview"
               />
               {/* 3x3 mock crop grid overlay */}
@@ -906,11 +1074,23 @@ const MenuCategoryManagement = () => {
               </div>
             </div>
 
+            {/* zoom controls */}
+            <div className="flex items-center gap-4 bg-white/50 p-4 rounded-2xl border border-white">
+              <ZoomOut size={18} className="text-text-secondary" />
+              <input
+                type="range"
+                min="1"
+                max="3"
+                step="0.05"
+                value={cropScale}
+                onChange={(e) => setCropScale(parseFloat(e.target.value))}
+                className="flex-1 accent-brand-primary"
+              />
+              <ZoomIn size={18} className="text-text-secondary" />
+            </div>
+
             <div className="flex justify-end gap-3 pt-2">
-              <Button
-                variant="ghost"
-                onClick={() => setCropModalImage(null)}
-              >
+              <Button variant="ghost" onClick={() => setCropModalImage(null)}>
                 Cancel
               </Button>
               <Button variant="primary" onClick={confirmImageCrop}>
