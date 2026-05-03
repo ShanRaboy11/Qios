@@ -39,6 +39,17 @@ export function DocumentUpload({
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewSrc, setPreviewSrc] = useState<string | null>(null);
   const [previewIsImage, setPreviewIsImage] = useState(false);
+
+  // Cleanup object URLs on unmount
+  useEffect(() => {
+    return () => {
+      if (previewSrc && previewSrc.startsWith("blob:")) {
+        URL.revokeObjectURL(previewSrc);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleFileChange = (id: string, file: File) => {
     setData((prev) => ({
       ...prev,
@@ -50,45 +61,34 @@ export function DocumentUpload({
     const newData = { ...data };
     delete newData[id];
     setData(newData);
+  };
 
-    useEffect(() => {
-      return () => {
-        // cleanup any object URLs when component unmounts
-        if (previewSrc && previewSrc.startsWith("blob:")) {
-          URL.revokeObjectURL(previewSrc);
-        }
-      };
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+  const openPreviewForFile = (file: File) => {
+    if (previewSrc && previewSrc.startsWith("blob:")) {
+      URL.revokeObjectURL(previewSrc);
+    }
+    const url = URL.createObjectURL(file);
+    setPreviewSrc(url);
+    setPreviewIsImage(file.type.startsWith("image/"));
+    setPreviewOpen(true);
+  };
 
-    const openPreviewForFile = (file: File) => {
-      // create object URL
-      if (previewSrc && previewSrc.startsWith("blob:")) {
-        URL.revokeObjectURL(previewSrc);
-      }
-      const url = URL.createObjectURL(file);
-      setPreviewSrc(url);
-      setPreviewIsImage(file.type.startsWith("image/"));
-      setPreviewOpen(true);
-    };
+  const openPreviewForUrl = (url: string) => {
+    if (previewSrc && previewSrc.startsWith("blob:")) {
+      URL.revokeObjectURL(previewSrc);
+    }
+    setPreviewSrc(url);
+    const lowered = url.split("?")[0].toLowerCase();
+    setPreviewIsImage(/\.(jpg|jpeg|png|gif|webp|bmp)$/.test(lowered));
+    setPreviewOpen(true);
+  };
 
-    const openPreviewForUrl = (url: string) => {
-      if (previewSrc && previewSrc.startsWith("blob:")) {
-        URL.revokeObjectURL(previewSrc);
-      }
-      setPreviewSrc(url);
-      const lowered = url.split("?")[0].toLowerCase();
-      setPreviewIsImage(/\.(jpg|jpeg|png|gif|webp|bmp)$/.test(lowered));
-      setPreviewOpen(true);
-    };
-
-    const closePreview = () => {
-      if (previewSrc && previewSrc.startsWith("blob:")) {
-        URL.revokeObjectURL(previewSrc);
-      }
-      setPreviewSrc(null);
-      setPreviewOpen(false);
-    };
+  const closePreview = () => {
+    if (previewSrc && previewSrc.startsWith("blob:")) {
+      URL.revokeObjectURL(previewSrc);
+    }
+    setPreviewSrc(null);
+    setPreviewOpen(false);
   };
 
   const isComplete = DOCUMENT_REQUIREMENTS.filter((r) => r.required).every(
