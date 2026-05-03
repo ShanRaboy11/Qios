@@ -191,7 +191,11 @@ function resolveOwnerEmail(
       "contact_email",
       "primary_email",
     ]) ??
-    pickFirstString(ownerMetadata, ["business_email", "owner_email", "email"]) ??
+    pickFirstString(ownerMetadata, [
+      "business_email",
+      "owner_email",
+      "email",
+    ]) ??
     ownerEmail ??
     ""
   );
@@ -808,9 +812,8 @@ export async function updateTenantSubscription(
   const currentMetadata =
     (user?.user_metadata as Record<string, unknown> | undefined) ?? {};
 
-  const { error: metadataUpdateError } = await supabase.auth.admin.updateUserById(
-    ownerProfile.id,
-    {
+  const { error: metadataUpdateError } =
+    await supabase.auth.admin.updateUserById(ownerProfile.id, {
       user_metadata: {
         ...currentMetadata,
         subscription_plan: normalizedPackage,
@@ -819,8 +822,7 @@ export async function updateTenantSubscription(
         billing_cycle: normalizedCycle,
         billingCycle: normalizedCycle,
       },
-    },
-  );
+    });
 
   if (metadataUpdateError) {
     throw new Error(metadataUpdateError.message);

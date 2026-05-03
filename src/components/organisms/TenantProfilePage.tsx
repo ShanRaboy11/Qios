@@ -76,9 +76,7 @@ function packageIdFromPlanLabel(planLabel: string): PackageId {
 }
 
 function billingCycleFromLabel(label: string): BillingCycle {
-  return label.trim().toLowerCase().includes("annual")
-    ? "annually"
-    : "monthly";
+  return label.trim().toLowerCase().includes("annual") ? "annually" : "monthly";
 }
 
 function billingLabelFromCycle(cycle: BillingCycle) {
@@ -460,7 +458,9 @@ export const TenantProfilePage = ({ tenantId }: TenantProfilePageProps) => {
             label="Plan"
             options={PACKAGE_OPTIONS}
             value={selectedPackageId}
-            onSelect={(option) => setSelectedPackageId(option.value as PackageId)}
+            onSelect={(option) =>
+              setSelectedPackageId(option.value as PackageId)
+            }
           />
 
           <Dropdown
