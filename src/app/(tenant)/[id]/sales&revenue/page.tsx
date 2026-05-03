@@ -142,66 +142,79 @@ export default function SalesRevenueSuite() {
                 </div>
             </div>
 
-           {/* RESPONSIVE GRAPH AREA (IMPLEMENTED) */}
-            <div className="px-4 sm:px-8 pb-10">
-                <div className="relative h-[220px] md:h-[280px] mb-2">
-                    {/* Responsive Axis Labels */}
-                    <div className="absolute left-0 h-full flex flex-col justify-between text-[9px] md:text-[11px] font-medium text-gray-400 z-0 pointer-events-none">
-                        {["$8.8m", "$8.6m", "$8.4m", "$8.2m", "$8m"].map(v => <div key={v} className="h-0 flex items-center"><span>{v}</span></div>)}
-                    </div>
-                    <div className="absolute right-0 h-full flex flex-col justify-between text-[9px] md:text-[11px] font-medium text-gray-400 text-right z-0 pointer-events-none">
-                        {["150", "120", "60", "30", "0"].map(v => <div key={v} className="h-0 flex items-center justify-end w-full"><span>{v}</span></div>)}
-                    </div>
+            {/* ─── ADJUSTED GRAPH SECTION ─── */}
+            <div className="relative h-[220px] md:h-[280px] mb-2">
+              {/* Responsive Left Y-Axis */}
+              <div className="absolute left-0 h-full flex flex-col justify-between text-[9px] md:text-[11px] font-medium text-gray-400 z-0 pointer-events-none">
+                {["$8.8m", "$8.6m", "$8.4m", "$8.2m", "$8m"].map(v => <div key={v} className="h-0 flex items-center"><span>{v}</span></div>)}
+              </div>
 
-                    {/* Responsive Grid Lines (Using dynamic inset) */}
-                    <div className="absolute inset-x-8 sm:inset-x-12 top-0 h-full flex flex-col justify-between pointer-events-none z-0">
-                        {[...Array(5)].map((_, i) => <div key={i} className="w-full border-t border-gray-100" />)}
-                    </div>
-
-                    {/* Responsive Bar Group Container */}
-                    <div className="absolute inset-x-8 sm:inset-x-12 top-0 h-full flex items-end justify-between px-1 sm:px-4 z-10">
-                        {CHART_DATA.map((item) => (
-                        <div key={item.month} className="flex-1 flex flex-col items-center group/item h-full relative cursor-pointer" onMouseEnter={() => setHoveredMonth(item.month)} onMouseLeave={() => setHoveredMonth(null)}>
-                            <AnimatePresence>
-                                {hoveredMonth === item.month && (
-                                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: -20 }} exit={{ opacity: 0 }} className="absolute -top-16 bg-zinc-900 text-white px-2 py-1.5 md:px-3 md:py-2 rounded-lg text-[9px] md:text-[10px] z-50 shadow-xl pointer-events-none whitespace-nowrap border border-white/10">
-                                        <div className="space-y-1">
-                                            <div className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-[#FFD77A] rounded-full" /><span className="font-bold">LTV: {item.ltvLabel}</span></div>
-                                            <div className="flex items-center gap-2 border-t border-white/10 pt-1"><div className="w-1.5 h-1.5 bg-[#FF5269] rounded-full" /><span className="font-bold text-white/80">Cost: {item.costLabel}</span></div>
-                                        </div>
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
-                            {/* Responsive Bar Widths */}
-                            <div className={cn("flex items-end justify-center gap-0.5 sm:gap-1.5 h-full transition-all duration-300", hoveredMonth && hoveredMonth !== item.month ? "opacity-20 grayscale" : "opacity-100")}>
-                                <motion.div initial={{ height: 0 }} animate={{ height: `${item.ltv}%` }} className="w-3.5 sm:w-6 md:w-8 bg-[#FFD77A] rounded-t-md shadow-sm group-hover/item:brightness-105" />
-                                <motion.div initial={{ height: 0 }} animate={{ height: `${item.cost}%` }} className="w-3.5 sm:w-6 md:w-8 bg-[#FF5269] rounded-t-md shadow-sm group-hover/item:brightness-105" />
-                            </div>
-                        </div>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Responsive Month labels alignment */}
-                <div className="flex justify-between items-center px-8 sm:px-[4.5rem] mb-8 mt-6">
-                {CHART_DATA.map((item) => (
-                    <div key={item.month} className="flex-1 text-center">
-                    <span className={cn("text-[10px] md:b4 font-bold uppercase tracking-widest transition-colors", hoveredMonth === item.month ? "text-brand-accent scale-110" : "text-gray-400")}>{item.month}</span>
-                    </div>
+              {/* Responsive Right Y-Axis */}
+              <div className="absolute right-0 h-full flex flex-col justify-between text-[9px] md:text-[11px] font-medium text-gray-400 text-right z-0 pointer-events-none">
+                {["150", "120", "60", "30", "0"].map(v => <div key={v} className="h-0 flex items-center justify-end w-full"><span>{v}</span></div>)}
+              </div>
+              
+              {/* Responsive Grid Lines */}
+              <div className="absolute inset-x-10 md:inset-x-12 top-0 h-full flex flex-col justify-between pointer-events-none z-0">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="w-full border-t border-gray-100" />
                 ))}
-                </div>
+              </div>
 
-                {/* Legend (Wrapping for mobile) */}
-                <div className="flex flex-wrap justify-center gap-4 sm:gap-8">
-                <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-[#FFD77A] rounded-full" />
-                    <span className="b5 font-bold text-text-secondary uppercase tracking-widest">Lifetime Value</span>
+              {/* Responsive Bars Container */}
+              <div className="absolute inset-x-10 md:inset-x-12 top-0 h-full flex items-end justify-between px-1 sm:px-4 z-10">
+                {CHART_DATA.map((item) => (
+                  <div 
+                    key={item.month} 
+                    className="flex-1 flex flex-col items-center group/item h-full relative cursor-pointer"
+                    onMouseEnter={() => setHoveredMonth(item.month)}
+                    onMouseLeave={() => setHoveredMonth(null)}
+                  >
+                    <AnimatePresence>
+                        {hoveredMonth === item.month && (
+                            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: -20 }} exit={{ opacity: 0 }} className="absolute -top-14 bg-zinc-900 text-white px-2 py-1.5 md:px-3 md:py-2 rounded-lg text-[9px] md:text-[10px] z-50 shadow-xl pointer-events-none whitespace-nowrap border border-white/10">
+                                <div className="space-y-1">
+                                    <div className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-[#FFD77A] rounded-full" /><span className="font-bold">LTV: {item.ltvLabel}</span></div>
+                                    <div className="flex items-center gap-2 border-t border-white/10 pt-1"><div className="w-1.5 h-1.5 bg-[#FF5269] rounded-full" /><span className="font-bold text-white/80">Cost: {item.costLabel}</span></div>
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
+                    <div className={cn(
+                        "flex items-end justify-center gap-0.5 sm:gap-1.5 h-full transition-all duration-300",
+                        hoveredMonth && hoveredMonth !== item.month ? "opacity-20 grayscale" : "opacity-100"
+                    )}>
+                        <motion.div initial={{ height: 0 }} animate={{ height: `${item.ltv}%` }} className="w-3.5 sm:w-6 md:w-8 bg-[#FFD77A] rounded-t-md shadow-sm group-hover/item:brightness-105" />
+                        <motion.div initial={{ height: 0 }} animate={{ height: `${item.cost}%` }} className="w-4 sm:w-6 md:w-8 bg-[#FF5269] rounded-t-md shadow-sm group-hover/item:brightness-105" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Responsive Month labels alignment */}
+            <div className="flex justify-between items-center px-10 md:px-[4.5rem] mb-8">
+              {CHART_DATA.map((item) => (
+                <div key={item.month} className="flex-1 text-center">
+                  <span className={cn(
+                    "text-[10px] md:b4 font-bold uppercase tracking-widest transition-colors",
+                    hoveredMonth === item.month ? "text-brand-accent scale-110" : "text-gray-400"
+                  )}>{item.month}</span>
                 </div>
-                <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-[#FF5269] rounded-full" />
-                    <span className="b5 font-bold text-text-secondary uppercase tracking-widest">Customer Cost</span>
-                </div>
-                </div>
+              ))}
+            </div>
+
+            {/* Legend (Wrapping for mobile) */}
+            <div className="flex flex-wrap justify-center gap-4 sm:gap-8">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-[#FFD77A] rounded-full" />
+                <span className="text-[10px] md:b5 font-bold text-text-secondary uppercase">Lifetime Value</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-[#FF5269] rounded-full" />
+                <span className="text-[10px] md:b5 font-bold text-text-secondary uppercase">Customer Cost</span>
+              </div>
             </div>
           </motion.div>
         </div>
