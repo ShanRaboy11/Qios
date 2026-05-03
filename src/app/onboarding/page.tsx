@@ -660,6 +660,7 @@ export default function OnboardingPage() {
 
             {currentStep === 7 && (
               <ReviewSummary
+                adminEmail={authData.email}
                 businessData={businessData}
                 selectedPlan={getSelectedPlan(subscriptionData.packageId)}
                 operationalData={operationalData}

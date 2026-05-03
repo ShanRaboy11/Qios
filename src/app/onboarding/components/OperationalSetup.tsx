@@ -11,6 +11,7 @@ import {
   ShieldCheck,
   Store,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 import { Button } from "@/components/atoms/Button";
 import { cn } from "@/lib/utils";
@@ -187,7 +188,7 @@ function OptionGroup<T extends OptionValue>({
   lockLabel,
 }: {
   title: string;
-  icon: React.ComponentType<{ size?: number }>;
+  icon: LucideIcon;
   description: string;
   selectedValue: T;
   options: OptionCard[];

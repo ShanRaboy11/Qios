@@ -6,6 +6,7 @@ import { Button } from "@/components/atoms/Button";
 import type { OperationalSetupConfig, SubscriptionPlan } from "@/types/tenant";
 
 interface ReviewSummaryProps {
+  adminEmail: string;
   businessData: {
     name: string;
     email: string;
@@ -125,6 +126,7 @@ function getCumulativeFeatures(plan: SubscriptionPlan) {
 }
 
 export function ReviewSummary({
+  adminEmail,
   businessData,
   selectedPlan,
   operationalData,
@@ -175,7 +177,7 @@ export function ReviewSummary({
           <div className="rounded-2xl border border-neutral-100 bg-neutral-50 px-4 py-4 shadow-sm sm:col-span-2">
             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-400">Admin Email</p>
             <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)] break-all">
-              {businessData.email || "-"}
+              {adminEmail || "-"}
             </p>
           </div>
 
@@ -190,6 +192,13 @@ export function ReviewSummary({
             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-400">Owner Name</p>
             <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
               {businessData.owner || "-"}
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-neutral-100 bg-neutral-50 px-4 py-4 shadow-sm sm:col-span-2">
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-400">Business Email</p>
+            <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)] break-all">
+              {businessData.email || "-"}
             </p>
           </div>
 
