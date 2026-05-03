@@ -24,6 +24,7 @@ import TenantManagement from "@/components/organisms/TenantManagement";
 import { ThresholdSettingsPanel } from "@/components/organisms/ThresholdSettingsPanel";
 import { ChatbotUI } from "@/components/organisms/ChatbotUI";
 import MenuCategoryManagement from "@/components/organisms/MenuCategoryManagement";
+import OrderEditor from "@/components/organisms/OrderEditor";
 
 export default function DraftPage() {
   return (
@@ -106,6 +107,10 @@ export default function DraftPage() {
 
         <SectionWrapper title="Menu Category Management">
           <MenuCategoryManagement />
+        </SectionWrapper>
+
+        <SectionWrapper title="Order Editor">
+          <OrderEditor />
         </SectionWrapper>
       </div>
     </Suspense>
