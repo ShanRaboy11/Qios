@@ -1104,7 +1104,7 @@ const MenuCategoryManagement = () => {
                           placeholder="Size Name"
                           className="!py-1.5 b2 placeholder:text-text-secondary/50"
                         />
-                        <div className="flex gap-2">
+                        <div className="flex flex-col sm:flex-row gap-2">
                           <Input
                             value={size.description}
                             onChange={(e) => {
@@ -1115,7 +1115,7 @@ const MenuCategoryManagement = () => {
                             placeholder="Description (optional)"
                             className="!py-1.5 flex-1 b2 placeholder:text-text-secondary/50"
                           />
-                          <div className="relative w-32 flex-shrink-0">
+                          <div className="relative w-full sm:w-32 flex-shrink-0">
                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary b2 font-medium">
                               ₱
                             </span>
@@ -1216,7 +1216,7 @@ const MenuCategoryManagement = () => {
                               placeholder="Add-on Name"
                               className="!py-1.5 b2 placeholder:text-text-secondary/50"
                             />
-                            <div className="flex gap-2">
+                            <div className="flex flex-col sm:flex-row gap-2">
                               <Input
                                 value={addon.description}
                                 onChange={(e) => {
@@ -1227,7 +1227,7 @@ const MenuCategoryManagement = () => {
                                 placeholder="Description (optional)"
                                 className="!py-1.5 flex-1 b2 placeholder:text-text-secondary/50"
                               />
-                              <div className="relative w-32 flex-shrink-0">
+                              <div className="relative w-full sm:w-32 flex-shrink-0">
                                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary b2 font-medium">
                                   +₱
                                 </span>
@@ -1305,7 +1305,7 @@ const MenuCategoryManagement = () => {
                               : "border-black/10 hover:border-brand-primary hover:bg-brand-primary/5 text-text-secondary hover:text-brand-primary",
                           )}
                         >
-                          Link Menu Item{" "}
+                          Menu Item{" "}
                           <ChevronDown
                             size={16}
                             className={cn(
