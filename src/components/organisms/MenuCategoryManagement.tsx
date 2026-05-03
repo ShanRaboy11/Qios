@@ -238,6 +238,7 @@ const MenuCategoryManagement = () => {
   const isValidDraft =
     draftItem?.name?.trim() !== "" &&
     draftItem?.price?.trim() !== "" &&
+    !!draftItem?.image &&
     draftItem?.sizes.every((s) => s.name.trim() !== "" && s.price.trim() !== "") &&
     (!draftItem?.addonsEnabled ||
       draftItem?.addons.every(
@@ -438,8 +439,8 @@ const MenuCategoryManagement = () => {
           {/* category navigator (sidebar) */}
           <aside
             className={cn(
-              "flex flex-col border-4 border-white rounded-[32px] md:rounded-[40px] bg-white/30 backdrop-blur-md shadow-xl h-[85vh]",
-              draftItem ? "lg:col-span-4 overflow-hidden" : "lg:col-span-3"
+              "flex flex-col border-4 border-white rounded-[32px] md:rounded-[40px] bg-white/30 backdrop-blur-md shadow-xl h-[85vh] overflow-hidden",
+              draftItem ? "lg:col-span-4" : "lg:col-span-3"
             )}
           >
             <div className="p-6 pb-4 flex flex-col gap-4">
@@ -528,8 +529,8 @@ const MenuCategoryManagement = () => {
           {/* item dashboard (main panel) */}
           <main
             className={cn(
-              "flex flex-col min-w-0 border-4 border-white rounded-[32px] md:rounded-[40px] shadow-xl relative h-[85vh]",
-              draftItem ? "lg:col-span-8 overflow-hidden" : "lg:col-span-9"
+              "flex flex-col min-w-0 border-4 border-white rounded-[32px] md:rounded-[40px] shadow-xl relative h-[85vh] overflow-hidden",
+              draftItem ? "lg:col-span-8" : "lg:col-span-9"
             )}
           >
             {/* dashboard header */}
@@ -1345,15 +1346,25 @@ const MenuCategoryManagement = () => {
       {/* image crop modal */}
       {cropModalImage && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200 select-none">
-          <div className="bg-bg-primary rounded-[32px] p-6 md:p-8 max-w-lg w-full flex flex-col gap-6 shadow-2xl animate-in zoom-in-95 duration-300">
-            <div>
-              <h3 className="h3 text-text-primary">Adjust Image</h3>
-              <p className="b1 text-text-secondary mt-1">
-                Zoom, crop, or re-center your menu item image.
-              </p>
+          <div className="bg-bg-primary rounded-2xl md:rounded-[32px] w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]">
+            <div className="px-6 md:px-8 py-4 md:py-6 flex items-center justify-between border-b border-black/[0.05] flex-shrink-0">
+              <h2 className="b2 font-bold text-text-primary">
+                Adjust Image
+              </h2>
+              <button
+                onClick={() => setCropModalImage(null)}
+                className="text-text-secondary hover:text-text-primary transition-colors p-1"
+              >
+                <X size={20} />
+              </button>
             </div>
 
-            <div
+            <div className="p-6 md:p-8 overflow-y-auto flex flex-col gap-6">
+              <p className="b3 text-text-secondary font-semibold">
+                Zoom, crop, or re-center your menu item image.
+              </p>
+
+              <div
               className="relative w-[320px] h-[320px] mx-auto rounded-2xl overflow-hidden bg-black/5 flex items-center justify-center group cursor-move shadow-inner"
               onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}
@@ -1412,6 +1423,7 @@ const MenuCategoryManagement = () => {
               >
                 Confirm & Save
               </Button>
+            </div>
             </div>
           </div>
         </div>
