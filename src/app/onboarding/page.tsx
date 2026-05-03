@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Building2,
   ShoppingBag,
@@ -118,6 +118,11 @@ export default function OnboardingPage() {
     dashboardFocus: "revenue",
     supplyLogic: "local",
   });
+
+  // Pending background save promises (optimistic saves)
+  const pendingSaveBusiness = useRef<Promise<any> | null>(null);
+  const pendingSaveDocuments = useRef<Promise<any> | null>(null);
+  const pendingSaveProgress = useRef<Promise<any> | null>(null);
 
   // Ensure onboarding always starts fresh when page is opened.
   useEffect(() => {
@@ -474,9 +479,9 @@ export default function OnboardingPage() {
       return setError("Owner / admin name is required.");
     }
 
-    setLoading(true);
+    // Start saving in background and advance immediately (optimistic)
     try {
-      const res = await saveBusinessInformation({
+      const promise = saveBusinessInformation({
         tenantId: tenantId || undefined,
         userId,
         businessData: {
@@ -484,16 +489,26 @@ export default function OnboardingPage() {
           email: businessData.email,
           owner: businessData.owner,
         },
-      });
+      })
+        .then((res) => {
+          if (res?.tenantId) {
+            setTenantId(res.tenantId);
+          }
+        })
+        .catch((err: any) => {
+          setError(err?.message || "Unable to save business information in background.");
+        })
+        .finally(() => {
+          pendingSaveBusiness.current = null;
+        });
 
-      setTenantId(res.tenantId);
-      setSuccess("Business information saved.");
+      pendingSaveBusiness.current = promise;
+
+      setSuccess("Progress saved locally. Finishing save in background.");
       setCurrentStep(4);
       scrollToTop();
     } catch (err: any) {
-      setError(err.message || "Unable to save business information.");
-    } finally {
-      setLoading(false);
+      setError(err.message || "Unable to start saving business information.");
     }
   };
 
@@ -501,15 +516,20 @@ export default function OnboardingPage() {
     setError("");
     setSuccess("");
 
+    // Ensure tenantId is available (wait for background business save if needed)
     if (!tenantId) {
-      return setError("Please save business information first.");
+      if (pendingSaveBusiness.current) {
+        await pendingSaveBusiness.current;
+      }
+      if (!tenantId) {
+        return setError("Please save business information first.");
+      }
     }
 
     if (!userId) {
       return setError("Please verify your account before uploading documents.");
     }
 
-    setLoading(true);
     try {
       const filesData: Record<string, { name: string; base64: string; type: string }> = {};
       for (const [key, file] of Object.entries(documentData)) {
@@ -524,22 +544,39 @@ export default function OnboardingPage() {
         filesData[key] = { name: file.name, base64, type: file.type };
       }
 
-      const res = await saveDocumentUploads({
+      // Start upload in background and continue immediately
+      const promise = saveDocumentUploads({
         tenantId,
         userId,
         filesData,
         existingDocumentUrls,
-      });
+      })
+        .then((res) => {
+          if (res.success && res.uploadedUrls) {
+            // Map urls back to requirement ids
+            const next: Record<string, string> = {};
+            res.uploadedUrls.forEach((url: string, idx: number) => {
+              const id = DOCUMENT_REQUIREMENTS[idx]?.id;
+              if (id) next[id] = url;
+            });
+            setExistingDocumentUrls((prev) => ({ ...prev, ...next }));
+            setSuccess("Documents saved in background.");
+          }
+        })
+        .catch((err: any) => {
+          setError(err?.message || "Unable to upload documents in background.");
+        })
+        .finally(() => {
+          pendingSaveDocuments.current = null;
+        });
 
-      if (res.success) {
-        setSuccess("Documents uploaded and saved.");
-        setCurrentStep(5);
-        scrollToTop();
-      }
+      pendingSaveDocuments.current = promise;
+
+      setSuccess("Progress saved locally. Uploading documents in background.");
+      setCurrentStep(5);
+      scrollToTop();
     } catch (err: any) {
-      setError(err.message || "Unable to upload documents.");
-    } finally {
-      setLoading(false);
+      setError(err.message || "Unable to start document upload.");
     }
   };
 
@@ -550,22 +587,27 @@ export default function OnboardingPage() {
     if (!tenantId) {
       return setError("Please save business information first.");
     }
-
-    setLoading(true);
     try {
-      const res = await saveOnboardingProgress({
+      // start save in background
+      const promise = saveOnboardingProgress({
         tenantId,
         subscriptionData,
-      });
+      })
+        .then((res) => {
+          if (res?.tenantId) setTenantId(res.tenantId);
+        })
+        .catch((err: any) => setError(err?.message || "Unable to save subscription in background."))
+        .finally(() => {
+          pendingSaveProgress.current = null;
+        });
 
-      setTenantId(res.tenantId);
-      setSuccess("Subscription package saved.");
+      pendingSaveProgress.current = promise;
+
+      setSuccess("Progress saved locally. Updating subscription in background.");
       setCurrentStep(6);
       scrollToTop();
     } catch (err: any) {
-      setError(err.message || "Unable to save subscription package.");
-    } finally {
-      setLoading(false);
+      setError(err.message || "Unable to start subscription save.");
     }
   };
 
@@ -576,23 +618,28 @@ export default function OnboardingPage() {
     if (!tenantId) {
       return setError("Please save business information first.");
     }
-
-    setLoading(true);
     try {
       setOperationalData(featureData);
-      const res = await saveOnboardingProgress({
+
+      const promise = saveOnboardingProgress({
         tenantId,
         featureData,
-      });
+      })
+        .then((res) => {
+          if (res?.tenantId) setTenantId(res.tenantId);
+        })
+        .catch((err: any) => setError(err?.message || "Unable to save operational strategy in background."))
+        .finally(() => {
+          pendingSaveProgress.current = null;
+        });
 
-      setTenantId(res.tenantId);
-      setSuccess("Operational strategy saved.");
+      pendingSaveProgress.current = promise;
+
+      setSuccess("Progress saved locally. Finalizing in background.");
       setCurrentStep(7);
       scrollToTop();
     } catch (err: any) {
-      setError(err.message || "Unable to save operational strategy.");
-    } finally {
-      setLoading(false);
+      setError(err.message || "Unable to start operational save.");
     }
   };
 

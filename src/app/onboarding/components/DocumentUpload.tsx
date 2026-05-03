@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   FileUp,
   CheckCircle2,
@@ -12,6 +12,7 @@ import {
   Landmark,
   Receipt,
   ShieldCheck,
+  Eye,
 } from "lucide-react";
 import { Button } from "@/components/atoms/Button";
 import { Badge } from "@/components/atoms/Badge";
@@ -35,6 +36,9 @@ export function DocumentUpload({
   onBack,
   loading = false,
 }: DocumentUploadProps) {
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewSrc, setPreviewSrc] = useState<string | null>(null);
+  const [previewIsImage, setPreviewIsImage] = useState(false);
   const handleFileChange = (id: string, file: File) => {
     setData((prev) => ({
       ...prev,
@@ -46,6 +50,45 @@ export function DocumentUpload({
     const newData = { ...data };
     delete newData[id];
     setData(newData);
+
+    useEffect(() => {
+      return () => {
+        // cleanup any object URLs when component unmounts
+        if (previewSrc && previewSrc.startsWith("blob:")) {
+          URL.revokeObjectURL(previewSrc);
+        }
+      };
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    const openPreviewForFile = (file: File) => {
+      // create object URL
+      if (previewSrc && previewSrc.startsWith("blob:")) {
+        URL.revokeObjectURL(previewSrc);
+      }
+      const url = URL.createObjectURL(file);
+      setPreviewSrc(url);
+      setPreviewIsImage(file.type.startsWith("image/"));
+      setPreviewOpen(true);
+    };
+
+    const openPreviewForUrl = (url: string) => {
+      if (previewSrc && previewSrc.startsWith("blob:")) {
+        URL.revokeObjectURL(previewSrc);
+      }
+      setPreviewSrc(url);
+      const lowered = url.split("?")[0].toLowerCase();
+      setPreviewIsImage(/\.(jpg|jpeg|png|gif|webp|bmp)$/.test(lowered));
+      setPreviewOpen(true);
+    };
+
+    const closePreview = () => {
+      if (previewSrc && previewSrc.startsWith("blob:")) {
+        URL.revokeObjectURL(previewSrc);
+      }
+      setPreviewSrc(null);
+      setPreviewOpen(false);
+    };
   };
 
   const isComplete = DOCUMENT_REQUIREMENTS.filter((r) => r.required).every(
@@ -72,6 +115,44 @@ export function DocumentUpload({
           Food Industry Standards
         </Badge>
       </div>
+      {/* Preview Modal */}
+      {previewOpen && previewSrc && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50" onClick={closePreview} />
+          <div className="relative z-10 max-w-[90vw] max-h-[90vh] w-full bg-white rounded-lg overflow-hidden">
+            <div className="flex items-center justify-between p-3 border-b">
+              <div className="font-semibold">Document Preview</div>
+              <div className="flex items-center gap-2">
+                <a
+                  href={previewSrc}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-sm text-[var(--color-brand-primary)] underline"
+                >
+                  Open in new tab
+                </a>
+                <button
+                  onClick={closePreview}
+                  type="button"
+                  className="rounded p-1 text-neutral-600 hover:bg-neutral-100"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            </div>
+
+            <div className="p-3 flex items-center justify-center h-[calc(90vh-64px)]">
+              {previewIsImage ? (
+                // image preview
+                <img src={previewSrc} alt="preview" className="max-w-full max-h-full object-contain" />
+              ) : (
+                // fallback to iframe for PDFs or other documents
+                <iframe src={previewSrc} className="w-full h-full border-0" title="document preview" />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-7">
         {DOCUMENT_REQUIREMENTS.map((req) => {
@@ -138,16 +219,28 @@ export function DocumentUpload({
                   <div className="space-y-3">
                     {selectedFile ? (
                       <div className="animate-in slide-in-from-left-2 flex items-center justify-between gap-3 rounded-xl border border-neutral-100 bg-neutral-50 p-2">
-                        <span className="b4 max-w-[220px] truncate pl-2 font-medium text-neutral-600">
-                          {selectedFile.name}
-                        </span>
-                        <button
-                          onClick={() => removeFile(req.id)}
-                          type="button"
-                          className="rounded-lg p-2 text-red-400 transition-all hover:bg-red-50 hover:text-red-600"
-                        >
-                          <X size={16} />
-                        </button>
+                        <div className="flex items-center gap-3 min-w-0">
+                          <button
+                            onClick={() => openPreviewForFile(selectedFile)}
+                            type="button"
+                            className="rounded-md p-2 text-[var(--color-brand-primary)] hover:bg-orange-50"
+                            aria-label="View document"
+                          >
+                            <Eye size={16} />
+                          </button>
+                          <span className="b4 max-w-[180px] truncate pl-1 font-medium text-neutral-600">
+                            {selectedFile.name}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => removeFile(req.id)}
+                            type="button"
+                            className="rounded-lg p-2 text-red-400 transition-all hover:bg-red-50 hover:text-red-600"
+                          >
+                            <X size={16} />
+                          </button>
+                        </div>
                       </div>
                     ) : existingUrl ? (
                       <div className="animate-in slide-in-from-left-2 rounded-xl border border-[var(--color-success-primary)]/20 bg-[var(--color-success-secondary)]/40 p-3">
@@ -160,17 +253,27 @@ export function DocumentUpload({
                               Saved from your previous session
                             </p>
                           </div>
-                          <label className="inline-flex cursor-pointer items-center justify-center rounded-lg border border-[var(--color-brand-primary)]/20 bg-white px-3 py-2 text-xs font-bold text-[var(--color-brand-primary)] transition-colors hover:bg-orange-50">
-                            Replace
-                            <input
-                              type="file"
-                              className="hidden"
-                              onChange={(e) =>
-                                e.target.files?.[0] &&
-                                handleFileChange(req.id, e.target.files[0])
-                              }
-                            />
-                          </label>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => openPreviewForUrl(existingUrl)}
+                              type="button"
+                              className="inline-flex items-center justify-center rounded-lg border border-[var(--color-brand-primary)]/10 bg-white px-3 py-2 text-xs font-bold text-[var(--color-brand-primary)] transition-colors hover:bg-orange-50"
+                            >
+                              <Eye size={14} className="mr-2" />
+                              View
+                            </button>
+                            <label className="inline-flex cursor-pointer items-center justify-center rounded-lg border border-[var(--color-brand-primary)]/20 bg-white px-3 py-2 text-xs font-bold text-[var(--color-brand-primary)] transition-colors hover:bg-orange-50">
+                              Replace
+                              <input
+                                type="file"
+                                className="hidden"
+                                onChange={(e) =>
+                                  e.target.files?.[0] &&
+                                  handleFileChange(req.id, e.target.files[0])
+                                }
+                              />
+                            </label>
+                          </div>
                         </div>
                       </div>
                     ) : (
