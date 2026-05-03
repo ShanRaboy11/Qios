@@ -2,6 +2,7 @@
 
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { sendContactVerificationEmail, sendRegistrationSuccessEmail } from "@/lib/email";
+import { DOCUMENT_REQUIREMENT_IDS } from "./documentRequirements";
 import type {
   OperationalSetupConfig,
   SubscriptionPlan,
@@ -42,6 +43,7 @@ type DocumentUploadInput = {
   tenantId: string;
   userId: string;
   filesData: Record<string, { name: string; base64: string; type: string }>;
+  existingDocumentUrls?: Record<string, string>;
 };
 
 type OnboardingAccessStatus = "new" | "resume-onboarding" | "completed";
@@ -54,6 +56,7 @@ type ResolveOnboardingAccessResult = {
   status: OnboardingAccessStatus;
   userExists: boolean;
   userVerified: boolean;
+  adminEmail?: string;
   nextStep?: number;
   userId?: string;
   tenantId?: string;
@@ -63,6 +66,17 @@ type ResolveOnboardingAccessResult = {
   subscriptionPlan?: SubscriptionPlan;
   verificationDocUrls?: string[];
   operationalSetup?: PartialOperationalSetupConfig;
+  tenant?: {
+    id: string;
+    business_name: string | null;
+    business_email: string | null;
+    owner_name: string | null;
+    subscription_plan: SubscriptionPlan | null;
+    verification_doc_urls: string[] | null;
+    settings: Record<string, unknown> | null;
+    status: string | null;
+    [key: string]: unknown;
+  };
 };
 
 const getSubscriptionPlan = (packageId: string): SubscriptionPlan => {
@@ -114,14 +128,65 @@ const parseOperationalSetup = (
   } as PartialOperationalSetupConfig;
 };
 
-const deriveNextStep = (tenant: {
+const mapTenantRow = (tenant: {
+  id: string;
   business_name: string | null;
   business_email: string | null;
   owner_name: string | null;
   subscription_plan: SubscriptionPlan | null;
   verification_doc_urls: string[] | null;
   settings: Record<string, unknown> | null;
-}) => {
+  status: string | null;
+  [key: string]: unknown;
+}) => tenant;
+
+const ensureProfileTenantLink = async (
+  supabase: ReturnType<typeof createSupabaseAdminClient>,
+  userId: string,
+  tenantId: string,
+  fallbackName: string,
+) => {
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("id, tenant_id, role, full_name")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (profileError) {
+    throw new Error(profileError.message);
+  }
+
+  if (profile?.tenant_id === tenantId) {
+    return;
+  }
+
+  const { error: profileLinkError } = await supabase.from("profiles").upsert({
+    id: userId,
+    tenant_id: tenantId,
+    role: profile?.role === "super_admin" ? profile.role : "admin",
+    full_name: profile?.full_name || fallbackName,
+  });
+
+  if (profileLinkError) {
+    throw new Error(profileLinkError.message);
+  }
+};
+
+const deriveNextStep = (
+  tenant: {
+  business_name: string | null;
+  business_email: string | null;
+  owner_name: string | null;
+  subscription_plan: SubscriptionPlan | null;
+  verification_doc_urls: string[] | null;
+  settings: Record<string, unknown> | null;
+  },
+  userVerified: boolean,
+) => {
+  if (!userVerified) {
+    return 2;
+  }
+
   const hasBusinessCore =
     Boolean(tenant.business_name?.trim()) &&
     Boolean(tenant.business_email?.trim()) &&
@@ -239,37 +304,82 @@ export async function resolveOnboardingAccess(
   const supabase = createSupabaseAdminClient();
   const normalizedEmail = normalizeEmail(email);
 
-  const { data: tenant, error: tenantError } = await supabase
-    .from("tenants")
-    .select(
-      "id, business_name, business_email, owner_name, subscription_plan, status, verification_doc_urls, settings",
-    )
-    .eq("business_email", normalizedEmail)
-    .order("updated_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (tenantError) {
-    throw new Error(tenantError.message);
-  }
-
   const authUser = await getLatestUserByEmail(supabase, normalizedEmail);
   const userExists = Boolean(authUser);
   const userVerified = Boolean(authUser?.email_confirmed_at);
+
+  let tenantRow: Record<string, unknown> | null = null;
+
+  if (authUser?.id) {
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("tenant_id")
+      .eq("id", authUser.id)
+      .maybeSingle();
+
+    if (profileError) {
+      throw new Error(profileError.message);
+    }
+
+    if (profile?.tenant_id) {
+      const { data: tenantByProfile, error: tenantByProfileError } = await supabase
+        .from("tenants")
+        .select("*")
+        .eq("id", profile.tenant_id)
+        .maybeSingle();
+
+      if (tenantByProfileError) {
+        throw new Error(tenantByProfileError.message);
+      }
+
+      tenantRow = tenantByProfile as Record<string, unknown> | null;
+    }
+  }
+
+  if (!tenantRow) {
+    const { data: tenantByBusinessEmail, error: tenantByEmailError } = await supabase
+      .from("tenants")
+      .select("*")
+      .eq("business_email", normalizedEmail)
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (tenantByEmailError) {
+      throw new Error(tenantByEmailError.message);
+    }
+
+    tenantRow = tenantByBusinessEmail as Record<string, unknown> | null;
+  }
+
+  const tenant = tenantRow ? mapTenantRow(tenantRow as any) : null;
+
+  if (tenant && authUser?.id) {
+    await ensureProfileTenantLink(
+      supabase,
+      authUser.id,
+      tenant.id,
+      tenant.owner_name || tenant.business_name || normalizedEmail,
+    );
+  }
 
   if (tenant?.status === "onboarding") {
     return {
       status: "resume-onboarding",
       userExists,
       userVerified,
-      nextStep: deriveNextStep({
-        business_name: tenant.business_name,
-        business_email: tenant.business_email,
-        owner_name: tenant.owner_name,
-        subscription_plan: tenant.subscription_plan as SubscriptionPlan,
-        verification_doc_urls: (tenant.verification_doc_urls as string[]) || [],
-        settings: (tenant.settings as Record<string, unknown> | null) || null,
-      }),
+      adminEmail: authUser?.email || normalizedEmail,
+      nextStep: deriveNextStep(
+        {
+          business_name: tenant.business_name,
+          business_email: tenant.business_email,
+          owner_name: tenant.owner_name,
+          subscription_plan: tenant.subscription_plan as SubscriptionPlan,
+          verification_doc_urls: (tenant.verification_doc_urls as string[]) || [],
+          settings: (tenant.settings as Record<string, unknown> | null) || null,
+        },
+        userVerified,
+      ),
       userId: authUser?.id,
       tenantId: tenant.id,
       businessName: tenant.business_name || undefined,
@@ -280,6 +390,7 @@ export async function resolveOnboardingAccess(
       operationalSetup: parseOperationalSetup(
         (tenant.settings as Record<string, unknown> | null) || null,
       ),
+      tenant,
     };
   }
 
@@ -288,7 +399,18 @@ export async function resolveOnboardingAccess(
       status: "completed",
       userExists,
       userVerified,
-      nextStep: 7,
+      adminEmail: authUser?.email || normalizedEmail,
+      nextStep: deriveNextStep(
+        {
+          business_name: tenant.business_name,
+          business_email: tenant.business_email,
+          owner_name: tenant.owner_name,
+          subscription_plan: tenant.subscription_plan as SubscriptionPlan,
+          verification_doc_urls: (tenant.verification_doc_urls as string[]) || [],
+          settings: (tenant.settings as Record<string, unknown> | null) || null,
+        },
+        userVerified,
+      ),
       userId: authUser?.id,
       tenantId: tenant.id,
       businessName: tenant.business_name || undefined,
@@ -299,6 +421,7 @@ export async function resolveOnboardingAccess(
       operationalSetup: parseOperationalSetup(
         (tenant.settings as Record<string, unknown> | null) || null,
       ),
+      tenant,
     };
   }
 
@@ -307,6 +430,7 @@ export async function resolveOnboardingAccess(
       status: "resume-onboarding",
       userExists,
       userVerified,
+      adminEmail: authUser?.email || normalizedEmail,
       nextStep: 3,
       userId: authUser?.id,
       businessEmail: normalizedEmail,
@@ -317,6 +441,7 @@ export async function resolveOnboardingAccess(
     status: "new",
     userExists,
     userVerified,
+    adminEmail: authUser?.email || normalizedEmail,
     nextStep: 1,
     userId: authUser?.id,
     businessEmail: normalizedEmail,
@@ -557,6 +682,7 @@ export async function saveDocumentUploads(data: DocumentUploadInput) {
 
   const uploadedUrls: string[] = [];
   const uploadErrors: string[] = [];
+  const finalUrlsByRequirement = { ...(data.existingDocumentUrls || {}) } as Record<string, string>;
 
   for (const [key, fileInfo] of Object.entries(data.filesData)) {
     try {
@@ -568,7 +694,7 @@ export async function saveDocumentUploads(data: DocumentUploadInput) {
         .from("verification-docs")
         .upload(filePath, buffer, {
           contentType: fileInfo.type || "application/octet-stream",
-          upsert: false,
+          upsert: true,
         });
 
       if (uploadError) {
@@ -578,6 +704,7 @@ export async function saveDocumentUploads(data: DocumentUploadInput) {
 
       const { data: urlData } = supabase.storage.from("verification-docs").getPublicUrl(filePath);
       if (urlData?.publicUrl) {
+        finalUrlsByRequirement[key] = urlData.publicUrl;
         uploadedUrls.push(urlData.publicUrl);
       } else {
         uploadErrors.push(`Document upload completed for ${key} but no public URL was returned.`);
@@ -591,14 +718,23 @@ export async function saveDocumentUploads(data: DocumentUploadInput) {
     throw new Error(uploadErrors[0]);
   }
 
-  if (uploadedUrls.length !== Object.keys(data.filesData).length) {
-    throw new Error("Not all verification documents were uploaded successfully.");
+  const orderedUrls = DOCUMENT_REQUIREMENT_IDS.map((requirementId) => finalUrlsByRequirement[requirementId]).filter(
+    (url): url is string => Boolean(url),
+  );
+
+  const requiredMissing = DOCUMENT_REQUIREMENT_IDS.filter((requirementId) => {
+    const isRequired = requirementId !== "fda";
+    return isRequired && !finalUrlsByRequirement[requirementId];
+  });
+
+  if (requiredMissing.length > 0) {
+    throw new Error("Not all required verification documents are available for this session.");
   }
 
   const { error } = await supabase
     .from("tenants")
     .update({
-      verification_doc_urls: uploadedUrls,
+      verification_doc_urls: orderedUrls,
       status: "onboarding",
     })
     .eq("id", data.tenantId);
@@ -607,7 +743,7 @@ export async function saveDocumentUploads(data: DocumentUploadInput) {
     throw new Error(error.message);
   }
 
-  return { success: true, uploadedUrls };
+  return { success: true, uploadedUrls: orderedUrls };
 }
 
 export async function processOnboarding(data: {

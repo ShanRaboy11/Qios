@@ -25,6 +25,7 @@ import { OperationalSetup } from "./components/OperationalSetup";
 import { ContactInformation } from "./components/ContactInformation";
 import { ReviewSummary } from "./components/ReviewSummary";
 import { RegistrationSuccessModal } from "./components/RegistrationSuccessModal";
+import { DOCUMENT_REQUIREMENTS } from "./documentRequirements";
 import { Navbar } from "@/components/organisms/navbar";
 import { Footer } from "@/components/organisms/footer";
 import {
@@ -107,6 +108,7 @@ export default function OnboardingPage() {
     packageId: "starter",
   });
   const [documentData, setDocumentData] = useState<Record<string, File>>({});
+  const [existingDocumentUrls, setExistingDocumentUrls] = useState<Record<string, string>>({});
   const [verificationCode, setVerificationCode] = useState("");
   const [tenantId, setTenantId] = useState("");
   const [userId, setUserId] = useState("");
@@ -137,6 +139,27 @@ export default function OnboardingPage() {
     return "basic";
   };
 
+  const mapOperationalSetup = (settings?: Record<string, unknown> | null) => {
+    if (!settings) {
+      return {};
+    }
+
+    return {
+      ...(typeof settings.inventory_mode === "string"
+        ? { inventoryMode: settings.inventory_mode }
+        : {}),
+      ...(typeof settings.service_workflow === "string"
+        ? { serviceWorkflow: settings.service_workflow }
+        : {}),
+      ...(typeof settings.dashboard_focus === "string"
+        ? { dashboardFocus: settings.dashboard_focus }
+        : {}),
+      ...(typeof settings.supply_logic === "string"
+        ? { supplyLogic: settings.supply_logic }
+        : {}),
+    } as Partial<OperationalSetupConfig>;
+  };
+
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
   const dispatchVerificationCode = async ({
@@ -154,26 +177,72 @@ export default function OnboardingPage() {
     return res.verificationCode;
   };
 
-  const hydrateFromAccess = (access: Awaited<ReturnType<typeof resolveOnboardingAccess>>) => {
-    setUserId(access.userId || "");
-    setTenantId(access.tenantId || "");
+  const hydrateForm = (access: Awaited<ReturnType<typeof resolveOnboardingAccess>>) => {
+    const tenant = access.tenant;
 
-    setBusinessData((prev) => ({
+    setUserId(access.userId || "");
+    setTenantId(access.tenantId || tenant?.id || "");
+    setAuthData((prev) => ({
       ...prev,
-      name: prev.name || access.businessName || "",
-      email: prev.email || access.businessEmail || authData.email,
-      owner: prev.owner || access.ownerName || "",
+      email: access.adminEmail || prev.email || access.businessEmail || "",
     }));
 
-    if (access.subscriptionPlan) {
-      setSubscriptionData({ packageId: access.subscriptionPlan });
-    }
+    setBusinessData({
+      name: tenant?.business_name || access.businessName || "",
+      email: tenant?.business_email || access.businessEmail || "",
+      owner: tenant?.owner_name || access.ownerName || "",
+    });
 
-    if (access.operationalSetup) {
-      setOperationalData((prev) => ({
-        ...prev,
-        ...access.operationalSetup,
-      }));
+    setSubscriptionData({
+      packageId: tenant?.subscription_plan || access.subscriptionPlan || "starter",
+    });
+
+    setOperationalData((prev) => ({
+      ...prev,
+      ...mapOperationalSetup(tenant?.settings),
+      ...(access.operationalSetup || {}),
+    }));
+
+    const verificationDocUrls =
+      tenant?.verification_doc_urls || access.verificationDocUrls || [];
+
+    const nextExistingUrls = DOCUMENT_REQUIREMENTS.reduce<Record<string, string>>((acc, requirement, index) => {
+      const nextUrl = verificationDocUrls[index];
+      if (nextUrl) {
+        acc[requirement.id] = nextUrl;
+      }
+      return acc;
+    }, {});
+
+    setExistingDocumentUrls(nextExistingUrls);
+    setDocumentData({});
+  };
+
+  const handleAutoResume = async (email: string) => {
+    try {
+      setAuthData((prev) => ({ ...prev, email }));
+      const access = await resolveOnboardingAccess({ email });
+
+      hydrateForm(access);
+
+      if (access.userVerified) {
+        setCurrentStep(access.nextStep || 3);
+        setSuccess("Session restored. Continuing from your saved progress.");
+        scrollToTop();
+        return;
+      }
+
+      if (access.status === "resume-onboarding" || access.userExists) {
+        await dispatchVerificationCode({
+          email,
+          businessName: access.businessName || email,
+        });
+        setCurrentStep(2);
+        setSuccess("We found your account. Verify your email OTP to continue.");
+        scrollToTop();
+      }
+    } catch (err: any) {
+      setError(err.message || "Unable to restore your session automatically.");
     }
   };
 
@@ -193,8 +262,8 @@ export default function OnboardingPage() {
     }
 
     setUserId(data.user.id);
-    hydrateFromAccess(access);
-    setCurrentStep(Math.max(access.nextStep || 3, 3));
+    hydrateForm(access);
+    setCurrentStep(access.nextStep || 3);
     setSuccess("Welcome back. Continuing your saved onboarding progress.");
     scrollToTop();
   };
@@ -223,7 +292,7 @@ export default function OnboardingPage() {
         return;
       }
 
-      if (access.userExists && access.userVerified) {
+      if (access.userVerified) {
         await loginAndResume(access);
         return;
       }
@@ -252,7 +321,7 @@ export default function OnboardingPage() {
               return;
             }
 
-            hydrateFromAccess(refreshedAccess);
+            hydrateForm(refreshedAccess);
             await dispatchVerificationCode({
               email: authData.email,
               businessName: refreshedAccess.businessName || authData.email,
@@ -276,7 +345,6 @@ export default function OnboardingPage() {
         businessName: businessData.name || authData.email,
       });
 
-      setBusinessData((prev) => ({ ...prev, email: prev.email || authData.email }));
       setCurrentStep(2);
       setSuccess("Enter the 6-digit OTP sent to your email.");
       scrollToTop();
@@ -389,6 +457,7 @@ export default function OnboardingPage() {
         tenantId,
         userId,
         filesData,
+        existingDocumentUrls,
       });
 
       if (res.success) {
@@ -571,7 +640,11 @@ export default function OnboardingPage() {
           <div className={cn("w-full mx-auto", contentMaxWidth)}>
             {currentStep === 1 && (
               <>
-                <AuthCredentials data={authData} setData={setAuthData} error={error} />
+                <AuthCredentials
+                  data={authData}
+                  setData={setAuthData}
+                  onAutoResume={handleAutoResume}
+                />
                 <div className="mt-8 flex flex-col items-center w-full">
                   <div className="flex flex-row gap-3 w-full">
                     <Button
@@ -633,6 +706,7 @@ export default function OnboardingPage() {
             {currentStep === 4 && (
               <DocumentUpload
                 data={documentData}
+                existingUrls={existingDocumentUrls}
                 setData={setDocumentData}
                 onNext={handleDocumentContinue}
                 onBack={prevStep}

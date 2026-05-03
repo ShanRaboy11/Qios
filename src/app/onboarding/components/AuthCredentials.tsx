@@ -1,9 +1,47 @@
 "use client";
-import React from "react";
+
+import React, { useEffect } from "react";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { FormField } from "@/components/molecules/FormField";
 import { Required } from "./BusinessInformation";
 
-export function AuthCredentials({ data, setData }: any) {
+type AuthCredentialsProps = {
+  data: {
+    email: string;
+    password: string;
+    confirm: string;
+  };
+  setData: React.Dispatch<React.SetStateAction<{
+    email: string;
+    password: string;
+    confirm: string;
+  }>>;
+  onAutoResume?: (email: string) => Promise<void> | void;
+};
+
+export function AuthCredentials({ data, setData, onAutoResume }: AuthCredentialsProps) {
+  useEffect(() => {
+    let isActive = true;
+
+    const restoreSession = async () => {
+      if (!onAutoResume) return;
+
+      const supabase = createSupabaseBrowserClient();
+      const { data: userData } = await supabase.auth.getUser();
+      const email = userData.user?.email;
+
+      if (isActive && email) {
+        await onAutoResume(email);
+      }
+    };
+
+    void restoreSession();
+
+    return () => {
+      isActive = false;
+    };
+  }, [onAutoResume]);
+
   return (
     <div className="w-full max-w-[450px] space-y-8 animate-in fade-in slide-in-from-right-8 duration-500">
       <FormField
