@@ -418,7 +418,7 @@ export default function SubscriptionManagementPage() {
                 <Search size={18} className="text-text-secondary" />
               </div>
               <Input
-                placeholder="Search plans..."
+                placeholder="Search plans"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-12 !py-2.5 rounded-xl !bg-white/60 !border-white/50"

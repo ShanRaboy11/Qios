@@ -323,7 +323,7 @@ export default function RoleManagementPage() {
                 <Search size={18} className="text-text-secondary" />
               </div>
               <Input
-                placeholder="Search roles..."
+                placeholder="Search roles"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-12 !py-2.5 rounded-xl !bg-white/60 !border-white/50"
@@ -517,7 +517,7 @@ export default function RoleManagementPage() {
                                <Search size={14} className="text-text-secondary" />
                              </div>
                              <Input
-                               placeholder="Search employees..."
+                               placeholder="Search employees"
                                value={employeeSearchQuery}
                                onChange={(e) => setEmployeeSearchQuery(e.target.value)}
                                className="pl-9 !py-2 !text-sm rounded-xl"

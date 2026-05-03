@@ -13,12 +13,12 @@ import {
   Sparkles,
   CheckCircle2,
   Trash2,
-  ChevronRight,
   Search,
   LayoutGrid,
   List as ListIcon,
   X,
   ChevronDown,
+  ChevronUp,
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
@@ -123,13 +123,14 @@ const MenuCategoryManagement = () => {
   // global state
   const [categories, setCategories] = useState<Category[]>(INITIAL_CATEGORIES);
   const [items, setItems] = useState<MenuItem[]>(INITIAL_ITEMS);
-  const [selectedCategory, setSelectedCategory] = useState("1");
+  const [expandedCategories, setExpandedCategories] = useState<string[]>([
+    "1",
+  ]);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
   // dashboard state
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchCategoryQuery, setSearchCategoryQuery] = useState("");
 
   // category modal state
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
@@ -201,7 +202,7 @@ const MenuCategoryManagement = () => {
         name: newCategoryName.trim(),
       };
       setCategories([...categories, newCat]);
-      setSelectedCategory(newCat.id);
+      setExpandedCategories([...expandedCategories, newCat.id]);
     }
     setNewCategoryName("");
     setIsCategoryModalOpen(false);
@@ -211,27 +212,17 @@ const MenuCategoryManagement = () => {
     e.stopPropagation();
     const newCats = categories.filter((c) => c.id !== id);
     setCategories(newCats);
-    if (selectedCategory === id && newCats.length > 0) {
-      setSelectedCategory(newCats[0].id);
-    } else if (newCats.length === 0) {
-      setSelectedCategory("");
-    }
     // optionally delete all items in this category
     setItems((prev) => prev.filter((i) => i.categoryId !== id));
   };
 
+  const toggleCategory = (id: string) => {
+    setExpandedCategories((prev) =>
+      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
+    );
+  };
+
   // derived data
-  const filteredCategories = categories.filter((c) =>
-    c.name.toLowerCase().includes(searchCategoryQuery.toLowerCase())
-  );
-
-  const filteredItems = items.filter(
-    (item) =>
-      item.categoryId === selectedCategory &&
-      item.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-  const activeCategory = categories.find((c) => c.id === selectedCategory);
-
   const hasChanges =
     JSON.stringify(originalItem) !== JSON.stringify(draftItem);
 
@@ -280,11 +271,10 @@ const MenuCategoryManagement = () => {
     handleCloseDrawer();
   };
 
-  const handleCreateNewItem = () => {
-    if (!selectedCategory) return;
+  const handleCreateNewItem = (categoryId: string) => {
     const newItem: MenuItem = {
       id: `item_${Date.now()}`,
-      categoryId: selectedCategory,
+      categoryId,
       name: "",
       description: "",
       price: "",
@@ -295,6 +285,10 @@ const MenuCategoryManagement = () => {
       sizes: [],
     };
     handleOpenDrawer(newItem);
+    // ensure the category is expanded if they click add item (just in case)
+    if (!expandedCategories.includes(categoryId)) {
+      setExpandedCategories([...expandedCategories, categoryId]);
+    }
   };
 
   const updateDraft = (field: keyof MenuItem, value: any) => {
@@ -420,12 +414,12 @@ const MenuCategoryManagement = () => {
   return (
     <div className="min-h-screen bg-bg-primary p-4 md:p-8 font-inter relative overflow-hidden flex flex-col">
       <div className="flex flex-1 gap-6 md:gap-8 max-w-[1400px] mx-auto w-full relative">
-        {/* left side: dashboard (60% or 100%) */}
+        {/* left side: dashboard (100% or 60% when drawer open) */}
         <div
           className={cn(
-            "flex-1 transition-all duration-500 grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8",
+            "flex-1 transition-all duration-500 w-full",
             draftItem &&
-              "opacity-50 blur-[2px] pointer-events-none select-none overflow-hidden lg:max-w-[60%]"
+              "opacity-50 blur-[2px] pointer-events-none select-none lg:max-w-[60%]"
           )}
         >
           {/* overlay to fully block interactions when drawer is open */}
@@ -436,133 +430,25 @@ const MenuCategoryManagement = () => {
             />
           )}
 
-          {/* category navigator (sidebar) */}
-          <aside
-            className={cn(
-              "flex flex-col border-4 border-white rounded-[32px] md:rounded-[40px] bg-white/30 backdrop-blur-md shadow-xl h-[85vh] overflow-hidden",
-              draftItem ? "lg:col-span-4" : "lg:col-span-3"
-            )}
-          >
-            <div className="p-6 pb-4 flex flex-col gap-4">
-              <h3 className="h3 text-text-primary mb-2">Categories</h3>
-
-              <Button
-                variant="primary"
-                className="w-full b3"
-                leftIcon={<Plus size={18} />}
-                onClick={() => setIsCategoryModalOpen(true)}
-              >
-                New Category
-              </Button>
-
-              <div className="relative">
-                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                  <Search size={18} className="text-text-secondary" />
-                </div>
-                <Input
-                  value={searchCategoryQuery}
-                  onChange={(e) => setSearchCategoryQuery(e.target.value)}
-                  placeholder="Search categories..."
-                  className="pl-12 !py-2.5 rounded-xl !bg-white/60 !border-white/50 b2"
-                />
-              </div>
-            </div>
-
-            <div
-              className={cn(
-                "flex-1 px-4 pb-6 custom-scrollbar",
-                draftItem ? "overflow-hidden" : "overflow-y-auto"
-              )}
-            >
-              <div className="flex flex-col gap-2">
-                {filteredCategories.map((cat) => (
-                  <div
-                    key={cat.id}
-                    draggable
-                    onDragStart={(e) => handleDragStartCategory(e, cat.id)}
-                    onDragOver={handleDragOverCategory}
-                    onDrop={(e) => handleDropCategory(e, cat.id)}
-                    onClick={() => setSelectedCategory(cat.id)}
-                    className={cn(
-                      "group flex items-center justify-between p-3 rounded-2xl cursor-pointer transition-all duration-300 relative",
-                      selectedCategory === cat.id
-                        ? "bg-white shadow-md border border-white/60 transform scale-[1.02]"
-                        : "hover:bg-white/40 border border-transparent",
-                      draggedCategoryId === cat.id &&
-                        "opacity-50 border-dashed border-2 border-brand-primary"
-                    )}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="cursor-grab text-text-secondary/50 hover:text-text-primary active:cursor-grabbing">
-                        <GripVertical size={16} />
-                      </div>
-                      <span
-                        className={cn(
-                          "b2 font-bold transition-colors",
-                          selectedCategory === cat.id
-                            ? "text-text-primary"
-                            : "text-text-primary/80"
-                        )}
-                      >
-                        {cat.name}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {selectedCategory === cat.id && (
-                        <ChevronRight
-                          size={18}
-                          className="text-brand-primary"
-                        />
-                      )}
-                    </div>
-                  </div>
-                ))}
-                {filteredCategories.length === 0 && (
-                  <p className="b4 text-center text-text-secondary mt-4">
-                    No categories found.
-                  </p>
-                )}
-              </div>
-            </div>
-          </aside>
-
           {/* item dashboard (main panel) */}
-          <main
-            className={cn(
-              "flex flex-col min-w-0 border-4 border-white rounded-[32px] md:rounded-[40px] shadow-xl relative h-[85vh] overflow-hidden",
-              draftItem ? "lg:col-span-8" : "lg:col-span-9"
-            )}
-          >
-            {/* dashboard header */}
+          <main className="flex flex-col min-w-0 border-4 border-white rounded-[32px] md:rounded-[40px] shadow-xl relative h-[85vh] overflow-hidden bg-white/30 backdrop-blur-md">
+            {/* dashboard global header */}
             <div className="p-6 md:p-8 flex-shrink-0 flex flex-col gap-6 border-b border-black/5 bg-white/50 backdrop-blur-sm">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="h2 text-text-primary">
-                    {activeCategory?.name || "Items"}
-                  </h2>
+                  <h2 className="h2 text-text-primary">Menu Items</h2>
                   <p className="b1 text-text-secondary mt-1">
-                    Manage items for this category
+                    Manage categories and items for your menu
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  {selectedCategory && (
-                    <Button
-                      variant="ghost"
-                      onClick={(e) => handleDeleteCategory(e, selectedCategory)}
-                      className="!w-10 !h-10 !p-0 flex items-center justify-center text-warning-primary hover:bg-warning-secondary hover:text-warning-primary flex-shrink-0"
-                      title="Delete Category"
-                    >
-                      <Trash2 size={18} />
-                    </Button>
-                  )}
                   <Button
-                    variant="accent"
-                    onClick={handleCreateNewItem}
+                    variant="primary"
+                    onClick={() => setIsCategoryModalOpen(true)}
                     leftIcon={<Plus size={18} />}
                     className="b3"
-                    disabled={!selectedCategory}
                   >
-                    Add Item
+                    Create Category
                   </Button>
                 </div>
               </div>
@@ -575,7 +461,7 @@ const MenuCategoryManagement = () => {
                   <Input
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search items..."
+                    placeholder="Search all items"
                     className="pl-12 !py-2.5 rounded-xl !bg-white/80 b2"
                   />
                 </div>
@@ -607,149 +493,272 @@ const MenuCategoryManagement = () => {
               </div>
             </div>
 
-            {/* dashboard content */}
+            {/* dashboard accordion content */}
             <div
               className={cn(
                 "flex-1 p-6 md:p-8 custom-scrollbar",
                 draftItem ? "overflow-hidden" : "overflow-y-auto"
               )}
             >
-              {filteredItems.length === 0 ? (
+              {categories.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-text-secondary opacity-70">
                   <ImageIcon size={48} className="mb-4 opacity-50" />
-                  <p className="b2 font-bold">No items found</p>
-                  <p className="b4">Add a new item to get started.</p>
-                </div>
-              ) : viewMode === "grid" ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 pb-20">
-                  {filteredItems.map((item) => (
-                    <div
-                      key={item.id}
-                      onClick={() => handleOpenDrawer(item)}
-                      className="bg-white rounded-[24px] border border-black/5 overflow-hidden shadow-sm hover:shadow-md hover:border-brand-primary/30 transition-all cursor-pointer group flex flex-col relative"
-                    >
-                      {/* select checkbox with solid white background to prevent morphing */}
-                      <div
-                        className="absolute top-4 left-4 z-20 bg-white rounded-[4px] flex items-center justify-center"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <Checkbox
-                          checked={selectedItems.includes(item.id)}
-                          onChange={() => toggleSelection(item.id)}
-                        />
-                      </div>
-
-                      <div className="aspect-video bg-black/5 flex items-center justify-center relative overflow-hidden">
-                        {item.image ? (
-                          <img
-                            src={item.image}
-                            alt={item.name}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                          />
-                        ) : (
-                          <ImageIcon size={32} className="text-black/20" />
-                        )}
-                        {!item.isAvailable && (
-                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-[2px]">
-                            <Badge color="secondary" variant="solid" className="px-2 py-0.5 text-[11px] font-bold">
-                              Unavailable
-                            </Badge>
-                          </div>
-                        )}
-                        {/* ai synced badge on top right */}
-                        {item.aiSynced && (
-                          <div className="absolute top-3 right-3 z-10">
-                            <Badge
-                              color="success"
-                              variant="subtle"
-                              className="px-2 py-0.5 text-[11px] font-bold shadow-sm"
-                            >
-                              AI Synced
-                            </Badge>
-                          </div>
-                        )}
-                      </div>
-                      <div className="p-5 flex flex-col flex-1">
-                        {/* title and price layout handling */}
-                        <div className="flex items-start justify-between gap-3 mb-2">
-                          <h4 className="b2 font-bold text-text-primary group-hover:text-brand-primary transition-colors leading-tight">
-                            {item.name}
-                          </h4>
-                          <span className="b2 font-bold text-brand-accent flex-shrink-0">
-                            ₱{item.price}
-                          </span>
-                        </div>
-                        <p className="b4 text-text-secondary line-clamp-2 mt-auto">
-                          {item.description}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
+                  <p className="b2 font-bold">No categories found</p>
+                  <p className="b4">Create a new category to get started.</p>
                 </div>
               ) : (
-                <div className="flex flex-col gap-4 pb-20">
-                  {filteredItems.map((item) => (
+                categories.map((cat) => {
+                  const catItems = items.filter(
+                    (i) =>
+                      i.categoryId === cat.id &&
+                      i.name.toLowerCase().includes(searchQuery.toLowerCase())
+                  );
+                  const isExpanded = expandedCategories.includes(cat.id);
+
+                  // if searching and this category has no matches, we can optionally hide it
+                  if (searchQuery && catItems.length === 0) return null;
+
+                  return (
                     <div
-                      key={item.id}
-                      onClick={() => handleOpenDrawer(item)}
-                      className="bg-white rounded-2xl border border-black/5 p-3 flex items-center gap-4 shadow-sm hover:shadow-md hover:border-brand-primary/30 transition-all cursor-pointer group relative pl-5"
+                      key={cat.id}
+                      draggable
+                      onDragStart={(e) => handleDragStartCategory(e, cat.id)}
+                      onDragOver={handleDragOverCategory}
+                      onDrop={(e) => handleDropCategory(e, cat.id)}
+                      className={cn(
+                        "bg-white rounded-[24px] border border-[#E5E5E5] mb-6 shadow-sm transition-all text-left group/accordion",
+                        draggedCategoryId === cat.id &&
+                          "opacity-50 border-dashed border-2 border-brand-primary"
+                      )}
                     >
-                      {/* select checkbox with a little left margin */}
+                      {/* accordion header */}
                       <div
-                        className="z-20 bg-white rounded-[4px] flex items-center justify-center"
-                        onClick={(e) => e.stopPropagation()}
+                        onClick={() => toggleCategory(cat.id)}
+                        className={cn(
+                          "p-4 md:px-6 md:py-4 flex flex-col md:flex-row items-start overflow-hidden md:items-center justify-between cursor-pointer transition-colors gap-4 md:gap-0 bg-brand-secondary/70",
+                          isExpanded
+                            ? "rounded-t-[24px] border-b border-[#E5E5E5]"
+                            : "rounded-[24px]"
+                        )}
                       >
-                        <Checkbox
-                          checked={selectedItems.includes(item.id)}
-                          onChange={() => toggleSelection(item.id)}
-                        />
+                        <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-start">
+                          <div className="flex items-center gap-3">
+                            <div className="cursor-grab text-text-secondary/30 hover:text-text-primary active:cursor-grabbing mr-1">
+                              <GripVertical size={20} />
+                            </div>
+                            <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
+                              <h3 className="text-xl font-extrabold text-text-primary leading-tight">
+                                {cat.name}
+                              </h3>
+                              <Badge
+                                color="secondary"
+                                variant="subtle"
+                                shape="pill"
+                                className="w-fit text-[11px] font-bold px-3 py-1"
+                              >
+                                {items.filter((i) => i.categoryId === cat.id).length} Items
+                              </Badge>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div
+                          className="flex items-center gap-3 shrink-0"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCreateNewItem(cat.id);
+                            }}
+                            className="px-3 py-1.5 flex items-center gap-2 text-brand-accent hover:bg-brand-accent/10 rounded-xl transition-colors b3"
+                            title="Add Item"
+                          >
+                            <Plus size={18} />
+                            <span className="hidden sm:inline">Add Item</span>
+                          </button>
+                          <button
+                            onClick={(e) => handleDeleteCategory(e, cat.id)}
+                            className="p-2 text-warning-primary hover:bg-warning-primary/10 rounded-xl transition-colors"
+                            title="Delete Category"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                          <div className="w-px h-6 bg-black/10 mx-1" />
+                          <div
+                            onClick={() => toggleCategory(cat.id)}
+                            className="p-1 cursor-pointer"
+                          >
+                            <ChevronDown
+                              className={cn(
+                                "text-text-secondary transition-transform duration-300",
+                                isExpanded && "rotate-180"
+                              )}
+                            />
+                          </div>
+                        </div>
                       </div>
 
-                      <div className="w-16 h-16 rounded-xl bg-black/5 flex-shrink-0 flex items-center justify-center overflow-hidden relative ml-2">
-                        {item.image ? (
-                          <img
-                            src={item.image}
-                            alt={item.name}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                          />
-                        ) : (
-                          <ImageIcon size={24} className="text-black/20" />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0 flex flex-col justify-center">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h4 className="b2 font-bold text-text-primary group-hover:text-brand-primary transition-colors truncate">
-                            {item.name}
-                          </h4>
-                          {!item.isAvailable && (
-                            <Badge
-                              color="secondary"
-                              variant="solid"
-                              className="px-2 py-0.5 text-[11px] font-bold"
+                      {/* accordion body */}
+                      {isExpanded && (
+                        <div className="p-6 bg-slate-50/50 rounded-b-[24px] animate-in fade-in slide-in-from-top-2 duration-200">
+                          {catItems.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-8 text-text-secondary opacity-70">
+                              <p className="b3 font-bold">No items</p>
+                              <p className="b5">Click 'Add Item' to start.</p>
+                            </div>
+                          ) : viewMode === "grid" ? (
+                            <div
+                              className={cn(
+                                "grid gap-6",
+                                draftItem
+                                  ? "grid-cols-1 xl:grid-cols-2"
+                                  : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                              )}
                             >
-                              Unavailable
-                            </Badge>
-                          )}
-                          {item.aiSynced && (
-                            <Badge
-                              color="success"
-                              variant="subtle"
-                              className="px-2 py-0.5 text-[11px] font-bold"
-                            >
-                              AI Synced
-                            </Badge>
+                              {catItems.map((item) => (
+                                <div
+                                  key={item.id}
+                                  onClick={() => handleOpenDrawer(item)}
+                                  className="bg-white rounded-[24px] border border-black/5 overflow-hidden shadow-sm hover:shadow-md hover:border-brand-primary/30 transition-all cursor-pointer group flex flex-col relative"
+                                >
+                                  {/* select checkbox with solid white background to prevent morphing */}
+                                  <div
+                                    className="absolute top-4 left-4 z-20 bg-white rounded-[4px] flex items-center justify-center"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <Checkbox
+                                      checked={selectedItems.includes(item.id)}
+                                      onChange={() => toggleSelection(item.id)}
+                                    />
+                                  </div>
+
+                                  <div className="aspect-video bg-black/5 flex items-center justify-center relative overflow-hidden">
+                                    {item.image ? (
+                                      <img
+                                        src={item.image}
+                                        alt={item.name}
+                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                      />
+                                    ) : (
+                                      <ImageIcon
+                                        size={32}
+                                        className="text-black/20"
+                                      />
+                                    )}
+                                    {!item.isAvailable && (
+                                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-[2px]">
+                                        <Badge
+                                          color="error"
+                                          variant="solid"
+                                          className="px-2 py-0.5 text-[11px] font-bold"
+                                        >
+                                          Unavailable
+                                        </Badge>
+                                      </div>
+                                    )}
+                                    {/* ai synced badge on top right */}
+                                    {item.aiSynced && (
+                                      <div className="absolute top-3 right-3 z-10">
+                                        <Badge
+                                          color="success"
+                                          variant="subtle"
+                                          className="px-2 py-0.5 text-[11px] font-bold shadow-sm"
+                                        >
+                                          AI Synced
+                                        </Badge>
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="p-5 flex flex-col flex-1">
+                                    <div className="flex items-start justify-between gap-3 mb-2">
+                                      <h4 className="b2 font-bold text-text-primary group-hover:text-brand-primary transition-colors leading-tight">
+                                        {item.name}
+                                      </h4>
+                                      <span className="b2 font-bold text-brand-accent flex-shrink-0">
+                                        ₱{item.price}
+                                      </span>
+                                    </div>
+                                    <p className="b4 text-text-secondary line-clamp-2 mt-auto">
+                                      {item.description}
+                                    </p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="flex flex-col gap-4">
+                              {catItems.map((item) => (
+                                <div
+                                  key={item.id}
+                                  onClick={() => handleOpenDrawer(item)}
+                                  className="bg-white rounded-2xl border border-black/5 p-2.5 flex items-center gap-4 shadow-sm hover:shadow-md hover:border-brand-primary/30 transition-all cursor-pointer group relative pl-5"
+                                >
+                                  {/* select checkbox with a little left margin */}
+                                  <div
+                                    className="z-20 bg-white rounded-[4px] flex items-center justify-center"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <Checkbox
+                                      checked={selectedItems.includes(item.id)}
+                                      onChange={() => toggleSelection(item.id)}
+                                    />
+                                  </div>
+
+                                  <div className="w-14 h-14 rounded-xl bg-black/5 flex-shrink-0 flex items-center justify-center overflow-hidden relative ml-2">
+                                    {item.image ? (
+                                      <img
+                                        src={item.image}
+                                        alt={item.name}
+                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                      />
+                                    ) : (
+                                      <ImageIcon
+                                        size={20}
+                                        className="text-black/20"
+                                      />
+                                    )}
+                                  </div>
+                                  <div className="flex-1 min-w-0 flex flex-col justify-center">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <h4 className="b2 font-bold text-text-primary group-hover:text-brand-primary transition-colors truncate">
+                                        {item.name}
+                                      </h4>
+                                      {!item.isAvailable && (
+                                        <Badge
+                                          color="error"
+                                          variant="subtle"
+                                          className="px-2 py-0.5 text-[11px] font-bold"
+                                        >
+                                          Unavailable
+                                        </Badge>
+                                      )}
+                                      {item.aiSynced && (
+                                        <Badge
+                                          color="success"
+                                          variant="subtle"
+                                          className="px-2 py-0.5 text-[11px] font-bold"
+                                        >
+                                          AI Synced
+                                        </Badge>
+                                      )}
+                                    </div>
+                                    <p className="b4 text-text-secondary truncate">
+                                      {item.description}
+                                    </p>
+                                  </div>
+                                  <div className="font-bold text-brand-accent text-lg flex-shrink-0 pl-4 border-l border-black/5 min-w-[130px] max-w-[180px] text-right truncate">
+                                    ₱{item.price}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
                           )}
                         </div>
-                        <p className="b4 text-text-secondary truncate">
-                          {item.description}
-                        </p>
-                      </div>
-                      <div className="font-bold text-brand-accent text-lg flex-shrink-0 pl-4 border-l border-black/5 min-w-[100px] max-w-[140px] text-right truncate">
-                        ₱{item.price}
-                      </div>
+                      )}
                     </div>
-                  ))}
-                </div>
+                  );
+                })
               )}
             </div>
           </main>
@@ -823,7 +832,6 @@ const MenuCategoryManagement = () => {
             {/* drawer body */}
             <div className="flex-1 overflow-y-auto p-6 bg-bg-primary custom-scrollbar flex flex-col gap-8">
               <div className="flex flex-col gap-5">
-                
                 <div className="flex items-center gap-3">
                   <h4 className="b3 font-bold text-text-secondary uppercase tracking-widest">
                     Item Information
@@ -1045,7 +1053,7 @@ const MenuCategoryManagement = () => {
                           description: "",
                           price: "",
                         },
-                      ])
+                      ],)
                     }
                     className="w-full border border-dashed border-black/10 hover:border-brand-primary hover:bg-brand-primary/5 text-text-secondary hover:text-brand-primary rounded-2xl py-3 mt-2 b2"
                   >
@@ -1365,65 +1373,65 @@ const MenuCategoryManagement = () => {
               </p>
 
               <div
-              className="relative w-[320px] h-[320px] mx-auto rounded-2xl overflow-hidden bg-black/5 flex items-center justify-center group cursor-move shadow-inner"
-              onMouseDown={handleMouseDown}
-              onMouseMove={handleMouseMove}
-              onMouseUp={handleMouseUp}
-              onMouseLeave={handleMouseUp}
-            >
-              <img
-                src={cropModalImage}
-                style={{
-                  width: `${renderedWidth}px`,
-                  height: `${renderedHeight}px`,
-                  transform: `translate(${cropPan.x}px, ${cropPan.y}px) scale(${cropScale})`,
-                  transition: isDragging ? "none" : "transform 0.1s ease-out",
-                }}
-                className="max-w-none origin-center pointer-events-none absolute"
-                alt="Crop preview"
-              />
-              {/* 3x3 mock crop grid overlay */}
-              <div className="absolute inset-0 pointer-events-none grid grid-cols-3 grid-rows-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                {Array.from({ length: 9 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="border border-white/40 shadow-[inset_0_0_0_1px_rgba(0,0,0,0.1)]"
-                  ></div>
-                ))}
+                className="relative w-[320px] h-[320px] mx-auto rounded-2xl overflow-hidden bg-black/5 flex items-center justify-center group cursor-move shadow-inner"
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseUp}
+              >
+                <img
+                  src={cropModalImage}
+                  style={{
+                    width: `${renderedWidth}px`,
+                    height: `${renderedHeight}px`,
+                    transform: `translate(${cropPan.x}px, ${cropPan.y}px) scale(${cropScale})`,
+                    transition: isDragging ? "none" : "transform 0.1s ease-out",
+                  }}
+                  className="max-w-none origin-center pointer-events-none absolute"
+                  alt="Crop preview"
+                />
+                {/* 3x3 mock crop grid overlay */}
+                <div className="absolute inset-0 pointer-events-none grid grid-cols-3 grid-rows-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  {Array.from({ length: 9 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className="border border-white/40 shadow-[inset_0_0_0_1px_rgba(0,0,0,0.1)]"
+                    ></div>
+                  ))}
+                </div>
               </div>
-            </div>
 
-            {/* zoom controls */}
-            <div className="flex items-center gap-4 bg-white/50 p-4 rounded-2xl border border-white max-w-[320px] mx-auto w-full">
-              <ZoomOut size={18} className="text-text-secondary" />
-              <input
-                type="range"
-                min="1"
-                max="3"
-                step="0.05"
-                value={cropScale}
-                onChange={(e) => setCropScale(parseFloat(e.target.value))}
-                className="flex-1 accent-brand-primary"
-              />
-              <ZoomIn size={18} className="text-text-secondary" />
-            </div>
+              {/* zoom controls */}
+              <div className="flex items-center gap-4 bg-white/50 p-4 rounded-2xl border border-white max-w-[320px] mx-auto w-full">
+                <ZoomOut size={18} className="text-text-secondary" />
+                <input
+                  type="range"
+                  min="1"
+                  max="3"
+                  step="0.05"
+                  value={cropScale}
+                  onChange={(e) => setCropScale(parseFloat(e.target.value))}
+                  className="flex-1 accent-brand-primary"
+                />
+                <ZoomIn size={18} className="text-text-secondary" />
+              </div>
 
-            <div className="flex justify-end gap-3 pt-2">
-              <Button
-                variant="ghost"
-                onClick={() => setCropModalImage(null)}
-                className="b3"
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="primary"
-                onClick={confirmImageCrop}
-                className="b3"
-              >
-                Confirm & Save
-              </Button>
-            </div>
+              <div className="flex justify-end gap-3 pt-2">
+                <Button
+                  variant="ghost"
+                  onClick={() => setCropModalImage(null)}
+                  className="b3"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="primary"
+                  onClick={confirmImageCrop}
+                  className="b3"
+                >
+                  Confirm & Save
+                </Button>
+              </div>
             </div>
           </div>
         </div>
