@@ -5,6 +5,7 @@ import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
 import { Toggle } from "@/components/atoms/Toggle";
 import { Badge } from "@/components/atoms/Badge";
+import { Checkbox } from "@/components/atoms/Checkbox";
 import {
   GripVertical,
   Plus,
@@ -88,7 +89,7 @@ const INITIAL_ITEMS: MenuItem[] = [
       },
     ],
     sizes: [
-      { id: "s1", name: "Regular", description: "Good for 1", price: "Free" },
+      { id: "s1", name: "Regular", description: "Good for 1", price: "0.00" },
       { id: "s2", name: "Large", description: "Good for 2-3", price: "150.00" },
     ],
   },
@@ -123,10 +124,15 @@ const MenuCategoryManagement = () => {
   const [categories, setCategories] = useState<Category[]>(INITIAL_CATEGORIES);
   const [items, setItems] = useState<MenuItem[]>(INITIAL_ITEMS);
   const [selectedCategory, setSelectedCategory] = useState("1");
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
   // dashboard state
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchQuery, setSearchQuery] = useState("");
+
+  // category modal state
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
 
   // drawer state
   const [originalItem, setOriginalItem] = useState<MenuItem | null>(null);
@@ -137,20 +143,24 @@ const MenuCategoryManagement = () => {
 
   // drag state
   const [draggedCategoryId, setDraggedCategoryId] = useState<string | null>(
-    null,
+    null
   );
 
   // crop modal state
   const [cropModalImage, setCropModalImage] = useState<string | null>(null);
+  const [imageNativeSize, setImageNativeSize] = useState({ w: 1, h: 1 });
   const [cropScale, setCropScale] = useState(1);
   const [cropPan, setCropPan] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const dragStart = useRef({ x: 0, y: 0 });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // container size for crop bounds checking
+  const CROP_CONTAINER_SIZE = 320;
+
   // close dropdown when clicking outside
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
+    const handleClickOutside = () => {
       if (isLinkDropdownOpen) setIsLinkDropdownOpen(false);
     };
     document.addEventListener("click", handleClickOutside);
@@ -183,15 +193,44 @@ const MenuCategoryManagement = () => {
     setDraggedCategoryId(null);
   };
 
+  const handleCreateCategory = () => {
+    if (newCategoryName.trim()) {
+      const newCat: Category = {
+        id: `cat_${Date.now()}`,
+        name: newCategoryName.trim(),
+      };
+      setCategories([...categories, newCat]);
+      setSelectedCategory(newCat.id);
+    }
+    setNewCategoryName("");
+    setIsCategoryModalOpen(false);
+  };
+
   // derived data
   const filteredItems = items.filter(
     (item) =>
       item.categoryId === selectedCategory &&
-      item.name.toLowerCase().includes(searchQuery.toLowerCase()),
+      item.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
   const activeCategory = categories.find((c) => c.id === selectedCategory);
 
-  const hasChanges = JSON.stringify(originalItem) !== JSON.stringify(draftItem);
+  const hasChanges =
+    JSON.stringify(originalItem) !== JSON.stringify(draftItem);
+
+  const isValidDraft =
+    draftItem?.name?.trim() !== "" && draftItem?.price?.trim() !== "";
+
+  // selection handlers
+  const toggleSelection = (id: string) => {
+    setSelectedItems((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+    );
+  };
+
+  const deleteSelectedItems = () => {
+    setItems((prev) => prev.filter((i) => !selectedItems.includes(i.id)));
+    setSelectedItems([]);
+  };
 
   // drawer handlers
   const handleOpenDrawer = (item: MenuItem) => {
@@ -205,7 +244,7 @@ const MenuCategoryManagement = () => {
   };
 
   const handleSaveItem = () => {
-    if (!draftItem) return;
+    if (!draftItem || !isValidDraft) return;
 
     const exists = items.some((i) => i.id === draftItem.id);
     if (exists) {
@@ -239,10 +278,10 @@ const MenuCategoryManagement = () => {
 
   const handleNumberInput = (
     e: React.ChangeEvent<HTMLInputElement>,
-    callback: (val: string) => void,
+    callback: (val: string) => void
   ) => {
     const val = e.target.value;
-    if (val === "" || /^\\d*\\.?\\d*$/.test(val)) {
+    if (val === "" || /^[0-9]*\.?[0-9]*$/.test(val)) {
       callback(val);
     }
   };
@@ -256,23 +295,77 @@ const MenuCategoryManagement = () => {
         return;
       }
       const reader = new FileReader();
-      reader.onload = (e) => {
-        setCropModalImage(e.target?.result as string);
-        setCropScale(1);
-        setCropPan({ x: 0, y: 0 });
+      reader.onload = (ev) => {
+        const src = ev.target?.result as string;
+        const img = new window.Image();
+        img.onload = () => {
+          setImageNativeSize({ w: img.width, h: img.height });
+          setCropModalImage(src);
+          setCropScale(1);
+          setCropPan({ x: 0, y: 0 });
+        };
+        img.src = src;
       };
       reader.readAsDataURL(file);
     }
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  // crop mathematical bounds & rendering
+  const coverScale = Math.max(
+    CROP_CONTAINER_SIZE / imageNativeSize.w,
+    CROP_CONTAINER_SIZE / imageNativeSize.h
+  );
+  const renderedWidth = imageNativeSize.w * coverScale;
+  const renderedHeight = imageNativeSize.h * coverScale;
+  const maxPanX = Math.max(
+    0,
+    (renderedWidth * cropScale - CROP_CONTAINER_SIZE) / 2
+  );
+  const maxPanY = Math.max(
+    0,
+    (renderedHeight * cropScale - CROP_CONTAINER_SIZE) / 2
+  );
+
+  // automatically restrict bounds if zooming out
+  useEffect(() => {
+    setCropPan((prev) => ({
+      x: Math.max(-maxPanX, Math.min(maxPanX, prev.x)),
+      y: Math.max(-maxPanY, Math.min(maxPanY, prev.y)),
+    }));
+  }, [cropScale, maxPanX, maxPanY]);
+
   const confirmImageCrop = () => {
     if (cropModalImage) {
-      // In a real app, we'd apply a canvas crop here using scale/pan state.
-      // For the UI demo, we save the image.
-      updateDraft("image", cropModalImage);
+      const canvas = document.createElement("canvas");
+      // high res output for quality
+      canvas.width = 600;
+      canvas.height = 600;
+      const ctx = canvas.getContext("2d");
+
+      const img = new window.Image();
+      img.onload = () => {
+        if (!ctx) return;
+        ctx.fillStyle = "white";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        const outScale = canvas.width / CROP_CONTAINER_SIZE;
+
+        // mirror css transform: origin center, apply pan, apply scale
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        ctx.translate(cropPan.x * outScale, cropPan.y * outScale);
+        ctx.scale(cropScale, cropScale);
+
+        const drawW = renderedWidth * outScale;
+        const drawH = renderedHeight * outScale;
+        ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
+
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
+        updateDraft("image", dataUrl);
+        setCropModalImage(null);
+      };
+      img.src = cropModalImage;
     }
-    setCropModalImage(null);
   };
 
   // crop interactions
@@ -282,9 +375,13 @@ const MenuCategoryManagement = () => {
   };
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!isDragging) return;
+
+    const nextX = e.clientX - dragStart.current.x;
+    const nextY = e.clientY - dragStart.current.y;
+
     setCropPan({
-      x: e.clientX - dragStart.current.x,
-      y: e.clientY - dragStart.current.y,
+      x: Math.max(-maxPanX, Math.min(maxPanX, nextX)),
+      y: Math.max(-maxPanY, Math.min(maxPanY, nextY)),
     });
   };
   const handleMouseUp = () => setIsDragging(false);
@@ -302,37 +399,53 @@ const MenuCategoryManagement = () => {
           className={cn(
             "flex-1 transition-all duration-500 grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8",
             draftItem &&
-              "opacity-50 blur-[2px] pointer-events-none select-none overflow-hidden lg:max-w-[60%]",
+              "opacity-50 blur-[2px] pointer-events-none select-none overflow-hidden lg:max-w-[60%]"
           )}
         >
+          {/* overlay to fully block interactions when drawer is open */}
+          {draftItem && (
+            <div
+              className="absolute inset-0 z-40 bg-transparent pointer-events-auto cursor-default"
+              onClick={(e) => e.stopPropagation()}
+            />
+          )}
+
           {/* category navigator (sidebar) */}
           <aside
             className={cn(
-              "flex flex-col border-4 border-white rounded-[32px] md:rounded-[40px] bg-white/30 backdrop-blur-md shadow-xl overflow-hidden h-[85vh]",
-              draftItem ? "lg:col-span-4" : "lg:col-span-3",
+              "flex flex-col border-4 border-white rounded-[32px] md:rounded-[40px] bg-white/30 backdrop-blur-md shadow-xl h-[85vh]",
+              draftItem ? "lg:col-span-4 overflow-hidden" : "lg:col-span-3"
             )}
           >
             <div className="p-6 pb-4 flex flex-col gap-4">
               <h3 className="h3 text-text-primary mb-2">Categories</h3>
+
               <Button
                 variant="primary"
-                className="w-full"
+                className="w-full b3"
                 leftIcon={<Plus size={18} />}
+                onClick={() => setIsCategoryModalOpen(true)}
               >
                 New Category
               </Button>
+
               <div className="relative">
                 <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
                   <Search size={18} className="text-text-secondary" />
                 </div>
                 <Input
                   placeholder="Search categories..."
-                  className="pl-12 !py-2.5 rounded-xl !bg-white/60 !border-white/50"
+                  className="pl-12 !py-2.5 rounded-xl !bg-white/60 !border-white/50 b2"
                 />
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-4 pb-6 custom-scrollbar">
+            <div
+              className={cn(
+                "flex-1 px-4 pb-6 custom-scrollbar",
+                draftItem ? "overflow-hidden" : "overflow-y-auto"
+              )}
+            >
               <div className="flex flex-col gap-2">
                 {categories.map((cat) => (
                   <div
@@ -348,7 +461,7 @@ const MenuCategoryManagement = () => {
                         ? "bg-white shadow-md border border-white/60 transform scale-[1.02]"
                         : "hover:bg-white/40 border border-transparent",
                       draggedCategoryId === cat.id &&
-                        "opacity-50 border-dashed border-2 border-brand-primary",
+                        "opacity-50 border-dashed border-2 border-brand-primary"
                     )}
                   >
                     <div className="flex items-center gap-3">
@@ -360,7 +473,7 @@ const MenuCategoryManagement = () => {
                           "b2 font-bold transition-colors",
                           selectedCategory === cat.id
                             ? "text-text-primary"
-                            : "text-text-primary/80",
+                            : "text-text-primary/80"
                         )}
                       >
                         {cat.name}
@@ -378,8 +491,8 @@ const MenuCategoryManagement = () => {
           {/* item dashboard (main panel) */}
           <main
             className={cn(
-              "flex flex-col min-w-0 border-4 border-white rounded-[32px] md:rounded-[40px] shadow-xl overflow-hidden relative h-[85vh]",
-              draftItem ? "lg:col-span-8" : "lg:col-span-9",
+              "flex flex-col min-w-0 border-4 border-white rounded-[32px] md:rounded-[40px] shadow-xl relative h-[85vh]",
+              draftItem ? "lg:col-span-8 overflow-hidden" : "lg:col-span-9"
             )}
           >
             {/* dashboard header */}
@@ -397,6 +510,7 @@ const MenuCategoryManagement = () => {
                   variant="accent"
                   onClick={handleCreateNewItem}
                   leftIcon={<Plus size={18} />}
+                  className="b3"
                 >
                   Add Item
                 </Button>
@@ -411,7 +525,7 @@ const MenuCategoryManagement = () => {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search items..."
-                    className="pl-12 !py-2.5 rounded-xl !bg-white/80"
+                    className="pl-12 !py-2.5 rounded-xl !bg-white/80 b2"
                   />
                 </div>
 
@@ -422,7 +536,7 @@ const MenuCategoryManagement = () => {
                       "p-2 rounded-lg transition-colors",
                       viewMode === "grid"
                         ? "bg-brand-primary text-white shadow-sm"
-                        : "text-text-secondary hover:text-text-primary hover:bg-black/5",
+                        : "text-text-secondary hover:text-text-primary hover:bg-black/5"
                     )}
                   >
                     <LayoutGrid size={18} />
@@ -433,7 +547,7 @@ const MenuCategoryManagement = () => {
                       "p-2 rounded-lg transition-colors",
                       viewMode === "list"
                         ? "bg-brand-primary text-white shadow-sm"
-                        : "text-text-secondary hover:text-text-primary hover:bg-black/5",
+                        : "text-text-secondary hover:text-text-primary hover:bg-black/5"
                     )}
                   >
                     <ListIcon size={18} />
@@ -443,7 +557,12 @@ const MenuCategoryManagement = () => {
             </div>
 
             {/* dashboard content */}
-            <div className="flex-1 overflow-y-auto p-6 md:p-8 custom-scrollbar">
+            <div
+              className={cn(
+                "flex-1 p-6 md:p-8 custom-scrollbar",
+                draftItem ? "overflow-hidden" : "overflow-y-auto"
+              )}
+            >
               {filteredItems.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-text-secondary opacity-70">
                   <ImageIcon size={48} className="mb-4 opacity-50" />
@@ -451,13 +570,24 @@ const MenuCategoryManagement = () => {
                   <p className="b4">Add a new item to get started.</p>
                 </div>
               ) : viewMode === "grid" ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 pb-20">
                   {filteredItems.map((item) => (
                     <div
                       key={item.id}
                       onClick={() => handleOpenDrawer(item)}
-                      className="bg-white rounded-[24px] border border-black/5 overflow-hidden shadow-sm hover:shadow-md hover:border-brand-primary/30 transition-all cursor-pointer group flex flex-col"
+                      className="bg-white rounded-[24px] border border-black/5 overflow-hidden shadow-sm hover:shadow-md hover:border-brand-primary/30 transition-all cursor-pointer group flex flex-col relative"
                     >
+                      {/* select checkbox */}
+                      <div
+                        className="absolute top-4 left-4 z-20"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Checkbox
+                          checked={selectedItems.includes(item.id)}
+                          onChange={() => toggleSelection(item.id)}
+                        />
+                      </div>
+
                       <div className="aspect-video bg-black/5 flex items-center justify-center relative overflow-hidden">
                         {item.image ? (
                           <img
@@ -475,43 +605,56 @@ const MenuCategoryManagement = () => {
                             </Badge>
                           </div>
                         )}
-                      </div>
-                      <div className="p-5 flex flex-col flex-1">
-                        <div className="flex items-start justify-between gap-2 mb-2">
-                          <h4 className="b2 font-bold text-text-primary group-hover:text-brand-primary transition-colors line-clamp-1">
-                            {item.name}
-                          </h4>
-                          <span className="font-bold text-brand-accent flex-shrink-0">
-                            ₱{item.price}
-                          </span>
-                        </div>
-                        <p className="b5 text-text-secondary line-clamp-2 mb-4 flex-1">
-                          {item.description}
-                        </p>
-                        <div className="flex items-center gap-2 mt-auto">
-                          {item.aiSynced && (
+                        {/* ai synced badge on top right */}
+                        {item.aiSynced && (
+                          <div className="absolute top-3 right-3 z-10">
                             <Badge
                               color="success"
                               variant="subtle"
-                              className="!text-[9px]"
+                              className="b5 shadow-sm"
                             >
                               AI Synced
                             </Badge>
-                          )}
+                          </div>
+                        )}
+                      </div>
+                      <div className="p-5 flex flex-col flex-1">
+                        {/* title and price layout handling */}
+                        <div className="flex items-start justify-between gap-3 mb-2">
+                          <h4 className="b2 font-bold text-text-primary group-hover:text-brand-primary transition-colors leading-tight">
+                            {item.name}
+                          </h4>
+                          <span className="b2 font-bold text-brand-accent flex-shrink-0">
+                            ₱{item.price}
+                          </span>
                         </div>
+                        <p className="b5 text-text-secondary line-clamp-2 mt-auto">
+                          {item.description}
+                        </p>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-4 pb-20">
                   {filteredItems.map((item) => (
                     <div
                       key={item.id}
                       onClick={() => handleOpenDrawer(item)}
-                      className="bg-white rounded-2xl border border-black/5 p-4 flex items-center gap-5 shadow-sm hover:shadow-md hover:border-brand-primary/30 transition-all cursor-pointer group"
+                      className="bg-white rounded-2xl border border-black/5 p-4 flex items-center gap-5 shadow-sm hover:shadow-md hover:border-brand-primary/30 transition-all cursor-pointer group relative"
                     >
-                      <div className="w-20 h-20 rounded-xl bg-black/5 flex-shrink-0 flex items-center justify-center overflow-hidden relative">
+                      {/* select checkbox */}
+                      <div
+                        className="absolute top-1/2 -translate-y-1/2 -left-2 z-20 pl-4 py-4"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Checkbox
+                          checked={selectedItems.includes(item.id)}
+                          onChange={() => toggleSelection(item.id)}
+                        />
+                      </div>
+
+                      <div className="w-20 h-20 rounded-xl bg-black/5 flex-shrink-0 flex items-center justify-center overflow-hidden relative ml-6">
                         {item.image ? (
                           <img
                             src={item.image}
@@ -534,7 +677,7 @@ const MenuCategoryManagement = () => {
                             <Badge
                               color="secondary"
                               variant="solid"
-                              className="!text-[9px] py-0"
+                              className="b5 py-0"
                             >
                               Unavailable
                             </Badge>
@@ -548,14 +691,14 @@ const MenuCategoryManagement = () => {
                             <Badge
                               color="success"
                               variant="subtle"
-                              className="!text-[9px] py-0"
+                              className="b5 py-0"
                             >
                               AI Synced
                             </Badge>
                           )}
                         </div>
                       </div>
-                      <div className="font-bold text-brand-accent text-lg flex-shrink-0 pl-4 border-l border-black/5">
+                      <div className="font-bold text-brand-accent text-lg flex-shrink-0 pl-4 border-l border-black/5 min-w-[100px] max-w-[140px] text-right truncate">
                         ₱{item.price}
                       </div>
                     </div>
@@ -566,17 +709,43 @@ const MenuCategoryManagement = () => {
           </main>
         </div>
 
+        {/* floating bulk action bar */}
+        {selectedItems.length > 0 && !draftItem && (
+          <div
+            className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-white px-6 py-3 rounded-full flex items-center gap-4 z-[60] border border-black/5 animate-in slide-in-from-bottom-10"
+            style={{ boxShadow: "var(--kds-shadow-hover)" }}
+          >
+            <Badge
+              color="primary"
+              variant="solid"
+              className="b2 font-bold px-3 py-1 text-text-primary shadow-sm"
+            >
+              {selectedItems.length} selected
+            </Badge>
+            <div className="w-px h-6 bg-black/10" />
+            <Button
+              variant="ghost"
+              onClick={deleteSelectedItems}
+              className="text-warning-primary hover:text-warning-primary hover:bg-warning-secondary p-2 h-auto b2 font-bold rounded-xl"
+            >
+              <Trash2 size={18} className="mr-2" /> Delete
+            </Button>
+          </div>
+        )}
+
         {/* right side: drawer (40% flush right, rounded left corners) */}
         {draftItem && (
           <div className="fixed inset-y-0 right-0 w-full lg:w-[40%] bg-bg-primary shadow-2xl rounded-l-[40px] rounded-r-none flex flex-col animate-in slide-in-from-right duration-500 z-50 overflow-hidden border-4 border-r-0 border-white">
-            {/* drawer header - reduced padding */}
+            {/* drawer header */}
             <div className="bg-brand-secondary p-5 flex-shrink-0 relative flex flex-col gap-2">
-              <button
-                onClick={handleCloseDrawer}
-                className="absolute top-4 right-4 p-2 bg-black/5 hover:bg-black/10 rounded-full text-text-primary transition-colors"
-              >
-                <X size={20} />
-              </button>
+              <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
+                <button
+                  onClick={handleCloseDrawer}
+                  className="p-2 bg-black/5 hover:bg-black/10 rounded-full text-text-primary transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
 
               <div className="flex items-center gap-3">
                 <Badge
@@ -590,132 +759,142 @@ const MenuCategoryManagement = () => {
                       <Sparkles size={14} className="animate-pulse" />
                     )
                   }
-                  className="shadow-sm mt-2"
+                  className="shadow-sm mt-2 b5"
                 >
                   {draftItem.aiSynced ? "AI Synced" : "Syncing to Gemini..."}
                 </Badge>
               </div>
             </div>
 
-            {/* drawer body - compact form layout */}
+            {/* drawer body */}
             <div className="flex-1 overflow-y-auto p-6 bg-bg-primary custom-scrollbar flex flex-col gap-8">
-              {/* compact top section: image + core info */}
-              <div className="flex flex-col sm:flex-row gap-5 items-start">
-                {/* 1:1 image upload */}
-                <div className="flex flex-col gap-2 w-32 flex-shrink-0">
-                  <div
-                    className="w-32 h-32 rounded-2xl border-2 border-dashed border-black/10 bg-white/40 hover:bg-white/60 transition-colors flex flex-col items-center justify-center cursor-pointer overflow-hidden group relative shadow-inner"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    {draftItem.image ? (
-                      <img
-                        src={draftItem.image}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                      />
-                    ) : (
-                      <>
-                        <ImageIcon
-                          size={24}
-                          className="text-black/20 group-hover:text-brand-primary transition-colors mb-1"
+              <div className="flex flex-col gap-6">
+                {/* top row: image + name/desc side by side */}
+                <div className="flex flex-col sm:flex-row gap-6 items-start">
+                  {/* image upload box */}
+                  <div className="flex flex-col gap-2 w-48 flex-shrink-0">
+                    <div
+                      className={cn(
+                        "w-48 h-48 rounded-2xl flex flex-col items-center justify-center cursor-pointer overflow-hidden group relative shadow-inner transition-colors bg-white/40 hover:bg-white/60",
+                        draftItem.image
+                          ? "border-0"
+                          : "border-2 border-dashed border-black/10 hover:border-brand-primary"
+                      )}
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      {draftItem.image ? (
+                        <img
+                          src={draftItem.image}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                         />
-                        <span className="text-[10px] font-bold text-text-secondary uppercase">
-                          Upload
-                        </span>
-                      </>
-                    )}
+                      ) : (
+                        <>
+                          <ImageIcon
+                            size={32}
+                            className="text-black/20 group-hover:text-brand-primary transition-colors mb-2"
+                          />
+                          <span className="b5 font-bold text-text-secondary uppercase">
+                            Upload Image
+                          </span>
+                        </>
+                      )}
+                    </div>
+                    <span className="b5 font-medium text-text-secondary/60 text-center uppercase tracking-wider">
+                      Max 5MB (JPG, PNG)
+                    </span>
+                    <input
+                      type="file"
+                      className="hidden"
+                      ref={fileInputRef}
+                      accept="image/jpeg, image/png, image/jpg"
+                      onChange={handleImageSelect}
+                    />
                   </div>
-                  <span className="text-[9px] font-medium text-text-secondary/60 text-center uppercase tracking-wider">
-                    Max 5MB (JPG, PNG)
-                  </span>
-                  <input
-                    type="file"
-                    className="hidden"
-                    ref={fileInputRef}
-                    accept="image/jpeg, image/png, image/jpg"
-                    onChange={handleImageSelect}
-                  />
-                </div>
 
-                {/* right side info */}
-                <div className="flex-1 flex flex-col gap-4 w-full">
-                  <div>
-                    <label className="text-xs font-bold text-text-secondary uppercase tracking-widest block mb-1">
-                      Item Name
-                    </label>
-                    <Input
-                      value={draftItem.name}
-                      onChange={(e) => updateDraft("name", e.target.value)}
-                      placeholder="e.g. Chicken Adobo"
-                      className="bg-white/80"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold text-text-secondary uppercase tracking-widest flex justify-between mb-1">
-                      <span>Description</span>
-                      <span className="text-black/40 normal-case font-medium">
-                        {draftItem.description.length}/150
-                      </span>
-                    </label>
-                    <textarea
-                      value={draftItem.description}
-                      onChange={(e) => {
-                        if (e.target.value.length <= 150) {
-                          updateDraft("description", e.target.value);
-                        }
-                      }}
-                      placeholder="Brief description"
-                      className="w-full bg-white/80 border-2 border-[#E5E5E5] rounded-xl p-3 text-sm focus:border-brand-primary outline-none transition-colors resize-none h-20 custom-scrollbar shadow-sm"
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  {/* right: name & description */}
+                  <div className="flex-1 flex flex-col gap-4 w-full">
                     <div>
-                      <label className="text-xs font-bold text-text-secondary uppercase tracking-widest block mb-1">
-                        Price (₱)
+                      <label className="b4 font-bold text-text-secondary uppercase tracking-widest block mb-1">
+                        Item Name{" "}
+                        <span className="text-brand-accent ml-0.5">*</span>
                       </label>
                       <Input
-                        value={draftItem.price}
-                        onChange={(e) =>
-                          handleNumberInput(e, (val) =>
-                            updateDraft("price", val),
-                          )
-                        }
-                        inputMode="decimal"
-                        placeholder="0.00"
-                        className="bg-white/80"
+                        value={draftItem.name}
+                        onChange={(e) => updateDraft("name", e.target.value)}
+                        placeholder="e.g. Chicken Adobo"
+                        className="bg-white/80 !py-2.5 shadow-sm border border-black/5 b2 font-bold placeholder:text-text-secondary/50 placeholder:font-normal"
                       />
                     </div>
                     <div>
-                      <label className="text-xs font-bold text-text-secondary uppercase tracking-widest block mb-1">
-                        Availability
-                      </label>
-                      <div className="flex items-center h-[42px]">
-                        <Toggle
-                          isOn={draftItem.isAvailable}
-                          onChange={(val) => updateDraft("isAvailable", val)}
-                          variant="accent"
-                        />
-                        <span className="ml-3 text-sm font-medium text-text-secondary">
-                          {draftItem.isAvailable ? "Available" : "Hidden"}
+                      <label className="b4 font-bold text-text-secondary uppercase tracking-widest flex justify-between mb-1">
+                        <span>Description</span>
+                        <span className="text-black/40 normal-case font-medium">
+                          {draftItem.description.length}/150
                         </span>
-                      </div>
+                      </label>
+                      <textarea
+                        value={draftItem.description}
+                        onChange={(e) => {
+                          if (e.target.value.length <= 150) {
+                            updateDraft("description", e.target.value);
+                          }
+                        }}
+                        placeholder="Brief description"
+                        className="w-full bg-white/80 border border-black/5 rounded-[14px] p-3 b2 focus:border-brand-primary outline-none transition-colors resize-none h-[88px] custom-scrollbar shadow-sm placeholder:text-text-secondary/50 placeholder:font-normal"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* bottom row: price & availability */}
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <label className="b4 font-bold text-text-secondary uppercase tracking-widest block mb-1">
+                      Price (₱){" "}
+                      <span className="text-brand-accent ml-0.5">*</span>
+                    </label>
+                    <Input
+                      value={draftItem.price}
+                      onChange={(e) =>
+                        handleNumberInput(e, (val) => updateDraft("price", val))
+                      }
+                      inputMode="decimal"
+                      placeholder="0.00"
+                      className="bg-white/80 !py-2.5 shadow-sm border border-black/5 b2 font-bold placeholder:text-text-secondary/50 placeholder:font-normal"
+                    />
+                  </div>
+                  <div>
+                    <label className="b4 font-bold text-text-secondary uppercase tracking-widest block mb-1">
+                      Availability{" "}
+                      <span className="text-brand-accent ml-0.5">*</span>
+                    </label>
+                    <div className="flex items-center h-[46px]">
+                      <Toggle
+                        isOn={draftItem.isAvailable}
+                        onChange={(val) => updateDraft("isAvailable", val)}
+                        variant="accent"
+                      />
+                      <span className="ml-3 b2 font-medium text-text-secondary">
+                        {draftItem.isAvailable ? "Available" : "Hidden"}
+                      </span>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="w-full h-px bg-black/10" />
+              <div className="w-full h-px bg-black/10 mt-2" />
 
               {/* sizes form section */}
               <div>
                 <div className="flex items-center gap-3 mb-4">
-                  <h4 className="text-sm font-bold text-text-secondary uppercase tracking-widest">
+                  <h4 className="b3 font-bold text-text-secondary uppercase tracking-widest">
                     Size Options
                   </h4>
                   <Badge
                     color="error"
                     variant="outline"
                     shape="pill"
-                    className="!text-[10px] uppercase font-bold border-warning-primary/30"
+                    className="b5 uppercase font-bold border-warning-primary/30"
                   >
                     Required
                   </Badge>
@@ -736,7 +915,7 @@ const MenuCategoryManagement = () => {
                             updateDraft("sizes", newSizes);
                           }}
                           placeholder="Size Name"
-                          className="!py-1.5"
+                          className="!py-1.5 b2 placeholder:text-text-secondary/50"
                         />
                         <div className="flex gap-2">
                           <Input
@@ -747,10 +926,10 @@ const MenuCategoryManagement = () => {
                               updateDraft("sizes", newSizes);
                             }}
                             placeholder="Description (optional)"
-                            className="!py-1.5 flex-1"
+                            className="!py-1.5 flex-1 b2 placeholder:text-text-secondary/50"
                           />
-                          <div className="relative w-32">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-sm font-medium">
+                          <div className="relative w-32 flex-shrink-0">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary b2 font-medium">
                               ₱
                             </span>
                             <Input
@@ -758,14 +937,17 @@ const MenuCategoryManagement = () => {
                               onChange={(e) => {
                                 const newSizes = [...draftItem.sizes];
                                 const val = e.target.value;
-                                if (val === "" || /^\\d*\\.?\\d*$/.test(val)) {
+                                if (
+                                  val === "" ||
+                                  /^[0-9]*\.?[0-9]*$/.test(val)
+                                ) {
                                   newSizes[index].price = val;
                                   updateDraft("sizes", newSizes);
                                 }
                               }}
                               inputMode="decimal"
                               placeholder="0.00"
-                              className="!py-1.5 w-full pl-7"
+                              className="!py-1.5 w-full pl-7 b2 placeholder:text-text-secondary/50"
                             />
                           </div>
                         </div>
@@ -774,10 +956,10 @@ const MenuCategoryManagement = () => {
                         onClick={() =>
                           updateDraft(
                             "sizes",
-                            draftItem.sizes.filter((s) => s.id !== size.id),
+                            draftItem.sizes.filter((s) => s.id !== size.id)
                           )
                         }
-                        className="p-2 text-text-secondary hover:text-white hover:bg-error-primary rounded-xl transition-colors mt-1"
+                        className="p-2 text-text-secondary hover:bg-warning-secondary hover:text-warning-primary rounded-xl transition-colors mt-1"
                       >
                         <Trash2 size={18} />
                       </button>
@@ -796,27 +978,27 @@ const MenuCategoryManagement = () => {
                         },
                       ])
                     }
-                    className="w-full border border-dashed border-black/10 hover:border-brand-primary hover:bg-brand-primary/5 text-text-secondary hover:text-brand-primary rounded-2xl py-3 mt-2"
+                    className="w-full border border-dashed border-black/10 hover:border-brand-primary hover:bg-brand-primary/5 text-text-secondary hover:text-brand-primary rounded-2xl py-3 mt-2 b2"
                   >
                     <Plus size={16} className="mr-2" /> Add Size
                   </Button>
                 </div>
               </div>
 
-              <div className="w-full h-px bg-black/10" />
+              <div className="w-full h-px bg-black/10 my-2" />
 
               {/* add-ons form section */}
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <h4 className="text-sm font-bold text-text-secondary uppercase tracking-widest">
+                    <h4 className="b3 font-bold text-text-secondary uppercase tracking-widest">
                       Add-ons
                     </h4>
                     <Badge
                       color="warning"
                       variant="outline"
                       shape="pill"
-                      className="!text-[10px] uppercase font-bold border-warning-primary/30"
+                      className="b5 uppercase font-bold border-warning-primary/30"
                     >
                       Optional
                     </Badge>
@@ -845,7 +1027,7 @@ const MenuCategoryManagement = () => {
                                 updateDraft("addons", newAddons);
                               }}
                               placeholder="Add-on Name"
-                              className="!py-1.5"
+                              className="!py-1.5 b2 placeholder:text-text-secondary/50"
                             />
                             <div className="flex gap-2">
                               <Input
@@ -856,10 +1038,10 @@ const MenuCategoryManagement = () => {
                                   updateDraft("addons", newAddons);
                                 }}
                                 placeholder="Description (optional)"
-                                className="!py-1.5 flex-1"
+                                className="!py-1.5 flex-1 b2 placeholder:text-text-secondary/50"
                               />
-                              <div className="relative w-32">
-                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-sm font-medium">
+                              <div className="relative w-32 flex-shrink-0">
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary b2 font-medium">
                                   +₱
                                 </span>
                                 <Input
@@ -869,7 +1051,7 @@ const MenuCategoryManagement = () => {
                                     const val = e.target.value;
                                     if (
                                       val === "" ||
-                                      /^\\d*\\.?\\d*$/.test(val)
+                                      /^[0-9]*\.?[0-9]*$/.test(val)
                                     ) {
                                       newAddons[index].price = val;
                                       updateDraft("addons", newAddons);
@@ -877,7 +1059,7 @@ const MenuCategoryManagement = () => {
                                   }}
                                   inputMode="decimal"
                                   placeholder="0.00"
-                                  className="!py-1.5 w-full pl-8 text-right"
+                                  className="!py-1.5 w-full pl-8 text-right b2 placeholder:text-text-secondary/50"
                                 />
                               </div>
                             </div>
@@ -887,11 +1069,11 @@ const MenuCategoryManagement = () => {
                               updateDraft(
                                 "addons",
                                 draftItem.addons.filter(
-                                  (m) => m.id !== addon.id,
-                                ),
+                                  (m) => m.id !== addon.id
+                                )
                               )
                             }
-                            className="p-2 text-text-secondary hover:text-white hover:bg-error-primary rounded-xl transition-colors mt-1"
+                            className="p-2 text-text-secondary hover:bg-warning-secondary hover:text-warning-primary rounded-xl transition-colors mt-1"
                           >
                             <Trash2 size={18} />
                           </button>
@@ -915,7 +1097,7 @@ const MenuCategoryManagement = () => {
                             },
                           ])
                         }
-                        className="flex-1 border border-dashed border-black/10 hover:border-brand-primary hover:bg-brand-primary/5 text-text-secondary hover:text-brand-primary rounded-2xl py-3"
+                        className="flex-1 border border-dashed border-black/10 hover:border-brand-primary hover:bg-brand-primary/5 text-text-secondary hover:text-brand-primary rounded-2xl py-3 b2"
                       >
                         <Plus size={16} className="mr-2" /> Create New
                       </Button>
@@ -930,10 +1112,10 @@ const MenuCategoryManagement = () => {
                             setIsLinkDropdownOpen(!isLinkDropdownOpen)
                           }
                           className={cn(
-                            "w-full border border-dashed rounded-2xl py-3 transition-colors",
+                            "w-full border border-dashed rounded-2xl py-3 transition-colors b2",
                             isLinkDropdownOpen
                               ? "border-brand-primary bg-brand-primary/5 text-brand-primary"
-                              : "border-black/10 hover:border-brand-primary hover:bg-brand-primary/5 text-text-secondary hover:text-brand-primary",
+                              : "border-black/10 hover:border-brand-primary hover:bg-brand-primary/5 text-text-secondary hover:text-brand-primary"
                           )}
                         >
                           Link Menu Item{" "}
@@ -941,21 +1123,21 @@ const MenuCategoryManagement = () => {
                             size={16}
                             className={cn(
                               "ml-2 transition-transform duration-300",
-                              isLinkDropdownOpen && "rotate-180",
+                              isLinkDropdownOpen && "rotate-180"
                             )}
                           />
                         </Button>
 
-                        {/* Flexible Dropdown List (User Snippet Based) */}
+                        {/* flexible dropdown list mapped precisely to the user's snippet styling */}
                         {isLinkDropdownOpen && (
                           <div
                             className={cn(
-                              "absolute top-[calc(100%+8px)] left-0 z-50 bg-white border-2 border-[#E5E5E5] rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-300 w-full",
+                              "absolute top-[calc(100%+8px)] left-0 z-50 bg-white border-2 border-[#E5E5E5] rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-300 w-full"
                             )}
                           >
-                            <ul className="max-h-[240px] overflow-y-auto custom-scrollbar py-1">
+                            <ul className="max-h-[240px] overflow-y-auto">
                               {dropdownOptions.length === 0 ? (
-                                <li className="px-4 py-4 text-sm text-text-secondary text-center">
+                                <li className="px-6 py-4 b2 text-text-secondary text-center">
                                   No items available
                                 </li>
                               ) : (
@@ -964,7 +1146,7 @@ const MenuCategoryManagement = () => {
                                     key={option.value}
                                     onClick={() => {
                                       const selectedItem = items.find(
-                                        (i) => i.id === option.value,
+                                        (i) => i.id === option.value
                                       );
                                       if (selectedItem) {
                                         updateDraft("addons", [
@@ -973,8 +1155,7 @@ const MenuCategoryManagement = () => {
                                             id: `addon_${Date.now()}`,
                                             itemId: selectedItem.id,
                                             name: selectedItem.name,
-                                            description:
-                                              selectedItem.description,
+                                            description: selectedItem.description,
                                             price: selectedItem.price,
                                           },
                                         ]);
@@ -982,8 +1163,13 @@ const MenuCategoryManagement = () => {
                                       setIsLinkDropdownOpen(false);
                                     }}
                                     className={cn(
-                                      "cursor-pointer transition-colors px-4 py-3 text-sm hover:bg-slate-50 border-b border-black/5 last:border-0",
-                                      "text-text-primary font-medium",
+                                      "cursor-pointer transition-colors",
+                                      "px-4 py-3 b2",
+                                      "hover:bg-slate-50",
+                                      index === 0 && "rounded-t-[14px]",
+                                      index === dropdownOptions.length - 1 &&
+                                        "rounded-b-[14px]",
+                                      "text-text-primary border-b border-black/5 last:border-0"
                                     )}
                                   >
                                     {option.label}
@@ -1003,11 +1189,11 @@ const MenuCategoryManagement = () => {
             {/* sticky save / discard footer */}
             <div className="p-6 border-t-2 border-white/50 flex flex-col sm:flex-row items-center justify-end gap-3 flex-shrink-0 bg-white/80 backdrop-blur-md z-10">
               {hasChanges && (
-                <div className="flex flex-col mr-auto">
+                <div className="flex flex-col text-left mr-auto hidden lg:flex">
                   <span className="b2 font-bold text-text-primary">
                     Unsaved changes
                   </span>
-                  <span className="b4 text-text-secondary">
+                  <span className="b5 text-text-secondary">
                     Modified item configuration
                   </span>
                 </div>
@@ -1018,7 +1204,7 @@ const MenuCategoryManagement = () => {
                   onClick={() =>
                     setDraftItem(JSON.parse(JSON.stringify(originalItem)))
                   }
-                  className="text-warning-primary hover:bg-warning-secondary w-full sm:w-auto"
+                  className="text-warning-primary hover:bg-warning-secondary w-full sm:w-auto b3"
                 >
                   Discard
                 </Button>
@@ -1026,8 +1212,11 @@ const MenuCategoryManagement = () => {
               <Button
                 variant={hasChanges ? "primary" : "ghost"}
                 onClick={handleSaveItem}
-                disabled={!hasChanges}
-                className={cn(!hasChanges && "opacity-50", "w-full sm:w-auto")}
+                disabled={!hasChanges || !isValidDraft}
+                className={cn(
+                  (!hasChanges || !isValidDraft) && "opacity-50",
+                  "w-full sm:w-auto b3"
+                )}
               >
                 Save Changes
               </Button>
@@ -1035,6 +1224,55 @@ const MenuCategoryManagement = () => {
           </div>
         )}
       </div>
+
+      {/* new category modal exactly matching roles/page.tsx */}
+      {isCategoryModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-text-primary/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl md:rounded-[32px] w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+            <div className="px-6 md:px-8 py-4 md:py-6 flex items-center justify-between border-b border-black/[0.05] flex-shrink-0">
+              <h2 className="b2 font-bold text-text-primary">
+                Create New Category
+              </h2>
+              <button
+                onClick={() => {
+                  setIsCategoryModalOpen(false);
+                  setNewCategoryName("");
+                }}
+                className="text-text-secondary hover:text-text-primary transition-colors p-1"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="p-6 md:p-8 overflow-y-auto flex flex-col gap-6">
+              <p className="b3 text-text-secondary font-semibold">
+                Enter a name for the new menu category.
+              </p>
+
+              <Input
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
+                placeholder="Category Name"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleCreateCategory();
+                }}
+                autoFocus
+                className="b2 bg-white"
+              />
+
+              <div className="flex justify-end pt-2">
+                <Button
+                  variant="primary"
+                  onClick={handleCreateCategory}
+                  className="w-full b2"
+                >
+                  Create Category
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* image crop modal */}
       {cropModalImage && (
@@ -1048,7 +1286,7 @@ const MenuCategoryManagement = () => {
             </div>
 
             <div
-              className="relative aspect-square w-full rounded-2xl overflow-hidden bg-black/5 flex items-center justify-center group cursor-move shadow-inner"
+              className="relative w-[320px] h-[320px] mx-auto rounded-2xl overflow-hidden bg-black/5 flex items-center justify-center group cursor-move shadow-inner"
               onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
@@ -1057,10 +1295,12 @@ const MenuCategoryManagement = () => {
               <img
                 src={cropModalImage}
                 style={{
+                  width: `${renderedWidth}px`,
+                  height: `${renderedHeight}px`,
                   transform: `translate(${cropPan.x}px, ${cropPan.y}px) scale(${cropScale})`,
                   transition: isDragging ? "none" : "transform 0.1s ease-out",
                 }}
-                className="w-full h-full object-cover origin-center pointer-events-none"
+                className="max-w-none origin-center pointer-events-none absolute"
                 alt="Crop preview"
               />
               {/* 3x3 mock crop grid overlay */}
@@ -1075,7 +1315,7 @@ const MenuCategoryManagement = () => {
             </div>
 
             {/* zoom controls */}
-            <div className="flex items-center gap-4 bg-white/50 p-4 rounded-2xl border border-white">
+            <div className="flex items-center gap-4 bg-white/50 p-4 rounded-2xl border border-white max-w-[320px] mx-auto w-full">
               <ZoomOut size={18} className="text-text-secondary" />
               <input
                 type="range"
@@ -1090,10 +1330,18 @@ const MenuCategoryManagement = () => {
             </div>
 
             <div className="flex justify-end gap-3 pt-2">
-              <Button variant="ghost" onClick={() => setCropModalImage(null)}>
+              <Button
+                variant="ghost"
+                onClick={() => setCropModalImage(null)}
+                className="b3"
+              >
                 Cancel
               </Button>
-              <Button variant="primary" onClick={confirmImageCrop}>
+              <Button
+                variant="primary"
+                onClick={confirmImageCrop}
+                className="b3"
+              >
                 Confirm & Save
               </Button>
             </div>
