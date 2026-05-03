@@ -36,13 +36,14 @@ const RECENT_ACTIVITY = [
   { id: "PRD-105", type: "Stock", entity: "Beta LLC", amount: "5 units", time: "15 mins ago", status: "warning" },
 ];
 
+// Data adjusted to match visual peaks in image
 const CHART_DATA = [
-  { month: "Jan", ltv: 80, cost: 50 },
-  { month: "Feb", ltv: 60, cost: 75 },
-  { month: "Mar", ltv: 70, cost: 30 },
-  { month: "Apr", ltv: 40, cost: 45 },
-  { month: "May", ltv: 90, cost: 40 },
-  { month: "Jun", ltv: 75, cost: 25 },
+  { month: "Jan", ltv: 85, cost: 65 },
+  { month: "Feb", ltv: 60, cost: 80 },
+  { month: "Mar", ltv: 75, cost: 15 },
+  { month: "Apr", ltv: 30, cost: 50 },
+  { month: "May", ltv: 95, cost: 40 },
+  { month: "Jun", ltv: 80, cost: 30 },
 ];
 
 // --- Sub-components ---
@@ -88,7 +89,7 @@ export default function SalesRevenueSuite() {
   return (
     <div className="min-h-screen bg-bg-primary p-6 md:p-12 space-y-8 font-inter">
       
-      {/* Header Section */}
+      {/* Header Section - No change */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <motion.div 
           initial={{ opacity: 0, x: -20 }}
@@ -122,7 +123,7 @@ export default function SalesRevenueSuite() {
         </motion.div>
       </div>
 
-      {/* Stats Grid */}
+      {/* Stats Grid - No change */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard title="Gross Sales" value="$8,458,798" trend={-35} icon={<DollarSign size={24} />} delay={0.1} />
         <StatCard title="Net Revenue" value="$6,120,450" trend={12.5} icon={<ArrowUpRight size={24} />} delay={0.2} />
@@ -130,75 +131,100 @@ export default function SalesRevenueSuite() {
         <StatCard title="Avg. Order Value" value="$2,450" trend={15} icon={<Package size={24} />} delay={0.4} />
       </div>
 
-      {/* Main Content Area */}
+      {/* ─── IMPLEMENTED PART (IMAGE) ─── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
-        {/* Analytics Section */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="lg:col-span-2 bg-white rounded-[24px] border border-kds-border-warm shadow-sm overflow-hidden flex flex-col"
-        >
-          <div className="p-8 border-b border-gray-50 space-y-6">
-            <div className="flex flex-wrap gap-2">
-              {["Growth Trends", "Peak Periods", "Sales Fluctuations"].map((tab) => (
-                <Button
-                  key={tab}
-                  variant={activeTab === tab ? "primary" : "ghost"}
-                  size="sm"
-                  onClick={() => setActiveTab(tab)}
-                  className={cn(
-                    "transition-all",
-                    activeTab === tab ? "shadow-md" : "hover:bg-brand-primary/5"
-                  )}
-                >
-                  {tab}
-                </Button>
-              ))}
-            </div>
-            
-            <div className="flex justify-between items-center">
-              <h4 className="h4 text-text-primary">{activeTab}</h4>
-              <div className="flex gap-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-brand-primary" />
-                  <span className="b4 text-text-secondary font-medium">Lifetime Value</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-brand-accent" />
-                  <span className="b4 text-text-secondary font-medium">Customer Cost</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="p-8 flex-1 flex items-end justify-between gap-4 min-h-[300px]">
-            {CHART_DATA.map((item, i) => (
-              <div key={item.month} className="flex-1 flex flex-col items-center gap-4 group">
-                <div className="w-full flex items-end justify-center gap-1.5 h-48 relative">
-                  {/* LTV Bar */}
-                  <motion.div 
-                    initial={{ height: 0 }}
-                    animate={{ height: `${item.ltv}%` }}
-                    transition={{ delay: 0.6 + (i * 0.1), type: "spring", stiffness: 50 }}
-                    className="w-1/3 bg-brand-primary rounded-t-lg relative group-hover:brightness-105 transition-all shadow-sm"
-                  />
-                  {/* Cost Bar */}
-                  <motion.div 
-                    initial={{ height: 0 }}
-                    animate={{ height: `${item.cost}%` }}
-                    transition={{ delay: 0.7 + (i * 0.1), type: "spring", stiffness: 50 }}
-                    className="w-1/3 bg-brand-accent rounded-t-lg relative group-hover:brightness-105 transition-all shadow-sm"
-                  />
-                </div>
-                <span className="b4 font-semibold text-text-secondary">{item.month}</span>
-              </div>
+        <div className="lg:col-span-2 flex flex-col gap-6">
+          
+          {/* Tab Navigation */}
+          <div className="flex gap-3">
+            {["Growth Trends", "Peak Periods", "Sales Fluctuations"].map((tab) => (
+              <Button
+                key={tab}
+                variant={activeTab === tab ? "primary" : "outline"}
+                size="sm"
+                shape="pill"
+                onClick={() => setActiveTab(tab)}
+                className={cn(
+                  "px-6 transition-all",
+                  activeTab === tab ? "shadow-lg border-transparent" : "bg-white/50 border-orange-200 text-orange-400"
+                )}
+              >
+                {tab}
+              </Button>
             ))}
           </div>
-        </motion.div>
 
-        {/* Recent Activity Section */}
+          {/* Main Chart Card */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white rounded-[32px] p-8 border border-kds-border-warm shadow-sm flex flex-col relative"
+          >
+            <div className="flex justify-between items-center mb-10">
+              <h2 className="text-[28px] font-semibold text-text-primary">{activeTab}</h2>
+              <Dropdown
+                label=""
+                size="sm"
+                value="all"
+                options={[{ label: "All Time", value: "all" }]}
+                className="w-32"
+              />
+            </div>
+
+            <div className="relative h-[320px] flex items-end justify-between px-12 mb-8">
+              {/* Left Y-Axis (Currency) */}
+              <div className="absolute left-0 h-full flex flex-col justify-between text-[11px] font-medium text-gray-400 py-2">
+                <span>$8.8m</span><span>$8.6m</span><span>$8.4m</span><span>$8.2m</span><span>$8m</span>
+              </div>
+
+              {/* Right Y-Axis (Units) */}
+              <div className="absolute right-0 h-full flex flex-col justify-between text-[11px] font-medium text-gray-400 py-2 text-right">
+                <span>150</span><span>120</span><span>60</span><span>30</span><span>0</span>
+              </div>
+
+              {/* Horizontal Grid Lines */}
+              <div className="absolute inset-x-12 top-0 bottom-0 flex flex-col justify-between pointer-events-none">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="w-full border-t border-gray-100" />
+                ))}
+              </div>
+
+              {/* Bars */}
+              {CHART_DATA.map((item, i) => (
+                <div key={item.month} className="flex-1 flex flex-col items-center gap-4 group z-10">
+                  <div className="flex items-end justify-center gap-1.5 h-64">
+                    <motion.div 
+                      initial={{ height: 0 }}
+                      animate={{ height: `${item.ltv}%` }}
+                      className="w-8 md:w-10 bg-[#FFD77A] rounded-t-md shadow-sm"
+                    />
+                    <motion.div 
+                      initial={{ height: 0 }}
+                      animate={{ height: `${item.cost}%` }}
+                      className="w-8 md:w-10 bg-[#FF5269] rounded-t-md shadow-sm"
+                    />
+                  </div>
+                  <span className="b4 font-semibold text-gray-400">{item.month}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Legend */}
+            <div className="flex justify-center gap-8 pt-4">
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 bg-[#FFD77A] rounded-sm" />
+                <span className="b4 font-bold text-text-secondary uppercase">Lifetime Value</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 bg-[#FF5269] rounded-sm" />
+                <span className="b4 font-bold text-text-secondary uppercase">Customer Cost</span>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+        {/* ─── END IMPLEMENTED PART ─── */}
+
+        {/* Recent Activity Section - No change */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -225,8 +251,8 @@ export default function SalesRevenueSuite() {
                   <div className="flex items-center gap-4">
                     <div className={cn(
                       "p-3 rounded-xl transition-transform group-hover:scale-110",
-                      activity.type === "Invoice" ? "bg-green-100 text-green-600" : 
-                      activity.type === "Stock" ? "bg-amber-100 text-amber-600" : "bg-blue-100 text-blue-600"
+                      activity.type === "Invoice" ? "bg-success-secondary text-success-primary" : 
+                      activity.type === "Stock" ? "bg-warning-secondary text-warning-primary" : "bg-blue-100 text-blue-600"
                     )}>
                       {activity.type === "Invoice" && <FileText size={20} />}
                       {activity.type === "Stock" && <Package size={20} />}
@@ -257,7 +283,6 @@ export default function SalesRevenueSuite() {
             </Button>
           </div>
         </motion.div>
-
       </div>
     </div>
   );
