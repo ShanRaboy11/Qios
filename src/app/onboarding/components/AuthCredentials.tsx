@@ -24,15 +24,8 @@ export function AuthCredentials({ data, setData, onAutoResume }: AuthCredentials
     let isActive = true;
 
     const restoreSession = async () => {
-      if (!onAutoResume) return;
-
-      const supabase = createSupabaseBrowserClient();
-      const { data: userData } = await supabase.auth.getUser();
-      const email = userData.user?.email;
-
-      if (isActive && email) {
-        await onAutoResume(email);
-      }
+      // Auto-resume disabled: onboarding should always start fresh.
+      // Do not auto-call `onAutoResume` from this component.
     };
 
     void restoreSession();

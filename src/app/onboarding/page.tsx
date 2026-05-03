@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Building2,
   ShoppingBag,
@@ -119,6 +119,36 @@ export default function OnboardingPage() {
     supplyLogic: "local",
   });
 
+  // Ensure onboarding always starts fresh when page is opened.
+  useEffect(() => {
+    const clearSession = async () => {
+      try {
+        const supabase = createSupabaseBrowserClient();
+        await supabase.auth.signOut();
+      } catch {
+        // ignore
+      }
+
+      setAuthData({ email: "", password: "", confirm: "" });
+      setTenantId("");
+      setUserId("");
+      setVerificationCode("");
+      setExistingDocumentUrls({});
+      setDocumentData({});
+      setSubscriptionData({ packageId: "starter" });
+      setOperationalData({
+        inventoryMode: "unit",
+        serviceWorkflow: "pickup",
+        dashboardFocus: "revenue",
+        supplyLogic: "local",
+      });
+      setCurrentStep(1);
+    };
+
+    void clearSession();
+    // run only on mount
+  }, []);
+
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -223,6 +253,33 @@ export default function OnboardingPage() {
       setAuthData((prev) => ({ ...prev, email }));
       const access = await resolveOnboardingAccess({ email });
 
+      // If onboarding is already submitted (eg. status: "pending/completed"), clear any session and do not resume
+      if (access.status === "completed") {
+        try {
+          const supabase = createSupabaseBrowserClient();
+          await supabase.auth.signOut();
+        } catch (e) {
+          // no-op
+        }
+
+        setAuthData({ email: "", password: "", confirm: "" });
+        setTenantId("");
+        setUserId("");
+        setVerificationCode("");
+        setExistingDocumentUrls({});
+        setDocumentData({});
+        setSubscriptionData({ packageId: "starter" });
+        setOperationalData({
+          inventoryMode: "unit",
+          serviceWorkflow: "pickup",
+          dashboardFocus: "revenue",
+          supplyLogic: "local",
+        });
+        setCurrentStep(1);
+        scrollToTop();
+        return;
+      }
+
       hydrateForm(access);
 
       if (access.userVerified) {
@@ -288,6 +345,20 @@ export default function OnboardingPage() {
       const access = await resolveOnboardingAccess({ email: authData.email });
 
       if (access.status === "completed") {
+        try {
+          await supabase.auth.signOut();
+        } catch {
+          // no-op
+        }
+
+        setAuthData({ ...authData, password: "", confirm: "" });
+        setTenantId("");
+        setUserId("");
+        setVerificationCode("");
+        setExistingDocumentUrls({});
+        setDocumentData({});
+        setSubscriptionData({ packageId: "starter" });
+
         setError("This email is already registered and onboarding has been submitted.");
         return;
       }
