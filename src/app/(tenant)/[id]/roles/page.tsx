@@ -384,7 +384,7 @@ export default function RoleManagementPage() {
                     <Input
                       value={draftRole.name}
                       onChange={(e) => setDraftRole({ ...draftRole, name: e.target.value })}
-                      className="text-lg font-bold !bg-white/80 !py-1.5 !h-10"
+                      className="text-lg !bg-white/80 !py-1.5 !h-10"
                     />
                   </div>
                   

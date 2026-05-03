@@ -129,6 +129,7 @@ const MenuCategoryManagement = () => {
   // dashboard state
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchCategoryQuery, setSearchCategoryQuery] = useState("");
 
   // category modal state
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
@@ -206,7 +207,24 @@ const MenuCategoryManagement = () => {
     setIsCategoryModalOpen(false);
   };
 
+  const handleDeleteCategory = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    const newCats = categories.filter((c) => c.id !== id);
+    setCategories(newCats);
+    if (selectedCategory === id && newCats.length > 0) {
+      setSelectedCategory(newCats[0].id);
+    } else if (newCats.length === 0) {
+      setSelectedCategory("");
+    }
+    // optionally delete all items in this category
+    setItems((prev) => prev.filter((i) => i.categoryId !== id));
+  };
+
   // derived data
+  const filteredCategories = categories.filter((c) =>
+    c.name.toLowerCase().includes(searchCategoryQuery.toLowerCase())
+  );
+
   const filteredItems = items.filter(
     (item) =>
       item.categoryId === selectedCategory &&
@@ -218,7 +236,13 @@ const MenuCategoryManagement = () => {
     JSON.stringify(originalItem) !== JSON.stringify(draftItem);
 
   const isValidDraft =
-    draftItem?.name?.trim() !== "" && draftItem?.price?.trim() !== "";
+    draftItem?.name?.trim() !== "" &&
+    draftItem?.price?.trim() !== "" &&
+    draftItem?.sizes.every((s) => s.name.trim() !== "" && s.price.trim() !== "") &&
+    (!draftItem?.addonsEnabled ||
+      draftItem?.addons.every(
+        (a) => a.name.trim() !== "" && a.price.trim() !== ""
+      ));
 
   // selection handlers
   const toggleSelection = (id: string) => {
@@ -256,6 +280,7 @@ const MenuCategoryManagement = () => {
   };
 
   const handleCreateNewItem = () => {
+    if (!selectedCategory) return;
     const newItem: MenuItem = {
       id: `item_${Date.now()}`,
       categoryId: selectedCategory,
@@ -434,6 +459,8 @@ const MenuCategoryManagement = () => {
                   <Search size={18} className="text-text-secondary" />
                 </div>
                 <Input
+                  value={searchCategoryQuery}
+                  onChange={(e) => setSearchCategoryQuery(e.target.value)}
                   placeholder="Search categories..."
                   className="pl-12 !py-2.5 rounded-xl !bg-white/60 !border-white/50 b2"
                 />
@@ -447,7 +474,7 @@ const MenuCategoryManagement = () => {
               )}
             >
               <div className="flex flex-col gap-2">
-                {categories.map((cat) => (
+                {filteredCategories.map((cat) => (
                   <div
                     key={cat.id}
                     draggable
@@ -456,7 +483,7 @@ const MenuCategoryManagement = () => {
                     onDrop={(e) => handleDropCategory(e, cat.id)}
                     onClick={() => setSelectedCategory(cat.id)}
                     className={cn(
-                      "group flex items-center justify-between p-3 rounded-2xl cursor-pointer transition-all duration-300",
+                      "group flex items-center justify-between p-3 rounded-2xl cursor-pointer transition-all duration-300 relative",
                       selectedCategory === cat.id
                         ? "bg-white shadow-md border border-white/60 transform scale-[1.02]"
                         : "hover:bg-white/40 border border-transparent",
@@ -479,11 +506,21 @@ const MenuCategoryManagement = () => {
                         {cat.name}
                       </span>
                     </div>
-                    {selectedCategory === cat.id && (
-                      <ChevronRight size={18} className="text-brand-primary" />
-                    )}
+                    <div className="flex items-center gap-2">
+                      {selectedCategory === cat.id && (
+                        <ChevronRight
+                          size={18}
+                          className="text-brand-primary"
+                        />
+                      )}
+                    </div>
                   </div>
                 ))}
+                {filteredCategories.length === 0 && (
+                  <p className="b4 text-center text-text-secondary mt-4">
+                    No categories found.
+                  </p>
+                )}
               </div>
             </div>
           </aside>
@@ -506,14 +543,27 @@ const MenuCategoryManagement = () => {
                     Manage items for this category
                   </p>
                 </div>
-                <Button
-                  variant="accent"
-                  onClick={handleCreateNewItem}
-                  leftIcon={<Plus size={18} />}
-                  className="b3"
-                >
-                  Add Item
-                </Button>
+                <div className="flex items-center gap-2">
+                  {selectedCategory && (
+                    <Button
+                      variant="ghost"
+                      onClick={(e) => handleDeleteCategory(e, selectedCategory)}
+                      className="!w-10 !h-10 !p-0 flex items-center justify-center text-warning-primary hover:bg-warning-secondary hover:text-warning-primary flex-shrink-0"
+                      title="Delete Category"
+                    >
+                      <Trash2 size={18} />
+                    </Button>
+                  )}
+                  <Button
+                    variant="accent"
+                    onClick={handleCreateNewItem}
+                    leftIcon={<Plus size={18} />}
+                    className="b3"
+                    disabled={!selectedCategory}
+                  >
+                    Add Item
+                  </Button>
+                </div>
               </div>
 
               <div className="flex items-center justify-between gap-4">
@@ -577,9 +627,9 @@ const MenuCategoryManagement = () => {
                       onClick={() => handleOpenDrawer(item)}
                       className="bg-white rounded-[24px] border border-black/5 overflow-hidden shadow-sm hover:shadow-md hover:border-brand-primary/30 transition-all cursor-pointer group flex flex-col relative"
                     >
-                      {/* select checkbox */}
+                      {/* select checkbox with solid white background to prevent morphing */}
                       <div
-                        className="absolute top-4 left-4 z-20"
+                        className="absolute top-4 left-4 z-20 bg-white rounded-[4px] flex items-center justify-center"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <Checkbox
@@ -600,7 +650,7 @@ const MenuCategoryManagement = () => {
                         )}
                         {!item.isAvailable && (
                           <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-[2px]">
-                            <Badge color="secondary" variant="solid">
+                            <Badge color="secondary" variant="solid" className="px-2 py-0.5 text-[11px] font-bold">
                               Unavailable
                             </Badge>
                           </div>
@@ -611,7 +661,7 @@ const MenuCategoryManagement = () => {
                             <Badge
                               color="success"
                               variant="subtle"
-                              className="b5 shadow-sm"
+                              className="px-2 py-0.5 text-[11px] font-bold shadow-sm"
                             >
                               AI Synced
                             </Badge>
@@ -628,7 +678,7 @@ const MenuCategoryManagement = () => {
                             ₱{item.price}
                           </span>
                         </div>
-                        <p className="b5 text-text-secondary line-clamp-2 mt-auto">
+                        <p className="b4 text-text-secondary line-clamp-2 mt-auto">
                           {item.description}
                         </p>
                       </div>
@@ -641,11 +691,11 @@ const MenuCategoryManagement = () => {
                     <div
                       key={item.id}
                       onClick={() => handleOpenDrawer(item)}
-                      className="bg-white rounded-2xl border border-black/5 p-4 flex items-center gap-5 shadow-sm hover:shadow-md hover:border-brand-primary/30 transition-all cursor-pointer group relative"
+                      className="bg-white rounded-2xl border border-black/5 p-3 flex items-center gap-4 shadow-sm hover:shadow-md hover:border-brand-primary/30 transition-all cursor-pointer group relative pl-5"
                     >
-                      {/* select checkbox */}
+                      {/* select checkbox with a little left margin */}
                       <div
-                        className="absolute top-1/2 -translate-y-1/2 -left-2 z-20 pl-4 py-4"
+                        className="z-20 bg-white rounded-[4px] flex items-center justify-center"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <Checkbox
@@ -654,7 +704,7 @@ const MenuCategoryManagement = () => {
                         />
                       </div>
 
-                      <div className="w-20 h-20 rounded-xl bg-black/5 flex-shrink-0 flex items-center justify-center overflow-hidden relative ml-6">
+                      <div className="w-16 h-16 rounded-xl bg-black/5 flex-shrink-0 flex items-center justify-center overflow-hidden relative ml-2">
                         {item.image ? (
                           <img
                             src={item.image}
@@ -664,11 +714,8 @@ const MenuCategoryManagement = () => {
                         ) : (
                           <ImageIcon size={24} className="text-black/20" />
                         )}
-                        {!item.isAvailable && (
-                          <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px]" />
-                        )}
                       </div>
-                      <div className="flex-1 min-w-0">
+                      <div className="flex-1 min-w-0 flex flex-col justify-center">
                         <div className="flex items-center gap-2 mb-1">
                           <h4 className="b2 font-bold text-text-primary group-hover:text-brand-primary transition-colors truncate">
                             {item.name}
@@ -677,26 +724,24 @@ const MenuCategoryManagement = () => {
                             <Badge
                               color="secondary"
                               variant="solid"
-                              className="b5 py-0"
+                              className="px-2 py-0.5 text-[11px] font-bold"
                             >
                               Unavailable
                             </Badge>
                           )}
-                        </div>
-                        <p className="b5 text-text-secondary truncate mb-2">
-                          {item.description}
-                        </p>
-                        <div className="flex items-center gap-2">
                           {item.aiSynced && (
                             <Badge
                               color="success"
                               variant="subtle"
-                              className="b5 py-0"
+                              className="px-2 py-0.5 text-[11px] font-bold"
                             >
                               AI Synced
                             </Badge>
                           )}
                         </div>
+                        <p className="b4 text-text-secondary truncate">
+                          {item.description}
+                        </p>
                       </div>
                       <div className="font-bold text-brand-accent text-lg flex-shrink-0 pl-4 border-l border-black/5 min-w-[100px] max-w-[140px] text-right truncate">
                         ₱{item.price}
@@ -712,9 +757,17 @@ const MenuCategoryManagement = () => {
         {/* floating bulk action bar */}
         {selectedItems.length > 0 && !draftItem && (
           <div
-            className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-white px-6 py-3 rounded-full flex items-center gap-4 z-[60] border border-black/5 animate-in slide-in-from-bottom-10"
+            className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-white px-5 py-2.5 rounded-full flex items-center gap-3 z-[60] border border-black/5 animate-in slide-in-from-bottom-10"
             style={{ boxShadow: "var(--kds-shadow-hover)" }}
           >
+            <Button
+              variant="ghost"
+              onClick={() => setSelectedItems([])}
+              className="p-1 h-auto b2 font-bold text-text-secondary hover:text-text-primary hover:bg-transparent"
+            >
+              Deselect
+            </Button>
+            <div className="w-px h-5 bg-black/10" />
             <Badge
               color="primary"
               variant="solid"
@@ -722,13 +775,13 @@ const MenuCategoryManagement = () => {
             >
               {selectedItems.length} selected
             </Badge>
-            <div className="w-px h-6 bg-black/10" />
+            <div className="w-px h-5 bg-black/10" />
             <Button
               variant="ghost"
               onClick={deleteSelectedItems}
-              className="text-warning-primary hover:text-warning-primary hover:bg-warning-secondary p-2 h-auto b2 font-bold rounded-xl"
+              className="p-1 h-auto b2 font-bold text-warning-primary hover:text-warning-primary hover:bg-transparent"
             >
-              <Trash2 size={18} className="mr-2" /> Delete
+              Delete
             </Button>
           </div>
         )}
@@ -759,7 +812,7 @@ const MenuCategoryManagement = () => {
                       <Sparkles size={14} className="animate-pulse" />
                     )
                   }
-                  className="shadow-sm mt-2 b5"
+                  className="shadow-sm mt-2 text-[11px] font-bold px-3 py-1"
                 >
                   {draftItem.aiSynced ? "AI Synced" : "Syncing to Gemini..."}
                 </Badge>
@@ -768,7 +821,22 @@ const MenuCategoryManagement = () => {
 
             {/* drawer body */}
             <div className="flex-1 overflow-y-auto p-6 bg-bg-primary custom-scrollbar flex flex-col gap-8">
-              <div className="flex flex-col gap-6">
+              <div className="flex flex-col gap-5">
+                
+                <div className="flex items-center gap-3">
+                  <h4 className="b3 font-bold text-text-secondary uppercase tracking-widest">
+                    Item Information
+                  </h4>
+                  <Badge
+                    color="error"
+                    variant="outline"
+                    shape="pill"
+                    className="text-[10px] px-2 py-0.5 uppercase font-bold border-warning-primary/30"
+                  >
+                    Required
+                  </Badge>
+                </div>
+
                 {/* top row: image + name/desc side by side */}
                 <div className="flex flex-col sm:flex-row gap-6 items-start">
                   {/* image upload box */}
@@ -822,7 +890,7 @@ const MenuCategoryManagement = () => {
                         value={draftItem.name}
                         onChange={(e) => updateDraft("name", e.target.value)}
                         placeholder="e.g. Chicken Adobo"
-                        className="bg-white/80 !py-2.5 shadow-sm border border-black/5 b2 font-bold placeholder:text-text-secondary/50 placeholder:font-normal"
+                        className="bg-white !py-2.5 b2 font-bold placeholder:text-text-secondary/50 placeholder:font-normal"
                       />
                     </div>
                     <div>
@@ -840,7 +908,7 @@ const MenuCategoryManagement = () => {
                           }
                         }}
                         placeholder="Brief description"
-                        className="w-full bg-white/80 border border-black/5 rounded-[14px] p-3 b2 focus:border-brand-primary outline-none transition-colors resize-none h-[88px] custom-scrollbar shadow-sm placeholder:text-text-secondary/50 placeholder:font-normal"
+                        className="w-full bg-white border-2 border-[#E5E5E5] rounded-[14px] p-3 b2 focus:border-brand-primary outline-none transition-colors resize-none h-[88px] custom-scrollbar placeholder:text-text-secondary/50 placeholder:font-normal"
                       />
                     </div>
                   </div>
@@ -860,7 +928,7 @@ const MenuCategoryManagement = () => {
                       }
                       inputMode="decimal"
                       placeholder="0.00"
-                      className="bg-white/80 !py-2.5 shadow-sm border border-black/5 b2 font-bold placeholder:text-text-secondary/50 placeholder:font-normal"
+                      className="bg-white !py-2.5 b2 font-bold placeholder:text-text-secondary/50 placeholder:font-normal"
                     />
                   </div>
                   <div>
@@ -882,7 +950,7 @@ const MenuCategoryManagement = () => {
                 </div>
               </div>
 
-              <div className="w-full h-px bg-black/10 mt-2" />
+              <div className="w-full h-px bg-black/10 my-2" />
 
               {/* sizes form section */}
               <div>
@@ -894,7 +962,7 @@ const MenuCategoryManagement = () => {
                     color="error"
                     variant="outline"
                     shape="pill"
-                    className="b5 uppercase font-bold border-warning-primary/30"
+                    className="text-[10px] px-2 py-0.5 uppercase font-bold border-warning-primary/30"
                   >
                     Required
                   </Badge>
@@ -998,7 +1066,7 @@ const MenuCategoryManagement = () => {
                       color="warning"
                       variant="outline"
                       shape="pill"
-                      className="b5 uppercase font-bold border-warning-primary/30"
+                      className="text-[10px] px-2 py-0.5 uppercase font-bold border-warning-primary/30"
                     >
                       Optional
                     </Badge>
@@ -1194,7 +1262,7 @@ const MenuCategoryManagement = () => {
                     Unsaved changes
                   </span>
                   <span className="b5 text-text-secondary">
-                    Modified item configuration
+                    You modified this item's configuration.
                   </span>
                 </div>
               )}

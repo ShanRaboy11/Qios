@@ -494,7 +494,7 @@ export default function SubscriptionManagementPage() {
                         onChange={(e) =>
                           setDraftPlan({ ...draftPlan, name: e.target.value })
                         }
-                        className="text-lg font-bold !bg-white/80 !py-1.5 !h-10"
+                        className="text-lg !bg-white/80 !py-1.5 !h-10"
                       />
                     </div>
                     <div className="flex-1">
