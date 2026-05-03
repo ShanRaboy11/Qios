@@ -11,6 +11,7 @@ import Link from "next/link";
 import { Navbar } from "@/components/organisms/navbar";
 import { Footer } from "@/components/organisms/footer";
 import { motion, AnimatePresence } from "framer-motion";
+import { useRouter, useParams } from "next/navigation";
 
 type ViewState =
   | "dashboard"
@@ -28,7 +29,21 @@ export default function TenantDashboardPage({
   const [currentView, setCurrentView] = useState<ViewState>("dashboard");
   const [isTransitioning, setIsTransitioning] = useState(false);
 
+  const router = useRouter();
+  const paramsHook = useParams();
+  const tenantId = paramsHook.id as string;
+
   const handleNavigation = (view: ViewState) => {
+    if (view === "staff") {
+      router.push(`/${tenantId}/staff`);
+      return;
+    }
+
+    if (view === "inventory" || view === "menu" || view === "sales") {
+      router.push(`/${tenantId}/${view}`);
+      return;
+    }
+
     if (currentView === view) return;
 
     setIsTransitioning(true);

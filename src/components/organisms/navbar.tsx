@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/atoms/Button";
 import { ArrowRight, Menu, X, User, LogOut, Settings } from "lucide-react";
+import { Avatar } from "@/components/atoms/Avatar";
 
 interface NavbarProps {
   variant?: "filled" | "transparent";
@@ -167,9 +168,13 @@ export const Navbar = ({
           <div className="shrink-0 relative" ref={profileRef}>
             <button
               onClick={() => setIsProfileOpen(!isProfileOpen)}
-              className="w-10 h-10 rounded-full bg-brand-accent flex items-center justify-center border border-brand-accent/20 hover:scale-110 transition-transform duration-300"
+              className="rounded-full border border-brand-accent/20 hover:scale-110 transition-transform duration-300 focus:outline-none ring-2 ring-transparent focus:ring-brand-accent/50 shadow-sm"
             >
-              <User className="w-5 h-5 text-white" />
+              <Avatar 
+                initials={type === "admin" ? "AD" : "TU"} 
+                size="md" 
+                status="online"
+              />
             </button>
 
             {isProfileOpen && (
