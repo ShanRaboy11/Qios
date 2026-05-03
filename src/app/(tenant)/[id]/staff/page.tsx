@@ -186,7 +186,8 @@ export default function StaffManagementPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [staffData, setStaffData] = useState<StaffEntry[]>(INITIAL_STAFF);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [selectedStaffProfile, setSelectedStaffProfile] = useState<StaffEntry | null>(null);
+  const [selectedStaffProfile, setSelectedStaffProfile] =
+    useState<StaffEntry | null>(null);
 
   const router = useRouter();
   const params = useParams();
@@ -235,13 +236,6 @@ export default function StaffManagementPage() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <Button
-              variant="outline"
-              shape="rounded"
-              leftIcon={<Filter size={18} />}
-            >
-              Filters
-            </Button>
             <Button
               variant="accent"
               shape="rounded"
@@ -342,18 +336,18 @@ export default function StaffManagementPage() {
         </div>
       </div>
 
-      <AddStaffModal 
-        isOpen={isAddModalOpen} 
-        onClose={() => setIsAddModalOpen(false)} 
-        onSave={handleAddStaff} 
+      <AddStaffModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onSave={handleAddStaff}
       />
 
-      <StaffProfileModal 
+      <StaffProfileModal
         isOpen={!!selectedStaffProfile}
         onClose={() => setSelectedStaffProfile(null)}
         staff={selectedStaffProfile}
       />
-
+      <div className="bottom-0 inset-x-0 h-40 bg-gradient-to-t from-white via-white/50 to-transparent z-[100] pointer-events-none" />
       <Footer hideSocials />
     </div>
   );

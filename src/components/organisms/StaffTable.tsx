@@ -54,21 +54,20 @@ export const StaffTable = ({ data, onEdit, onResetPassword, onDeactivate, onClea
           </thead>
           <tbody>
             {data.map((staff) => (
-              <tr key={staff.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors group">
+              <tr 
+                key={staff.id} 
+                className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors group cursor-pointer"
+                onClick={() => onViewProfile?.(staff)}
+              >
                 <td className="py-4 px-6">
-                  <div 
-                    className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 rounded-xl p-1 -ml-1 transition-colors group/profile"
-                    onClick={() => onViewProfile?.(staff)}
-                    role="button"
-                    tabIndex={0}
-                  >
+                  <div className="flex items-center gap-3">
                     <Avatar 
                       initials={staff.name} 
                       src={staff.avatar} 
                       status={staff.status === "Active" ? "online" : staff.status === "On Leave" ? "away" : "offline"} 
                     />
                     <div>
-                      <div className="font-bold text-text-primary group-hover/profile:text-brand-primary transition-colors">{staff.name}</div>
+                      <div className="font-bold text-text-primary group-hover:text-brand-primary transition-colors">{staff.name}</div>
                       <div className="text-xs text-text-secondary">{staff.email}</div>
                     </div>
                   </div>
@@ -95,7 +94,10 @@ export const StaffTable = ({ data, onEdit, onResetPassword, onDeactivate, onClea
                 </td>
                 <td className="py-4 px-6 text-right relative">
                   <button 
-                    onClick={() => toggleDropdown(staff.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleDropdown(staff.id);
+                    }}
                     className="p-2 rounded-full hover:bg-gray-100 text-gray-400 hover:text-text-primary transition-colors focus:outline-none"
                   >
                     <MoreVertical size={18} />
@@ -105,9 +107,15 @@ export const StaffTable = ({ data, onEdit, onResetPassword, onDeactivate, onClea
                     <>
                       <div 
                         className="fixed inset-0 z-40" 
-                        onClick={() => setOpenDropdownId(null)} 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOpenDropdownId(null);
+                        }} 
                       />
-                      <div className="absolute right-0 top-10 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50 animate-in fade-in zoom-in-95 duration-200">
+                      <div 
+                        className="absolute right-0 top-10 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50 animate-in fade-in zoom-in-95 duration-200"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <button 
                           onClick={() => { onEdit?.(staff.id); setOpenDropdownId(null); }}
                           className="w-full text-left px-4 py-2.5 text-sm text-text-primary hover:bg-gray-50 flex items-center gap-3 transition-colors"

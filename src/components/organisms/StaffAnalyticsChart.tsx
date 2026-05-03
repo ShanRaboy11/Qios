@@ -12,6 +12,7 @@ import {
   ReferenceArea,
   Legend
 } from "recharts";
+import { DateRangePicker } from "@/components/molecules/DateRangePicker";
 
 export interface AnalyticsDataPoint {
   time: string;
@@ -26,8 +27,9 @@ interface StaffAnalyticsChartProps {
 export const StaffAnalyticsChart = ({ data }: StaffAnalyticsChartProps) => {
   return (
     <div className="bg-white rounded-[24px] shadow-sm border border-gray-100 overflow-hidden">
-      <div className="p-6 border-b border-gray-50">
+      <div className="p-6 border-b border-gray-50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h3 className="font-bold text-xl text-text-primary">Prep Time Trends vs. Order Volume</h3>
+        <DateRangePicker startDate="01 Jan 2026" endDate="07 Jan 2026" />
       </div>
       <div className="p-6 h-[400px]">
         <ResponsiveContainer width="100%" height="100%">

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
+import { Dropdown } from "@/components/molecules/Dropdown";
 
 interface AddStaffModalProps {
   isOpen: boolean;
@@ -72,40 +73,34 @@ export const AddStaffModal = ({ isOpen, onClose, onSave }: AddStaffModalProps) =
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-4 mt-2">
             <div>
-              <label className="block text-sm font-bold text-text-secondary mb-1.5 uppercase tracking-wider">
-                Role
-              </label>
-              <select 
-                className="w-full bg-bg-primary border border-gray-200 rounded-xl px-4 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
+              <Dropdown
+                label="Role"
+                placeholder="Select Role"
+                options={[
+                  { label: "Manager", value: "Manager" },
+                  { label: "Head Chef", value: "Head Chef" },
+                  { label: "Line Cook", value: "Line Cook" },
+                  { label: "Cashier", value: "Cashier" },
+                  { label: "Server", value: "Server" },
+                ]}
                 value={formData.role}
-                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                required
-              >
-                <option value="" disabled>Select Role</option>
-                <option value="Manager">Manager</option>
-                <option value="Head Chef">Head Chef</option>
-                <option value="Line Cook">Line Cook</option>
-                <option value="Cashier">Cashier</option>
-                <option value="Server">Server</option>
-              </select>
+                onSelect={(opt) => setFormData({ ...formData, role: opt.value })}
+              />
             </div>
             <div>
-              <label className="block text-sm font-bold text-text-secondary mb-1.5 uppercase tracking-wider">
-                Department
-              </label>
-              <select 
-                className="w-full bg-bg-primary border border-gray-200 rounded-xl px-4 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
+              <Dropdown
+                label="Department"
+                placeholder="Select Dept"
+                options={[
+                  { label: "Operations", value: "Operations" },
+                  { label: "Kitchen", value: "Kitchen" },
+                  { label: "Front of House", value: "Front of House" },
+                ]}
                 value={formData.department}
-                onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                required
-              >
-                <option value="" disabled>Select Dept</option>
-                <option value="Operations">Operations</option>
-                <option value="Kitchen">Kitchen</option>
-                <option value="Front of House">Front of House</option>
-              </select>
+                onSelect={(opt) => setFormData({ ...formData, department: opt.value })}
+              />
             </div>
           </div>
 

@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 interface AvatarProps {
   src?: string;
   initials?: string;
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "xl";
   status?: "online" | "offline" | "busy" | "away";
   className?: string;
 }
@@ -13,6 +13,7 @@ const sizeClasses = {
   sm: "w-8 h-8 text-xs",
   md: "w-10 h-10 text-sm",
   lg: "w-14 h-14 text-base",
+  xl: "w-20 h-20 text-2xl",
 };
 
 const statusColors = {
@@ -42,7 +43,7 @@ export const Avatar = ({ src, initials, size = "md", status, className }: Avatar
           className={cn(
             "absolute bottom-0 right-0 block rounded-full ring-2 ring-white",
             statusColors[status],
-            size === "sm" ? "w-2 h-2" : size === "md" ? "w-2.5 h-2.5" : "w-3 h-3"
+            size === "sm" ? "w-2 h-2" : size === "md" ? "w-2.5 h-2.5" : size === "lg" ? "w-3 h-3" : "w-4 h-4"
           )}
         />
       )}

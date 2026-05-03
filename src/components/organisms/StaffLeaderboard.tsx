@@ -24,8 +24,8 @@ export const StaffLeaderboard = ({ data }: StaffLeaderboardProps) => {
           Ranked by efficiency score and transaction velocity
         </p>
       </div>
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
+      <div className="overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        <table className="w-full text-left border-collapse whitespace-nowrap">
           <thead>
             <tr className="bg-[#FF5269] text-white text-[11px] font-bold uppercase tracking-wider">
               <th className="py-3 px-6 w-20 text-center">Rank</th>
@@ -40,7 +40,7 @@ export const StaffLeaderboard = ({ data }: StaffLeaderboardProps) => {
                 key={entry.id}
                 className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors"
               >
-                <td className="py-4 px-6 font-bold text-text-primary text-center">
+                <td className="py-4 px-6 font-medium text-text-primary text-center">
                   {entry.rank}
                 </td>
                 <td className="py-4 px-6 font-medium text-text-primary">
