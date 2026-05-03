@@ -564,7 +564,13 @@ export default function RoleManagementPage() {
               </div>
 
               {/* global action footer */}
-              <div className="p-4 md:p-6 border-t-2 border-white/50 flex justify-end gap-2 md:gap-4 flex-shrink-0 z-10 bg-white/50 md:bg-transparent">
+              <div className="p-4 md:p-6 border-t-2 border-white/50 flex items-center justify-end gap-2 md:gap-4 flex-shrink-0 z-10 bg-white/50 md:bg-transparent">
+                {hasChanges && (
+                  <div className="flex flex-col mr-auto">
+                    <span className="b2 font-bold text-text-primary">Unsaved changes</span>
+                    <span className="b4 text-text-secondary hidden sm:inline">You have modified this role's configuration.</span>
+                  </div>
+                )}
                 {hasChanges && (
                   <Button variant="ghost" onClick={handleDiscard} className="text-warning-primary hover:bg-warning-secondary">
                     Discard Changes

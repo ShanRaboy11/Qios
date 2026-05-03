@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { BentoCard } from "@/components/molecules/BentoCard";
 import { InfoRow } from "@/components/molecules/InfoRow";
 import {
@@ -9,7 +9,7 @@ import {
   Check,
   AlertCircle,
   FileImage,
-  ExternalLink,
+  Eye,
   ShieldCheck,
   Receipt,
   MapPin,
@@ -19,6 +19,7 @@ import { TenantProfileData } from "./TenantProfilePage";
 import { Button } from "@/components/atoms/Button";
 import { Badge } from "@/components/atoms/Badge";
 import { KPICard } from "@/components/molecules/KPICard";
+import { Modal } from "@/components/molecules/Modal";
 
 import { cn } from "@/lib/utils";
 
@@ -28,16 +29,32 @@ interface TenantProfileBentoGridProps {
     docId: string,
     newStatus: "Approved" | "Revision Requested",
   ) => void;
+  onManagePlan: () => void;
   className?: string;
 }
 
 export const TenantProfileBentoGrid = ({
   tenant,
   onUpdateDocumentStatus,
+  onManagePlan,
   className,
 }: TenantProfileBentoGridProps) => {
+  const [previewDocument, setPreviewDocument] = useState<{
+    url: string;
+    title: string;
+  } | null>(null);
+
+  useEffect(() => {
+    setPreviewDocument(null);
+  }, [tenant.id]);
+
   return (
-    <div className={cn("grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6", className)}>
+    <div
+      className={cn(
+        "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6",
+        className,
+      )}
+    >
       {/* 1. Business Information */}
       <BentoCard
         title="Business Information"
@@ -47,7 +64,6 @@ export const TenantProfileBentoGrid = ({
         <div className="flex flex-col h-full">
           <InfoRow label="Owner Name" value={tenant.owner} />
           <InfoRow label="Email Address" value={tenant.email} />
-          <InfoRow label="Contact Number" value={tenant.phone} />
           <InfoRow label="Registration Date" value={tenant.joined} />
         </div>
       </BentoCard>
@@ -112,14 +128,18 @@ export const TenantProfileBentoGrid = ({
                           </span>
                         </div>
                         {doc.url && (
-                          <a
-                            href={doc.url}
-                            target="_blank"
-                            rel="noreferrer"
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setPreviewDocument({
+                                url: doc.url || "",
+                                title: doc.fileName || doc.title,
+                              })
+                            }
                             className="text-[12px] text-brand-primary font-bold hover:underline flex items-center gap-1 shrink-0"
                           >
-                            View <ExternalLink className="w-3 h-3" />
-                          </a>
+                            View <Eye className="w-3 h-3" />
+                          </button>
                         )}
                       </div>
 
@@ -196,7 +216,11 @@ export const TenantProfileBentoGrid = ({
           <InfoRow label="Billing Cycle" value={tenant.billingCycle} />
           <InfoRow label="Next Billing Date" value="May 15, 2026" />
           <div className="mt-4 flex-1 flex items-end">
-            <Button variant="outline" className="w-full justify-center">
+            <Button
+              variant="outline"
+              className="w-full justify-center"
+              onClick={onManagePlan}
+            >
               Manage Plan
             </Button>
           </div>
@@ -253,6 +277,25 @@ export const TenantProfileBentoGrid = ({
           />
         </div>
       </BentoCard>
+
+      <Modal
+        isOpen={Boolean(previewDocument)}
+        onClose={() => setPreviewDocument(null)}
+        title={
+          previewDocument ? `Preview: ${previewDocument.title}` : "Preview"
+        }
+        className="max-w-5xl md:translate-y-9"
+      >
+        {previewDocument && (
+          <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+            <iframe
+              src={previewDocument.url}
+              title={previewDocument.title}
+              className="w-full h-[65vh]"
+            />
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };

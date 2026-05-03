@@ -2,12 +2,16 @@
 
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { updateTenantStatus } from "@/app/(admin)/admin/tenants/actions";
+import {
+  getTenants,
+  updateTenantStatus,
+} from "@/app/(admin)/admin/tenants/actions";
+import { useRouter } from "next/navigation";
 import {
   Search,
-  MoreVertical,
   Building2,
   Check,
+  Loader2,
   X,
   SlidersHorizontal,
 } from "lucide-react";
@@ -15,7 +19,6 @@ import { FormField } from "@/components/molecules/FormField";
 import { Dropdown } from "@/components/molecules/Dropdown";
 import { Badge } from "@/components/atoms/Badge";
 import { Button } from "@/components/atoms/Button";
-import Link from "next/link";
 
 interface Tenant {
   id: string;
@@ -77,6 +80,15 @@ const INITIAL_DATA: Tenant[] = [
   },
 ];
 
+let tenantCache: Tenant[] | null = null;
+let tenantCacheTimestamp = 0;
+const TENANT_CACHE_TTL_MS = 30_000;
+
+function updateTenantCache(nextTenants: Tenant[]) {
+  tenantCache = nextTenants;
+  tenantCacheTimestamp = Date.now();
+}
+
 export type ActionType =
   | "approve"
   | "reject"
@@ -93,9 +105,16 @@ export default function TenantManagement({
   initialStatusFilter,
   initialTenants = [],
 }: TenantManagementProps) {
-  const [tenants, setTenants] = useState<Tenant[]>(
-    initialTenants.length > 0 ? initialTenants : INITIAL_DATA,
+  const router = useRouter();
+  const [tenants, setTenants] = useState<Tenant[]>(() => {
+    if (initialTenants.length > 0) return initialTenants;
+    return tenantCache ?? [];
+  });
+  const [isLoadingTenants, setIsLoadingTenants] = useState(
+    initialTenants.length === 0 && (tenantCache?.length ?? 0) === 0,
   );
+  const [isRefreshingTenants, setIsRefreshingTenants] = useState(false);
+  const [tenantListError, setTenantListError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState(
     initialStatusFilter || "All",
@@ -109,6 +128,77 @@ export default function TenantManagement({
       setStatusFilter(initialStatusFilter);
     }
   }, [initialStatusFilter]);
+
+  useEffect(() => {
+    if (initialTenants.length > 0) {
+      setTenants(initialTenants);
+      setIsLoadingTenants(false);
+      setIsRefreshingTenants(false);
+      setTenantListError(null);
+      updateTenantCache(initialTenants);
+      return;
+    }
+
+    const cachedTenants = tenantCache ?? [];
+    const hasCachedTenants = cachedTenants.length > 0;
+    const isCacheFresh =
+      hasCachedTenants &&
+      Date.now() - tenantCacheTimestamp < TENANT_CACHE_TTL_MS;
+
+    if (hasCachedTenants) {
+      setTenants(cachedTenants);
+      setIsLoadingTenants(false);
+    }
+
+    if (isCacheFresh) {
+      setTenantListError(null);
+      return;
+    }
+
+    let isMounted = true;
+    const loadTenants = async () => {
+      if (hasCachedTenants) {
+        setIsRefreshingTenants(true);
+      } else {
+        setIsLoadingTenants(true);
+      }
+      setTenantListError(null);
+
+      try {
+        const fetchedTenants = await getTenants();
+        if (!isMounted) return;
+
+        setTenants(fetchedTenants);
+        updateTenantCache(fetchedTenants);
+      } catch (error) {
+        console.error("Failed to load tenants", error);
+        if (!isMounted) return;
+
+        if (hasCachedTenants) {
+          setTenantListError(
+            "Unable to refresh tenant data right now. Showing last loaded data.",
+          );
+        } else {
+          // Keep the UI usable in local dev even if Supabase is unavailable.
+          setTenants(INITIAL_DATA);
+          setTenantListError(
+            "Live tenant data is unavailable. Showing fallback data.",
+          );
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingTenants(false);
+          setIsRefreshingTenants(false);
+        }
+      }
+    };
+
+    loadTenants();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [initialTenants]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -168,6 +258,14 @@ export default function TenantManagement({
     setModalOpen(false);
     setSelectedTenant(null);
     setActionType(null);
+  };
+
+  const handleTenantClick = (tenant: Tenant) => {
+    router.push(`/admin/tenants/${tenant.id}`);
+  };
+
+  const prefetchTenantDetails = (tenantId: string) => {
+    void router.prefetch(`/admin/tenants/${tenantId}`);
   };
 
   const filteredTenants = useMemo(() => {
@@ -308,10 +406,37 @@ export default function TenantManagement({
 
       {/* Tenant List */}
       <div className="flex flex-col gap-3 mt-3">
-        {filteredTenants.map((tenant) => (
-          <TenantCard key={tenant.id} tenant={tenant} />
-        ))}
-        {filteredTenants.length === 0 && (
+        {tenantListError && (
+          <div className="rounded-2xl border border-warning-primary/20 bg-warning-primary/5 px-4 py-3 text-sm text-warning-primary">
+            {tenantListError}
+          </div>
+        )}
+
+        {isRefreshingTenants && !isLoadingTenants && (
+          <div className="rounded-2xl border border-gray-100 bg-white px-4 py-3 text-sm text-gray-500 flex items-center gap-2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Refreshing tenant directory...
+          </div>
+        )}
+
+        {isLoadingTenants && (
+          <div className="space-y-3">
+            {[1, 2, 3].map((item) => (
+              <TenantCardSkeleton key={item} />
+            ))}
+          </div>
+        )}
+
+        {!isLoadingTenants &&
+          filteredTenants.map((tenant) => (
+            <TenantCard
+              key={tenant.id}
+              tenant={tenant}
+              onClick={handleTenantClick}
+              onPrefetch={prefetchTenantDetails}
+            />
+          ))}
+        {!isLoadingTenants && filteredTenants.length === 0 && (
           <div className="text-center py-12 text-gray-400 bg-white rounded-2xl border border-dashed">
             No tenants found matching your search and filters.
           </div>
@@ -331,10 +456,36 @@ export default function TenantManagement({
   );
 }
 
-function TenantCard({ tenant }: { tenant: Tenant }) {
+function TenantCardSkeleton() {
   return (
-    <Link
-      href={`/admin/tenants/${tenant.id}`}
+    <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-sm animate-pulse">
+      <div className="flex items-start md:items-center gap-4">
+        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gray-100" />
+        <div className="flex-1 min-w-0 space-y-2">
+          <div className="h-4 sm:h-5 w-2/3 bg-gray-100 rounded-lg" />
+          <div className="h-3 w-1/2 bg-gray-100 rounded-lg" />
+        </div>
+        <div className="h-6 w-20 bg-gray-100 rounded-full" />
+      </div>
+    </div>
+  );
+}
+
+function TenantCard({
+  tenant,
+  onClick,
+  onPrefetch,
+}: {
+  tenant: Tenant;
+  onClick: (tenant: Tenant) => void;
+  onPrefetch: (tenantId: string) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onClick(tenant)}
+      onMouseEnter={() => onPrefetch(tenant.id)}
+      onFocus={() => onPrefetch(tenant.id)}
       className="group bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col md:flex-row md:items-center gap-4 transition-all hover:border-orange-100 block"
     >
       <div className="flex items-start md:items-center gap-4 md:w-[60%] shrink-0">
@@ -406,7 +557,7 @@ function TenantCard({ tenant }: { tenant: Tenant }) {
           </Badge>
         </div>
       </div>
-    </Link>
+    </button>
   );
 }
 
