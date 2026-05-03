@@ -142,27 +142,25 @@ export default function SalesRevenueSuite() {
                 </div>
             </div>
 
-            {/* ─── ADJUSTED GRAPH SECTION ─── */}
+            {/* GRAPH SECTION */}
             <div className="relative h-[220px] md:h-[280px] mb-2">
-              {/* Responsive Left Y-Axis */}
-              <div className="absolute left-0 h-full flex flex-col justify-between text-[9px] md:text-[11px] font-medium text-gray-400 z-0 pointer-events-none">
+              <div className="absolute left-0 h-full flex flex-col justify-between b4 font-medium text-gray-400 z-0 pointer-events-none">
                 {["$8.8m", "$8.6m", "$8.4m", "$8.2m", "$8m"].map(v => <div key={v} className="h-0 flex items-center"><span>{v}</span></div>)}
               </div>
 
-              {/* Responsive Right Y-Axis */}
-              <div className="absolute right-0 h-full flex flex-col justify-between text-[9px] md:text-[11px] font-medium text-gray-400 text-right z-0 pointer-events-none">
+              <div className="absolute right-4 h-full flex flex-col justify-between b4 font-medium text-gray-400 z-0 pointer-events-none">
                 {["150", "120", "60", "30", "0"].map(v => <div key={v} className="h-0 flex items-center justify-end w-full"><span>{v}</span></div>)}
               </div>
               
-              {/* Responsive Grid Lines */}
+              {/* Grid Lines */}
               <div className="absolute inset-x-10 md:inset-x-12 top-0 h-full flex flex-col justify-between pointer-events-none z-0">
                 {[...Array(5)].map((_, i) => (
                   <div key={i} className="w-full border-t border-gray-100" />
                 ))}
               </div>
 
-              {/* Responsive Bars Container */}
-              <div className="absolute inset-x-10 md:inset-x-12 top-0 h-full flex items-end justify-between px-1 sm:px-4 z-10">
+              {/* Bars Container */}
+              <div className="absolute inset-x-10 md:inset-x-12 top-0 h-full flex items-center justify-between px-1 sm:px-4 z-10">
                 {CHART_DATA.map((item) => (
                   <div 
                     key={item.month} 
@@ -193,7 +191,7 @@ export default function SalesRevenueSuite() {
               </div>
             </div>
 
-            {/* Responsive Month labels alignment */}
+            {/* Month labels alignment */}
             <div className="flex justify-between items-center px-10 md:px-[4.5rem] mb-8">
               {CHART_DATA.map((item) => (
                 <div key={item.month} className="flex-1 text-center">
@@ -205,7 +203,7 @@ export default function SalesRevenueSuite() {
               ))}
             </div>
 
-            {/* Legend (Wrapping for mobile) */}
+            {/* Legend */}
             <div className="flex flex-wrap justify-center gap-4 sm:gap-8">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 bg-[#FFD77A] rounded-full" />
