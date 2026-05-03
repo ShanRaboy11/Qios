@@ -6,8 +6,6 @@ import { Button } from "@/components/atoms/Button";
 import { cn } from "@/lib/utils";
 
 interface ContactInformationProps {
-  data: { phoneNumber: string };
-  setData: React.Dispatch<React.SetStateAction<{ phoneNumber: string }>>;
   expectedCode: string;
   onResendCode: () => Promise<string>;
   onVerified: () => Promise<void> | void;
@@ -69,8 +67,6 @@ export function ContactInformation({ expectedCode, onResendCode, onVerified, onB
     /* items-center centers the content horizontally */
     <div className="flex flex-col items-center w-full space-y-10 animate-in fade-in slide-in-from-right-8 duration-500 ">
       
-      {/* Contact Number section removed as requested */}
-
       {/* Timer and OTP */}
       <div className="flex flex-col items-center w-full max-w-[550px] space-y-12 pt-4">
         <div className="flex items-center gap-5">

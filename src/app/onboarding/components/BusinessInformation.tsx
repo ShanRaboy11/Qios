@@ -9,48 +9,46 @@ export const Required = () => (
 export function BusinessInformation({ data, setData, error }: any) {
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-right-8 duration-500 w-full max-w-[450px]">
-      
       <FormField
-        label={<>Business Name <Required /></>}
+        label={
+          <>
+            Business Name <Required />
+          </>
+        }
         placeholder="Business Name"
         className="max-w-none"
         value={data.name}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
           setData((prev: any) => ({ ...prev, name: e.target.value }))
         }
       />
 
       <FormField
-        label={<>Business Email Address <Required /></>}
+        label={
+          <>
+            Business Email Address <Required />
+          </>
+        }
         placeholder="Business Email Address"
         className="max-w-none"
         value={data.email}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
           setData((prev: any) => ({ ...prev, email: e.target.value }))
         }
       />
 
       <FormField
-        label={<>Owner / Admin Name <Required /></>}
+        label={
+          <>
+            Owner / Admin Name <Required />
+          </>
+        }
         placeholder="Owner / Admin Name"
         className="max-w-none"
         value={data.owner || ""}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
           setData((prev: any) => ({ ...prev, owner: e.target.value }))
         }
-      />
-
-      <FormField
-        label={<>Contact Number <Required /></>}
-        placeholder="09123456789"
-        type="tel"
-        className="max-w-none"
-        value={data.phoneNumber || ""}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-          const val = e.target.value.replace(/\D/g, "");
-          setData((prev: any) => ({ ...prev, phoneNumber: val }))
-        }}
-        supportiveText="Philippine phone number without +63"
       />
     </div>
   );

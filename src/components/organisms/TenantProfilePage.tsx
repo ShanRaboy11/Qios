@@ -18,7 +18,7 @@ import {
 
 export interface TenantProfileData {
   id: string;
-  name: string;
+  business_name: string;
   type: string;
   status: "Active" | "Pending" | "Suspended" | "Rejected";
   owner: string;

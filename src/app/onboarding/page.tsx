@@ -1,8 +1,17 @@
 "use client";
-import React, { useState } from "react";
-import { 
-  FileText, Contact, ShoppingBag, Component, 
-  IdCard, ArrowRight, ArrowLeft, CheckCircle2, FileCheck 
+
+import React, { useState, useEffect, useRef } from "react";
+import {
+  Building2,
+  ShoppingBag,
+  Component,
+  IdCard,
+  ArrowRight,
+  ArrowLeft,
+  CheckCircle2,
+  FileCheck,
+  ShieldCheck,
+  ClipboardCheck,
 } from "lucide-react";
 import { Button } from "@/components/atoms/Button";
 import { cn } from "@/lib/utils";
@@ -10,106 +19,647 @@ import { cn } from "@/lib/utils";
 import { OnboardingSidebar } from "./components/Sidebar";
 import { BusinessInformation } from "./components/BusinessInformation";
 import { DocumentUpload } from "./components/DocumentUpload";
-import { ContactInformation } from "./components/ContactInformation";
 import { AuthCredentials } from "./components/AuthCredentials";
 import { SubscriptionPackage } from "./components/SubscriptionPackage";
-import { FeatureConfig } from "./components/FeatureConfiguration";
+import { OperationalSetup } from "./components/OperationalSetup";
+import { ContactInformation } from "./components/ContactInformation";
+import { ReviewSummary } from "./components/ReviewSummary";
 import { RegistrationSuccessModal } from "./components/RegistrationSuccessModal";
+import { DOCUMENT_REQUIREMENTS } from "./documentRequirements";
 import { Navbar } from "@/components/organisms/navbar";
 import { Footer } from "@/components/organisms/footer";
-import { processOnboarding, sendContactVerificationCode } from "./actions";
+import {
+  processOnboarding,
+  resolveOnboardingAccess,
+  sendContactVerificationCode,
+  createDevOnboardingAuthUser,
+  saveBusinessInformation,
+  saveDocumentUploads,
+  saveOnboardingProgress,
+} from "./actions";
 import { useRouter } from "next/navigation";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import type { OperationalSetupConfig, SubscriptionPlan } from "@/types/tenant";
 
 const steps = [
-  { id: 1, title: "Business Information", icon: FileText },
-  { id: 2, title: "Contact Verification", icon: Contact },
-  { id: 3, title: "Authentication Credentials", icon: IdCard },
+  { id: 1, title: "Account Creation", icon: IdCard },
+  { id: 2, title: "Identity Verification", icon: ShieldCheck },
+  { id: 3, title: "Business Information", icon: Building2 },
   { id: 4, title: "Document Requirements", icon: FileCheck },
   { id: 5, title: "Subscription Package", icon: ShoppingBag },
-  { id: 6, title: "Feature Configuration", icon: Component },
+  { id: 6, title: "Operational Strategy", icon: Component },
+  { id: 7, title: "Application Summary", icon: ClipboardCheck },
 ];
+
+function MobileStepBar({
+  currentStep,
+  totalSteps,
+}: {
+  currentStep: number;
+  totalSteps: number;
+}) {
+  const step = steps.find((s) => s.id === currentStep);
+  const StepIcon = step?.icon;
+  const progress = Math.round((currentStep / totalSteps) * 100);
+
+  return (
+    <div className="lg:hidden sticky top-[72px] z-20 bg-white border-b border-neutral-100 px-4 py-3 shadow-sm">
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          {StepIcon && (
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--color-brand-primary)]/10">
+              <StepIcon className="h-3.5 w-3.5 text-[var(--color-brand-primary)]" />
+            </div>
+          )}
+          <span className="text-sm font-semibold text-[var(--color-text-primary)]">
+            {step?.title}
+          </span>
+        </div>
+        <span className="text-xs font-medium text-[var(--color-text-secondary)]">
+          {currentStep} of {totalSteps}
+        </span>
+      </div>
+      <div className="h-1.5 w-full rounded-full bg-neutral-100 overflow-hidden">
+        <div
+          className="h-full rounded-full bg-[var(--color-brand-primary)] transition-all duration-500 ease-out"
+          style={{ width: `${progress}%` }}
+        />
+      </div>
+    </div>
+  );
+}
 
 export default function OnboardingPage() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  
-  const [businessData, setBusinessData] = useState({ name: "", email: "", owner: "", phoneNumber: "" });
-  const [contactData, setContactData] = useState({ phoneNumber: "" });
-  const [authData, setAuthData] = useState({ email: "", password: "", confirm: "" });
-  const [subscriptionData, setSubscriptionData] = useState({ packageId: "starter" });
+
+  const [businessData, setBusinessData] = useState({
+    name: "",
+    email: "",
+    owner: "",
+  });
+  const [authData, setAuthData] = useState({
+    email: "",
+    password: "",
+    confirm: "",
+  });
+  const [subscriptionData, setSubscriptionData] = useState({
+    packageId: "starter",
+  });
   const [documentData, setDocumentData] = useState<Record<string, File>>({});
+  const [existingDocumentUrls, setExistingDocumentUrls] = useState<Record<string, string>>({});
   const [verificationCode, setVerificationCode] = useState("");
-  
+  const [tenantId, setTenantId] = useState("");
+  const [userId, setUserId] = useState("");
+  const [operationalData, setOperationalData] = useState<OperationalSetupConfig>({
+    inventoryMode: "unit",
+    serviceWorkflow: "pickup",
+    dashboardFocus: "revenue",
+    supplyLogic: "local",
+  });
+
+  // Pending background save promises (optimistic saves)
+  const pendingSaveBusiness = useRef<Promise<any> | null>(null);
+  const pendingSaveDocuments = useRef<Promise<any> | null>(null);
+  const pendingSaveProgress = useRef<Promise<any> | null>(null);
+
+  // Ensure onboarding always starts fresh when page is opened.
+  useEffect(() => {
+    const clearSession = async () => {
+      try {
+        const supabase = createSupabaseBrowserClient();
+        await supabase.auth.signOut();
+      } catch {
+        // ignore
+      }
+
+      setAuthData({ email: "", password: "", confirm: "" });
+      setTenantId("");
+      setUserId("");
+      setVerificationCode("");
+      setExistingDocumentUrls({});
+      setDocumentData({});
+      setSubscriptionData({ packageId: "starter" });
+      setOperationalData({
+        inventoryMode: "unit",
+        serviceWorkflow: "pickup",
+        dashboardFocus: "revenue",
+        supplyLogic: "local",
+      });
+      setCurrentStep(1);
+    };
+
+    void clearSession();
+    // run only on mount
+  }, []);
+
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  
+
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [registrationData, setRegistrationData] = useState({ businessName: "", businessEmail: "" });
+  const [registrationData, setRegistrationData] = useState({
+    businessName: "",
+    businessEmail: "",
+  });
 
   const validateEmail = (email: string) => /\S+@\S+\.\S+/.test(email);
 
-  const dispatchVerificationCode = async () => {
-    const res = await sendContactVerificationCode({
-      email: businessData.email,
-      businessName: businessData.name,
-    });
+  const getSelectedPlan = (packageId: string): SubscriptionPlan => {
+    if (packageId === "basic" || packageId === "starter") return "basic";
+    if (packageId === "business" || packageId === "growth") return "business";
+    if (packageId === "enterprise" || packageId === "enterprises") {
+      return "enterprise";
+    }
+    return "basic";
+  };
 
+  const mapOperationalSetup = (settings?: Record<string, unknown> | null) => {
+    if (!settings) {
+      return {};
+    }
+
+    return {
+      ...(typeof settings.inventory_mode === "string"
+        ? { inventoryMode: settings.inventory_mode }
+        : {}),
+      ...(typeof settings.service_workflow === "string"
+        ? { serviceWorkflow: settings.service_workflow }
+        : {}),
+      ...(typeof settings.dashboard_focus === "string"
+        ? { dashboardFocus: settings.dashboard_focus }
+        : {}),
+      ...(typeof settings.supply_logic === "string"
+        ? { supplyLogic: settings.supply_logic }
+        : {}),
+    } as Partial<OperationalSetupConfig>;
+  };
+
+  const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
+
+  const dispatchVerificationCode = async ({
+    email = businessData.email || authData.email,
+    businessName = businessData.name || businessData.email || authData.email,
+  }: {
+    email?: string;
+    businessName?: string;
+  } = {}) => {
+    const res = await sendContactVerificationCode({
+      email,
+      businessName,
+    });
     setVerificationCode(res.verificationCode);
     return res.verificationCode;
   };
 
-  const nextStep = async () => {
-    setError("");
-    setSuccess("");
+  const hydrateForm = (access: Awaited<ReturnType<typeof resolveOnboardingAccess>>) => {
+    const tenant = access.tenant;
 
-    if (currentStep === 1) {
-      if (!businessData.name.trim()) return setError("Business Name is required");
-      if (!validateEmail(businessData.email)) return setError("A valid business email is required");
-      if (!businessData.owner?.trim()) return setError("Owner / Admin Name is required");
-      if (!businessData.phoneNumber || businessData.phoneNumber.length < 10) return setError("A valid Philippine phone number is required");
+    setUserId(access.userId || "");
+    setTenantId(access.tenantId || tenant?.id || "");
+    setAuthData((prev) => ({
+      ...prev,
+      email: access.adminEmail || prev.email || access.businessEmail || "",
+    }));
 
-      setLoading(true);
-      try {
-        await dispatchVerificationCode();
-        setSuccess(`Verification code sent to ${businessData.email}`);
-        setCurrentStep(2);
-      } catch (err: any) {
-        setError(err.message || "Unable to send verification code.");
-      } finally {
-        setLoading(false);
+    setBusinessData({
+      name: tenant?.business_name || access.businessName || "",
+      email: tenant?.business_email || access.businessEmail || "",
+      owner: tenant?.owner_name || access.ownerName || "",
+    });
+
+    setSubscriptionData({
+      packageId: tenant?.subscription_plan || access.subscriptionPlan || "starter",
+    });
+
+    setOperationalData((prev) => ({
+      ...prev,
+      ...mapOperationalSetup(tenant?.settings),
+      ...(access.operationalSetup || {}),
+    }));
+
+    const verificationDocUrls =
+      tenant?.verification_doc_urls || access.verificationDocUrls || [];
+
+    const nextExistingUrls = DOCUMENT_REQUIREMENTS.reduce<Record<string, string>>((acc, requirement, index) => {
+      const nextUrl = verificationDocUrls[index];
+      if (nextUrl) {
+        acc[requirement.id] = nextUrl;
       }
-      return;
-    }
+      return acc;
+    }, {});
 
-    if (currentStep === 3) {
-      if (!validateEmail(authData.email)) return setError("Valid Admin Email is required");
-      if (authData.password.length < 8) return setError("Password must be at least 8 characters");
-      if (authData.password !== authData.confirm) return setError("Passwords do not match");
-    }
-
-    setCurrentStep((prev) => Math.min(prev + 1, steps.length));
-    window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll to top on step change
+    setExistingDocumentUrls(nextExistingUrls);
+    setDocumentData({});
   };
 
-  const prevStep = () => {
+  const handleAutoResume = async (email: string) => {
+    try {
+      setAuthData((prev) => ({ ...prev, email }));
+      const access = await resolveOnboardingAccess({ email });
+
+      // If onboarding is already submitted (eg. status: "pending/completed"), clear any session and do not resume
+      if (access.status === "completed") {
+        try {
+          const supabase = createSupabaseBrowserClient();
+          await supabase.auth.signOut();
+        } catch (e) {
+          // no-op
+        }
+
+        setAuthData({ email: "", password: "", confirm: "" });
+        setTenantId("");
+        setUserId("");
+        setVerificationCode("");
+        setExistingDocumentUrls({});
+        setDocumentData({});
+        setSubscriptionData({ packageId: "starter" });
+        setOperationalData({
+          inventoryMode: "unit",
+          serviceWorkflow: "pickup",
+          dashboardFocus: "revenue",
+          supplyLogic: "local",
+        });
+        setCurrentStep(1);
+        scrollToTop();
+        return;
+      }
+
+      hydrateForm(access);
+
+      if (access.userVerified) {
+        setCurrentStep(access.nextStep || 3);
+        setSuccess("Session restored. Continuing from your saved progress.");
+        scrollToTop();
+        return;
+      }
+
+      if (access.status === "resume-onboarding" || access.userExists) {
+        await dispatchVerificationCode({
+          email,
+          businessName: access.businessName || email,
+        });
+        setCurrentStep(2);
+        setSuccess("We found your account. Verify your email OTP to continue.");
+        scrollToTop();
+      }
+    } catch (err: any) {
+      setError(err.message || "Unable to restore your session automatically.");
+    }
+  };
+
+  const loginAndResume = async (
+    access: Awaited<ReturnType<typeof resolveOnboardingAccess>>,
+  ) => {
+    const supabase = createSupabaseBrowserClient();
+    const { data, error: signInError } = await supabase.auth.signInWithPassword({
+      email: authData.email,
+      password: authData.password,
+    });
+
+    if (signInError || !data.user) {
+      throw new Error(
+        "This account already exists. Please use the correct password to continue onboarding.",
+      );
+    }
+
+    setUserId(data.user.id);
+    hydrateForm(access);
+    setCurrentStep(access.nextStep || 3);
+    setSuccess("Welcome back. Continuing your saved onboarding progress.");
+    scrollToTop();
+  };
+
+  const handleAuthContinue = async () => {
     setError("");
     setSuccess("");
-    setCurrentStep((prev) => Math.max(prev - 1, 1));
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    if (!validateEmail(authData.email)) {
+      return setError("A valid admin email is required.");
+    }
+    if (authData.password.length < 8) {
+      return setError("Password must be at least 8 characters.");
+    }
+    if (authData.password !== authData.confirm) {
+      return setError("Passwords do not match.");
+    }
+
+    setLoading(true);
+    try {
+      const supabase = createSupabaseBrowserClient();
+      const access = await resolveOnboardingAccess({ email: authData.email });
+
+      if (access.status === "completed") {
+        try {
+          await supabase.auth.signOut();
+        } catch {
+          // no-op
+        }
+
+        setAuthData({ ...authData, password: "", confirm: "" });
+        setTenantId("");
+        setUserId("");
+        setVerificationCode("");
+        setExistingDocumentUrls({});
+        setDocumentData({});
+        setSubscriptionData({ packageId: "starter" });
+
+        setError("This email is already registered and onboarding has been submitted.");
+        return;
+      }
+
+      if (access.userVerified) {
+        await loginAndResume(access);
+        return;
+      }
+
+      if (process.env.NODE_ENV !== "production") {
+        const devUser = await createDevOnboardingAuthUser({
+          email: authData.email,
+          password: authData.password,
+        });
+
+        setUserId(devUser.userId);
+      } else {
+        const { data, error: signUpError } = await supabase.auth.signUp({
+          email: authData.email,
+          password: authData.password,
+        });
+
+        if (signUpError) {
+          const msg = signUpError.message || "";
+
+          if (/already/i.test(msg) || /exists/i.test(msg)) {
+            const refreshedAccess = await resolveOnboardingAccess({ email: authData.email });
+
+            if (refreshedAccess.userVerified) {
+              await loginAndResume(refreshedAccess);
+              return;
+            }
+
+            hydrateForm(refreshedAccess);
+            await dispatchVerificationCode({
+              email: authData.email,
+              businessName: refreshedAccess.businessName || authData.email,
+            });
+            setCurrentStep(2);
+            setSuccess("Account found. Verify your email OTP to continue.");
+            scrollToTop();
+            return;
+          }
+
+          throw new Error(signUpError.message || "Failed to create account. Please try again.");
+        }
+
+        if (data.user?.id) {
+          setUserId(data.user.id);
+        }
+      }
+
+      await dispatchVerificationCode({
+        email: authData.email,
+        businessName: businessData.name || authData.email,
+      });
+
+      setCurrentStep(2);
+      setSuccess("Enter the 6-digit OTP sent to your email.");
+      scrollToTop();
+    } catch (err: any) {
+      setError(err.message || "An error occurred during signup. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
-  
-  const handleFinalize = async (featureData: any) => {
+
+  const handleOtpVerification = async () => {
+    setError("");
+    setSuccess("");
+
+    setLoading(true);
+    try {
+      if (!userId) {
+        const access = await resolveOnboardingAccess({ email: authData.email });
+        if (access.userId) {
+          setUserId(access.userId);
+        } else {
+          throw new Error("Could not resolve your account. Please return to Step 1 and try again.");
+        }
+      }
+
+      setCurrentStep(3);
+      scrollToTop();
+    } catch (err: any) {
+      setError(err.message || "Unable to verify OTP.");
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOtpResend = async () => {
+    return dispatchVerificationCode({
+      email: authData.email,
+      businessName: businessData.name || authData.email,
+    });
+  };
+
+  const handleBusinessContinue = async () => {
+    setError("");
+    setSuccess("");
+
+    if (!businessData.name.trim()) {
+      return setError("Business name is required.");
+    }
+
+    if (!validateEmail(businessData.email)) {
+      return setError("A valid business email is required.");
+    }
+
+    if (!businessData.owner?.trim()) {
+      return setError("Owner / admin name is required.");
+    }
+
+    // Start saving in background and advance immediately (optimistic)
+    try {
+      const promise = saveBusinessInformation({
+        tenantId: tenantId || undefined,
+        userId,
+        businessData: {
+          name: businessData.name,
+          email: businessData.email,
+          owner: businessData.owner,
+        },
+      })
+        .then((res) => {
+          if (res?.tenantId) {
+            setTenantId(res.tenantId);
+          }
+        })
+        .catch((err: any) => {
+          setError(err?.message || "Unable to save business information in background.");
+        })
+        .finally(() => {
+          pendingSaveBusiness.current = null;
+        });
+
+      pendingSaveBusiness.current = promise;
+
+      setSuccess("Progress saved locally. Finishing save in background.");
+      setCurrentStep(4);
+      scrollToTop();
+    } catch (err: any) {
+      setError(err.message || "Unable to start saving business information.");
+    }
+  };
+
+  const handleDocumentContinue = async () => {
+    setError("");
+    setSuccess("");
+
+    // Ensure tenantId is available (wait for background business save if needed)
+    if (!tenantId) {
+      if (pendingSaveBusiness.current) {
+        await pendingSaveBusiness.current;
+      }
+      if (!tenantId) {
+        return setError("Please save business information first.");
+      }
+    }
+
+    if (!userId) {
+      return setError("Please verify your account before uploading documents.");
+    }
+
+    try {
+      const filesData: Record<string, { name: string; base64: string; type: string }> = {};
+      for (const [key, file] of Object.entries(documentData)) {
+        const reader = new FileReader();
+        const base64 = await new Promise<string>((resolve) => {
+          reader.onload = () => {
+            const result = reader.result as string;
+            resolve(result.split(",")[1]);
+          };
+          reader.readAsDataURL(file);
+        });
+        filesData[key] = { name: file.name, base64, type: file.type };
+      }
+
+      // Start upload in background and continue immediately
+      const promise = saveDocumentUploads({
+        tenantId,
+        userId,
+        filesData,
+        existingDocumentUrls,
+      })
+        .then((res) => {
+          if (res.success && res.uploadedUrls) {
+            // Map urls back to requirement ids
+            const next: Record<string, string> = {};
+            res.uploadedUrls.forEach((url: string, idx: number) => {
+              const id = DOCUMENT_REQUIREMENTS[idx]?.id;
+              if (id) next[id] = url;
+            });
+            setExistingDocumentUrls((prev) => ({ ...prev, ...next }));
+            setSuccess("Documents saved in background.");
+          }
+        })
+        .catch((err: any) => {
+          setError(err?.message || "Unable to upload documents in background.");
+        })
+        .finally(() => {
+          pendingSaveDocuments.current = null;
+        });
+
+      pendingSaveDocuments.current = promise;
+
+      setSuccess("Progress saved locally. Uploading documents in background.");
+      setCurrentStep(5);
+      scrollToTop();
+    } catch (err: any) {
+      setError(err.message || "Unable to start document upload.");
+    }
+  };
+
+  const handleSubscriptionContinue = async () => {
+    setError("");
+    setSuccess("");
+
+    if (!tenantId) {
+      return setError("Please save business information first.");
+    }
+    try {
+      // start save in background
+      const promise = saveOnboardingProgress({
+        tenantId,
+        subscriptionData,
+      })
+        .then((res) => {
+          if (res?.tenantId) setTenantId(res.tenantId);
+        })
+        .catch((err: any) => setError(err?.message || "Unable to save subscription in background."))
+        .finally(() => {
+          pendingSaveProgress.current = null;
+        });
+
+      pendingSaveProgress.current = promise;
+
+      setSuccess("Progress saved locally. Updating subscription in background.");
+      setCurrentStep(6);
+      scrollToTop();
+    } catch (err: any) {
+      setError(err.message || "Unable to start subscription save.");
+    }
+  };
+
+  const handleOperationalContinue = async (featureData: OperationalSetupConfig) => {
+    setError("");
+    setSuccess("");
+
+    if (!tenantId) {
+      return setError("Please save business information first.");
+    }
+    try {
+      setOperationalData(featureData);
+
+      const promise = saveOnboardingProgress({
+        tenantId,
+        featureData,
+      })
+        .then((res) => {
+          if (res?.tenantId) setTenantId(res.tenantId);
+        })
+        .catch((err: any) => setError(err?.message || "Unable to save operational strategy in background."))
+        .finally(() => {
+          pendingSaveProgress.current = null;
+        });
+
+      pendingSaveProgress.current = promise;
+
+      setSuccess("Progress saved locally. Finalizing in background.");
+      setCurrentStep(7);
+      scrollToTop();
+    } catch (err: any) {
+      setError(err.message || "Unable to start operational save.");
+    }
+  };
+
+  const handleSubmitApplication = async () => {
     setLoading(true);
     setError("");
+
     try {
+      if (!tenantId) {
+        throw new Error("Your onboarding session is incomplete. Please continue from business information.");
+      }
+
       const res = await processOnboarding({
+        tenantId,
         businessData,
-        authData,
         subscriptionData,
-        featureData,
-        documentData
+        featureData: operationalData,
+        userId,
       });
+
       if (res.success) {
         setRegistrationData({
           businessName: res.businessName,
@@ -124,121 +674,206 @@ export default function OnboardingPage() {
     }
   };
 
+  const handleChangeEmail = async () => {
+    setError("");
+    setSuccess("");
+    setVerificationCode("");
+    setTenantId("");
+    setUserId("");
+
+    try {
+      const supabase = createSupabaseBrowserClient();
+      await supabase.auth.signOut();
+    } catch {
+      // no-op
+    }
+
+    setCurrentStep(1);
+    scrollToTop();
+  };
+
+  const prevStep = () => {
+    setError("");
+    setSuccess("");
+    setCurrentStep((prev) => Math.max(prev - 1, 1));
+    scrollToTop();
+  };
+
   const handleModalClose = () => {
     setShowSuccessModal(false);
     router.push("/");
   };
 
+  const contentMaxWidth = cn(
+    currentStep === 6
+      ? "max-w-[960px]"
+      : currentStep === 7
+        ? "max-w-[960px]"
+        : currentStep === 4
+          ? "max-w-[1200px]"
+          : currentStep === 5
+            ? "max-w-xl"
+            : "max-w-[450px]",
+  );
+
   return (
-    <main className="flex flex-col min-h-screen bg-white w-full overflow-x-hidden">
+    <main className="flex flex-col min-h-screen bg-[var(--color-bg-primary)] w-full overflow-x-hidden">
       <Navbar variant="transparent" />
-      <div className="flex flex-col lg:flex-row min-h-screen bg-[var(--color-bg-primary)]">
+
+      <div className="flex flex-1 flex-col lg:flex-row pt-[72px]">
         <OnboardingSidebar steps={steps} currentStep={currentStep} />
 
-      {/* MAIN CONTENT AREA */}
-      <div className={cn(
-        "flex-1 flex flex-col items-center px-6 md:px-16 lg:px-16 xl:px-24 min-h-screen transition-all duration-300",
-        currentStep <= 3 ? "justify-center pt-24 lg:pt-0" : "justify-start pt-52 lg:pt-32 pb-20"
-      )}>
-        
-        {/* Title Section */}
-        <div className="w-full mb-8 lg:mb-12 text-center">
-          <h1 className="text-3xl md:text-4xl lg:h1 text-[var(--color-text-primary)] leading-tight lg:whitespace-nowrap">
-            {steps.find(s => s.id === currentStep)?.title}
-          </h1>
-        </div>
+        <MobileStepBar currentStep={currentStep} totalSteps={steps.length} />
 
-        {/* Content Wrapper */}
-        <div className={cn(
-          "w-full transition-all duration-500 mx-auto flex flex-col items-center",
-          (currentStep === 4 || currentStep === 5 || currentStep === 6) ? "max-w-2xl" : "max-w-[450px]"
-        )}>
-          <div className="min-h-fit w-full">
-            {currentStep === 1 && (
-              <BusinessInformation data={businessData} setData={setBusinessData} error={error} />
-            )}
-            
-            {currentStep === 2 && (
-              <ContactInformation
-                data={contactData}
-                setData={setContactData}
-                expectedCode={verificationCode}
-                onResendCode={dispatchVerificationCode}
-                onBack={prevStep}
-                onVerified={nextStep}
-              />
-            )}
-            
-            {currentStep === 3 && (
-              <AuthCredentials data={authData} setData={setAuthData} error={error} />
-            )}
-
-            {currentStep === 4 && (
-              <DocumentUpload data={documentData} setData={setDocumentData} onNext={nextStep} onBack={prevStep} />
-            )}
-            
-            {currentStep === 5 && (
-              <SubscriptionPackage data={subscriptionData} setData={setSubscriptionData} onNext={nextStep} onBack={prevStep} />
-            )}
-
-            {currentStep === 6 && (
-              <FeatureConfig onFinish={handleFinalize} onBack={prevStep} />
-            )}
+        <div
+          className={cn(
+            "flex-1 flex flex-col items-center px-4 sm:px-6 md:px-10 lg:px-12 xl:px-24",
+            currentStep <= 3
+              ? "justify-center min-h-[calc(100vh-72px)]"
+              : "justify-start pt-12 pb-20",
+          )}
+        >
+          <div className="w-full mb-8 text-center">
+            <h1 className="text-3xl md:text-4xl font-bold text-[var(--color-text-primary)]">
+              {steps.find((s) => s.id === currentStep)?.title}
+            </h1>
           </div>
 
-          {/* Action Buttons for Step 1 & 3 */}
-          {(currentStep === 1 || currentStep === 3) && (
-            <div className="flex flex-col mt-12 w-full items-center">
+          {(success || error) && currentStep <= 3 && (
+            <div className="w-full max-w-[450px] mb-6 space-y-3">
               {success && (
-                <div className="flex items-center gap-2 text-green-600 bg-green-50 p-3 rounded-lg mb-4 border border-green-100">
-                  <CheckCircle2 className="w-4 h-4" />
+                <div className="flex items-center gap-2 w-full text-green-700 bg-green-50 border border-green-100 rounded-xl px-4 py-3">
+                  <CheckCircle2 className="h-4 w-4 shrink-0" />
                   <p className="text-sm font-medium">{success}</p>
                 </div>
               )}
-
-              {error && <p className="text-red-500 text-sm mb-4 text-center">{error}</p>}
-              
-              <div className="flex flex-row gap-6 w-full justify-center"> 
-                {currentStep === 3 && (
-                  <Button 
-                    variant="ghost" 
-                    size="lg" 
-                    className="h-13 px-8 border-neutral-200 text-neutral-500" 
-                    onClick={prevStep}
-                    disabled={loading}
-                  >
-                    <ArrowLeft className="w-5 h-5 mr-1" />
-                    Back
-                  </Button>
-                )}
-                <Button 
-                  variant="primary" 
-                  size="lg" 
-                  className={cn(
-                    "h-13 b2 font-bold text-lg shadow-xl shadow-orange-200/50 text-[var(--color-text-tertiary)]",
-                    currentStep === 3 ? "flex-1 max-w-[300px]" : "w-full"
-                  )} 
-                  onClick={nextStep}
-                  disabled={loading}
-                >
-                  {loading && currentStep === 1 ? "Sending Code..." : "Continue"}
-                  {!loading && <ArrowRight className="w-5 h-5 ml-2" />}
-                </Button>
-              </div>
+              {error && (
+                <p className="w-full text-sm text-red-500 bg-red-50 border border-red-100 rounded-xl px-4 py-3 text-center">
+                  {error}
+                </p>
+              )}
             </div>
           )}
-          {currentStep === 6 && error && <p className="text-red-500 text-sm mt-4 text-center">{error}</p>}
+
+          <div className={cn("w-full mx-auto", contentMaxWidth)}>
+            {currentStep === 1 && (
+              <>
+                <AuthCredentials
+                  data={authData}
+                  setData={setAuthData}
+                  onAutoResume={handleAutoResume}
+                />
+                <div className="mt-8 flex flex-col items-center w-full">
+                  <div className="flex flex-row gap-3 w-full">
+                    <Button
+                      variant="primary"
+                      size="lg"
+                      className="h-12 flex-1 text-sm font-bold shadow-lg shadow-orange-200/40"
+                      onClick={handleAuthContinue}
+                      disabled={loading}
+                    >
+                      {loading ? "Creating..." : "Continue"}
+                      {!loading && <ArrowRight className="h-4 w-4 ml-1.5" />}
+                    </Button>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {currentStep === 2 && (
+              <>
+                <ContactInformation
+                  expectedCode={verificationCode}
+                  onResendCode={handleOtpResend}
+                  onVerified={handleOtpVerification}
+                  onBack={prevStep}
+                />
+              </>
+            )}
+
+            {currentStep === 3 && (
+              <>
+                <BusinessInformation data={businessData} setData={setBusinessData} error={error} />
+                <div className="mt-8 flex flex-col items-center w-full">
+                  <div className="flex flex-row gap-3 w-full">
+                    <Button
+                      variant="ghost"
+                      size="lg"
+                      className="h-12 shrink-0 border-neutral-200 px-4 text-sm text-neutral-500"
+                      onClick={prevStep}
+                      disabled={loading}
+                    >
+                      <ArrowLeft className="h-4 w-4 mr-1.5" />
+                      Back
+                    </Button>
+                    <Button
+                      variant="primary"
+                      size="lg"
+                      className="h-12 flex-1 text-sm font-bold shadow-lg shadow-orange-200/40"
+                      onClick={handleBusinessContinue}
+                      disabled={loading}
+                    >
+                      {loading ? "Saving..." : "Continue"}
+                      {!loading && <ArrowRight className="h-4 w-4 ml-1.5" />}
+                    </Button>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {currentStep === 4 && (
+              <DocumentUpload
+                data={documentData}
+                existingUrls={existingDocumentUrls}
+                setData={setDocumentData}
+                onNext={handleDocumentContinue}
+                onBack={prevStep}
+                loading={loading}
+              />
+            )}
+
+            {currentStep === 5 && (
+              <SubscriptionPackage
+                data={subscriptionData}
+                setData={setSubscriptionData}
+                onNext={handleSubscriptionContinue}
+                onBack={prevStep}
+              />
+            )}
+
+            {currentStep === 6 && (
+              <OperationalSetup
+                selectedPlan={getSelectedPlan(subscriptionData.packageId)}
+                onFinish={handleOperationalContinue}
+                onBack={prevStep}
+                loading={loading}
+              />
+            )}
+
+            {currentStep === 7 && (
+              <ReviewSummary
+                adminEmail={authData.email}
+                businessData={businessData}
+                selectedPlan={getSelectedPlan(subscriptionData.packageId)}
+                operationalData={operationalData}
+                onBack={prevStep}
+                onSubmit={handleSubmitApplication}
+                loading={loading}
+              />
+            )}
+          </div>
         </div>
       </div>
-    </div>
-    <Footer />
-    {showSuccessModal && (
-      <RegistrationSuccessModal
-        businessName={registrationData.businessName}
-        businessEmail={registrationData.businessEmail}
-        onClose={handleModalClose}
-      />
-    )}
+
+      <Footer />
+
+      {showSuccessModal && (
+        <RegistrationSuccessModal
+          businessName={registrationData.businessName}
+          businessEmail={registrationData.businessEmail}
+          onClose={handleModalClose}
+        />
+      )}
     </main>
   );
 }

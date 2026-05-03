@@ -36,7 +36,7 @@ export interface TenantProfileDocument {
 
 export interface TenantProfileDetails {
   id: string;
-  name: string;
+  business_name: string;
   type: string;
   status: "Active" | "Suspended" | "Pending" | "Rejected";
   owner: string;
@@ -629,7 +629,7 @@ export async function getTenants() {
 
     return {
       id: t.id,
-      name: resolveTenantName(tenantRecord),
+      business_name: resolveTenantName(tenantRecord),
       owner: resolveOwnerName(tenantRecord, ownerProfile, {}),
       type: "Professional" as "Professional" | "Enterprise" | "Starter",
       joined: formatJoinedDate(t.created_at),
@@ -750,7 +750,7 @@ export async function getTenantProfileDetails(
 
   return {
     id: tenant.id,
-    name: resolveTenantName(tenantRecord),
+    business_name: resolveTenantName(tenantRecord),
     type: planLabel,
     status: mapTenantStatus(
       typeof tenant.status === "string" ? tenant.status : null,
