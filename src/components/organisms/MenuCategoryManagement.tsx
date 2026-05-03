@@ -550,7 +550,7 @@ const MenuCategoryManagement = () => {
                         )}
                       >
                         {/* mobile layout */}
-                        <div className="flex md:hidden flex-col w-full gap-3">
+                        <div className="flex md:hidden flex-col w-full gap-1">
                           <div className="flex items-center justify-between w-full">
                             <div className="flex items-center gap-2">
                               <div className="cursor-grab text-text-secondary/30 hover:text-text-primary active:cursor-grabbing">
@@ -566,13 +566,13 @@ const MenuCategoryManagement = () => {
                             >
                               <button
                                 onClick={() => handleCreateNewItem(cat.id)}
-                                className="w-10 h-10 flex items-center justify-center text-brand-accent bg-brand-accent/10 rounded-xl transition-colors"
+                                className="w-8 h-8 flex items-center justify-center text-brand-accent bg-brand-accent/10 rounded-lg transition-colors"
                               >
                                 <Plus size={18} />
                               </button>
                               <button
                                 onClick={(e) => handleDeleteCategory(e, cat.id)}
-                                className="w-10 h-10 flex items-center justify-center text-warning-primary bg-warning-primary/10 rounded-xl transition-colors"
+                                className="w-8 h-8 flex items-center justify-center text-warning-primary bg-warning-primary/10 rounded-lg transition-colors"
                               >
                                 <Trash2 size={18} />
                               </button>
@@ -778,32 +778,34 @@ const MenuCategoryManagement = () => {
                                   </div>
 
                                   {/* mobile list layout */}
-                                  <div className="flex md:hidden flex-col gap-1 w-full pl-8">
-                                    <h4 className="b2 font-bold text-text-primary truncate">
-                                      {item.name}
-                                    </h4>
-                                    <div className="font-bold text-brand-accent text-lg">
-                                      ₱{item.price}
+                                  <div className="flex md:hidden flex-col gap-0.5 w-full pl-8">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <h4 className="b3 font-bold text-text-primary truncate max-w-[140px]">
+                                        {item.name}
+                                      </h4>
+                                      <div className="flex gap-1">
+                                        {!item.isAvailable && (
+                                          <Badge
+                                            color="error"
+                                            variant="subtle"
+                                            className="px-1.5 py-0 text-[9px] font-bold"
+                                          >
+                                            Unavail
+                                          </Badge>
+                                        )}
+                                        {item.aiSynced && (
+                                          <Badge
+                                            color="success"
+                                            variant="subtle"
+                                            className="px-1.5 py-0 text-[9px] font-bold"
+                                          >
+                                            Synced
+                                          </Badge>
+                                        )}
+                                      </div>
                                     </div>
-                                    <div className="flex gap-2 mt-1">
-                                      {!item.isAvailable && (
-                                        <Badge
-                                          color="error"
-                                          variant="subtle"
-                                          className="px-2 py-0.5 text-[11px] font-bold"
-                                        >
-                                          Unavailable
-                                        </Badge>
-                                      )}
-                                      {item.aiSynced && (
-                                        <Badge
-                                          color="success"
-                                          variant="subtle"
-                                          className="px-2 py-0.5 text-[11px] font-bold"
-                                        >
-                                          AI Synced
-                                        </Badge>
-                                      )}
+                                    <div className="font-bold text-brand-accent b3">
+                                      ₱{item.price}
                                     </div>
                                   </div>
 
@@ -903,7 +905,7 @@ const MenuCategoryManagement = () => {
           <div
             className={cn(
               "fixed bg-bg-primary shadow-2xl flex flex-col z-50 overflow-hidden duration-500 animate-in border-white",
-              "inset-x-0 bottom-0 top-16 w-full rounded-t-[32px] rounded-b-none slide-in-from-bottom border-t-4 border-x-0 border-b-0",
+              "inset-x-0 bottom-0 top-16 w-full rounded-t-[32px] rounded-b-none slide-in-from-bottom border-t-4 border-x-4 border-b-0",
               "lg:top-0 lg:inset-y-0 lg:right-0 lg:left-auto lg:w-[40%] lg:rounded-l-[40px] lg:rounded-r-none lg:slide-in-from-right lg:border-4 lg:border-r-0",
             )}
           >
