@@ -29,12 +29,14 @@ interface TenantProfileBentoGridProps {
     docId: string,
     newStatus: "Approved" | "Revision Requested",
   ) => void;
+  onManagePlan: () => void;
   className?: string;
 }
 
 export const TenantProfileBentoGrid = ({
   tenant,
   onUpdateDocumentStatus,
+  onManagePlan,
   className,
 }: TenantProfileBentoGridProps) => {
   const [previewDocument, setPreviewDocument] = useState<{
@@ -62,7 +64,6 @@ export const TenantProfileBentoGrid = ({
         <div className="flex flex-col h-full">
           <InfoRow label="Owner Name" value={tenant.owner} />
           <InfoRow label="Email Address" value={tenant.email} />
-          <InfoRow label="Contact Number" value={tenant.phone} />
           <InfoRow label="Registration Date" value={tenant.joined} />
         </div>
       </BentoCard>
@@ -215,7 +216,11 @@ export const TenantProfileBentoGrid = ({
           <InfoRow label="Billing Cycle" value={tenant.billingCycle} />
           <InfoRow label="Next Billing Date" value="May 15, 2026" />
           <div className="mt-4 flex-1 flex items-end">
-            <Button variant="outline" className="w-full justify-center">
+            <Button
+              variant="outline"
+              className="w-full justify-center"
+              onClick={onManagePlan}
+            >
               Manage Plan
             </Button>
           </div>

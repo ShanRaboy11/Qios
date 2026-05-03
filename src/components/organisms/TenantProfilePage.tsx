@@ -6,11 +6,15 @@ import { TenantProfileBentoGrid } from "./TenantProfileBentoGrid";
 import { Modal } from "@/components/molecules/Modal";
 import { Button } from "@/components/atoms/Button";
 import { FormField } from "@/components/molecules/FormField";
+import { Dropdown } from "@/components/molecules/Dropdown";
 import { motion, AnimatePresence } from "framer-motion";
 import { TenantProfileSkeleton } from "./TenantProfileSkeleton";
 import { Navbar } from "./navbar";
 import { Footer } from "./footer";
-import { getTenantProfileDetails } from "@/app/(admin)/admin/tenants/actions";
+import {
+  getTenantProfileDetails,
+  updateTenantSubscription,
+} from "@/app/(admin)/admin/tenants/actions";
 
 export interface TenantProfileData {
   id: string;
@@ -37,6 +41,48 @@ export interface TenantProfileData {
 
 interface TenantProfilePageProps {
   tenantId: string;
+}
+
+type PackageId = "starter" | "growth" | "enterprises";
+type BillingCycle = "monthly" | "annually";
+
+const PACKAGE_OPTIONS: { label: string; value: PackageId }[] = [
+  { label: "Starter", value: "starter" },
+  { label: "Growth", value: "growth" },
+  { label: "Enterprises", value: "enterprises" },
+];
+
+const BILLING_CYCLE_OPTIONS: { label: string; value: BillingCycle }[] = [
+  { label: "Monthly", value: "monthly" },
+  { label: "Annually", value: "annually" },
+];
+
+function planLabelFromPackageId(packageId: PackageId) {
+  const selected = PACKAGE_OPTIONS.find((option) => option.value === packageId);
+  return selected?.label ?? "Starter";
+}
+
+function packageIdFromPlanLabel(planLabel: string): PackageId {
+  const normalized = planLabel.trim().toLowerCase();
+  if (normalized.includes("growth") || normalized.includes("business")) {
+    return "growth";
+  }
+
+  if (normalized.includes("enterprise")) {
+    return "enterprises";
+  }
+
+  return "starter";
+}
+
+function billingCycleFromLabel(label: string): BillingCycle {
+  return label.trim().toLowerCase().includes("annual")
+    ? "annually"
+    : "monthly";
+}
+
+function billingLabelFromCycle(cycle: BillingCycle) {
+  return cycle === "annually" ? "Annually" : "Monthly";
 }
 
 type ModalState = {
@@ -67,6 +113,13 @@ export const TenantProfilePage = ({ tenantId }: TenantProfilePageProps) => {
     requireReason: false,
   });
   const [reason, setReason] = useState("");
+  const [isManagePlanOpen, setIsManagePlanOpen] = useState(false);
+  const [selectedPackageId, setSelectedPackageId] =
+    useState<PackageId>("starter");
+  const [selectedBillingCycle, setSelectedBillingCycle] =
+    useState<BillingCycle>("monthly");
+  const [isUpdatingPlan, setIsUpdatingPlan] = useState(false);
+  const [managePlanError, setManagePlanError] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -202,6 +255,58 @@ export const TenantProfilePage = ({ tenantId }: TenantProfilePageProps) => {
     setReason("");
   };
 
+  const openManagePlan = () => {
+    if (!tenant) return;
+
+    setSelectedPackageId(packageIdFromPlanLabel(tenant.plan));
+    setSelectedBillingCycle(billingCycleFromLabel(tenant.billingCycle));
+    setManagePlanError(null);
+    setIsManagePlanOpen(true);
+  };
+
+  const closeManagePlan = () => {
+    if (isUpdatingPlan) return;
+    setIsManagePlanOpen(false);
+    setManagePlanError(null);
+  };
+
+  const saveManagePlan = async () => {
+    if (!tenant) return;
+
+    setIsUpdatingPlan(true);
+    setManagePlanError(null);
+
+    try {
+      await updateTenantSubscription(
+        tenant.id,
+        selectedPackageId,
+        selectedBillingCycle,
+      );
+
+      setTenant((prev) =>
+        prev
+          ? {
+              ...prev,
+              plan: planLabelFromPackageId(selectedPackageId),
+              type: planLabelFromPackageId(selectedPackageId),
+              billingCycle: billingLabelFromCycle(selectedBillingCycle),
+            }
+          : null,
+      );
+
+      setIsManagePlanOpen(false);
+    } catch (error) {
+      console.error("Failed to update tenant subscription", error);
+      setManagePlanError(
+        error instanceof Error
+          ? error.message
+          : "Unable to update subscription plan right now.",
+      );
+    } finally {
+      setIsUpdatingPlan(false);
+    }
+  };
+
   return (
     <>
       <AnimatePresence mode="wait">
@@ -286,6 +391,7 @@ export const TenantProfilePage = ({ tenantId }: TenantProfilePageProps) => {
               <TenantProfileBentoGrid
                 tenant={tenant}
                 onUpdateDocumentStatus={handleUpdateDocumentStatus}
+                onManagePlan={openManagePlan}
               />
             </div>
           </motion.div>
@@ -335,6 +441,51 @@ export const TenantProfilePage = ({ tenantId }: TenantProfilePageProps) => {
               onClick={confirmAction}
             >
               Confirm
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={isManagePlanOpen}
+        onClose={closeManagePlan}
+        title="Manage Subscription Plan"
+      >
+        <div className="flex flex-col gap-5">
+          <p className="text-[15px] text-text-secondary">
+            Update the tenant's plan and billing cycle.
+          </p>
+
+          <Dropdown
+            label="Plan"
+            options={PACKAGE_OPTIONS}
+            value={selectedPackageId}
+            onSelect={(option) => setSelectedPackageId(option.value as PackageId)}
+          />
+
+          <Dropdown
+            label="Billing Cycle"
+            options={BILLING_CYCLE_OPTIONS}
+            value={selectedBillingCycle}
+            onSelect={(option) =>
+              setSelectedBillingCycle(option.value as BillingCycle)
+            }
+          />
+
+          {managePlanError && (
+            <p className="text-sm text-warning-primary">{managePlanError}</p>
+          )}
+
+          <div className="flex items-center justify-end gap-3 pt-2">
+            <Button variant="warning" onClick={closeManagePlan}>
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              onClick={saveManagePlan}
+              disabled={isUpdatingPlan}
+            >
+              {isUpdatingPlan ? "Saving..." : "Save Plan"}
             </Button>
           </div>
         </div>
