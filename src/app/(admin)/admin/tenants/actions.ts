@@ -112,6 +112,220 @@ function resolveTenantName(tenant: Record<string, unknown>) {
   return "Unnamed Tenant";
 }
 
+function pickFirstString(
+  record: Record<string, unknown>,
+  keys: string[],
+): string | null {
+  for (const key of keys) {
+    const value = record[key];
+    if (typeof value === "string" && value.trim() !== "") {
+      return value.trim();
+    }
+  }
+
+  return null;
+}
+
+function pickFirstValue(record: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    const value = record[key];
+    if (value !== undefined && value !== null) {
+      return value;
+    }
+  }
+
+  return null;
+}
+
+function toTitleCaseWords(raw: string) {
+  return raw
+    .replace(/[_-]/g, " ")
+    .split(" ")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function resolveOwnerName(
+  tenantRecord: Record<string, unknown>,
+  ownerProfile: any,
+  ownerMetadata: Record<string, unknown>,
+) {
+  const tenantOwnerName = pickFirstString(tenantRecord, [
+    "owner_name",
+    "owner",
+    "contact_name",
+    "primary_contact_name",
+    "admin_name",
+  ]);
+  if (tenantOwnerName) return tenantOwnerName;
+
+  const metadataOwnerName = pickFirstString(ownerMetadata, [
+    "owner_name",
+    "full_name",
+    "contact_name",
+    "name",
+  ]);
+  if (metadataOwnerName) return metadataOwnerName;
+
+  if (
+    typeof ownerProfile?.full_name === "string" &&
+    ownerProfile.full_name.trim() !== ""
+  ) {
+    return ownerProfile.full_name;
+  }
+
+  return "Unknown";
+}
+
+function resolveOwnerEmail(
+  tenantRecord: Record<string, unknown>,
+  ownerEmail: string | null,
+  ownerMetadata: Record<string, unknown>,
+) {
+  return (
+    pickFirstString(tenantRecord, [
+      "owner_email",
+      "email",
+      "business_email",
+      "contact_email",
+      "primary_email",
+    ]) ??
+    pickFirstString(ownerMetadata, [
+      "business_email",
+      "owner_email",
+      "email",
+    ]) ??
+    ownerEmail ??
+    ""
+  );
+}
+
+function resolveOwnerPhone(
+  tenantRecord: Record<string, unknown>,
+  ownerPhone: string | null,
+  ownerMetadata: Record<string, unknown>,
+) {
+  return (
+    pickFirstString(tenantRecord, [
+      "owner_phone",
+      "phone",
+      "phone_number",
+      "contact_phone",
+      "contact_number",
+      "mobile_number",
+    ]) ??
+    pickFirstString(ownerMetadata, [
+      "phone",
+      "phone_number",
+      "contact_number",
+      "mobile_number",
+    ]) ??
+    ownerPhone ??
+    ""
+  );
+}
+
+function resolveTenantPlanLabel(
+  tenantRecord: Record<string, unknown>,
+  ownerMetadata: Record<string, unknown>,
+) {
+  const plan =
+    pickFirstString(tenantRecord, [
+      "subscription_plan",
+      "plan",
+      "plan_name",
+      "package",
+      "package_id",
+      "tier",
+    ]) ??
+    pickFirstString(ownerMetadata, [
+      "subscription_plan",
+      "plan",
+      "plan_name",
+      "package",
+      "package_id",
+      "tier",
+    ]);
+
+  return formatPlanLabel(plan);
+}
+
+function resolveBillingCycle(
+  tenantRecord: Record<string, unknown>,
+  ownerMetadata: Record<string, unknown>,
+) {
+  const cycle =
+    pickFirstString(tenantRecord, [
+      "billing_cycle",
+      "billingCycle",
+      "subscription_cycle",
+      "plan_cycle",
+      "interval",
+    ]) ??
+    pickFirstString(ownerMetadata, [
+      "billing_cycle",
+      "billingCycle",
+      "subscription_cycle",
+      "plan_cycle",
+      "subscription_interval",
+      "interval",
+    ]);
+
+  return cycle ? toTitleCaseWords(cycle) : "Monthly";
+}
+
+function resolveFeatureList(
+  tenantRecord: Record<string, unknown>,
+  ownerMetadata: Record<string, unknown>,
+) {
+  const tenantFeatures = pickFirstValue(tenantRecord, [
+    "features",
+    "enabled_features",
+    "feature_flags",
+    "feature_list",
+  ]);
+  const tenantFeatureList = extractFeatureList(tenantFeatures);
+  if (tenantFeatureList.length > 0) {
+    return tenantFeatureList;
+  }
+
+  const metadataFeatures = pickFirstValue(ownerMetadata, [
+    "features",
+    "enabled_features",
+    "feature_flags",
+    "feature_list",
+  ]);
+  return extractFeatureList(metadataFeatures);
+}
+
+function isMissingColumnError(errorMessage: string | undefined) {
+  const normalized = (errorMessage ?? "").toLowerCase();
+  return normalized.includes("column") && normalized.includes("does not exist");
+}
+
+function normalizePackageId(packageId: string) {
+  const normalized = packageId.trim().toLowerCase();
+  if (normalized === "starter" || normalized === "growth") {
+    return normalized;
+  }
+
+  if (
+    normalized === "enterprise" ||
+    normalized === "enterprises" ||
+    normalized === "business"
+  ) {
+    return "enterprises";
+  }
+
+  return "starter";
+}
+
+function normalizeBillingCycle(cycle: string) {
+  const normalized = cycle.trim().toLowerCase();
+  return normalized === "annually" ? "annually" : "monthly";
+}
+
 function formatJoinedDate(rawCreatedAt: unknown) {
   if (typeof rawCreatedAt !== "string" && !(rawCreatedAt instanceof Date)) {
     return "N/A";
@@ -356,6 +570,22 @@ function extractFeatureList(rawFeatures: unknown): string[] {
     );
   }
 
+  if (typeof rawFeatures === "string") {
+    const trimmed = rawFeatures.trim();
+    if (!trimmed) return [];
+
+    try {
+      const parsed = JSON.parse(trimmed);
+      return extractFeatureList(parsed);
+    } catch {
+      return trimmed
+        .split(",")
+        .map((feature) => feature.trim())
+        .filter(Boolean)
+        .map((feature) => toTitleCaseWords(feature));
+    }
+  }
+
   if (rawFeatures && typeof rawFeatures === "object") {
     return Object.entries(rawFeatures)
       .filter(([, value]) => Boolean(value))
@@ -393,13 +623,14 @@ export async function getTenants() {
   if (tenantError) throw new Error(tenantError.message);
 
   return tenants.map((t) => {
+    const tenantRecord = t as Record<string, unknown>;
     const profiles = normalizeProfiles(t.profiles);
     const ownerProfile = selectOwnerProfile(profiles);
 
     return {
       id: t.id,
-      name: resolveTenantName(t as Record<string, unknown>),
-      owner: ownerProfile?.full_name ?? "Unknown",
+      name: resolveTenantName(tenantRecord),
+      owner: resolveOwnerName(tenantRecord, ownerProfile, {}),
       type: "Professional" as "Professional" | "Enterprise" | "Starter",
       joined: formatJoinedDate(t.created_at),
       status: mapTenantStatus(typeof t.status === "string" ? t.status : null),
@@ -436,6 +667,8 @@ export async function getTenantDirectoryDetails(
   const profiles = normalizeProfiles(tenant.profiles);
   const ownerProfile = selectOwnerProfile(profiles);
   const ownerIdentity = await getOwnerIdentity(supabase, ownerProfile);
+  const tenantRecord = tenant as Record<string, unknown>;
+  const ownerMetadata = ownerIdentity.metadata;
   const sortedDocuments = await buildTenantDocuments(
     supabase,
     tenantId,
@@ -444,10 +677,18 @@ export async function getTenantDirectoryDetails(
 
   return {
     id: tenant.id,
-    name: resolveTenantName(tenant as Record<string, unknown>),
-    owner: ownerProfile?.full_name ?? "Unknown",
-    ownerEmail: ownerIdentity.email,
-    ownerPhone: ownerIdentity.phone,
+    name: resolveTenantName(tenantRecord),
+    owner: resolveOwnerName(tenantRecord, ownerProfile, ownerMetadata),
+    ownerEmail: resolveOwnerEmail(
+      tenantRecord,
+      ownerIdentity.email,
+      ownerMetadata,
+    ),
+    ownerPhone: resolveOwnerPhone(
+      tenantRecord,
+      ownerIdentity.phone,
+      ownerMetadata,
+    ),
     joined: formatJoinedDate(tenant.created_at),
     status: mapTenantStatus(
       typeof tenant.status === "string" ? tenant.status : null,
@@ -484,14 +725,16 @@ export async function getTenantProfileDetails(
   const profiles = normalizeProfiles(tenant.profiles);
   const ownerProfile = selectOwnerProfile(profiles);
   const ownerIdentity = await getOwnerIdentity(supabase, ownerProfile);
+  const tenantRecord = tenant as Record<string, unknown>;
+  const ownerMetadata = ownerIdentity.metadata;
   const sortedDocuments = await buildTenantDocuments(
     supabase,
     tenantId,
     tenant.verification_doc_urls,
   );
 
-  const planLabel = formatPlanLabel(ownerIdentity.metadata.subscription_plan);
-  const featureList = extractFeatureList(ownerIdentity.metadata.features);
+  const planLabel = resolveTenantPlanLabel(tenantRecord, ownerMetadata);
+  const featureList = resolveFeatureList(tenantRecord, ownerMetadata);
 
   const profileDocuments: TenantProfileDocument[] = sortedDocuments.map(
     (document) => ({
@@ -507,19 +750,130 @@ export async function getTenantProfileDetails(
 
   return {
     id: tenant.id,
-    name: resolveTenantName(tenant as Record<string, unknown>),
+    name: resolveTenantName(tenantRecord),
     type: planLabel,
     status: mapTenantStatus(
       typeof tenant.status === "string" ? tenant.status : null,
     ),
-    owner: ownerProfile?.full_name ?? "Unknown",
-    email: ownerIdentity.email ?? "",
-    phone: ownerIdentity.phone ?? "",
+    owner: resolveOwnerName(tenantRecord, ownerProfile, ownerMetadata),
+    email: resolveOwnerEmail(tenantRecord, ownerIdentity.email, ownerMetadata),
+    phone: resolveOwnerPhone(tenantRecord, ownerIdentity.phone, ownerMetadata),
     joined: formatJoinedDate(tenant.created_at),
     plan: planLabel,
-    billingCycle: "Monthly",
+    billingCycle: resolveBillingCycle(tenantRecord, ownerMetadata),
     features: featureList,
     documents: profileDocuments,
+  };
+}
+
+export async function updateTenantSubscription(
+  tenantId: string,
+  packageId: string,
+  billingCycle: string,
+) {
+  const supabase = createSupabaseAdminClient();
+  const normalizedPackage = normalizePackageId(packageId);
+  const normalizedCycle = normalizeBillingCycle(billingCycle);
+
+  const { data: tenantData, error: tenantError } = await supabase
+    .from("tenants")
+    .select(
+      `
+      id,
+      profiles (
+        id,
+        role
+      )
+    `,
+    )
+    .eq("id", tenantId)
+    .single();
+
+  if (tenantError || !tenantData) {
+    throw new Error(tenantError?.message || "Tenant not found");
+  }
+
+  const profiles = normalizeProfiles(tenantData.profiles);
+  const ownerProfile = selectOwnerProfile(profiles);
+
+  if (!ownerProfile?.id) {
+    throw new Error("Unable to locate tenant owner profile");
+  }
+
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.admin.getUserById(ownerProfile.id);
+
+  if (userError) {
+    throw new Error(userError.message);
+  }
+
+  const currentMetadata =
+    (user?.user_metadata as Record<string, unknown> | undefined) ?? {};
+
+  const { error: metadataUpdateError } =
+    await supabase.auth.admin.updateUserById(ownerProfile.id, {
+      user_metadata: {
+        ...currentMetadata,
+        subscription_plan: normalizedPackage,
+        plan: normalizedPackage,
+        package_id: normalizedPackage,
+        billing_cycle: normalizedCycle,
+        billingCycle: normalizedCycle,
+      },
+    });
+
+  if (metadataUpdateError) {
+    throw new Error(metadataUpdateError.message);
+  }
+
+  const planColumns = ["subscription_plan", "plan", "plan_name", "package_id"];
+  for (const column of planColumns) {
+    const { error } = await supabase
+      .from("tenants")
+      .update({ [column]: normalizedPackage } as Record<string, string>)
+      .eq("id", tenantId);
+
+    if (!error) {
+      break;
+    }
+
+    if (!isMissingColumnError(error.message)) {
+      throw new Error(error.message);
+    }
+  }
+
+  const billingColumns = [
+    "billing_cycle",
+    "billingCycle",
+    "subscription_cycle",
+    "plan_cycle",
+    "interval",
+  ];
+  for (const column of billingColumns) {
+    const { error } = await supabase
+      .from("tenants")
+      .update({ [column]: normalizedCycle } as Record<string, string>)
+      .eq("id", tenantId);
+
+    if (!error) {
+      break;
+    }
+
+    if (!isMissingColumnError(error.message)) {
+      throw new Error(error.message);
+    }
+  }
+
+  revalidatePath(`/admin/tenants/${tenantId}`);
+  revalidatePath("/admin/tenants");
+  revalidatePath("/admin/dashboard");
+
+  return {
+    success: true,
+    packageId: normalizedPackage,
+    billingCycle: normalizedCycle,
   };
 }
 
