@@ -36,18 +36,16 @@ const RECENT_ACTIVITY = [
   { id: "PRD-105", type: "Stock", entity: "Beta LLC", amount: "5 units", time: "15 mins ago", status: "warning" },
 ];
 
-// Data adjusted to match visual peaks in image
 const CHART_DATA = [
-  { month: "Jan", ltv: 85, cost: 65 },
-  { month: "Feb", ltv: 60, cost: 80 },
-  { month: "Mar", ltv: 75, cost: 15 },
-  { month: "Apr", ltv: 30, cost: 50 },
-  { month: "May", ltv: 95, cost: 40 },
-  { month: "Jun", ltv: 80, cost: 30 },
+  { month: "JAN", ltv: 85, cost: 65 },
+  { month: "FEB", ltv: 60, cost: 80 },
+  { month: "MAR", ltv: 75, cost: 15 },
+  { month: "APR", ltv: 30, cost: 50 },
+  { month: "MAY", ltv: 95, cost: 40 },
+  { month: "JUN", ltv: 80, cost: 30 },
 ];
 
 // --- Sub-components ---
-
 const StatCard = ({ title, value, trend, icon, delay = 0 }: StatCardProps) => {
   const isPositive = trend > 0;
   return (
@@ -89,7 +87,7 @@ export default function SalesRevenueSuite() {
   return (
     <div className="min-h-screen bg-bg-primary p-6 md:p-12 space-y-8 font-inter">
       
-      {/* Header Section - No change */}
+      {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <motion.div 
           initial={{ opacity: 0, x: -20 }}
@@ -105,25 +103,13 @@ export default function SalesRevenueSuite() {
           animate={{ opacity: 1, x: 0 }}
           className="flex items-center gap-3"
         >
-          <Dropdown
-            label=""
-            size="sm"
-            value={timeRange}
-            onSelect={(opt) => setTimeRange(opt.value)}
-            options={[
-              { label: "All Time", value: "all-time" },
-              { label: "Last 30 Days", value: "30d" },
-              { label: "Last Quarter", value: "quarter" },
-            ]}
-            className="w-44"
-          />
           <Button variant="accent" shape="pill" leftIcon={<Download size={18} />}>
             Export Reports
           </Button>
         </motion.div>
       </div>
 
-      {/* Stats Grid - No change */}
+      {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard title="Gross Sales" value="$8,458,798" trend={-35} icon={<DollarSign size={24} />} delay={0.1} />
         <StatCard title="Net Revenue" value="$6,120,450" trend={12.5} icon={<ArrowUpRight size={24} />} delay={0.2} />
@@ -131,11 +117,11 @@ export default function SalesRevenueSuite() {
         <StatCard title="Avg. Order Value" value="$2,450" trend={15} icon={<Package size={24} />} delay={0.4} />
       </div>
 
-      {/* ─── IMPLEMENTED PART (IMAGE) ─── */}
+      {/* Main Content Area */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        {/* Analytics Section */}
         <div className="lg:col-span-2 flex flex-col gap-6">
-          
-          {/* Tab Navigation */}
           <div className="flex gap-3">
             {["Growth Trends", "Peak Periods", "Sales Fluctuations"].map((tab) => (
               <Button
@@ -154,7 +140,6 @@ export default function SalesRevenueSuite() {
             ))}
           </div>
 
-          {/* Main Chart Card */}
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -165,46 +150,66 @@ export default function SalesRevenueSuite() {
               <Dropdown
                 label=""
                 size="sm"
-                value="all"
-                options={[{ label: "All Time", value: "all" }]}
-                className="w-32"
-              />
+                value={timeRange}
+                onSelect={(opt) => setTimeRange(opt.value)}
+                options={[
+                { label: "All Time", value: "all-time" },
+                { label: "Last 30 Days", value: "30d" },
+                { label: "Last Quarter", value: "quarter" },
+                ]}
+                className="w-44"
+            />
             </div>
 
-            <div className="relative h-[320px] flex items-end justify-between px-12 mb-8">
-              {/* Left Y-Axis (Currency) */}
-              <div className="absolute left-0 h-full flex flex-col justify-between text-[11px] font-medium text-gray-400 py-2">
-                <span>$8.8m</span><span>$8.6m</span><span>$8.4m</span><span>$8.2m</span><span>$8m</span>
+            {/* GRAPH SECTION */}
+            <div className="relative h-[280px] mb-2">
+              <div className="absolute left-0 h-full flex flex-col justify-between text-[11px] font-medium text-gray-400 z-0 pointer-events-none">
+                <div className="h-0 flex items-center"><span>$8.8m</span></div>
+                <div className="h-0 flex items-center"><span>$8.6m</span></div>
+                <div className="h-0 flex items-center"><span>$8.4m</span></div>
+                <div className="h-0 flex items-center"><span>$8.2m</span></div>
+                <div className="h-0 flex items-center"><span>$8m</span></div>
               </div>
 
-              {/* Right Y-Axis (Units) */}
-              <div className="absolute right-0 h-full flex flex-col justify-between text-[11px] font-medium text-gray-400 py-2 text-right">
-                <span>150</span><span>120</span><span>60</span><span>30</span><span>0</span>
+              <div className="absolute right-0 h-full flex flex-col justify-between text-[11px] font-medium text-gray-400 text-right z-0 pointer-events-none">
+                <div className="h-0 flex items-center justify-end w-full"><span>150</span></div>
+                <div className="h-0 flex items-center justify-end w-full"><span>120</span></div>
+                <div className="h-0 flex items-center justify-end w-full"><span>60</span></div>
+                <div className="h-0 flex items-center justify-end w-full"><span>30</span></div>
+                <div className="h-0 flex items-center justify-end w-full"><span>0</span></div>
               </div>
 
               {/* Horizontal Grid Lines */}
-              <div className="absolute inset-x-12 top-0 bottom-0 flex flex-col justify-between pointer-events-none">
+              <div className="absolute inset-x-12 top-0 h-full flex flex-col justify-between pointer-events-none z-0">
                 {[...Array(5)].map((_, i) => (
                   <div key={i} className="w-full border-t border-gray-100" />
                 ))}
               </div>
 
               {/* Bars */}
-              {CHART_DATA.map((item, i) => (
-                <div key={item.month} className="flex-1 flex flex-col items-center gap-4 group z-10">
-                  <div className="flex items-end justify-center gap-1.5 h-64">
+              <div className="absolute inset-x-12 top-0 h-full flex items-end justify-between px-4 z-10">
+                {CHART_DATA.map((item) => (
+                  <div key={item.month} className="flex-1 flex items-end justify-center gap-1.5 h-full">
                     <motion.div 
                       initial={{ height: 0 }}
                       animate={{ height: `${item.ltv}%` }}
-                      className="w-8 md:w-10 bg-[#FFD77A] rounded-t-md shadow-sm"
+                      className="w-6 md:w-8 bg-[#FFD77A] rounded-t-md shadow-sm"
                     />
                     <motion.div 
                       initial={{ height: 0 }}
                       animate={{ height: `${item.cost}%` }}
-                      className="w-8 md:w-10 bg-[#FF5269] rounded-t-md shadow-sm"
+                      className="w-6 md:w-8 bg-[#FF5269] rounded-t-md shadow-sm"
                     />
                   </div>
-                  <span className="b4 font-semibold text-gray-400">{item.month}</span>
+                ))}
+              </div>
+            </div>
+
+            {/* Month Labels */}
+            <div className="flex justify-between items-center px-[4.5rem] mb-8">
+              {CHART_DATA.map((item) => (
+                <div key={item.month} className="flex-1 text-center">
+                  <span className="b4 font-semibold text-gray-400 uppercase tracking-wider">{item.month}</span>
                 </div>
               ))}
             </div>
@@ -222,9 +227,8 @@ export default function SalesRevenueSuite() {
             </div>
           </motion.div>
         </div>
-        {/* ─── END IMPLEMENTED PART ─── */}
 
-        {/* Recent Activity Section - No change */}
+        {/* Recent Activity Section */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -251,8 +255,8 @@ export default function SalesRevenueSuite() {
                   <div className="flex items-center gap-4">
                     <div className={cn(
                       "p-3 rounded-xl transition-transform group-hover:scale-110",
-                      activity.type === "Invoice" ? "bg-success-secondary text-success-primary" : 
-                      activity.type === "Stock" ? "bg-warning-secondary text-warning-primary" : "bg-blue-100 text-blue-600"
+                      activity.type === "Invoice" ? "bg-green-100 text-green-600" : 
+                      activity.type === "Stock" ? "bg-amber-100 text-amber-600" : "bg-blue-100 text-blue-600"
                     )}>
                       {activity.type === "Invoice" && <FileText size={20} />}
                       {activity.type === "Stock" && <Package size={20} />}
