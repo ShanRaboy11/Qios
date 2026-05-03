@@ -7,6 +7,7 @@ import { AdminChartsSection } from "@/components/organisms/AdminChartsSection";
 import { AdminListsSection } from "@/components/organisms/AdminListsSection";
 import TenantManagement from "@/components/organisms/TenantManagement";
 import { SystemActivity } from "@/components/organisms/SystemActivity";
+import { AdminSettings } from "@/components/organisms/AdminSettings";
 import { Footer } from "@/components/organisms/footer";
 import { Navbar } from "@/components/organisms/navbar";
 import { LogOut } from "lucide-react";
@@ -287,13 +288,7 @@ function AdminDashboardContent() {
                   </p>
                 </div>
               </div>
-              <div className="flex flex-col h-[400px] bg-white rounded-[24px] shadow-sm relative p-6 sm:p-8">
-                <div className="flex-1 flex items-center justify-center">
-                  <h2 className="text-2xl font-bold text-text-primary">
-                    Coming Soon
-                  </h2>
-                </div>
-              </div>
+              <AdminSettings />
             </motion.div>
           ) : (
             <motion.div

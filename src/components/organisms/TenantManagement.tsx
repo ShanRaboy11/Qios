@@ -22,7 +22,7 @@ import { Button } from "@/components/atoms/Button";
 
 interface Tenant {
   id: string;
-  name: string;
+  business_name: string;
   owner: string;
   type: "Professional" | "Enterprise" | "Starter";
   joined: string;
@@ -32,7 +32,7 @@ interface Tenant {
 const INITIAL_DATA: Tenant[] = [
   {
     id: "TEN-2026-001",
-    name: "Lola's Lechon House",
+    business_name: "Lola's Lechon House",
     owner: "Maria Santos",
     type: "Professional",
     joined: "Jan 15, 2026",
@@ -40,7 +40,7 @@ const INITIAL_DATA: Tenant[] = [
   },
   {
     id: "TEN-2026-002",
-    name: "Kape Republika",
+    business_name: "Kape Republika",
     owner: "Juan Dela Cruz",
     type: "Enterprise",
     joined: "Jan 22, 2026",
@@ -48,7 +48,7 @@ const INITIAL_DATA: Tenant[] = [
   },
   {
     id: "TEN-2026-003",
-    name: "Sugbo Mercado Central",
+    business_name: "Sugbo Mercado Central",
     owner: "Carlo Reyes",
     type: "Enterprise",
     joined: "Feb 3, 2026",
@@ -56,7 +56,7 @@ const INITIAL_DATA: Tenant[] = [
   },
   {
     id: "TEN-2026-004",
-    name: "Tatay's Grill Station",
+    business_name: "Tatay's Grill Station",
     owner: "Roberto Garcia",
     type: "Starter",
     joined: "Feb 10, 2026",
@@ -64,7 +64,7 @@ const INITIAL_DATA: Tenant[] = [
   },
   {
     id: "TEN-2026-005",
-    name: "Seafood Express",
+    business_name: "Seafood Express",
     owner: "Ana Mercado",
     type: "Professional",
     joined: "Feb 18, 2026",
@@ -72,7 +72,7 @@ const INITIAL_DATA: Tenant[] = [
   },
   {
     id: "TEN-2026-006",
-    name: "Crispy Pata Corner",
+    business_name: "Crispy Pata Corner",
     owner: "Eddie Tan",
     type: "Starter",
     joined: "Mar 1, 2026",
@@ -272,7 +272,7 @@ export default function TenantManagement({
     const query = searchTerm.toLowerCase();
     return tenants.filter((t) => {
       const matchesSearch =
-        t.name.toLowerCase().includes(query) ||
+        t.business_name.toLowerCase().includes(query) ||
         t.id.toLowerCase().includes(query) ||
         t.owner.toLowerCase().includes(query);
       const matchesStatus = statusFilter === "All" || t.status === statusFilter;
@@ -498,7 +498,7 @@ function TenantCard({
         <div className="flex flex-col gap-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <h3 className="text-gray-900 text-base sm:text-lg font-semibold tracking-tight truncate group-hover:text-brand-accent transition-colors cursor-pointer">
-              {tenant.name}
+              {tenant.business_name}
             </h3>
           </div>
           <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-500 font-normal">
@@ -578,7 +578,7 @@ function ConfirmationModal({
       case "reapprove":
         return {
           title: "Approve Tenant",
-          message: `Are you sure you want to approve ${tenant.name}? They will gain full access to the platform.`,
+          message: `Are you sure you want to approve ${tenant.business_name}? They will gain full access to the platform.`,
           confirmText: "Approve",
           confirmVariant: "primary",
           icon: <Check className="w-6 h-6 text-[#22C55E]" />,
@@ -586,7 +586,7 @@ function ConfirmationModal({
       case "reject":
         return {
           title: "Reject Tenant",
-          message: `Are you sure you want to reject ${tenant.name}? This action cannot be undone immediately.`,
+          message: `Are you sure you want to reject ${tenant.business_name}? This action cannot be undone immediately.`,
           confirmText: "Reject",
           confirmVariant: "warning",
           icon: <X className="w-6 h-6 text-warning-primary" />,
@@ -594,7 +594,7 @@ function ConfirmationModal({
       case "deactivate":
         return {
           title: "Deactivate Tenant",
-          message: `Are you sure you want to suspend ${tenant.name}? Their access will be temporarily disabled.`,
+          message: `Are you sure you want to suspend ${tenant.business_name}? Their access will be temporarily disabled.`,
           confirmText: "Deactivate",
           confirmVariant: "warning",
           icon: <X className="w-6 h-6 text-warning-primary" />,
@@ -602,7 +602,7 @@ function ConfirmationModal({
       case "activate":
         return {
           title: "Activate Tenant",
-          message: `Are you sure you want to reactivate ${tenant.name}? Their access will be restored.`,
+          message: `Are you sure you want to reactivate ${tenant.business_name}? Their access will be restored.`,
           confirmText: "Activate",
           confirmVariant: "primary",
           icon: <Check className="w-6 h-6 text-[#22C55E]" />,
