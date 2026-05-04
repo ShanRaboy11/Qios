@@ -33,9 +33,9 @@ export default function TenantDashboardPage({
   const paramsHook = useParams();
   const tenantId = paramsHook.id as string;
 
-  const handleNavigation = (view: ViewState) => {
-    if (view === "staff") {
-      router.push(`/${tenantId}/staff`);
+  const handleNavigation = (view: string) => {
+    if (view === "staff" || view === "settings") {
+      router.push(`/${tenantId}/${view}`);
       return;
     }
 
@@ -50,7 +50,7 @@ export default function TenantDashboardPage({
 
     // Simulate loading delay for skeleton
     setTimeout(() => {
-      setCurrentView(view);
+      setCurrentView(view as ViewState);
       setIsTransitioning(false);
     }, 600);
   };
@@ -106,7 +106,7 @@ export default function TenantDashboardPage({
         variant="transparent"
         type="tenant"
         activeView={currentView}
-        onNavigate={(view) => handleNavigation(view as ViewState)}
+        onNavigate={(view) => handleNavigation(view)}
         className="z-[100]"
       />
 
