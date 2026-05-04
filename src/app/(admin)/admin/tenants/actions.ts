@@ -20,7 +20,7 @@ export interface TenantDirectoryDetails {
   ownerEmail: string | null;
   ownerPhone: string | null;
   joined: string;
-  status: "Active" | "Suspended" | "Pending" | "Rejected";
+  status: "Active" | "Suspended" | "Pending" | "Rejected" | "Onboarding";
   documents: TenantDirectoryDocument[];
 }
 
@@ -38,7 +38,7 @@ export interface TenantProfileDetails {
   id: string;
   business_name: string;
   type: string;
-  status: "Active" | "Suspended" | "Pending" | "Rejected";
+  status: "Active" | "Suspended" | "Pending" | "Rejected" | "Onboarding";
   owner: string;
   email: string;
   phone: string;
@@ -84,7 +84,8 @@ const DOCUMENT_REQUIREMENTS = [
 
 function mapTenantStatus(
   status: string | null,
-): "Active" | "Suspended" | "Pending" | "Rejected" {
+): "Active" | "Suspended" | "Pending" | "Rejected" | "Onboarding" {
+  if (status === "onboarding") return "Onboarding";
   if (status === "pending") return "Pending";
   if (status === "approved") return "Active";
   if (status === "rejected") return "Rejected";
