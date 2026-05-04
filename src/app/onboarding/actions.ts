@@ -260,14 +260,10 @@ const getLatestUserByEmail = async (
   return null;
 };
 
-export async function createDevOnboardingAuthUser(input: {
+export async function createOnboardingAuthUser(input: {
   email: string;
   password: string;
 }) {
-  if (process.env.NODE_ENV === "production") {
-    throw new Error("Dev-only auth helper cannot run in production.");
-  }
-
   const supabase = createSupabaseAdminClient();
   const normalizedEmail = normalizeEmail(input.email);
   const existingUser = await getLatestUserByEmail(supabase, normalizedEmail);
@@ -453,15 +449,6 @@ export async function sendContactVerificationCode(data: {
   businessName: string;
 }) {
   const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-  const isDev = process.env.NODE_ENV !== "production";
-
-  if (isDev) {
-    console.log(`\n[DEV] Verification code generated for ${data.email}: ${verificationCode}\n`);
-    return {
-      success: true,
-      verificationCode,
-    };
-  }
 
   const result = await sendContactVerificationEmail({
     to: data.email,
@@ -600,7 +587,7 @@ export async function saveBusinessInformation(data: SaveBusinessInformationInput
 
 export async function saveOnboardingProgress(data: SaveOnboardingProgressInput) {
   const supabase = createSupabaseAdminClient();
-  const updatePayload: Record<string, unknown> = { status: "onboarding" };
+  const updatePayload: Record<string, unknown> = {};
 
   if (data.businessData?.name) {
     updatePayload.business_name = data.businessData.name;
@@ -752,6 +739,7 @@ export async function processOnboarding(data: {
   subscriptionData: { packageId: string };
   featureData: OperationalSetupConfig;
   userId?: string;
+  adminEmail?: string;
 }) {
   const supabase = createSupabaseAdminClient();
   const subscriptionPlan = getSubscriptionPlan(data.subscriptionData.packageId);
@@ -808,8 +796,10 @@ export async function processOnboarding(data: {
   }
 
   try {
+    const toEmail = data.adminEmail || data.businessData.email;
     await sendRegistrationSuccessEmail({
-      to: data.businessData.email,
+      to: toEmail,
+      adminName: data.businessData.owner.trim(),
       businessName: data.businessData.name,
     });
   } catch (err) {
@@ -821,5 +811,6 @@ export async function processOnboarding(data: {
     tenantId: data.tenantId,
     businessName: data.businessData.name,
     businessEmail: data.businessData.email,
+    ownerName: data.businessData.owner,
   };
 }

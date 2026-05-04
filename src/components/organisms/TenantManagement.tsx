@@ -26,7 +26,8 @@ interface Tenant {
   owner: string;
   type: "Professional" | "Enterprise" | "Starter";
   joined: string;
-  status: "Active" | "Suspended" | "Pending" | "Rejected";
+  status: "Active" | "Suspended" | "Pending" | "Rejected" | "Onboarding";
+  rawStatus?: string;
 }
 
 const INITIAL_DATA: Tenant[] = [
@@ -289,6 +290,7 @@ export default function TenantManagement({
       pending: tenants.filter((t) => t.status === "Pending").length,
       suspended: tenants.filter((t) => t.status === "Suspended").length,
       rejected: tenants.filter((t) => t.status === "Rejected").length,
+      onboarding: tenants.filter((t) => t.status === "Onboarding").length,
     }),
     [tenants],
   );
@@ -316,6 +318,12 @@ export default function TenantManagement({
           <span className="b1 text-gray-900">{stats.pending}</span>
         </div>
 
+          <div className="w-2.5 h-2.5 bg-[#ffc670] rounded-full" />
+          <span className="b1 text-gray-500">Onboarding:</span>
+          <span className="b1 text-gray-900">{stats.onboarding}</span>
+        </div>
+
+        <div className="flex items-center gap-2">
         <div className="flex items-center gap-2">
           <div className="w-2.5 h-2.5 bg-warning-primary rounded-full" />
           <span className="b1 text-gray-500">Rejected:</span>
@@ -378,6 +386,7 @@ export default function TenantManagement({
                     { label: "Pending", value: "Pending" },
                     { label: "Suspended", value: "Suspended" },
                     { label: "Rejected", value: "Rejected" },
+                    { label: "Onboarding", value: "Onboarding" },
                   ]}
                   value={statusFilter}
                   onSelect={(opt) => setStatusFilter(opt.value)}
@@ -524,6 +533,7 @@ function TenantCard({
                 tenant.status === "Active" && "bg-success-primary",
                 tenant.status === "Pending" && "bg-brand-secondary",
                 tenant.status === "Suspended" && "bg-gray-500",
+                tenant.status === "Onboarding" && "bg-[#ffc670]",
                 tenant.status === "Rejected" && "bg-warning-primary",
               )}
             />
@@ -533,6 +543,7 @@ function TenantCard({
                 tenant.status === "Active" && "text-success-primary",
                 tenant.status === "Pending" && "text-brand-secondary",
                 tenant.status === "Suspended" && "text-gray-500",
+                tenant.status === "Onboarding" && "text-[#ffc670]",
                 tenant.status === "Rejected" && "text-warning-primary",
               )}
             >

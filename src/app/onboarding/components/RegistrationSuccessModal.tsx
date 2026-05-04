@@ -5,13 +5,13 @@ import { CheckCircle2, Mail, Clock } from "lucide-react";
 import { Button } from "@/components/atoms/Button";
 
 interface RegistrationSuccessModalProps {
-  businessName: string;
+  adminName: string;
   businessEmail: string;
   onClose: () => void;
 }
 
 export function RegistrationSuccessModal({
-  businessName,
+  adminName,
   businessEmail,
   onClose,
 }: RegistrationSuccessModalProps) {
@@ -32,7 +32,8 @@ export function RegistrationSuccessModal({
 
         {/* Description */}
         <p className="text-center text-gray-600 mb-6 leading-relaxed">
-          Thank you, <span className="font-semibold">{businessName}</span>. Your registration has been successfully submitted.
+          Thank you, <span className="font-semibold">{adminName}</span>. Your
+          registration has been successfully submitted.
         </p>
 
         {/* Info Card 1: Email Sent */}
@@ -40,8 +41,12 @@ export function RegistrationSuccessModal({
           <div className="flex items-start gap-3">
             <Mail className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-semibold text-blue-900">Confirmation Email Sent</p>
-              <p className="text-xs text-blue-700 mt-1">A detailed confirmation has been sent to {businessEmail}</p>
+              <p className="text-sm font-semibold text-blue-900">
+                Confirmation Email Sent
+              </p>
+              <p className="text-xs text-blue-700 mt-1">
+                A detailed confirmation has been sent to {businessEmail}
+              </p>
             </div>
           </div>
         </div>
@@ -51,10 +56,14 @@ export function RegistrationSuccessModal({
           <div className="flex items-start gap-3">
             <Clock className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-semibold text-amber-900">Verification Timeline</p>
+              <p className="text-sm font-semibold text-amber-900">
+                Verification Timeline
+              </p>
               <ul className="text-xs text-amber-700 mt-2 space-y-1">
                 <li>• Our team will review your documents</li>
-                <li>• <strong>2-3 business days</strong> for verification</li>
+                <li>
+                  • <strong>2-3 business days</strong> for verification
+                </li>
                 <li>• You'll receive an email when approved</li>
               </ul>
             </div>
@@ -63,7 +72,8 @@ export function RegistrationSuccessModal({
 
         {/* Message */}
         <p className="text-center text-sm text-gray-600 mb-6">
-          We'll notify you via email as soon as your registration is approved or if we need any additional information.
+          We'll notify you via email as soon as your registration is approved or
+          if we need any additional information.
         </p>
 
         {/* Close Button */}
