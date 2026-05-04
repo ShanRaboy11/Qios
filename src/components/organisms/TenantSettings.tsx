@@ -11,13 +11,15 @@ import {
   Save,
   Laptop,
   Smartphone,
-  Upload,
   LogOut,
   Trash2,
+  Palette,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
 import { TenantProfileSettings } from "./TenantProfileSettings";
 import { TenantStoreSettings } from "./TenantStoreSettings";
+import { TenantBrandingSettings } from "./TenantBrandingSettings";
 import { TenantSecuritySettings } from "./TenantSecuritySettings";
 import { TenantNotificationSettings } from "./TenantNotificationSettings";
 import { TenantBillingSettings } from "./TenantBillingSettings";
@@ -26,6 +28,7 @@ import { TenantDangerZone } from "./TenantDangerZone";
 type SettingsTab =
   | "profile"
   | "store"
+  | "branding"
   | "security"
   | "notifications"
   | "billing"
@@ -37,6 +40,7 @@ export const TenantSettings = () => {
   const tabs = [
     { id: "profile", label: "Profile Settings", icon: User },
     { id: "store", label: "Store Details", icon: Store },
+    { id: "branding", label: "Branding & Appearance", icon: Palette },
     { id: "security", label: "Security", icon: Shield },
     { id: "notifications", label: "Notifications", icon: Bell },
     { id: "billing", label: "Subscription & Billing", icon: CreditCard },
@@ -86,12 +90,43 @@ export const TenantSettings = () => {
 
       {/* Content Area */}
       <div className="flex-1 bg-white rounded-[24px] shadow-sm border border-gray-100 p-6 md:p-8 overflow-hidden w-full">
-        {activeTab === "profile" && <TenantProfileSettings />}
-        {activeTab === "store" && <TenantStoreSettings />}
-        {activeTab === "security" && <TenantSecuritySettings />}
-        {activeTab === "notifications" && <TenantNotificationSettings />}
-        {activeTab === "billing" && <TenantBillingSettings />}
-        {activeTab === "danger" && <TenantDangerZone />}
+        <AnimatePresence mode="wait">
+          {activeTab === "profile" && (
+            <motion.div key="profile" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
+              <TenantProfileSettings />
+            </motion.div>
+          )}
+          {activeTab === "store" && (
+            <motion.div key="store" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
+              <TenantStoreSettings />
+            </motion.div>
+          )}
+          {activeTab === "branding" && (
+            <motion.div key="branding" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
+              <TenantBrandingSettings />
+            </motion.div>
+          )}
+          {activeTab === "security" && (
+            <motion.div key="security" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
+              <TenantSecuritySettings />
+            </motion.div>
+          )}
+          {activeTab === "notifications" && (
+            <motion.div key="notifications" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
+              <TenantNotificationSettings />
+            </motion.div>
+          )}
+          {activeTab === "billing" && (
+            <motion.div key="billing" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
+              <TenantBillingSettings />
+            </motion.div>
+          )}
+          {activeTab === "danger" && (
+            <motion.div key="danger" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
+              <TenantDangerZone />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

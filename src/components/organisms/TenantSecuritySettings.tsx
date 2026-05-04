@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
-import { Shield, Laptop, Smartphone } from "lucide-react";
+import React, { useState } from "react";
+import { Shield, Laptop, Smartphone, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
 import { Toggle } from "@/components/atoms/Toggle";
@@ -9,6 +9,10 @@ import { SectionHeader } from "@/components/molecules/SectionHeader";
 import { SessionCard } from "@/components/molecules/SessionCard";
 
 export const TenantSecuritySettings = () => {
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 w-full">
       <div>
@@ -31,19 +35,67 @@ export const TenantSecuritySettings = () => {
               <label className="text-sm font-medium text-text-primary">
                 Current Password
               </label>
-              <Input type="password" placeholder="••••••••" className="py-2.5 rounded-xl" />
+              <div className="relative">
+                <Input 
+                  type={showCurrentPassword ? "text" : "password"} 
+                  placeholder="••••••••" 
+                  className="py-2.5 rounded-xl pr-10" 
+                />
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setShowCurrentPassword(!showCurrentPassword);
+                  }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-brand-accent transition-colors z-10 p-1"
+                >
+                  {showCurrentPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-text-primary">
                 New Password
               </label>
-              <Input type="password" placeholder="New Password" className="py-2.5 rounded-xl" />
+              <div className="relative">
+                <Input 
+                  type={showNewPassword ? "text" : "password"} 
+                  placeholder="New Password" 
+                  className="py-2.5 rounded-xl pr-10" 
+                />
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setShowNewPassword(!showNewPassword);
+                  }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-brand-accent transition-colors z-10 p-1"
+                >
+                  {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-text-primary">
                 Confirm New Password
               </label>
-              <Input type="password" placeholder="Confirm Password" className="py-2.5 rounded-xl" />
+              <div className="relative">
+                <Input 
+                  type={showConfirmPassword ? "text" : "password"} 
+                  placeholder="Confirm Password" 
+                  className="py-2.5 rounded-xl pr-10" 
+                />
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setShowConfirmPassword(!showConfirmPassword);
+                  }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-brand-accent transition-colors z-10 p-1"
+                >
+                  {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
             <div className="sm:col-span-2 flex justify-end mt-2">
                <Button variant="outline" shape="rounded">Update Password</Button>

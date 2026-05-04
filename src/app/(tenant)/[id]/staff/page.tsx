@@ -7,6 +7,7 @@ import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
 import { Plus, Search, Filter } from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 
 import { StaffTable, StaffEntry } from "@/components/organisms/StaffTable";
 import {
@@ -212,7 +213,52 @@ export default function StaffManagementPage() {
   };
 
   return (
-    <div className="min-h-screen bg-bg-primary overflow-x-hidden">
+    <div className="min-h-screen bg-bg-primary overflow-x-hidden relative">
+      <div className="fixed inset-0 pointer-events-none overflow-hidden z-[1]">
+        <motion.div
+          animate={{
+            x: [0, 100, -50, 0],
+            y: [0, -100, 50, 0],
+            scale: [1, 1.2, 0.8, 1],
+          }}
+          transition={{
+            duration: 60,
+            repeat: Infinity,
+            repeatType: "reverse",
+            ease: "easeInOut",
+          }}
+          className="absolute top-[10%] left-[20%] w-[500px] h-[500px] bg-[#FFE5BE] rounded-full mix-blend-multiply filter blur-[80px] opacity-15"
+        />
+        <motion.div
+          animate={{
+            x: [0, -120, 80, 0],
+            y: [0, 80, -120, 0],
+            scale: [1, 0.8, 1.2, 1],
+          }}
+          transition={{
+            duration: 75,
+            repeat: Infinity,
+            repeatType: "reverse",
+            ease: "easeInOut",
+          }}
+          className="absolute top-[40%] right-[10%] w-[600px] h-[600px] bg-[#FFDF96] rounded-full mix-blend-multiply filter blur-[100px] opacity-20"
+        />
+        <motion.div
+          animate={{
+            x: [0, 150, -100, 0],
+            y: [0, 100, -150, 0],
+            scale: [1, 1.3, 0.9, 1],
+          }}
+          transition={{
+            duration: 66,
+            repeat: Infinity,
+            repeatType: "reverse",
+            ease: "easeInOut",
+          }}
+          className="absolute bottom-[-10%] left-[40%] w-[700px] h-[700px] bg-[#FFBDC6] rounded-full mix-blend-multiply filter blur-[120px] opacity-15"
+        />
+      </div>
+
       <Navbar
         variant="transparent"
         type="tenant"
@@ -221,119 +267,131 @@ export default function StaffManagementPage() {
           if (view === "staff") return;
           router.push(`/${tenantId}/${view}`);
         }}
+        className="z-[100]"
       />
 
       <div className="max-w-[1440px] mx-auto flex flex-col p-4 md:p-8 lg:p-12 mt-28 relative z-10">
-        {/* Page Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-text-primary">
-              Staff Management
-            </h1>
-            <p className="text-text-secondary mt-1">
-              Manage employee records, monitor performance, and track
-              attendance.
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button
-              variant="accent"
-              shape="rounded"
-              leftIcon={<Plus size={18} strokeWidth={2.5} />}
-              onClick={() => setIsAddModalOpen(true)}
-            >
-              Add New Staff
-            </Button>
-          </div>
-        </div>
-
-        {/* Dashboard KPIs / Mini Analytics */}
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white p-5 rounded-[24px] shadow-sm border border-gray-100">
-            <div className="text-sm font-medium text-text-secondary mb-1">
-              Total Active Staff
-            </div>
-            <div className="text-2xl font-bold text-text-primary">24</div>
-            <div className="text-xs text-success-primary mt-2 font-medium">
-              ↑ 2 from last month
-            </div>
-          </div>
-          <div className="bg-white p-5 rounded-[24px] shadow-sm border border-gray-100">
-            <div className="text-sm font-medium text-text-secondary mb-1">
-              Avg. Prep Time
-            </div>
-            <div className="text-2xl font-bold text-text-primary">8.5m</div>
-            <div className="text-xs text-success-primary mt-2 font-medium">
-              ↓ 1.2m from last week
-            </div>
-          </div>
-          <div className="bg-white p-5 rounded-[24px] shadow-sm border border-gray-100">
-            <div className="text-sm font-medium text-text-secondary mb-1">
-              Total Completed Orders
-            </div>
-            <div className="text-2xl font-bold text-text-primary">1,284</div>
-            <div className="text-xs text-success-primary mt-2 font-medium">
-              ↑ 12% from last week
-            </div>
-          </div>
-          <div className="bg-white p-5 rounded-[24px] shadow-sm border border-gray-100">
-            <div className="text-sm font-medium text-text-secondary mb-1">
-              Labor Cost
-            </div>
-            <div className="text-2xl font-bold text-text-primary">₱42,500</div>
-            <div className="text-xs text-text-secondary mt-2 font-medium">
-              Within target budget
-            </div>
-          </div>
-        </div>
-
-        {/* Main Grid Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column (Directory & Chart) */}
-          <div className="lg:col-span-2 space-y-8">
-            {/* Analytics Chart */}
-            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100">
-              <StaffAnalyticsChart data={MOCK_ANALYTICS} />
+        <AnimatePresence mode="wait">
+          <motion.div
+            key="staff"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            className="flex flex-col w-full"
+          >
+            {/* Page Header */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+              <div>
+                <h1 className="text-3xl font-bold text-text-primary">
+                  Staff Management
+                </h1>
+                <p className="text-text-secondary mt-1">
+                  Manage employee records, monitor performance, and track
+                  attendance.
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="accent"
+                  shape="rounded"
+                  leftIcon={<Plus size={18} strokeWidth={2.5} />}
+                  onClick={() => setIsAddModalOpen(true)}
+                >
+                  Add New Staff
+                </Button>
+              </div>
             </div>
 
-            {/* Staff Directory Table */}
-            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <h2 className="text-xl font-bold text-text-primary">
-                  Staff Directory
-                </h2>
-                <div className="relative w-full sm:w-64">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-                  <Input
-                    placeholder="Search staff..."
-                    className="pl-10 py-2 rounded-xl"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
+            {/* Dashboard KPIs / Mini Analytics */}
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+              <div className="bg-white p-5 rounded-[24px] shadow-sm border border-gray-100">
+                <div className="text-sm font-medium text-text-secondary mb-1">
+                  Total Active Staff
+                </div>
+                <div className="text-2xl font-bold text-text-primary">24</div>
+                <div className="text-xs text-success-primary mt-2 font-medium">
+                  ↑ 2 from last month
                 </div>
               </div>
-              {isLoading ? (
-                <div className="bg-white rounded-[24px] shadow-sm border border-gray-100 min-h-[400px] animate-pulse" />
-              ) : (
-                <StaffTable
-                  data={filteredStaff}
-                  onClearFilters={() => setSearchQuery("")}
-                  onViewProfile={(staff) => setSelectedStaffProfile(staff)}
-                />
-              )}
+              <div className="bg-white p-5 rounded-[24px] shadow-sm border border-gray-100">
+                <div className="text-sm font-medium text-text-secondary mb-1">
+                  Avg. Prep Time
+                </div>
+                <div className="text-2xl font-bold text-text-primary">8.5m</div>
+                <div className="text-xs text-success-primary mt-2 font-medium">
+                  ↓ 1.2m from last week
+                </div>
+              </div>
+              <div className="bg-white p-5 rounded-[24px] shadow-sm border border-gray-100">
+                <div className="text-sm font-medium text-text-secondary mb-1">
+                  Total Completed Orders
+                </div>
+                <div className="text-2xl font-bold text-text-primary">1,284</div>
+                <div className="text-xs text-success-primary mt-2 font-medium">
+                  ↑ 12% from last week
+                </div>
+              </div>
+              <div className="bg-white p-5 rounded-[24px] shadow-sm border border-gray-100">
+                <div className="text-sm font-medium text-text-secondary mb-1">
+                  Labor Cost
+                </div>
+                <div className="text-2xl font-bold text-text-primary">₱42,500</div>
+                <div className="text-xs text-text-secondary mt-2 font-medium">
+                  Within target budget
+                </div>
+              </div>
             </div>
-          </div>
 
-          {/* Right Column (Leaderboard & Feed) */}
-          <div className="space-y-8">
-            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300">
-              <StaffLeaderboard data={MOCK_LEADERBOARD} />
+            {/* Main Grid Layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Left Column (Directory & Chart) */}
+              <div className="lg:col-span-2 space-y-8">
+                {/* Analytics Chart */}
+                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100">
+                  <StaffAnalyticsChart data={MOCK_ANALYTICS} />
+                </div>
+
+                {/* Staff Directory Table */}
+                <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <h2 className="text-xl font-bold text-text-primary">
+                      Staff Directory
+                    </h2>
+                    <div className="relative w-full sm:w-64">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                      <Input
+                        placeholder="Search staff..."
+                        className="pl-10 py-2 rounded-xl"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  {isLoading ? (
+                    <div className="bg-white rounded-[24px] shadow-sm border border-gray-100 min-h-[400px] animate-pulse" />
+                  ) : (
+                    <StaffTable
+                      data={filteredStaff}
+                      onClearFilters={() => setSearchQuery("")}
+                      onViewProfile={(staff) => setSelectedStaffProfile(staff)}
+                    />
+                  )}
+                </div>
+              </div>
+
+              {/* Right Column (Leaderboard & Feed) */}
+              <div className="space-y-8">
+                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300">
+                  <StaffLeaderboard data={MOCK_LEADERBOARD} />
+                </div>
+                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-400 h-[600px]">
+                  <LiveActivityFeed activities={MOCK_ACTIVITIES} />
+                </div>
+              </div>
             </div>
-            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-400 h-[600px]">
-              <LiveActivityFeed activities={MOCK_ACTIVITIES} />
-            </div>
-          </div>
-        </div>
+          </motion.div>
+        </AnimatePresence>
       </div>
 
       <AddStaffModal
