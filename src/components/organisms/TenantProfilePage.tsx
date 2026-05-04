@@ -20,7 +20,7 @@ export interface TenantProfileData {
   id: string;
   business_name: string;
   type: string;
-  status: "Active" | "Pending" | "Suspended" | "Rejected";
+  status: "Active" | "Pending" | "Suspended" | "Rejected" | "Onboarding";
   owner: string;
   email: string;
   phone: string;

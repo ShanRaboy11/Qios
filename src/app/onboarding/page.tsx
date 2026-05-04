@@ -32,7 +32,7 @@ import {
   processOnboarding,
   resolveOnboardingAccess,
   sendContactVerificationCode,
-  createDevOnboardingAuthUser,
+  createOnboardingAuthUser,
   saveBusinessInformation,
   saveDocumentUploads,
   saveOnboardingProgress,
@@ -159,7 +159,7 @@ export default function OnboardingPage() {
 
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [registrationData, setRegistrationData] = useState({
-    businessName: "",
+    adminName: "",
     businessEmail: "",
   });
 
@@ -373,47 +373,33 @@ export default function OnboardingPage() {
         return;
       }
 
-      if (process.env.NODE_ENV !== "production") {
-        const devUser = await createDevOnboardingAuthUser({
+      try {
+        const authUser = await createOnboardingAuthUser({
           email: authData.email,
           password: authData.password,
         });
+        setUserId(authUser.userId);
+      } catch (err: any) {
+        const msg = err.message || "";
+        if (/already/i.test(msg) || /exists/i.test(msg)) {
+          const refreshedAccess = await resolveOnboardingAccess({ email: authData.email });
 
-        setUserId(devUser.userId);
-      } else {
-        const { data, error: signUpError } = await supabase.auth.signUp({
-          email: authData.email,
-          password: authData.password,
-        });
-
-        if (signUpError) {
-          const msg = signUpError.message || "";
-
-          if (/already/i.test(msg) || /exists/i.test(msg)) {
-            const refreshedAccess = await resolveOnboardingAccess({ email: authData.email });
-
-            if (refreshedAccess.userVerified) {
-              await loginAndResume(refreshedAccess);
-              return;
-            }
-
-            hydrateForm(refreshedAccess);
-            await dispatchVerificationCode({
-              email: authData.email,
-              businessName: refreshedAccess.businessName || authData.email,
-            });
-            setCurrentStep(2);
-            setSuccess("Account found. Verify your email OTP to continue.");
-            scrollToTop();
+          if (refreshedAccess.userVerified) {
+            await loginAndResume(refreshedAccess);
             return;
           }
 
-          throw new Error(signUpError.message || "Failed to create account. Please try again.");
+          hydrateForm(refreshedAccess);
+          await dispatchVerificationCode({
+            email: authData.email,
+            businessName: refreshedAccess.businessName || authData.email,
+          });
+          setCurrentStep(2);
+          setSuccess("Account found. Verify your email OTP to continue.");
+          scrollToTop();
+          return;
         }
-
-        if (data.user?.id) {
-          setUserId(data.user.id);
-        }
+        throw err;
       }
 
       await dispatchVerificationCode({
@@ -658,11 +644,12 @@ export default function OnboardingPage() {
         subscriptionData,
         featureData: operationalData,
         userId,
+        adminEmail: authData.email,
       });
 
       if (res.success) {
         setRegistrationData({
-          businessName: res.businessName,
+          adminName: res.ownerName,
           businessEmail: res.businessEmail,
         });
         setShowSuccessModal(true);
@@ -869,7 +856,7 @@ export default function OnboardingPage() {
 
       {showSuccessModal && (
         <RegistrationSuccessModal
-          businessName={registrationData.businessName}
+          adminName={registrationData.adminName}
           businessEmail={registrationData.businessEmail}
           onClose={handleModalClose}
         />

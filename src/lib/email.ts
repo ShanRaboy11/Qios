@@ -320,11 +320,6 @@ export const sendContactVerificationEmail = async ({
     };
   }
 
-  if (isDevelopment) {
-    console.log(`[DEV EMAIL] Verification code for ${to}: ${code}`);
-    return { success: true as const, messageId: `dev-otp-${Date.now()}` };
-  }
-
   const digits = code.split("");
   const mid = Math.floor(digits.length / 2);
   const left = digits.slice(0, mid);
@@ -451,11 +446,6 @@ export const sendBusinessVerificationEmail = async ({
         "SMTP is not fully configured. Set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, and SMTP_FROM.",
       ),
     };
-  }
-
-  if (isDevelopment) {
-    console.log(`[DEV EMAIL] Business verification email skipped for ${to} (${status})`);
-    return { success: true as const, messageId: `dev-business-${Date.now()}` };
   }
 
   const isApproved = status === "approved";
@@ -635,9 +625,11 @@ export const sendBusinessVerificationEmail = async ({
 
 export const sendRegistrationSuccessEmail = async ({
   to,
+  adminName,
   businessName,
 }: {
   to: string;
+  adminName: string;
   businessName: string;
 }) => {
   const smtp = readSmtpConfig();
@@ -647,11 +639,6 @@ export const sendRegistrationSuccessEmail = async ({
       reason: "SMTP_NOT_CONFIGURED" as const,
       error: new Error("SMTP is not fully configured."),
     };
-  }
-
-  if (isDevelopment) {
-    console.log(`[DEV EMAIL] Registration success email skipped for ${to} (${businessName})`);
-    return { success: true as const, messageId: `dev-success-${Date.now()}` };
   }
 
   const html = emailWrapper(`
@@ -667,10 +654,10 @@ export const sendRegistrationSuccessEmail = async ({
     <tr>
       <td style="padding:32px 40px 28px;background:#fffdf8;">
         <p style="margin:0 0 10px;font-size:15px;color:${B.textPrimary};">
-          Hi <strong>${businessName}</strong>,
+          Hi <strong>${adminName}</strong>,
         </p>
         <p style="margin:0 0 24px;font-size:14px;color:${B.textSecondary};line-height:1.7;">
-          We've received your business registration and our team will review your documents shortly.
+          We've received your registration for <strong>${businessName}</strong> and our team will review your documents shortly.
           Here's what to expect next:
         </p>
 
