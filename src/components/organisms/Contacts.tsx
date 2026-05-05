@@ -333,7 +333,7 @@ export default function ContactForm() {
             <span style={gradientHeaderStyle}>hear from you.</span>
           </h1>
           <p className="max-md:text-base h4 text-text-secondary max-w-[520px] mx-auto">
-            Whether you have a question, want a demo, or just want to say hello — our team is ready.
+            Whether you have a question, want a demo, or just want to say hello—our team is ready.
           </p>
         </div>
 
