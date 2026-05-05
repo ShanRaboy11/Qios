@@ -1,4 +1,6 @@
+"use client";
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Check, ExternalLink, Info, Sparkles, Rocket } from "lucide-react";
 import { Button } from "../atoms/Button";
 import { Badge } from "../atoms/Badge";
@@ -18,6 +20,7 @@ interface PlanProps {
   notes: PlanNote[];
   variant: "basic" | "business" | "enterprise";
   badge?: string;
+  onGetStarted?: () => void;
 }
 
 const PlanCard = ({
@@ -30,6 +33,7 @@ const PlanCard = ({
   notes,
   variant,
   badge,
+  onGetStarted,
 }: PlanProps) => {
   const isBusiness = variant === "business";
   const isEnterprise = variant === "enterprise";
@@ -162,6 +166,7 @@ const PlanCard = ({
           variant={isBusiness ? "accent" : "outline"}
           shape="rounded"
           size="md"
+          onClick={onGetStarted}
           className={cn(
             "w-full max-md:text-sm text-base transition-all duration-300 ease-in-out",
             !isBusiness && styles.btnMobile,
@@ -181,9 +186,14 @@ const PlanCard = ({
 };
 
 export default function SubscriptionPlans() {
+  const router = useRouter();
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annually">(
     "monthly",
   );
+
+  const handleGetStarted = () => {
+    router.push("/onboarding");
+  };
 
   const gradientHeaderStyle = {
     background: "linear-gradient(250deg, #FFD77A 15.53%, #FF5269 84.47%)",
@@ -301,6 +311,7 @@ export default function SubscriptionPlans() {
                   { label: "Cancel anytime" },
                   { label: "7-day guarantee" },
                 ]}
+                onGetStarted={handleGetStarted}
               />
             </div>
             <div className="w-full max-w-md lg:w-1/3 z-20 transition-all duration-500 ease-out lg:scale-110 group-hover:lg:scale-105">
@@ -328,6 +339,7 @@ export default function SubscriptionPlans() {
                   { label: "Cancel anytime" },
                   { label: "14-day guarantee" },
                 ]}
+                onGetStarted={handleGetStarted}
               />
             </div>
             <div className="w-full max-w-md lg:w-1/3 transition-all duration-500 ease-out lg:-ml-2 group-hover:lg:translate-x-12">
@@ -355,6 +367,7 @@ export default function SubscriptionPlans() {
                   { label: "30-day cancellation notice" },
                   { label: "Onboarding support" },
                 ]}
+                onGetStarted={handleGetStarted}
               />
             </div>
           </div>
