@@ -61,13 +61,13 @@ export const Navbar = ({
   const defaultLinks = [
     { label: "Home", href: "#home", id: "home" },
     { label: "Services", href: "#services", id: "services" },
-    { label: "Contact", href: "#contact", id: "contact" },
+    { label: "Contact", href: "/contact", id: "contact" },
   ];
 
   const adminLinks = [
     { label: "Dashboard", href: "#", id: "dashboard" },
     { label: "Tenant Directory", href: "#", id: "tenant" },
-    { label: "Subscription and Plans", href: "#", id: "subscription" },
+    { label: "Subscription and Plans", href: "/admin/dashboard?view=subscription", id: "subscription" },
     { label: "System Activity", href: "#", id: "system_activity" },
   ];
 
@@ -173,7 +173,7 @@ export const Navbar = ({
 
         {type !== "admin" && type !== "tenant" && type !== "employee" ? (
           <div className="shrink-0">
-            <Link href="/onboarding">
+            <Link href="/login">
               <Button
                 variant="accent"
                 shape="rounded"
@@ -290,7 +290,7 @@ export const Navbar = ({
         ))}
         {type !== "admin" && type !== "tenant" ? (
           <div className="pt-2">
-            <Link href="/onboarding" onClick={() => setIsOpen(false)}>
+            <Link href="/login" onClick={() => setIsOpen(false)}>
               <Button
                 variant="accent"
                 shape="rounded"
