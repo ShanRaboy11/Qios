@@ -1,4 +1,4 @@
-"use client";
+"use client"; {/* ibetter q pa i2 */}
 
 import React, { useState } from "react";
 import { Plus, Minus, PlusCircle } from "lucide-react";
