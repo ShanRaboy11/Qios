@@ -11,6 +11,7 @@ import Link from "next/link";
 import { Navbar } from "@/components/organisms/navbar";
 import { Footer } from "@/components/organisms/footer";
 import { motion, AnimatePresence } from "framer-motion";
+import { useRouter, useParams } from "next/navigation";
 
 type ViewState =
   | "dashboard"
@@ -28,14 +29,28 @@ export default function TenantDashboardPage({
   const [currentView, setCurrentView] = useState<ViewState>("dashboard");
   const [isTransitioning, setIsTransitioning] = useState(false);
 
-  const handleNavigation = (view: ViewState) => {
+  const router = useRouter();
+  const paramsHook = useParams();
+  const tenantId = paramsHook.id as string;
+
+  const handleNavigation = (view: string) => {
+    if (view === "staff" || view === "settings") {
+      router.push(`/${tenantId}/${view}`);
+      return;
+    }
+
+    if (view === "inventory" || view === "menu" || view === "sales") {
+      router.push(`/${tenantId}/${view}`);
+      return;
+    }
+
     if (currentView === view) return;
 
     setIsTransitioning(true);
 
     // Simulate loading delay for skeleton
     setTimeout(() => {
-      setCurrentView(view);
+      setCurrentView(view as ViewState);
       setIsTransitioning(false);
     }, 600);
   };
@@ -91,7 +106,7 @@ export default function TenantDashboardPage({
         variant="transparent"
         type="tenant"
         activeView={currentView}
-        onNavigate={(view) => handleNavigation(view as ViewState)}
+        onNavigate={(view) => handleNavigation(view)}
         className="z-[100]"
       />
 
