@@ -72,6 +72,7 @@ const OrderEditor = () => {
   const [selectedModifiers, setSelectedModifiers] = useState<string[]>([]);
   const [selectedSize, setSelectedSize] = useState<string>("s2");
   const [instructions, setInstructions] = useState("");
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   // handlers
   const toggleModifier = (id: string) => {
@@ -80,9 +81,17 @@ const OrderEditor = () => {
     );
   };
 
+  const handleAddToOrder = () => {
+    setShowSuccessModal(true);
+  };
+
   const basePrice = 500;
-  const modifiersTotal = selectedModifiers.length * 35;
-  const totalPrice = (basePrice + modifiersTotal) * quantity;
+  const sizePrice = SIZES.find((s) => s.id === selectedSize)?.price ?? 0;
+  const modifiersTotal = selectedModifiers.reduce((sum, id) => {
+    const mod = MODIFIERS.find((m) => m.id === id);
+    return sum + (mod?.price ?? 0);
+  }, 0);
+  const totalPrice = (basePrice + sizePrice + modifiersTotal) * quantity;
 
   return (
     <div className="max-w-[700px] mx-auto bg-bg-primary rounded-[40px] md:rounded-[48px] border-[8px] md:border-[12px] border-white shadow-[var(--kds-shadow-hover)] overflow-hidden relative font-inter my-4 md:my-8">
@@ -273,6 +282,7 @@ const OrderEditor = () => {
           <Button
             variant="accent"
             shape="rounded"
+            onClick={handleAddToOrder}
             className="w-full h-[56px] md:h-[64px] text-white text-base md:text-[18px] font-bold shadow-[0_12px_24px_rgba(255,82,105,0.22)] justify-center gap-3 active:scale-[0.98] transition-transform"
           >
             Add to Order
@@ -284,6 +294,90 @@ const OrderEditor = () => {
           </Button>
         </div>
       </div>
+
+      {/* success modal overlay */}
+      {showSuccessModal && (
+        <div
+          className="fixed inset-0 z-[200] flex items-end md:items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+          onClick={() => setShowSuccessModal(false)}
+        >
+          <div
+            className="w-full max-w-[420px] bg-white rounded-[32px] border-[8px] border-bg-primary shadow-[var(--kds-shadow-hover)] overflow-hidden animate-in slide-in-from-bottom-4 md:zoom-in-95 duration-300"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* modal handle */}
+            <div className="flex justify-center pt-4 pb-1">
+              <div className="w-10 h-1.5 bg-black/10 rounded-full" />
+            </div>
+
+            <div className="p-6 md:p-8 flex flex-col items-center gap-4 text-center">
+              {/* success icon */}
+              <div className="w-16 h-16 rounded-full bg-success-secondary flex items-center justify-center shadow-sm">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="w-8 h-8 text-success-primary animate-in zoom-in-75 duration-300"
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </div>
+
+              <div className="space-y-1.5">
+                <h3 className="text-xl font-extrabold text-text-primary">
+                  Added to Order!
+                </h3>
+                <p className="b4 text-text-secondary">
+                  {quantity}x Chicken Adobo has been added to your cart.
+                </p>
+              </div>
+
+              {/* order summary */}
+              <div className="w-full bg-bg-primary rounded-2xl px-5 py-4 space-y-1.5 text-left">
+                <div className="flex justify-between b4 text-text-secondary">
+                  <span>Base price</span>
+                  <span className="font-semibold text-text-primary">₱{basePrice.toFixed(2)}</span>
+                </div>
+                {modifiersTotal > 0 && (
+                  <div className="flex justify-between b4 text-text-secondary">
+                    <span>Add-ons ({selectedModifiers.length})</span>
+                    <span className="font-semibold text-text-primary">+₱{modifiersTotal.toFixed(2)}</span>
+                  </div>
+                )}
+                {sizePrice > 0 && (
+                  <div className="flex justify-between b4 text-text-secondary">
+                    <span>Size</span>
+                    <span className="font-semibold text-text-primary">+₱{sizePrice.toFixed(2)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between b4 text-text-secondary">
+                  <span>Qty</span>
+                  <span className="font-semibold text-text-primary">&times;{quantity}</span>
+                </div>
+                <div className="h-px bg-black/5 my-1" />
+                <div className="flex justify-between b3 font-bold">
+                  <span className="text-text-primary">Total</span>
+                  <span className="text-brand-accent">₱{totalPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                </div>
+              </div>
+
+              {/* close btn */}
+              <Button
+                variant="accent"
+                shape="rounded"
+                onClick={() => setShowSuccessModal(false)}
+                className="w-full h-[52px] text-white text-base font-bold shadow-[0_8px_20px_rgba(255,82,105,0.2)] justify-center"
+              >
+                Done
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
