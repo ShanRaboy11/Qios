@@ -170,7 +170,7 @@ export default function KitchenPreparationDashboard() {
   );
 
   return (
-    <div className="flex flex-col bg-[#F8FAFC] min-h-screen p-4 md:p-6 lg:p-8 gap-6 md:gap-8 font-inter">
+    <div className="flex flex-col min-h-screen p-4 md:p-6 lg:p-8 gap-6 md:gap-8 font-inter bg-transparent">
       {/* Dashboard Header Element */}
       <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4 bg-white p-6 rounded-2xl shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-100">
         <div>

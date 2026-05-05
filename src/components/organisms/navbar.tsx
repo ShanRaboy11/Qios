@@ -9,7 +9,7 @@ import Link from "next/link";
 
 interface NavbarProps {
   variant?: "filled" | "transparent";
-  type?: "default" | "admin" | "tenant";
+  type?: "default" | "admin" | "tenant" | "employee";
   activeView?: string;
   onNavigate?: (view: string) => void;
   className?: string;
@@ -80,12 +80,22 @@ export const Navbar = ({
     { label: "Audit Logs", href: "#", id: "audit_logs" },
   ];
 
+  const employeeLinks = [
+    { label: "Dashboard", href: "#", id: "dashboard" },
+    { label: "Order Queue", href: "#", id: "queue" },
+    { label: "Scanner", href: "#", id: "scanner" },
+    { label: "Inventory Audit", href: "#", id: "inventory_audit" },
+    { label: "Transactions", href: "#", id: "transactions" },
+  ];
+
   const links =
     type === "admin"
       ? adminLinks
       : type === "tenant"
         ? tenantLinks
-        : defaultLinks;
+        : type === "employee"
+          ? employeeLinks
+          : defaultLinks;
 
   return (
     <nav
@@ -108,9 +118,9 @@ export const Navbar = ({
       />
 
       <Link
-        href={type === "admin" || type === "tenant" ? "#" : "/"}
+        href={type === "admin" || type === "tenant" || type === "employee" ? "#" : "/"}
         onClick={(e) => {
-          if (type === "admin" || type === "tenant") {
+          if (type === "admin" || type === "tenant" || type === "employee") {
             e.preventDefault();
             onNavigate?.("dashboard");
           }
@@ -143,7 +153,7 @@ export const Navbar = ({
             key={link.id}
             href={link.href}
             onClick={(e) => {
-              if (type === "admin" || type === "tenant") {
+              if (type === "admin" || type === "tenant" || type === "employee") {
                 e.preventDefault();
                 onNavigate?.(link.id);
               }
@@ -161,7 +171,7 @@ export const Navbar = ({
           </a>
         ))}
 
-        {type !== "admin" && type !== "tenant" ? (
+        {type !== "admin" && type !== "tenant" && type !== "employee" ? (
           <div className="shrink-0">
             <Link href="/onboarding">
               <Button
@@ -191,10 +201,10 @@ export const Navbar = ({
               <div className="absolute right-0 top-[calc(100%+12px)] w-56 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 py-2">
                 <div className="px-4 py-3 border-b border-gray-50 mb-2">
                   <p className="text-[15px] font-bold text-text-primary truncate">
-                    {type === "admin" ? "Admin User" : "Tenant User"}
+                    {type === "admin" ? "Admin User" : type === "employee" ? "Employee User" : "Tenant User"}
                   </p>
                   <p className="text-[13px] text-text-secondary truncate mt-0.5">
-                    {type === "admin" ? "admin@qios.com" : "tenant@qios.com"}
+                    {type === "admin" ? "admin@qios.com" : type === "employee" ? "employee@qios.com" : "tenant@qios.com"}
                   </p>
                 </div>
                 <button
@@ -259,7 +269,7 @@ export const Navbar = ({
             key={link.id}
             href={link.href}
             onClick={(e) => {
-              if (type === "admin" || type === "tenant") {
+              if (type === "admin" || type === "tenant" || type === "employee") {
                 e.preventDefault();
                 onNavigate?.(link.id);
               }
@@ -267,8 +277,9 @@ export const Navbar = ({
             }}
             className={cn(
               "transition-colors font-inter font-medium text-[18px] active:opacity-70",
-              ((type === "admin" || type === "tenant") &&
+              ((type === "admin" || type === "tenant" || type === "employee") &&
                 activeView === link.id) ||
+
                 (type === "default" && link.id === "home")
                 ? "text-brand-accent"
                 : "text-text-primary hover:text-brand-accent active:text-brand-accent",
