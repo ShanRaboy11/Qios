@@ -57,6 +57,8 @@ const TAX_RATE = 0.085;
 const OrderSummary = () => {
   // state
   const [items, setItems] = useState<OrderItem[]>(INITIAL_ITEMS);
+  const [showVoidModal, setShowVoidModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   // handlers
   const updateQuantity = (id: string, delta: number) => {
@@ -69,6 +71,16 @@ const OrderSummary = () => {
     );
   };
 
+  const handleVoidConfirm = () => {
+    setShowVoidModal(false);
+    // void order logic goes here
+  };
+
+  const handlePaymentConfirm = () => {
+    setShowVoidModal(false);
+    setShowPaymentModal(true);
+  };
+
   // calculations
   const subtotal = items.reduce(
     (acc, item) => acc + item.price * item.quantity,
@@ -78,6 +90,7 @@ const OrderSummary = () => {
   const total = subtotal + tax;
 
   return (
+    <>
     <div className="max-w-[900px] mx-auto bg-white rounded-[32px] shadow-[var(--kds-shadow-hover)] overflow-hidden font-inter border border-black/5 my-8 md:my-10">
       {/* header section */}
       <div className="bg-brand-secondary px-6 md:px-10 py-7 flex flex-col gap-3">
@@ -218,6 +231,7 @@ const OrderSummary = () => {
           <Button
             variant="accent"
             shape="rounded"
+            onClick={() => setShowVoidModal(true)}
             className="flex-1 sm:flex-none sm:min-w-[200px] h-[56px] text-white font-bold text-base shadow-[0_8px_24px_rgba(255,82,105,0.22)] justify-center active:scale-[0.97] transition-transform"
           >
             Void Order
@@ -225,6 +239,7 @@ const OrderSummary = () => {
           <Button
             variant="primary"
             shape="rounded"
+            onClick={() => setShowPaymentModal(true)}
             className="flex-1 sm:flex-none sm:min-w-[200px] h-[56px] font-bold text-base shadow-[0_8px_24px_rgba(255,215,122,0.35)] justify-center active:scale-[0.97] transition-transform"
           >
             Confirm Payment
@@ -232,6 +247,148 @@ const OrderSummary = () => {
         </div>
       </div>
     </div>
+
+      {/* void order confirmation modal */}
+      {showVoidModal && (
+        <div
+          className="fixed inset-0 z-[200] flex items-end md:items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+          onClick={() => setShowVoidModal(false)}
+        >
+          <div
+            className="w-full max-w-[420px] bg-white rounded-[32px] border-[8px] border-bg-primary shadow-[var(--kds-shadow-hover)] overflow-hidden animate-in slide-in-from-bottom-4 md:zoom-in-95 duration-300"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* modal handle */}
+            <div className="flex justify-center pt-4 pb-1">
+              <div className="w-10 h-1.5 bg-black/10 rounded-full" />
+            </div>
+
+            <div className="p-6 md:p-8 flex flex-col items-center gap-4 text-center">
+              {/* warning icon */}
+              <div className="w-16 h-16 rounded-full bg-warning-secondary flex items-center justify-center shadow-sm">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="w-8 h-8 text-warning-primary animate-in zoom-in-75 duration-300"
+                >
+                  <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                  <line x1="12" y1="9" x2="12" y2="13" />
+                  <line x1="12" y1="17" x2="12.01" y2="17" />
+                </svg>
+              </div>
+
+              <div className="space-y-1.5">
+                <h3 className="text-xl font-extrabold text-text-primary">Void this order?</h3>
+                <p className="b4 text-text-secondary">
+                  Order #ORD-2847 will be permanently cancelled. This action cannot be undone.
+                </p>
+              </div>
+
+              {/* summary pill */}
+              <div className="w-full bg-warning-secondary/40 rounded-2xl px-5 py-3 flex justify-between items-center">
+                <span className="b4 text-text-secondary">Total to void</span>
+                <span className="b3 font-bold text-warning-primary">₱ {total.toFixed(2)}</span>
+              </div>
+
+              {/* action btns */}
+              <div className="flex gap-3 w-full pt-1">
+                <Button
+                  variant="ghost"
+                  shape="rounded"
+                  onClick={() => setShowVoidModal(false)}
+                  className="flex-1 h-[50px] font-bold text-base justify-center border border-black/10"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="accent"
+                  shape="rounded"
+                  onClick={handleVoidConfirm}
+                  className="flex-1 h-[50px] text-white font-bold text-base shadow-[0_6px_18px_rgba(255,82,105,0.22)] justify-center"
+                >
+                  Yes, Void
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* payment success modal */}
+      {showPaymentModal && (
+        <div
+          className="fixed inset-0 z-[200] flex items-end md:items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+          onClick={() => setShowPaymentModal(false)}
+        >
+          <div
+            className="w-full max-w-[420px] bg-white rounded-[32px] border-[8px] border-bg-primary shadow-[var(--kds-shadow-hover)] overflow-hidden animate-in slide-in-from-bottom-4 md:zoom-in-95 duration-300"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* modal handle */}
+            <div className="flex justify-center pt-4 pb-1">
+              <div className="w-10 h-1.5 bg-black/10 rounded-full" />
+            </div>
+
+            <div className="p-6 md:p-8 flex flex-col items-center gap-4 text-center">
+              {/* success icon */}
+              <div className="w-16 h-16 rounded-full bg-success-secondary flex items-center justify-center shadow-sm">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="w-8 h-8 text-success-primary animate-in zoom-in-75 duration-300"
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </div>
+
+              <div className="space-y-1.5">
+                <h3 className="text-xl font-extrabold text-text-primary">Payment Confirmed!</h3>
+                <p className="b4 text-text-secondary">
+                  Order #ORD-2847 has been paid and closed successfully.
+                </p>
+              </div>
+
+              {/* receipt summary */}
+              <div className="w-full bg-bg-primary rounded-2xl px-5 py-4 space-y-1.5 text-left">
+                <div className="flex justify-between b4 text-text-secondary">
+                  <span>Subtotal</span>
+                  <span className="font-semibold text-text-primary">₱ {subtotal.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between b4 text-text-secondary">
+                  <span>Tax ({(TAX_RATE * 100).toFixed(1)}%)</span>
+                  <span className="font-semibold text-text-primary">₱ {tax.toFixed(2)}</span>
+                </div>
+                <div className="h-px bg-black/5 my-1" />
+                <div className="flex justify-between b3 font-bold">
+                  <span className="text-text-primary">Total Paid</span>
+                  <span className="text-success-primary">₱ {total.toFixed(2)}</span>
+                </div>
+              </div>
+
+              {/* close btn */}
+              <Button
+                variant="primary"
+                shape="rounded"
+                onClick={() => setShowPaymentModal(false)}
+                className="w-full h-[52px] font-bold text-base shadow-[0_8px_24px_rgba(255,215,122,0.35)] justify-center"
+              >
+                Done
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 
