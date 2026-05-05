@@ -3,6 +3,7 @@ import { Check, ExternalLink, Info, Sparkles, Rocket } from "lucide-react";
 import { Button } from "../atoms/Button";
 import { Badge } from "../atoms/Badge";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 interface PlanNote {
   label: string;
@@ -158,23 +159,25 @@ const PlanCard = ({
           ))}
         </div>
 
-        <Button
-          variant={isBusiness ? "accent" : "outline"}
-          shape="rounded"
-          size="md"
-          className={cn(
-            "w-full max-md:text-sm text-base transition-all duration-300 ease-in-out",
-            !isBusiness && styles.btnMobile,
-            !isBusiness && "md:bg-transparent md:text-inherit",
-            isEnterprise &&
-              "md:border-success-primary md:text-success-primary md:hover:bg-success-primary md:hover:text-white md:hover:border-success-primary",
-            isBasic &&
-              "md:border-brand-primary md:text-brand-primary md:hover:bg-brand-primary md:hover:text-white md:hover:border-brand-primary",
-          )}
-          rightIcon={<ExternalLink size={16} />}
-        >
-          Get Started
-        </Button>
+        <Link href="/onboarding" className="w-full mt-auto">
+          <Button
+            variant={isBusiness ? "accent" : "outline"}
+            shape="rounded"
+            size="md"
+            className={cn(
+              "w-full max-md:text-sm text-base transition-all duration-300 ease-in-out",
+              !isBusiness && styles.btnMobile,
+              !isBusiness && "md:bg-transparent md:text-inherit",
+              isEnterprise &&
+                "md:border-success-primary md:text-success-primary md:hover:bg-success-primary md:hover:text-white md:hover:border-success-primary",
+              isBasic &&
+                "md:border-brand-primary md:text-brand-primary md:hover:bg-brand-primary md:hover:text-white md:hover:border-brand-primary",
+            )}
+            rightIcon={<ExternalLink size={16} />}
+          >
+            Get Started
+          </Button>
+        </Link>
       </div>
     </div>
   );
