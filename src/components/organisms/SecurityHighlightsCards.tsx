@@ -26,7 +26,7 @@ const HighlightCard = ({
   return (
     <div
       className={cn(
-        "bg-white rounded-[16px] sm:rounded-[24px] shadow-sm border p-4 sm:p-6 flex flex-col justify-between min-w-0 transition-colors",
+        "bg-white rounded-[16px] sm:rounded-[24px] shadow-sm border p-4 sm:p-6 flex flex-col justify-between min-w-0 transition-all duration-300 hover:-translate-y-1 hover:shadow-md cursor-pointer",
         isAlert ? "border-error-primary/30 bg-error-secondary/10" : "border-gray-100"
       )}
     >
