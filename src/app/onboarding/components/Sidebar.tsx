@@ -40,12 +40,10 @@ export function OnboardingSidebar({ steps, currentStep }: SidebarProps) {
   return (
     <div
       className={cn(
-        // h-auto and lg:h-auto allow the container to grow with the parent flex height
-        // lg:min-h-screen ensures it is at least full height
-        // lg:self-stretch ensures it stretches to match the tallest sibling (the right side content)
-        "w-full lg:w-[45%] xl:w-[55%] h-auto lg:min-h-screen lg:h-auto lg:self-stretch sticky z-40 overflow-hidden",
-        "top-[120px] lg:top-0",
-        "flex flex-row lg:flex-col justify-center items-center px-6 py-8",
+        // FIXED: Removed 'sticky' and 'top' classes. 
+        // Added 'lg:min-h-screen' and 'lg:self-stretch' to ensure background stretches to footer.
+        "w-full lg:w-[45%] xl:w-[55%] h-auto lg:min-h-screen lg:self-stretch relative z-40 overflow-hidden",
+        "flex flex-col justify-center items-center px-6 py-12 lg:py-24",
         "bg-gradient-to-br from-[#FFF5E9] via-[#FFD8B1] to-[#FFCC99] border-b lg:border-b-0 lg:border-r border-orange-200",
       )}
     >
@@ -129,8 +127,8 @@ export function OnboardingSidebar({ steps, currentStep }: SidebarProps) {
         }
       `}</style>
 
-      {/* CONTENT LOGIC - Kept centered in the sidebar viewport */}
-      <div className="flex flex-row lg:flex-col gap-4 md:gap-12 lg:gap-12 relative justify-center items-center z-10 lg:sticky lg:top-1/2 lg:-translate-y-1/2">
+      {/* CONTENT LOGIC */}
+      <div className="flex flex-row lg:flex-col gap-4 md:gap-12 lg:gap-12 relative justify-center items-center z-10">
         {steps.map((step, index) => {
           const isDone = currentStep > step.id;
           const isActive = currentStep === step.id;
