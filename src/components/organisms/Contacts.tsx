@@ -10,11 +10,18 @@ import {
   MessageSquare,
   Tag,
   CheckCircle,
+  AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/atoms/Button";
 import { cn } from "@/lib/utils";
 
-/* ─── Reusable field label ─────────────────────────────────── */
+// ── validation helpers ────────────────────────────────────────
+const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
+const isValidPhone = (v: string) => /^9\d{9}$/.test(v.replace(/\s/g, ""));
+
+type Errors = Partial<Record<"name" | "email" | "phone" | "subject" | "message", string>>;
+
+// ── reusable field label ──────────────────────────────────────
 function FieldLabel({
   htmlFor,
   children,
@@ -32,7 +39,7 @@ function FieldLabel({
   );
 }
 
-/* ─── Reusable text input ─────────────────────────────────── */
+// ── reusable text input ───────────────────────────────────────
 function TextInput({
   id,
   type = "text",
@@ -41,7 +48,7 @@ function TextInput({
   onChange,
   icon,
   prefix,
-  required,
+  error,
   className,
 }: {
   id: string;
@@ -51,91 +58,113 @@ function TextInput({
   onChange: (v: string) => void;
   icon?: React.ReactNode;
   prefix?: React.ReactNode;
-  required?: boolean;
+  error?: string;
   className?: string;
 }) {
   const [focused, setFocused] = useState(false);
 
   return (
-    <div
-      className={cn(
-        "flex items-center gap-2 w-full rounded-xl border bg-white/70 backdrop-blur-sm px-4 py-3 transition-all duration-300",
-        focused
-          ? "border-brand-primary shadow-[0_0_0_3px_color-mix(in_srgb,var(--color-brand-primary)_18%,transparent)]"
-          : "border-black/10 hover:border-brand-primary/40",
-        className,
+    <div className="flex flex-col gap-1">
+      <div
+        className={cn(
+          "flex items-center gap-2 w-full rounded-xl border bg-white/70 backdrop-blur-sm px-4 py-3 transition-all duration-300",
+          error
+            ? "border-warning-primary bg-warning-secondary/30 shadow-[0_0_0_3px_color-mix(in_srgb,var(--color-warning-primary)_15%,transparent)]"
+            : focused
+              ? "border-brand-primary shadow-[0_0_0_3px_color-mix(in_srgb,var(--color-brand-primary)_18%,transparent)]"
+              : "border-black/10 hover:border-brand-primary/40",
+          className,
+        )}
+      >
+        {icon && (
+          <span
+            className={cn(
+              "shrink-0 transition-colors duration-300",
+              error
+                ? "text-warning-primary"
+                : focused
+                  ? "text-brand-primary"
+                  : "text-text-secondary/50",
+            )}
+          >
+            {icon}
+          </span>
+        )}
+        {prefix && (
+          <span className="shrink-0 b2 text-text-secondary/60 pr-1 border-r border-black/10 mr-1 select-none">
+            {prefix}
+          </span>
+        )}
+        <input
+          id={id}
+          type={type}
+          placeholder={placeholder}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          className="flex-1 bg-transparent outline-none b2 text-text-primary placeholder:text-text-secondary/40 min-w-0"
+        />
+        {error && <AlertCircle size={16} className="shrink-0 text-warning-primary" />}
+      </div>
+      {error && (
+        <p className="b5 text-warning-primary font-medium pl-1">{error}</p>
       )}
-    >
-      {icon && (
-        <span
-          className={cn(
-            "shrink-0 transition-colors duration-300",
-            focused ? "text-brand-primary" : "text-text-secondary/50",
-          )}
-        >
-          {icon}
-        </span>
-      )}
-      {prefix && (
-        <span className="shrink-0 b2 text-text-secondary/60 pr-1 border-r border-black/10 mr-1 select-none">
-          {prefix}
-        </span>
-      )}
-      <input
-        id={id}
-        type={type}
-        placeholder={placeholder}
-        value={value}
-        required={required}
-        onChange={(e) => onChange(e.target.value)}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
-        className="flex-1 bg-transparent outline-none b2 text-text-primary placeholder:text-text-secondary/40 min-w-0"
-      />
     </div>
   );
 }
 
-/* ─── Reusable textarea ────────────────────────────────────── */
+// ── reusable textarea ─────────────────────────────────────────
 function TextArea({
   id,
   placeholder,
   value,
   onChange,
   rows = 5,
+  error,
 }: {
   id: string;
   placeholder?: string;
   value: string;
   onChange: (v: string) => void;
   rows?: number;
+  error?: string;
 }) {
   const [focused, setFocused] = useState(false);
 
   return (
-    <div
-      className={cn(
-        "w-full rounded-xl border bg-white/70 backdrop-blur-sm px-4 py-3 transition-all duration-300",
-        focused
-          ? "border-brand-primary shadow-[0_0_0_3px_color-mix(in_srgb,var(--color-brand-primary)_18%,transparent)]"
-          : "border-black/10 hover:border-brand-primary/40",
+    <div className="flex flex-col gap-1">
+      <div
+        className={cn(
+          "w-full rounded-xl border bg-white/70 backdrop-blur-sm px-4 py-3 transition-all duration-300",
+          error
+            ? "border-warning-primary bg-warning-secondary/30 shadow-[0_0_0_3px_color-mix(in_srgb,var(--color-warning-primary)_15%,transparent)]"
+            : focused
+              ? "border-brand-primary shadow-[0_0_0_3px_color-mix(in_srgb,var(--color-brand-primary)_18%,transparent)]"
+              : "border-black/10 hover:border-brand-primary/40",
+        )}
+      >
+        <textarea
+          id={id}
+          rows={rows}
+          placeholder={placeholder}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          className="w-full bg-transparent outline-none resize-none b2 text-text-primary placeholder:text-text-secondary/40"
+        />
+      </div>
+      {error && (
+        <p className="b5 text-warning-primary font-medium pl-1 flex items-center gap-1">
+          <AlertCircle size={12} /> {error}
+        </p>
       )}
-    >
-      <textarea
-        id={id}
-        rows={rows}
-        placeholder={placeholder}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
-        className="w-full bg-transparent outline-none resize-none b2 text-text-primary placeholder:text-text-secondary/40"
-      />
     </div>
   );
 }
 
-/* ─── Contact method pill ──────────────────────────────────── */
+// ── contact method pill ───────────────────────────────────────
 function ContactMethodPill({
   id,
   icon,
@@ -184,18 +213,17 @@ function ContactMethodPill({
         </p>
         <p className="b5 text-text-secondary mt-0.5">{description}</p>
       </div>
+      {/* selected checkmark */}
       {selected && (
-        <CheckCircle
-          size={18}
-          className="text-brand-primary ml-auto shrink-0"
-          fill="currentColor"
-        />
+        <div className="ml-auto shrink-0 w-5 h-5 rounded-full bg-brand-primary flex items-center justify-center shadow-sm">
+          <CheckCircle size={14} className="text-white" strokeWidth={2.5} />
+        </div>
       )}
     </button>
   );
 }
 
-/* ─── Main component ────────────────────────────────────────── */
+// ── main component ────────────────────────────────────────────
 export default function ContactForm() {
   const [form, setForm] = useState({
     name: "",
@@ -206,6 +234,7 @@ export default function ContactForm() {
     message: "",
     contactMethod: "email" as "email" | "phone",
   });
+  const [errors, setErrors] = useState<Errors>({});
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -215,16 +244,58 @@ export default function ContactForm() {
     WebkitTextFillColor: "transparent",
   };
 
-  const set = (key: keyof typeof form) => (val: string) =>
+  const set = (key: keyof typeof form) => (val: string) => {
     setForm((prev) => ({ ...prev, [key]: val }));
+    // clear error on change
+    if (errors[key as keyof Errors]) {
+      setErrors((prev) => ({ ...prev, [key]: undefined }));
+    }
+  };
+
+  const validate = (): boolean => {
+    const newErrors: Errors = {};
+
+    if (!form.name.trim()) newErrors.name = "Full name is required.";
+    if (!form.email.trim()) {
+      newErrors.email = "Email address is required.";
+    } else if (!isValidEmail(form.email)) {
+      newErrors.email = "Please enter a valid email address.";
+    }
+    if (form.phone && !isValidPhone(form.phone)) {
+      newErrors.phone = "Enter a valid PH mobile number (e.g. 9171234567).";
+    }
+    if (form.contactMethod === "phone" && !form.phone.trim()) {
+      newErrors.phone = "Phone number is required when using phone contact.";
+    }
+    if (!form.subject.trim()) newErrors.subject = "Subject is required.";
+    if (!form.message.trim()) newErrors.message = "Message is required.";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validate()) return;
     setLoading(true);
-    // Simulate network request
+    // simulate network request
     await new Promise((r) => setTimeout(r, 1400));
     setLoading(false);
     setSubmitted(true);
+  };
+
+  const handleReset = () => {
+    setSubmitted(false);
+    setErrors({});
+    setForm({
+      name: "",
+      email: "",
+      phone: "",
+      company: "",
+      subject: "",
+      message: "",
+      contactMethod: "email",
+    });
   };
 
   return (
@@ -232,59 +303,49 @@ export default function ContactForm() {
       className="relative w-full py-32 px-6 bg-bg-primary overflow-hidden"
       id="contact-form"
     >
-      {/* ── Background blobs (matching SubscriptionPlans) ── */}
+      {/* background blobs (matching subscription plans) */}
       <div className="absolute top-0 inset-x-0 h-48 bg-gradient-to-b from-bg-primary via-bg-primary/50 to-transparent pointer-events-none z-10" />
       <div
         className="absolute -top-[10%] -left-[10%] w-[60%] h-[60%] rounded-full opacity-40 pointer-events-none"
         style={{
-          background:
-            "radial-gradient(circle at center, #FFD77A 0%, transparent 70%)",
+          background: "radial-gradient(circle at center, #FFD77A 0%, transparent 70%)",
           filter: "blur(110px)",
         }}
       />
       <div
         className="absolute -bottom-[15%] -right-[10%] w-[70%] h-[70%] rounded-full opacity-35 pointer-events-none"
         style={{
-          background:
-            "radial-gradient(circle at center, #FF5269 0%, transparent 70%)",
+          background: "radial-gradient(circle at center, #FF5269 0%, transparent 70%)",
           filter: "blur(130px)",
         }}
       />
       <div
         className="absolute top-1/4 right-[5%] w-[40%] h-[50%] rounded-full opacity-20 pointer-events-none"
         style={{
-          background:
-            "radial-gradient(circle at center, #ffc670 0%, transparent 60%)",
+          background: "radial-gradient(circle at center, #ffc670 0%, transparent 60%)",
           filter: "blur(90px)",
         }}
       />
 
       <div className="max-w-4xl mx-auto relative z-10">
-        {/* ── Section header ── */}
+        {/* section header */}
         <div className="text-center mb-14 space-y-3">
           <p className="b3 text-brand-primary">GET IN TOUCH</p>
-          <h1
-            className="max-md:text-[34px] h1 text-text-primary tracking-tight leading-tight"
-          >
+          <h1 className="max-md:text-[34px] h1 text-text-primary tracking-tight leading-tight">
             We&apos;d love to{" "}
             <span style={gradientHeaderStyle}>hear from you.</span>
           </h1>
           <p className="max-md:text-base h4 text-text-secondary max-w-[520px] mx-auto">
-            Whether you have a question, want a demo, or just want to say hello—our team is ready.
+            Whether you have a question, want a demo, or just want to say hello — our team is ready.
           </p>
         </div>
 
-        {/* ── Card ── */}
-        <div
-          className="bg-white/80 backdrop-blur-sm rounded-[2rem] border border-brand-primary/20 shadow-xl shadow-brand-primary/5 overflow-hidden"
-        >
-          {/* Card header bar */}
+        {/* card */}
+        <div className="bg-white/80 backdrop-blur-sm rounded-[2rem] border border-brand-primary/20 shadow-xl shadow-brand-primary/5 overflow-hidden">
+          {/* card header bar */}
           <div className="bg-brand-primary/25 px-8 py-7 flex items-center gap-4 border-b border-black/5">
             <div className="w-11 h-11 rounded-2xl bg-brand-primary flex items-center justify-center shadow-md shadow-brand-primary/30 shrink-0">
-              <MessageSquare
-                className="w-5 h-5 text-white"
-                fill="currentColor"
-              />
+              <MessageSquare className="w-5 h-5 text-white" fill="currentColor" />
             </div>
             <div>
               <h2 className="text-[22px] leading-[125%] font-bold font-figtree text-text-primary">
@@ -296,23 +357,30 @@ export default function ContactForm() {
             </div>
           </div>
 
-          {/* ── Success state ── */}
+          {/* success state */}
           {submitted ? (
             <div className="flex flex-col items-center justify-center gap-6 py-20 px-8 text-center">
-              <div className="w-20 h-20 rounded-full bg-success-secondary flex items-center justify-center">
-                <CheckCircle
-                  size={40}
-                  className="text-success-primary"
-                  fill="currentColor"
-                />
+              {/* animated success circle */}
+              <div className="relative w-20 h-20">
+                <div className="absolute inset-0 rounded-full bg-success-secondary animate-ping opacity-30" />
+                <div className="relative w-20 h-20 rounded-full bg-success-secondary flex items-center justify-center shadow-lg shadow-success-primary/20">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2.5}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="w-9 h-9 text-success-primary"
+                  >
+                    <path d="M20 6L9 17l-5-5" />
+                  </svg>
+                </div>
               </div>
               <div className="space-y-2">
-                <h3 className="h3 text-text-primary font-figtree font-bold">
-                  Message sent!
-                </h3>
+                <h3 className="h3 text-text-primary font-figtree font-bold">Message sent!</h3>
                 <p className="b1 text-text-secondary max-w-sm">
-                  Thanks, <strong>{form.name.split(" ")[0]}</strong>! We&apos;ll
-                  reach out via{" "}
+                  Thanks, <strong>{form.name.split(" ")[0]}</strong>! We&apos;ll reach out via{" "}
                   <strong>
                     {form.contactMethod === "email" ? form.email : `+63 ${form.phone}`}
                   </strong>{" "}
@@ -322,27 +390,16 @@ export default function ContactForm() {
               <Button
                 variant="outline"
                 shape="rounded"
-                onClick={() => {
-                  setSubmitted(false);
-                  setForm({
-                    name: "",
-                    email: "",
-                    phone: "",
-                    company: "",
-                    subject: "",
-                    message: "",
-                    contactMethod: "email",
-                  });
-                }}
+                onClick={handleReset}
                 className="border-brand-primary text-brand-primary hover:bg-brand-primary hover:text-white hover:border-brand-primary"
               >
                 Send another message
               </Button>
             </div>
           ) : (
-            /* ── Form ── */
-            <form onSubmit={handleSubmit} className="p-8 space-y-6">
-              {/* Row 1: Name + Email */}
+            /* form */
+            <form onSubmit={handleSubmit} noValidate className="p-8 space-y-6">
+              {/* row 1: name + email */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
                   <FieldLabel htmlFor="contact-name">Full Name *</FieldLabel>
@@ -352,13 +409,11 @@ export default function ContactForm() {
                     value={form.name}
                     onChange={set("name")}
                     icon={<User size={16} />}
-                    required
+                    error={errors.name}
                   />
                 </div>
                 <div>
-                  <FieldLabel htmlFor="contact-email">
-                    Email Address *
-                  </FieldLabel>
+                  <FieldLabel htmlFor="contact-email">Email Address *</FieldLabel>
                   <TextInput
                     id="contact-email"
                     type="email"
@@ -366,12 +421,12 @@ export default function ContactForm() {
                     value={form.email}
                     onChange={set("email")}
                     icon={<Mail size={16} />}
-                    required
+                    error={errors.email}
                   />
                 </div>
               </div>
 
-              {/* Row 2: Phone + Company */}
+              {/* row 2: phone + company */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
                   <FieldLabel htmlFor="contact-phone">Phone Number</FieldLabel>
@@ -383,12 +438,11 @@ export default function ContactForm() {
                     onChange={set("phone")}
                     icon={<Phone size={16} />}
                     prefix="+63"
+                    error={errors.phone}
                   />
                 </div>
                 <div>
-                  <FieldLabel htmlFor="contact-company">
-                    Company / Restaurant
-                  </FieldLabel>
+                  <FieldLabel htmlFor="contact-company">Company / Restaurant</FieldLabel>
                   <TextInput
                     id="contact-company"
                     placeholder="Jollibee Cebu Branch"
@@ -399,7 +453,7 @@ export default function ContactForm() {
                 </div>
               </div>
 
-              {/* Row 3: Subject */}
+              {/* row 3: subject */}
               <div>
                 <FieldLabel htmlFor="contact-subject">Subject *</FieldLabel>
                 <TextInput
@@ -408,11 +462,11 @@ export default function ContactForm() {
                   value={form.subject}
                   onChange={set("subject")}
                   icon={<Tag size={16} />}
-                  required
+                  error={errors.subject}
                 />
               </div>
 
-              {/* Row 4: Message */}
+              {/* row 4: message */}
               <div>
                 <FieldLabel htmlFor="contact-message">Message *</FieldLabel>
                 <TextArea
@@ -421,10 +475,11 @@ export default function ContactForm() {
                   value={form.message}
                   onChange={set("message")}
                   rows={5}
+                  error={errors.message}
                 />
               </div>
 
-              {/* ── Preferred contact method ── */}
+              {/* preferred contact method */}
               <div>
                 <p className="b4 font-semibold text-text-secondary uppercase tracking-[0.08em] mb-3">
                   Preferred Contact Method
@@ -436,9 +491,7 @@ export default function ContactForm() {
                     label="Email"
                     description="We'll reply to your inbox"
                     selected={form.contactMethod === "email"}
-                    onSelect={() =>
-                      setForm((p) => ({ ...p, contactMethod: "email" }))
-                    }
+                    onSelect={() => setForm((p) => ({ ...p, contactMethod: "email" }))}
                   />
                   <ContactMethodPill
                     id="method-phone"
@@ -446,24 +499,19 @@ export default function ContactForm() {
                     label="Phone / SMS"
                     description="We'll call or text your number"
                     selected={form.contactMethod === "phone"}
-                    onSelect={() =>
-                      setForm((p) => ({ ...p, contactMethod: "phone" }))
-                    }
+                    onSelect={() => setForm((p) => ({ ...p, contactMethod: "phone" }))}
                   />
                 </div>
               </div>
 
-              {/* ── Divider ── */}
+              {/* divider */}
               <div className="h-px w-full bg-black/6" />
 
-              {/* ── Submit ── */}
+              {/* submit row */}
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                 <p className="b4 text-text-secondary/70">
                   * Required fields. We typically respond within{" "}
-                  <span className="text-brand-primary font-semibold">
-                    1 business day
-                  </span>
-                  .
+                  <span className="text-brand-primary font-semibold">1 business day</span>.
                 </p>
                 <Button
                   type="submit"
@@ -481,24 +529,12 @@ export default function ContactForm() {
           )}
         </div>
 
-        {/* ── Info tiles below the card ── */}
+        {/* info tiles */}
         <div className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-5">
           {[
-            {
-              icon: <Mail size={20} className="text-brand-primary" />,
-              label: "Email",
-              value: "hello@qios.ph",
-            },
-            {
-              icon: <Phone size={20} className="text-brand-accent" />,
-              label: "Phone",
-              value: "+63 32 000 0000",
-            },
-            {
-              icon: <Building2 size={20} className="text-success-primary" />,
-              label: "Office",
-              value: "Cebu City, Philippines",
-            },
+            { icon: <Mail size={20} className="text-brand-primary" />, label: "Email", value: "contact@qios.ph" },
+            { icon: <Phone size={20} className="text-brand-accent" />, label: "Phone", value: "+63 912 345 6789" },
+            { icon: <Building2 size={20} className="text-success-primary" />, label: "Office", value: "Cebu City, Philippines" },
           ].map((item) => (
             <div
               key={item.label}

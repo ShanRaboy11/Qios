@@ -12,6 +12,7 @@ export default function ContactPage() {
       <div className="flex-grow w-full pt-20">
         <ContactForm />
       </div>
+      <div className="relative bottom-0 inset-x-0 h-40 bg-gradient-to-t from-white via-white/50 to-transparent z-[2] pointer-events-none" />
       <Footer />
     </main>
   );
