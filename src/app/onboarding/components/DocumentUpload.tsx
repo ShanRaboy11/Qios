@@ -39,18 +39,23 @@ export function DocumentUpload({
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewSrc, setPreviewSrc] = useState<string | null>(null);
   const [previewIsImage, setPreviewIsImage] = useState(false);
+  
+  const [clearedIds, setClearedIds] = useState<string[]>([]);
 
-  // Cleanup object URLs on unmount
   useEffect(() => {
     return () => {
       if (previewSrc && previewSrc.startsWith("blob:")) {
         URL.revokeObjectURL(previewSrc);
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Dependency array kept empty to match original intent and prevent render errors
   }, []);
 
   const handleFileChange = (id: string, file: File) => {
+    // If user uploads a file, they are replacing any existing document
+    if (!clearedIds.includes(id)) {
+      setClearedIds((prev) => [...prev, id]);
+    }
     setData((prev) => ({
       ...prev,
       [id]: file,
@@ -61,6 +66,10 @@ export function DocumentUpload({
     const newData = { ...data };
     delete newData[id];
     setData(newData);
+    // Ensure that once removed, we don't fall back to "Already Uploaded"
+    if (!clearedIds.includes(id)) {
+      setClearedIds((prev) => [...prev, id]);
+    }
   };
 
   const openPreviewForFile = (file: File) => {
@@ -84,15 +93,11 @@ export function DocumentUpload({
   };
 
   const closePreview = () => {
-    if (previewSrc && previewSrc.startsWith("blob:")) {
-      URL.revokeObjectURL(previewSrc);
-    }
-    setPreviewSrc(null);
     setPreviewOpen(false);
   };
 
   const isComplete = DOCUMENT_REQUIREMENTS.filter((r) => r.required).every(
-    (r) => Boolean(data[r.id] || existingUrls[r.id]),
+    (r) => Boolean(data[r.id] || (existingUrls[r.id] && !clearedIds.includes(r.id))),
   );
 
   return (
@@ -115,39 +120,38 @@ export function DocumentUpload({
           Food Industry Standards
         </Badge>
       </div>
+
       {/* Preview Modal */}
       {previewOpen && previewSrc && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/50" onClick={closePreview} />
-          <div className="relative z-10 max-w-[90vw] max-h-[90vh] w-full bg-white rounded-lg overflow-hidden">
-            <div className="flex items-center justify-between p-3 border-b">
-              <div className="font-semibold">Document Preview</div>
-              <div className="flex items-center gap-2">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm">
+          <div className="absolute inset-0" onClick={closePreview} />
+          <div className="relative z-10 w-full max-w-6xl max-h-[90vh] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between px-8 py-5 border-b">
+              <div className="font-bold text-lg text-neutral-800">Document Preview</div>
+              <div className="flex items-center gap-6">
                 <a
                   href={previewSrc}
                   target="_blank"
                   rel="noreferrer"
-                  className="text-sm text-[var(--color-brand-primary)] underline"
+                  className="text-sm font-bold text-[var(--color-brand-primary)] hover:underline"
                 >
                   Open in new tab
                 </a>
                 <button
                   onClick={closePreview}
                   type="button"
-                  className="rounded p-1 text-neutral-600 hover:bg-neutral-100"
+                  className="rounded-full p-1 text-neutral-500 hover:bg-neutral-100 transition-colors"
                 >
-                  <X size={16} />
+                  <X size={26} />
                 </button>
               </div>
             </div>
 
-            <div className="p-3 flex items-center justify-center h-[calc(90vh-64px)]">
+            <div className="flex-1 bg-neutral-50 overflow-auto p-4 flex items-center justify-center">
               {previewIsImage ? (
-                // image preview
                 <img src={previewSrc} alt="preview" className="max-w-full max-h-full object-contain" />
               ) : (
-                // fallback to iframe for PDFs or other documents
-                <iframe src={previewSrc} className="w-full h-full border-0" title="document preview" />
+                <iframe src={previewSrc} className="w-full h-[75vh] border-0 bg-white" title="document preview" />
               )}
             </div>
           </div>
@@ -157,142 +161,86 @@ export function DocumentUpload({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-7">
         {DOCUMENT_REQUIREMENTS.map((req) => {
           const selectedFile = data[req.id];
-          const existingUrl = existingUrls[req.id];
+          const hasExistingUrl = existingUrls[req.id] && !clearedIds.includes(req.id);
+          const hasFile = !!(selectedFile || hasExistingUrl);
 
           return (
             <div
               key={req.id}
+              onClick={() => {
+                if (selectedFile) openPreviewForFile(selectedFile);
+                else if (hasExistingUrl) openPreviewForUrl(existingUrls[req.id]);
+              }}
               className={cn(
                 "group relative overflow-hidden rounded-[24px] border-2 bg-white p-8 transition-all duration-500",
-                selectedFile || existingUrl
-                  ? "border-[var(--color-success-primary)] shadow-lg shadow-green-100/50"
-                  : "border-neutral-100 hover:border-[var(--color-brand-primary)] hover:shadow-xl hover:shadow-orange-100/30",
+                hasFile
+                  ? "border-[var(--color-success-primary)] shadow-lg cursor-pointer"
+                  : "border-neutral-100 hover:border-[var(--color-brand-primary)] hover:shadow-xl",
               )}
             >
-              {(selectedFile || existingUrl) && (
+              {hasFile && (
                 <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-[var(--color-success-secondary)] opacity-50 blur-3xl" />
               )}
 
               <div className="relative z-10 flex h-full flex-col justify-between gap-6">
                 <div className="space-y-3">
                   <div className="flex items-start justify-between">
-                    <div
-                      className={cn(
-                        "rounded-xl p-3 transition-colors duration-300",
-                        selectedFile || existingUrl
-                          ? "bg-[var(--color-success-secondary)] text-[var(--color-success-primary)]"
-                          : "bg-neutral-50 text-neutral-400 group-hover:bg-orange-50 group-hover:text-[var(--color-brand-primary)]",
-                      )}
-                    >
+                    <div className={cn("rounded-xl p-3 transition-colors duration-300", hasFile ? "bg-[var(--color-success-secondary)] text-[var(--color-success-primary)]" : "bg-neutral-50 text-neutral-400 group-hover:bg-orange-50 group-hover:text-[var(--color-brand-primary)]")}>
                       <req.icon size={24} />
                     </div>
-
-                    {req.required && !selectedFile && !existingUrl && (
-                      <Badge
-                        color="error"
-                        variant="subtle"
-                        shape="pill"
-                        className="text-[10px] font-bold uppercase tracking-wider"
-                      >
-                        Required
-                      </Badge>
+                    {req.required && !hasFile && (
+                      <Badge color="error" variant="subtle" shape="pill" className="text-[10px] font-bold uppercase tracking-wider">Required</Badge>
                     )}
-                    {(selectedFile || existingUrl) && (
-                      <CheckCircle2
-                        size={24}
-                        className="text-[var(--color-success-primary)] animate-in zoom-in duration-300"
-                      />
-                    )}
+                    {hasFile && <CheckCircle2 size={24} className="text-[var(--color-success-primary)]" />}
                   </div>
-
                   <div>
-                    <h4 className="b2 mb-1 font-bold text-[var(--color-text-primary)]">
-                      {req.title}
-                    </h4>
-                    <p className="b4 leading-relaxed text-[var(--color-text-secondary)]">
-                      {req.desc}
-                    </p>
+                    <h4 className="b2 mb-1 font-bold text-[var(--color-text-primary)]">{req.title}</h4>
+                    <p className="b4 leading-relaxed text-[var(--color-text-secondary)]">{req.desc}</p>
                   </div>
                 </div>
 
                 <div className="mt-auto">
-                  <div className="space-y-3">
-                    {selectedFile ? (
-                      <div className="animate-in slide-in-from-left-2 flex items-center justify-between gap-3 rounded-xl border border-neutral-100 bg-neutral-50 p-2">
-                        <div className="flex items-center gap-3 min-w-0">
-                          <button
-                            onClick={() => openPreviewForFile(selectedFile)}
-                            type="button"
-                            className="rounded-md p-2 text-[var(--color-brand-primary)] hover:bg-orange-50"
-                            aria-label="View document"
-                          >
-                            <Eye size={16} />
-                          </button>
-                          <span className="b4 max-w-[180px] truncate pl-1 font-medium text-neutral-600">
-                            {selectedFile.name}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => removeFile(req.id)}
-                            type="button"
-                            className="rounded-lg p-2 text-red-400 transition-all hover:bg-red-50 hover:text-red-600"
-                          >
-                            <X size={16} />
-                          </button>
-                        </div>
+                  {selectedFile ? (
+                    <div className="flex items-center justify-between rounded-xl border border-neutral-100 bg-neutral-50 p-4">
+                      <div className="flex items-center gap-4 min-w-0">
+                        <Eye size={18} className="text-[var(--color-brand-primary)]" />
+                        <span className="b4 truncate font-medium text-neutral-600">{selectedFile.name}</span>
                       </div>
-                    ) : existingUrl ? (
-                      <div className="animate-in slide-in-from-left-2 rounded-xl border border-[var(--color-success-primary)]/20 bg-[var(--color-success-secondary)]/40 p-3">
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="min-w-0">
-                            <p className="text-xs font-bold uppercase tracking-wider text-[var(--color-success-primary)]">
-                              Already Uploaded
-                            </p>
-                            <p className="mt-1 truncate text-[11px] text-neutral-500">
-                              Saved from your previous session
-                            </p>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => openPreviewForUrl(existingUrl)}
-                              type="button"
-                              className="inline-flex items-center justify-center rounded-lg border border-[var(--color-brand-primary)]/10 bg-white px-3 py-2 text-xs font-bold text-[var(--color-brand-primary)] transition-colors hover:bg-orange-50"
-                            >
-                              <Eye size={14} className="mr-2" />
-                              View
-                            </button>
-                            <label className="inline-flex cursor-pointer items-center justify-center rounded-lg border border-[var(--color-brand-primary)]/20 bg-white px-3 py-2 text-xs font-bold text-[var(--color-brand-primary)] transition-colors hover:bg-orange-50">
-                              Replace
-                              <input
-                                type="file"
-                                className="hidden"
-                                onChange={(e) =>
-                                  e.target.files?.[0] &&
-                                  handleFileChange(req.id, e.target.files[0])
-                                }
-                              />
-                            </label>
-                          </div>
-                        </div>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); removeFile(req.id); }}
+                        type="button"
+                        className="text-red-400 hover:text-red-600"
+                      >
+                        <X size={18} />
+                      </button>
+                    </div>
+                  ) : hasExistingUrl ? (
+                    <div className="rounded-xl border border-neutral-100 bg-white p-4 flex flex-col gap-4">
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-wider text-[var(--color-success-primary)]">Already Uploaded</p>
+                        <p className="text-[11px] font-medium text-neutral-500 mt-1">Saved from previous session</p>
                       </div>
-                    ) : (
-                      <label className="block w-full cursor-pointer">
-                        <input
-                          type="file"
-                          className="hidden"
-                          onChange={(e) =>
-                            e.target.files?.[0] &&
-                            handleFileChange(req.id, e.target.files[0])
-                          }
-                        />
-                        <div className="b3 flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-neutral-200 py-3 font-bold text-neutral-400 transition-all hover:border-[var(--color-brand-primary)] hover:bg-orange-50/50 hover:text-[var(--color-brand-primary)]">
-                          <FileUp size={18} />
-                          Upload File
-                        </div>
-                      </label>
-                    )}
-                  </div>
+                      <div className="flex items-center gap-2">
+                        <button type="button" className="flex-1 h-9 rounded-lg border border-neutral-200 bg-white text-xs font-bold text-neutral-500 hover:bg-neutral-50">
+                          <Eye size={14} className="inline mr-2" /> View
+                        </button>
+                        <label 
+                          className="flex-1 h-9 flex items-center justify-center cursor-pointer rounded-lg border border-neutral-200 bg-white text-xs font-bold text-neutral-500 hover:bg-neutral-50"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          Replace
+                          <input type="file" className="hidden" onChange={(e) => e.target.files?.[0] && handleFileChange(req.id, e.target.files[0])} />
+                        </label>
+                      </div>
+                    </div>
+                  ) : (
+                    <label className="block w-full cursor-pointer" onClick={(e) => e.stopPropagation()}>
+                      <input type="file" className="hidden" onChange={(e) => e.target.files?.[0] && handleFileChange(req.id, e.target.files[0])} />
+                      <div className="b3 flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-neutral-200 py-3 font-bold text-neutral-400 transition-all hover:border-[var(--color-brand-primary)] hover:bg-orange-50">
+                        <FileUp size={18} /> Upload File
+                      </div>
+                    </label>
+                  )}
                 </div>
               </div>
             </div>
@@ -301,25 +249,13 @@ export function DocumentUpload({
       </div>
 
       <div className="flex flex-row items-center justify-center gap-4 md:gap-8 pt-8">
-        <Button
-          variant="ghost"
-          size="lg"
-          className="h-14 px-6 md:px-10 b2 border-neutral-200 text-neutral-500"
-          onClick={onBack}
-          disabled={loading}
-        >
-          <ArrowLeft className="w-5 h-5 mr-2" />
-          Back
+        <Button variant="ghost" size="lg" className="h-14 px-6 md:px-10 b2" onClick={onBack} disabled={loading}>
+          <ArrowLeft className="w-5 h-5 mr-2" /> Back
         </Button>
         <Button
           variant="primary"
           size="lg"
-          className={cn(
-            "flex-1 h-14 b2 max-w-[320px] font-bold text-lg shadow-xl",
-            isComplete && !loading
-              ? "shadow-orange-200/50"
-              : "bg-neutral-200 text-white cursor-not-allowed shadow-none",
-          )}
+          className={cn("flex-1 h-14 b2 max-w-[320px] font-bold text-lg", isComplete && !loading ? "shadow-xl shadow-orange-200" : "bg-neutral-200 cursor-not-allowed")}
           onClick={async () => isComplete && !loading && (await onNext())}
           disabled={!isComplete || loading}
         >
