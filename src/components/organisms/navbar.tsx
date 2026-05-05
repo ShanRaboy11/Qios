@@ -163,7 +163,7 @@ export const Navbar = ({
 
         {type !== "admin" && type !== "tenant" ? (
           <div className="shrink-0">
-            <Link href="/onboarding">
+            <Link href="/login">
               <Button
                 variant="accent"
                 shape="rounded"
@@ -279,7 +279,7 @@ export const Navbar = ({
         ))}
         {type !== "admin" && type !== "tenant" ? (
           <div className="pt-2">
-            <Link href="/onboarding" onClick={() => setIsOpen(false)}>
+            <Link href="/login" onClick={() => setIsOpen(false)}>
               <Button
                 variant="accent"
                 shape="rounded"

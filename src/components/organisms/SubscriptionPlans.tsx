@@ -192,7 +192,7 @@ export default function SubscriptionPlans() {
   );
 
   const handleGetStarted = () => {
-    router.push("/onboarding");
+    router.push("/login");
   };
 
   const gradientHeaderStyle = {
