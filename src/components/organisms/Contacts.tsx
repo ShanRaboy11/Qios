@@ -186,9 +186,9 @@ function ContactMethodPill({
       type="button"
       onClick={onSelect}
       className={cn(
-        "flex-1 flex items-center gap-3 px-5 py-4 rounded-2xl border-2 text-left transition-all duration-300 group",
+        "flex-1 flex items-center gap-3 px-5 py-4 rounded-2xl border-2 text-left transition-all duration-300 group backdrop-blur-sm",
         selected
-          ? "border-brand-primary bg-brand-primary/8 shadow-[0_4px_18px_color-mix(in_srgb,var(--color-brand-primary)_22%,transparent)]"
+          ? "border-brand-primary bg-brand-primary/8 shadow-lg shadow-brand-primary/20"
           : "border-black/10 bg-white/60 backdrop-blur-sm hover:border-brand-primary/40 hover:bg-white/80",
       )}
     >
@@ -200,9 +200,12 @@ function ContactMethodPill({
             : "bg-black/5 text-text-secondary group-hover:bg-brand-primary/10 group-hover:text-brand-primary",
         )}
       >
+        {selected && (
+        <div className="absolute inset-0 bg-brand-primary/5 rounded-[14px] pointer-events-none" />
+      )}
         {icon}
       </div>
-      <div>
+      <div className="flex-1 min-w-0">
         <p
           className={cn(
             "b3 transition-colors duration-300",
@@ -213,12 +216,6 @@ function ContactMethodPill({
         </p>
         <p className="b5 text-text-secondary mt-0.5">{description}</p>
       </div>
-      {/* selected checkmark */}
-      {selected && (
-        <div className="ml-auto shrink-0 w-5 h-5 rounded-full bg-brand-primary flex items-center justify-center shadow-sm">
-          <CheckCircle size={14} className="text-white" strokeWidth={2.5} />
-        </div>
-      )}
     </button>
   );
 }
@@ -235,7 +232,7 @@ export default function ContactForm() {
     contactMethod: "email" as "email" | "phone",
   });
   const [errors, setErrors] = useState<Errors>({});
-  const [submitted, setSubmitted] = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const gradientHeaderStyle = {
@@ -281,11 +278,11 @@ export default function ContactForm() {
     // simulate network request
     await new Promise((r) => setTimeout(r, 1400));
     setLoading(false);
-    setSubmitted(true);
+    setShowModal(true);
   };
 
   const handleReset = () => {
-    setSubmitted(false);
+    setShowModal(false);
     setErrors({});
     setForm({
       name: "",
@@ -340,6 +337,62 @@ export default function ContactForm() {
           </p>
         </div>
 
+        {/* success modal */}
+        {showModal && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-text-primary/40 backdrop-blur-sm animate-in fade-in duration-200"
+            onClick={(e) => { if (e.target === e.currentTarget) setShowModal(false); }}
+          >
+            <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-md p-10 flex flex-col items-center text-center gap-6 animate-in zoom-in-95 fade-in duration-200">
+              {/* success icon */}
+              <div className="relative w-20 h-20">
+                <div className="absolute inset-0 rounded-full bg-success-secondary/60 animate-ping" style={{ animationDuration: "1.8s" }} />
+                <div className="relative w-20 h-20 rounded-full bg-success-secondary flex items-center justify-center shadow-lg shadow-success-primary/20">
+                  <svg
+                    viewBox="0 0 24 20"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2.5}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="w-8 h-8 text-success-primary"
+                  >
+                    <path d="M2 10l7 7L22 2" />
+                  </svg>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <h3 className="h3 text-text-primary font-figtree font-bold">Message sent!</h3>
+                <p className="b1 text-text-secondary max-w-sm">
+                  Thanks, <strong>{form.name.split(" ")[0]}</strong>! We&apos;ll reach out via{" "}
+                  <strong>
+                    {form.contactMethod === "email" ? form.email : `+63 ${form.phone}`}
+                  </strong>{" "}
+                  soon.
+                </p>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-3 w-full">
+                <Button
+                  variant="outline"
+                  shape="rounded"
+                  onClick={handleReset}
+                  className="flex-1 border-brand-primary text-brand-primary hover:bg-brand-primary hover:text-white hover:border-brand-primary"
+                >
+                  Send another
+                </Button>
+                <Button
+                  variant="accent"
+                  shape="rounded"
+                  onClick={() => setShowModal(false)}
+                  className="flex-1"
+                >
+                  Done
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* card */}
         <div className="bg-white/80 backdrop-blur-sm rounded-[2rem] border border-brand-primary/20 shadow-xl shadow-brand-primary/5 overflow-hidden">
           {/* card header bar */}
@@ -357,48 +410,8 @@ export default function ContactForm() {
             </div>
           </div>
 
-          {/* success state */}
-          {submitted ? (
-            <div className="flex flex-col items-center justify-center gap-6 py-20 px-8 text-center">
-              {/* animated success circle */}
-              <div className="relative w-20 h-20">
-                <div className="absolute inset-0 rounded-full bg-success-secondary animate-ping opacity-30" />
-                <div className="relative w-20 h-20 rounded-full bg-success-secondary flex items-center justify-center shadow-lg shadow-success-primary/20">
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth={2.5}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="w-9 h-9 text-success-primary"
-                  >
-                    <path d="M20 6L9 17l-5-5" />
-                  </svg>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <h3 className="h3 text-text-primary font-figtree font-bold">Message sent!</h3>
-                <p className="b1 text-text-secondary max-w-sm">
-                  Thanks, <strong>{form.name.split(" ")[0]}</strong>! We&apos;ll reach out via{" "}
-                  <strong>
-                    {form.contactMethod === "email" ? form.email : `+63 ${form.phone}`}
-                  </strong>{" "}
-                  soon.
-                </p>
-              </div>
-              <Button
-                variant="outline"
-                shape="rounded"
-                onClick={handleReset}
-                className="border-brand-primary text-brand-primary hover:bg-brand-primary hover:text-white hover:border-brand-primary"
-              >
-                Send another message
-              </Button>
-            </div>
-          ) : (
-            /* form */
-            <form onSubmit={handleSubmit} noValidate className="p-8 space-y-6">
+          {/* form — always visible */}
+          <form onSubmit={handleSubmit} noValidate className="p-8 space-y-6">
               {/* row 1: name + email */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
@@ -526,7 +539,6 @@ export default function ContactForm() {
                 </Button>
               </div>
             </form>
-          )}
         </div>
 
         {/* info tiles */}
