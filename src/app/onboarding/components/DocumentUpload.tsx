@@ -39,23 +39,18 @@ export function DocumentUpload({
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewSrc, setPreviewSrc] = useState<string | null>(null);
   const [previewIsImage, setPreviewIsImage] = useState(false);
-  
-  const [clearedIds, setClearedIds] = useState<string[]>([]);
 
+  // FIXED: Dependency array size must remain constant. 
+  // We use previewSrc to ensure clean up happens when source changes or unmounts.
   useEffect(() => {
     return () => {
       if (previewSrc && previewSrc.startsWith("blob:")) {
         URL.revokeObjectURL(previewSrc);
       }
     };
-    // Dependency array kept empty to match original intent and prevent render errors
-  }, []);
+  }, [previewSrc]);
 
   const handleFileChange = (id: string, file: File) => {
-    // If user uploads a file, they are replacing any existing document
-    if (!clearedIds.includes(id)) {
-      setClearedIds((prev) => [...prev, id]);
-    }
     setData((prev) => ({
       ...prev,
       [id]: file,
@@ -66,10 +61,6 @@ export function DocumentUpload({
     const newData = { ...data };
     delete newData[id];
     setData(newData);
-    // Ensure that once removed, we don't fall back to "Already Uploaded"
-    if (!clearedIds.includes(id)) {
-      setClearedIds((prev) => [...prev, id]);
-    }
   };
 
   const openPreviewForFile = (file: File) => {
@@ -97,7 +88,7 @@ export function DocumentUpload({
   };
 
   const isComplete = DOCUMENT_REQUIREMENTS.filter((r) => r.required).every(
-    (r) => Boolean(data[r.id] || (existingUrls[r.id] && !clearedIds.includes(r.id))),
+    (r) => Boolean(data[r.id] || existingUrls[r.id]),
   );
 
   return (
@@ -121,12 +112,12 @@ export function DocumentUpload({
         </Badge>
       </div>
 
-      {/* Preview Modal */}
+      {/* Preview Modal - High Z-index to cover Qios header */}
       {previewOpen && previewSrc && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="absolute inset-0" onClick={closePreview} />
-          <div className="relative z-10 w-full max-w-6xl max-h-[90vh] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col">
-            <div className="flex items-center justify-between px-8 py-5 border-b">
+          <div className="relative z-10 w-full max-w-6xl max-h-[90vh] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-300">
+            <div className="flex items-center justify-between px-6 py-4 border-b">
               <div className="font-bold text-lg text-neutral-800">Document Preview</div>
               <div className="flex items-center gap-6">
                 <a
@@ -142,7 +133,7 @@ export function DocumentUpload({
                   type="button"
                   className="rounded-full p-1 text-neutral-500 hover:bg-neutral-100 transition-colors"
                 >
-                  <X size={26} />
+                  <X size={24} />
                 </button>
               </div>
             </div>
@@ -161,15 +152,15 @@ export function DocumentUpload({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-7">
         {DOCUMENT_REQUIREMENTS.map((req) => {
           const selectedFile = data[req.id];
-          const hasExistingUrl = existingUrls[req.id] && !clearedIds.includes(req.id);
-          const hasFile = !!(selectedFile || hasExistingUrl);
+          const existingUrl = existingUrls[req.id];
+          const hasFile = !!(selectedFile || existingUrl);
 
           return (
             <div
               key={req.id}
               onClick={() => {
                 if (selectedFile) openPreviewForFile(selectedFile);
-                else if (hasExistingUrl) openPreviewForUrl(existingUrls[req.id]);
+                else if (existingUrl) openPreviewForUrl(existingUrl);
               }}
               className={cn(
                 "group relative overflow-hidden rounded-[24px] border-2 bg-white p-8 transition-all duration-500",
@@ -201,6 +192,7 @@ export function DocumentUpload({
 
                 <div className="mt-auto">
                   {selectedFile ? (
+                    /* Newly Uploaded Bar - Matches Textbox.png gaps */
                     <div className="flex items-center justify-between rounded-xl border border-neutral-100 bg-neutral-50 p-4">
                       <div className="flex items-center gap-4 min-w-0">
                         <Eye size={18} className="text-[var(--color-brand-primary)]" />
@@ -214,18 +206,19 @@ export function DocumentUpload({
                         <X size={18} />
                       </button>
                     </div>
-                  ) : hasExistingUrl ? (
-                    <div className="rounded-xl border border-neutral-100 bg-white p-4 flex flex-col gap-4">
+                  ) : existingUrl ? (
+                    /* Already Uploaded - Text on top, buttons below */
+                    <div className="rounded-xl border border-[var(--color-success-primary)]/20 bg-[var(--color-success-secondary)]/40 p-4 flex flex-col gap-4">
                       <div>
                         <p className="text-xs font-bold uppercase tracking-wider text-[var(--color-success-primary)]">Already Uploaded</p>
-                        <p className="text-[11px] font-medium text-neutral-500 mt-1">Saved from previous session</p>
+                        <p className="text-[11px] font-medium text-neutral-500">Saved from previous session</p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <button type="button" className="flex-1 h-9 rounded-lg border border-neutral-200 bg-white text-xs font-bold text-neutral-500 hover:bg-neutral-50">
+                        <button type="button" className="flex-1 h-9 rounded-lg border border-neutral-200 bg-white text-xs font-bold text-[var(--color-brand-primary)] transition-all hover:bg-orange-50">
                           <Eye size={14} className="inline mr-2" /> View
                         </button>
                         <label 
-                          className="flex-1 h-9 flex items-center justify-center cursor-pointer rounded-lg border border-neutral-200 bg-white text-xs font-bold text-neutral-500 hover:bg-neutral-50"
+                          className="flex-1 h-9 flex items-center justify-center cursor-pointer rounded-lg border border-neutral-200 bg-white text-xs font-bold text-[var(--color-brand-primary)] transition-all hover:bg-orange-50"
                           onClick={(e) => e.stopPropagation()}
                         >
                           Replace
@@ -234,7 +227,7 @@ export function DocumentUpload({
                       </div>
                     </div>
                   ) : (
-                    <label className="block w-full cursor-pointer" onClick={(e) => e.stopPropagation()}>
+                    <label className="block w-full cursor-pointer">
                       <input type="file" className="hidden" onChange={(e) => e.target.files?.[0] && handleFileChange(req.id, e.target.files[0])} />
                       <div className="b3 flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-neutral-200 py-3 font-bold text-neutral-400 transition-all hover:border-[var(--color-brand-primary)] hover:bg-orange-50">
                         <FileUp size={18} /> Upload File
