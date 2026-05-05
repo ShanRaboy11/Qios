@@ -9,6 +9,7 @@ import TenantManagement from "@/components/organisms/TenantManagement";
 import { SystemActivity } from "@/components/organisms/SystemActivity";
 import { AdminSettings } from "@/components/organisms/AdminSettings";
 import { Footer } from "@/components/organisms/footer";
+import SubscriptionManagement from "@/components/organisms/SubscriptionManagement";
 import { Navbar } from "@/components/organisms/navbar";
 import { LogOut } from "lucide-react";
 
@@ -257,19 +258,13 @@ function AdminDashboardContent() {
             >
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                 <div>
-                  <span className="h1 text-text-primary">
-                    Subscription and Plans
-                  </span>
+                  <span className="h1 text-text-primary">Subscription and Plans</span>
                   <p className="h4 text-text-secondary mt-2">
-                    Manage billing, plans, and subscriptions.
+                    Configure subscription plans and feature access.
                   </p>
                 </div>
               </div>
-              <div className="flex items-center justify-center h-[400px] bg-white rounded-[24px] shadow-sm">
-                <h2 className="text-2xl font-bold text-text-primary">
-                  Coming Soon
-                </h2>
-              </div>
+              <SubscriptionManagement />
             </motion.div>
           ) : currentView === "settings" ? (
             <motion.div

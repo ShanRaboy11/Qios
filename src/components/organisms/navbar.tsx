@@ -67,7 +67,7 @@ export const Navbar = ({
   const adminLinks = [
     { label: "Dashboard", href: "#", id: "dashboard" },
     { label: "Tenant Directory", href: "#", id: "tenant" },
-    { label: "Subscription and Plans", href: "#", id: "subscription" },
+    { label: "Subscription and Plans", href: "/admin/dashboard?view=subscription", id: "subscription" },
     { label: "System Activity", href: "#", id: "system_activity" },
   ];
 
