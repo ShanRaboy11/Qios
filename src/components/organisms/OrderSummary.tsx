@@ -80,34 +80,36 @@ const OrderSummary = () => {
   return (
     <div className="max-w-[900px] mx-auto bg-white rounded-[32px] shadow-[var(--kds-shadow-hover)] overflow-hidden font-inter border border-black/5 my-8 md:my-10">
       {/* header section */}
-      <div className="bg-brand-secondary px-6 md:px-10 py-7 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="space-y-2.5">
+      <div className="bg-brand-secondary px-6 md:px-10 py-7 flex flex-col gap-3">
+        {/* top row: title + validated badge always side by side */}
+        <div className="flex items-start justify-between gap-3">
           <h2 className="h2 text-text-primary font-extrabold">Order #ORD-2847</h2>
-          <div className="flex items-center gap-3">
-            {/* table badge */}
-            <Badge
-              color="accent"
-              variant="subtle"
-              shape="pill"
-              className="b4 font-bold px-4 py-1"
-            >
-              Table 12
-            </Badge>
-            <span className="b4 text-text-primary/60 font-medium">
-              Today, 7:34 PM
-            </span>
-          </div>
+          {/* status badge - anchored top-right on all screen sizes */}
+          <Badge
+            color="success"
+            variant="solid"
+            shape="rounded"
+            className="b4 font-bold px-4 py-2 h-fit shrink-0 shadow-sm mt-1"
+          >
+            Validated
+          </Badge>
         </div>
 
-        {/* status badge */}
-        <Badge
-          color="success"
-          variant="solid"
-          shape="rounded"
-          className="b4 font-bold px-4 py-2 h-fit self-start sm:self-auto shadow-sm"
-        >
-          Validated
-        </Badge>
+        {/* bottom row: table badge + timestamp */}
+        <div className="flex items-center gap-3">
+          {/* table badge */}
+          <Badge
+            color="accent"
+            variant="ghost"
+            shape="pill"
+            className="b4 font-bold px-4 py-1"
+          >
+            Table 12
+          </Badge>
+          <span className="b4 text-text-primary/60 font-medium">
+            Today, 7:34 PM
+          </span>
+        </div>
       </div>
 
       {/* items list section */}
@@ -149,9 +151,9 @@ const OrderSummary = () => {
                   </span>
                   <button
                     onClick={() => updateQuantity(item.id, 1)}
-                    className="w-8 h-8 flex items-center justify-center rounded-lg bg-brand-primary text-text-tertiary hover:opacity-90 transition-all shadow-sm active:scale-90"
+                    className="w-8 h-8 flex items-center justify-center rounded-lg bg-brand-primary hover:opacity-90 transition-all shadow-sm active:scale-90"
                   >
-                    <Plus size={15} />
+                    <Plus size={15} className="text-text-primary" />
                   </button>
                 </div>
 
@@ -212,24 +214,18 @@ const OrderSummary = () => {
         </div>
 
         {/* action buttons */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 pt-8">
           <Button
             variant="accent"
             shape="rounded"
-            className={cn(
-              "w-full sm:min-w-[220px] h-[60px] text-white font-bold text-base md:text-[17px]",
-              "shadow-[0_8px_24px_rgba(255,82,105,0.22)] justify-center active:scale-[0.97] transition-transform",
-            )}
+            className="flex-1 sm:flex-none sm:min-w-[200px] h-[56px] text-white font-bold text-base shadow-[0_8px_24px_rgba(255,82,105,0.22)] justify-center active:scale-[0.97] transition-transform"
           >
             Void Order
           </Button>
           <Button
             variant="primary"
             shape="rounded"
-            className={cn(
-              "w-full sm:min-w-[220px] h-[60px] font-bold text-base md:text-[17px]",
-              "shadow-[var(--kds-shadow-gold)] justify-center active:scale-[0.97] transition-transform",
-            )}
+            className="flex-1 sm:flex-none sm:min-w-[200px] h-[56px] font-bold text-base shadow-[0_8px_24px_rgba(255,215,122,0.35)] justify-center active:scale-[0.97] transition-transform"
           >
             Confirm Payment
           </Button>
