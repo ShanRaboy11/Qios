@@ -1,4 +1,6 @@
+"use client";
 import React from "react";
+import Link from "next/link";
 import { Button } from "@/components/atoms/Button";
 
 export const Hero = () => {
@@ -33,9 +35,11 @@ export const Hero = () => {
             </div>
 
             <div className="flex gap-4 mt-8 xl:mt-0">
-              <Button variant="accent" shape="rounded">
-                Schedule a Demo
-              </Button>
+              <Link href="/contact">
+                <Button variant="accent" shape="rounded">
+                  Schedule a Demo
+                </Button>
+              </Link>
               <Button
                 variant="outline"
                 shape="rounded"
