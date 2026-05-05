@@ -5,7 +5,6 @@ import { Check, ExternalLink, Info, Sparkles, Rocket } from "lucide-react";
 import { Button } from "../atoms/Button";
 import { Badge } from "../atoms/Badge";
 import { cn } from "@/lib/utils";
-import Link from "next/link";
 
 interface PlanNote {
   label: string;

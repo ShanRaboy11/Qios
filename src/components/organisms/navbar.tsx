@@ -61,7 +61,7 @@ export const Navbar = ({
   const defaultLinks = [
     { label: "Home", href: "#home", id: "home" },
     { label: "Services", href: "#services", id: "services" },
-    { label: "Contact", href: "#contact", id: "contact" },
+    { label: "Contact", href: "/contact", id: "contact" },
   ];
 
   const adminLinks = [
