@@ -85,10 +85,13 @@ const DOCUMENT_REQUIREMENTS = [
 function mapTenantStatus(
   status: string | null,
 ): "Active" | "Suspended" | "Pending" | "Rejected" | "Onboarding" {
-  if (status === "onboarding") return "Onboarding";
-  if (status === "pending") return "Pending";
-  if (status === "approved") return "Active";
-  if (status === "rejected") return "Rejected";
+  const normalizedStatus = status?.trim().toLowerCase();
+
+  if (normalizedStatus === "onboarding") return "Onboarding";
+  if (normalizedStatus === "pending") return "Pending";
+  if (normalizedStatus === "approved") return "Active";
+  if (normalizedStatus === "rejected") return "Rejected";
+  if (normalizedStatus === "suspended") return "Suspended";
   return "Active";
 }
 
@@ -252,6 +255,40 @@ function resolveTenantPlanLabel(
   return formatPlanLabel(plan);
 }
 
+function resolveTenantDirectoryType(
+  tenantRecord: Record<string, unknown>,
+): "Basic" | "Business" | "Enterprise" {
+  const plan = pickFirstString(tenantRecord, [
+    "subscription_plan",
+    "plan",
+    "plan_name",
+    "package",
+    "package_id",
+    "tier",
+  ]);
+
+  const normalizedPlan = plan?.trim().toLowerCase();
+
+  if (normalizedPlan === "basic" || normalizedPlan === "starter") {
+    return "Basic";
+  }
+
+  if (normalizedPlan === "enterprise" || normalizedPlan === "enterprises") {
+    return "Enterprise";
+  }
+
+  if (
+    normalizedPlan === "growth" ||
+    normalizedPlan === "business" ||
+    normalizedPlan === "professional" ||
+    normalizedPlan === "pro"
+  ) {
+    return "Business";
+  }
+
+  return "Business";
+}
+
 function resolveBillingCycle(
   tenantRecord: Record<string, unknown>,
   ownerMetadata: Record<string, unknown>,
@@ -280,6 +317,61 @@ function resolveFeatureList(
   tenantRecord: Record<string, unknown>,
   ownerMetadata: Record<string, unknown>,
 ) {
+  const settingsValue = tenantRecord.settings;
+  const settings =
+    settingsValue && typeof settingsValue === "object"
+      ? (settingsValue as Record<string, unknown>)
+      : null;
+
+  if (settings) {
+    const operationalBreakdown: string[] = [];
+
+    const inventoryMode = settings.inventory_mode;
+    if (typeof inventoryMode === "string") {
+      if (inventoryMode === "unit") {
+        operationalBreakdown.push("Inventory Logic: Retail Style (Unit-Based)");
+      } else if (
+        inventoryMode === "recipe" ||
+        inventoryMode === "measurement"
+      ) {
+        operationalBreakdown.push(
+          "Inventory Logic: Production Style (Recipe-Based)",
+        );
+      }
+    }
+
+    const serviceWorkflow = settings.service_workflow;
+    if (typeof serviceWorkflow === "string") {
+      if (serviceWorkflow === "pickup") {
+        operationalBreakdown.push("Service Workflow: Express Pickup");
+      } else if (serviceWorkflow === "dine_in") {
+        operationalBreakdown.push("Service Workflow: Table Service");
+      }
+    }
+
+    const dashboardFocus = settings.dashboard_focus;
+    if (typeof dashboardFocus === "string") {
+      if (dashboardFocus === "speed") {
+        operationalBreakdown.push("Primary Metric: Efficiency (Prep Speed)");
+      } else if (dashboardFocus === "revenue") {
+        operationalBreakdown.push("Primary Metric: Growth (Customer Behavior)");
+      }
+    }
+
+    const supplyLogic = settings.supply_logic;
+    if (typeof supplyLogic === "string") {
+      if (supplyLogic === "centralized") {
+        operationalBreakdown.push("Multi-Store Logic: Centralized Commissary");
+      } else if (supplyLogic === "local") {
+        operationalBreakdown.push("Multi-Store Logic: Independent Units");
+      }
+    }
+
+    if (operationalBreakdown.length > 0) {
+      return operationalBreakdown;
+    }
+  }
+
   const tenantFeatures = pickFirstValue(tenantRecord, [
     "features",
     "enabled_features",
@@ -632,7 +724,7 @@ export async function getTenants() {
       id: t.id,
       business_name: resolveTenantName(tenantRecord),
       owner: resolveOwnerName(tenantRecord, ownerProfile, {}),
-      type: "Professional" as "Professional" | "Enterprise" | "Starter",
+      type: resolveTenantDirectoryType(tenantRecord),
       joined: formatJoinedDate(t.created_at),
       status: mapTenantStatus(typeof t.status === "string" ? t.status : null),
       rawStatus: typeof t.status === "string" ? t.status : "approved",
@@ -884,10 +976,11 @@ export async function updateTenantStatus(
   comments?: string,
 ) {
   const supabase = createSupabaseAdminClient();
+  const trimmedComments = comments?.trim();
 
   const updateData: any = { status };
-  if (comments !== undefined) {
-    updateData.admin_comments = comments;
+  if (trimmedComments !== undefined) {
+    updateData.admin_comments = trimmedComments;
   }
 
   const { error } = await supabase
@@ -899,7 +992,20 @@ export async function updateTenantStatus(
     throw new Error(error.message);
   }
 
-  // Find owner to get email for notification (usually 'admin' role in this single-tenant context)
+  // Prefer the tenant's registered business email, then fall back to owner auth email.
+  const { data: tenant } = await supabase
+    .from("tenants")
+    .select("business_email")
+    .eq("id", tenantId)
+    .maybeSingle();
+
+  let recipientEmail =
+    typeof tenant?.business_email === "string" &&
+    tenant.business_email.trim() !== ""
+      ? tenant.business_email.trim()
+      : null;
+
+  // Find owner to resolve fallback email if tenant business_email is unavailable.
   const { data: adminProfiles } = await supabase
     .from("profiles")
     .select("id, full_name")
@@ -912,17 +1018,20 @@ export async function updateTenantStatus(
     // Get user email using Supabase identity
     const {
       data: { user },
-      error: userError,
     } = await supabase.auth.admin.getUserById(adminId);
 
-    if (user && user.email && status !== "pending") {
-      const { sendBusinessVerificationEmail } = await import("@/lib/email");
-      await sendBusinessVerificationEmail({
-        to: user.email,
-        status,
-        comments,
-      });
+    if (!recipientEmail && user?.email) {
+      recipientEmail = user.email;
     }
+  }
+
+  if (recipientEmail && status !== "pending") {
+    const { sendBusinessVerificationEmail } = await import("@/lib/email");
+    await sendBusinessVerificationEmail({
+      to: recipientEmail,
+      status,
+      comments: trimmedComments,
+    });
   }
 
   revalidatePath("/admin/tenants");

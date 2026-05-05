@@ -14,6 +14,7 @@ import { Footer } from "./footer";
 import {
   getTenantProfileDetails,
   updateTenantSubscription,
+  updateTenantStatus,
 } from "@/app/(admin)/admin/tenants/actions";
 
 export interface TenantProfileData {
@@ -118,6 +119,10 @@ export const TenantProfilePage = ({ tenantId }: TenantProfilePageProps) => {
     useState<BillingCycle>("monthly");
   const [isUpdatingPlan, setIsUpdatingPlan] = useState(false);
   const [managePlanError, setManagePlanError] = useState<string | null>(null);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const [statusActionError, setStatusActionError] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
     let isMounted = true;
@@ -151,6 +156,15 @@ export const TenantProfilePage = ({ tenantId }: TenantProfilePageProps) => {
 
   const handleStatusChange = (newStatus: TenantProfileData["status"]) => {
     if (!tenant) return;
+    setStatusActionError(null);
+
+    if (
+      tenant.status === "Onboarding" &&
+      (newStatus === "Active" || newStatus === "Rejected")
+    ) {
+      return;
+    }
+
     if (newStatus === "Active") {
       const isReactivating = tenant.status === "Suspended";
       setModal({
@@ -187,6 +201,8 @@ export const TenantProfilePage = ({ tenantId }: TenantProfilePageProps) => {
     newStatus: "Approved" | "Revision Requested",
   ) => {
     if (!tenant) return;
+    setStatusActionError(null);
+
     const doc = tenant.documents.find((d) => d.id === docId);
     if (newStatus === "Approved") {
       setModal({
@@ -209,48 +225,76 @@ export const TenantProfilePage = ({ tenantId }: TenantProfilePageProps) => {
     }
   };
 
-  const confirmAction = () => {
+  const confirmAction = async () => {
     if (!tenant) return;
-    if (modal.type === "approve_tenant" || modal.type === "reactivate_tenant") {
-      setTenant((prev) => (prev ? { ...prev, status: "Active" } : null));
-    } else if (modal.type === "reject_tenant") {
-      setTenant((prev) => (prev ? { ...prev, status: "Rejected" } : null));
-    } else if (modal.type === "suspend_tenant") {
-      setTenant((prev) => (prev ? { ...prev, status: "Suspended" } : null));
-    } else if (modal.type === "approve_doc" && modal.targetId) {
-      setTenant((prev) =>
-        prev
-          ? {
-              ...prev,
-              documents: prev.documents.map((doc) =>
-                doc.id === modal.targetId
-                  ? { ...doc, status: "Approved" }
-                  : doc,
-              ),
-            }
-          : null,
-      );
-    } else if (modal.type === "revision_doc" && modal.targetId) {
-      setTenant((prev) =>
-        prev
-          ? {
-              ...prev,
-              documents: prev.documents.map((doc) =>
-                doc.id === modal.targetId
-                  ? { ...doc, status: "Revision Requested" }
-                  : doc,
-              ),
-            }
-          : null,
-      );
+
+    if (modal.requireReason && reason.trim() === "") {
+      setStatusActionError("A comment is required for this action.");
+      return;
     }
 
-    closeModal();
+    setIsUpdatingStatus(true);
+    setStatusActionError(null);
+
+    try {
+      if (
+        modal.type === "approve_tenant" ||
+        modal.type === "reactivate_tenant"
+      ) {
+        await updateTenantStatus(tenant.id, "approved");
+        setTenant((prev) => (prev ? { ...prev, status: "Active" } : null));
+      } else if (modal.type === "reject_tenant") {
+        const adminComment = reason.trim();
+        await updateTenantStatus(tenant.id, "rejected", adminComment);
+        setTenant((prev) => (prev ? { ...prev, status: "Rejected" } : null));
+      } else if (modal.type === "suspend_tenant") {
+        setTenant((prev) => (prev ? { ...prev, status: "Suspended" } : null));
+      } else if (modal.type === "approve_doc" && modal.targetId) {
+        setTenant((prev) =>
+          prev
+            ? {
+                ...prev,
+                documents: prev.documents.map((doc) =>
+                  doc.id === modal.targetId
+                    ? { ...doc, status: "Approved" }
+                    : doc,
+                ),
+              }
+            : null,
+        );
+      } else if (modal.type === "revision_doc" && modal.targetId) {
+        setTenant((prev) =>
+          prev
+            ? {
+                ...prev,
+                documents: prev.documents.map((doc) =>
+                  doc.id === modal.targetId
+                    ? { ...doc, status: "Revision Requested" }
+                    : doc,
+                ),
+              }
+            : null,
+        );
+      }
+
+      closeModal();
+    } catch (error) {
+      console.error("Failed to process tenant action", error);
+      setStatusActionError(
+        error instanceof Error
+          ? error.message
+          : "Unable to process this action right now.",
+      );
+    } finally {
+      setIsUpdatingStatus(false);
+    }
   };
 
   const closeModal = () => {
+    if (isUpdatingStatus) return;
     setModal({ ...modal, isOpen: false });
     setReason("");
+    setStatusActionError(null);
   };
 
   const openManagePlan = () => {
@@ -407,18 +451,40 @@ export const TenantProfilePage = ({ tenantId }: TenantProfilePageProps) => {
         <div className="flex flex-col gap-6">
           <p className="text-[15px] text-text-secondary">{modal.description}</p>
 
-          {modal.requireReason && (
-            <FormField
-              label="Reason (Required)"
-              placeholder="e.g., Document is blurred, Information mismatch..."
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              className="w-full"
-            />
+          {modal.requireReason &&
+            (modal.type === "reject_tenant" ? (
+              <div className="flex flex-col gap-1.5 w-full">
+                <label className="b4 ml-1 font-medium text-text-secondary">
+                  Reason (Required)
+                </label>
+                <textarea
+                  placeholder="e.g., Please revise your submitted permits and upload a clearer copy of the business registration."
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                  rows={5}
+                  className="w-full bg-white text-sm md:text-[16px] px-6 py-3.5 transition-all duration-300 outline-none rounded-2xl border-2 border-[#E5E5E5] focus:border-brand-primary focus:shadow-[0_0_0_2px_rgba(255,198,112,0.15)] placeholder:text-text-secondary text-text-primary resize-y min-h-[132px]"
+                />
+              </div>
+            ) : (
+              <FormField
+                label="Reason (Required)"
+                placeholder="e.g., Document is blurred, Information mismatch..."
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                className="w-full"
+              />
+            ))}
+
+          {statusActionError && (
+            <p className="text-sm text-warning-primary">{statusActionError}</p>
           )}
 
           <div className="flex items-center justify-end gap-3 pt-2">
-            <Button variant="warning" onClick={closeModal}>
+            <Button
+              variant="warning"
+              onClick={closeModal}
+              disabled={isUpdatingStatus}
+            >
               Cancel
             </Button>
             <Button
@@ -435,10 +501,13 @@ export const TenantProfilePage = ({ tenantId }: TenantProfilePageProps) => {
                   ? ""
                   : ""
               }
-              disabled={modal.requireReason && reason.trim() === ""}
+              disabled={
+                isUpdatingStatus ||
+                (modal.requireReason && reason.trim() === "")
+              }
               onClick={confirmAction}
             >
-              Confirm
+              {isUpdatingStatus ? "Saving..." : "Confirm"}
             </Button>
           </div>
         </div>
