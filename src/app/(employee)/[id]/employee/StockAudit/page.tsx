@@ -3,14 +3,14 @@
 import React, { useState, useMemo } from "react";
 import { 
   FileText, TrendingDown, TrendingUp, Minus, Plus,
-  CheckCircle2, X, AlertCircle, ClipboardCheck, Check, RotateCcw
+  CheckCircle2, X, AlertCircle, ClipboardCheck, Check, RotateCcw,
+  Search, SlidersHorizontal
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 import { Button } from "@/components/atoms/Button";
 import { Badge } from "@/components/atoms/Badge";
-import { SearchFilterBar } from "@/components/molecules/SearchFilterBar";
 
 const STOCK_DATA = {
   PROTEINS: [
@@ -76,28 +76,53 @@ export default function StockAudit() {
 
   return (
     <div className="w-full min-h-screen pb-40 bg-bg-primary kds-fade-in">
-      <header className="sticky top-0 z-30 bg-brand-primary backdrop-blur-md border-b border-kds-border-warm px-6 py-8 md:px-12">
-        <div className="max-w-6xl mx-auto space-y-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div>
-              <h1 className="h2 text-text-primary tracking-tighter">Stock Audit</h1>
-              <p className="b3 text-text-secondary">Physical verification session</p>
+      
+      {/* ─── HEADER ─── */}
+      <header className="sticky top-0 z-30 bg-brand-primary backdrop-blur-md border-b border-kds-border-warm px-4 py-6 md:px-12 md:py-8">
+        <div className="max-w-6xl mx-auto space-y-8 md:space-y-6">
+          
+          <div className="flex items-center justify-between gap-4">
+            <div className="min-w-0">
+              <h1 className="h1 text-text-primary tracking-tighter truncate">Stock Audit</h1>
+              <p className="b3 md:b3 text-text-secondary sm:block">Physical verification session</p>
             </div>
-            <div className="flex items-center gap-4 bg-bg-primary p-2 rounded-2xl border border-kds-border-warm">
-                <div className="px-4 border-r border-kds-border-warm text-center">
-                    <p className="b4 font-semibold text-text-primary uppercase">Items Audited</p>
-                    <p className="b2 text-text-primary">{stats.audited}</p>
+
+            <div className="flex shrink-0 items-center bg-white/90 rounded-2xl border border-kds-border-warm shadow-sm divide-x divide-kds-border-warm overflow-hidden h-12 md:h-20">
+                <div className="px-3 sm:px-8 flex flex-col items-center justify-center min-w-[70px] sm:min-w-[100px] md:min-w-[120px]">
+                    <p className="b5 md:b5 font-bold text-text-secondary uppercase tracking-tight">Audited</p>
+                    <p className="b2 md:h2 text-text-primary leading-none">{stats.audited}</p>
                 </div>
-                <div className="px-4 text-center">
-                    <p className="b4 font-bold text-text-primary uppercase">To-Do</p>
-                    <p className="b2 text-brand-accent">{stats.remaining}</p>
+                <div className="px-3 sm:px-8 flex flex-col items-center justify-center min-w-[70px] sm:min-w-[100px] md:min-w-[120px]">
+                    <p className="b5 md:b5 font-bold text-text-secondary uppercase tracking-tight">To-Do</p>
+                    <p className="b2 md:h2 text-brand-accent leading-none">{stats.remaining}</p>
                 </div>
             </div>
           </div>
-          <SearchFilterBar placeholder="Search by ingredient name..." onSearch={(val) => setSearchQuery(val)} />
+
+          {/* Search & Filter */}
+          <div className="flex items-center gap-2 md:gap-4 w-full">
+            <div className="flex-1 relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary" size={18} />
+              <input 
+                type="text" 
+                placeholder="Search by ingredient name..." 
+                className="w-full h-12 md:h-14 pl-11 pr-4 bg-white border border-kds-border-warm rounded-[15px] b3 focus:outline-none focus:border-brand-accent transition-all shadow-sm"
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <Button 
+                variant="outline" 
+                className="h-12 md:h-14 px-4 md:px-8 bg-white border-kds-border-warm rounded-[15px] flex items-center gap-2 hover:bg-bg-primary transition-all shadow-sm shrink-0"
+                onClick={() => console.log("Open Filters")}
+            >
+              <SlidersHorizontal size={18} className="text-text-primary" />
+              <span className="b3 text-text-primary font-semibold hidden xs:block">Filters</span>
+            </Button>
+          </div>
         </div>
       </header>
 
+      {/* ─── LABELS ─── */}
       <div className="hidden lg:block max-w-6xl mx-auto px-6 mt-10">
         <div className="flex items-center text-text-primary b4 font-bold uppercase tracking-[0.2em] px-8 pb-4">
           <div className="flex-1">Ingredient Details</div>
@@ -157,7 +182,6 @@ export default function StockAudit() {
                           {!isFinished && (
                               <button 
                                 onClick={() => handleQuickMatch(item.id, item.systemCount)} 
-                                // Changed from -right-11 to -right-10 to move it a little to the left
                                 className="absolute -right-10 top-1/2 -translate-y-1/2 w-8 h-8 bg-success-secondary text-success-primary rounded-full flex items-center justify-center hover:bg-success-primary hover:text-white transition-all shadow-sm"
                                 title="Match System"
                               >
