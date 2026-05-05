@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/atoms/Button";
 import { ArrowRight, Menu, X, User, LogOut, Settings } from "lucide-react";
 import { Avatar } from "@/components/atoms/Avatar";
+import Link from "next/link";
 
 interface NavbarProps {
   variant?: "filled" | "transparent";
@@ -106,8 +107,15 @@ export const Navbar = ({
         )}
       />
 
-      <div
-        className="font-ibrand shrink-0 relative"
+      <Link
+        href={type === "admin" || type === "tenant" ? "#" : "/"}
+        onClick={(e) => {
+          if (type === "admin" || type === "tenant") {
+            e.preventDefault();
+            onNavigate?.("dashboard");
+          }
+        }}
+        className="font-ibrand shrink-0 relative cursor-pointer"
         style={{
           textAlign: "right",
           fontSize: "50px",
@@ -122,7 +130,7 @@ export const Navbar = ({
         }}
       >
         Qios
-      </div>
+      </Link>
 
       <div
         className={cn(
@@ -155,14 +163,16 @@ export const Navbar = ({
 
         {type !== "admin" && type !== "tenant" ? (
           <div className="shrink-0">
-            <Button
-              variant="accent"
-              shape="rounded"
-              className="text-[18px]"
-              rightIcon={<ArrowRight size={18} strokeWidth={2.5} />}
-            >
-              Get Started
-            </Button>
+            <Link href="/onboarding">
+              <Button
+                variant="accent"
+                shape="rounded"
+                className="text-[18px]"
+                rightIcon={<ArrowRight size={18} strokeWidth={2.5} />}
+              >
+                Get Started
+              </Button>
+            </Link>
           </div>
         ) : (
           <div className="shrink-0 relative" ref={profileRef}>
@@ -269,14 +279,16 @@ export const Navbar = ({
         ))}
         {type !== "admin" && type !== "tenant" ? (
           <div className="pt-2">
-            <Button
-              variant="accent"
-              shape="rounded"
-              className="w-full justify-center active:scale-[0.98] transition-transform text-[18px]"
-              rightIcon={<ArrowRight size={18} strokeWidth={2.5} />}
-            >
-              Get Started
-            </Button>
+            <Link href="/onboarding" onClick={() => setIsOpen(false)}>
+              <Button
+                variant="accent"
+                shape="rounded"
+                className="w-full justify-center active:scale-[0.98] transition-transform text-[18px]"
+                rightIcon={<ArrowRight size={18} strokeWidth={2.5} />}
+              >
+                Get Started
+              </Button>
+            </Link>
           </div>
         ) : (
           <div className="pt-4 mt-2 border-t border-gray-100 flex flex-col gap-2">
