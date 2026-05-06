@@ -48,6 +48,15 @@ export const TenantProfileBentoGrid = ({
     setPreviewDocument(null);
   }, [tenant.id]);
 
+  const subscriptionStatusColor =
+    tenant.status === "Active"
+      ? "success"
+      : tenant.status === "Pending"
+        ? "primary"
+        : tenant.status === "Onboarding"
+          ? "warning"
+          : "error";
+
   return (
     <div
       className={cn(
@@ -209,8 +218,8 @@ export const TenantProfileBentoGrid = ({
             <span className="text-2xl font-bold text-text-primary">
               {tenant.plan}
             </span>
-            <Badge color="success" variant="subtle">
-              Active
+            <Badge color={subscriptionStatusColor} variant="subtle">
+              {tenant.status}
             </Badge>
           </div>
           <InfoRow label="Billing Cycle" value={tenant.billingCycle} />

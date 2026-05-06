@@ -24,7 +24,7 @@ interface Tenant {
   id: string;
   business_name: string;
   owner: string;
-  type: "Professional" | "Enterprise" | "Starter";
+  type: "Basic" | "Business" | "Enterprise";
   joined: string;
   status: "Active" | "Suspended" | "Pending" | "Rejected" | "Onboarding";
   rawStatus?: string;
@@ -35,7 +35,7 @@ const INITIAL_DATA: Tenant[] = [
     id: "TEN-2026-001",
     business_name: "Lola's Lechon House",
     owner: "Maria Santos",
-    type: "Professional",
+    type: "Business",
     joined: "Jan 15, 2026",
     status: "Active",
   },
@@ -59,7 +59,7 @@ const INITIAL_DATA: Tenant[] = [
     id: "TEN-2026-004",
     business_name: "Tatay's Grill Station",
     owner: "Roberto Garcia",
-    type: "Starter",
+    type: "Basic",
     joined: "Feb 10, 2026",
     status: "Suspended",
   },
@@ -67,7 +67,7 @@ const INITIAL_DATA: Tenant[] = [
     id: "TEN-2026-005",
     business_name: "Seafood Express",
     owner: "Ana Mercado",
-    type: "Professional",
+    type: "Business",
     joined: "Feb 18, 2026",
     status: "Active",
   },
@@ -75,7 +75,7 @@ const INITIAL_DATA: Tenant[] = [
     id: "TEN-2026-006",
     business_name: "Crispy Pata Corner",
     owner: "Eddie Tan",
-    type: "Starter",
+    type: "Basic",
     joined: "Mar 1, 2026",
     status: "Rejected",
   },
@@ -318,12 +318,12 @@ export default function TenantManagement({
           <span className="b1 text-gray-900">{stats.pending}</span>
         </div>
 
-          <div className="w-2.5 h-2.5 bg-[#ffc670] rounded-full" />
-          <span className="b1 text-gray-500">Onboarding:</span>
-          <span className="b1 text-gray-900">{stats.onboarding}</span>
-        </div>
+        <div className="w-2.5 h-2.5 bg-[#ffc670] rounded-full" />
+        <span className="b1 text-gray-500">Onboarding:</span>
+        <span className="b1 text-gray-900">{stats.onboarding}</span>
+      </div>
 
-        <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2">
         <div className="flex items-center gap-2">
           <div className="w-2.5 h-2.5 bg-warning-primary rounded-full" />
           <span className="b1 text-gray-500">Rejected:</span>
@@ -399,9 +399,9 @@ export default function TenantManagement({
                   label="Plan"
                   options={[
                     { label: "All Plans", value: "All" },
-                    { label: "Professional", value: "Professional" },
+                    { label: "Basic", value: "Basic" },
+                    { label: "Business", value: "Business" },
                     { label: "Enterprise", value: "Enterprise" },
-                    { label: "Starter", value: "Starter" },
                   ]}
                   value={typeFilter}
                   onSelect={(opt) => setTypeFilter(opt.value)}
@@ -558,10 +558,10 @@ function TenantCard({
             variant="outline"
             color={
               tenant.type === "Enterprise"
-                ? "primary"
-                : tenant.type === "Professional"
+                ? "success"
+                : tenant.type === "Business"
                   ? "accent"
-                  : "info"
+                  : "warning"
             }
           >
             {tenant.type}
