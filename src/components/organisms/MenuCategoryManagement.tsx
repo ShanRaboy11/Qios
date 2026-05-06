@@ -421,12 +421,16 @@ const MenuCategoryManagement = () => {
               "opacity-50 blur-[2px] pointer-events-none select-none lg:max-w-[60%]",
           )}
         >
-          {/* overlay to fully block interactions when drawer is open */}
           {draftItem && (
-            <div
-              className="absolute inset-0 z-40 bg-transparent pointer-events-auto cursor-default"
-              onClick={(e) => e.stopPropagation()}
-            />
+            <>
+              <div
+                className="absolute inset-0 z-40 bg-transparent pointer-events-auto cursor-default"
+                onClick={(e) => e.stopPropagation()}
+              />
+              <style>{`
+                nav { display: none !important; }
+              `}</style>
+            </>
           )}
 
           {/* item dashboard (main panel) */}
@@ -454,6 +458,14 @@ const MenuCategoryManagement = () => {
                     className="sm:hidden flex-1 justify-center b3 py-2 h-auto"
                   >
                     <Plus size={18} className="mr-1" /> Create Category
+                  </Button>
+                  <Button
+                    variant="primary"
+                    onClick={() => setIsCategoryModalOpen(true)}
+                    className="hidden sm:flex b3"
+                    leftIcon={<Plus size={18} />}
+                  >
+                    Create Category
                   </Button>
                   <div className="flex items-center gap-1 bg-white/80 p-1 rounded-xl shadow-sm border border-black/5 flex-shrink-0">
                     <button

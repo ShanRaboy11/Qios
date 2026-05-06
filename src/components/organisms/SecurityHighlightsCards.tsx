@@ -27,15 +27,15 @@ const HighlightCard = ({
     <div
       className={cn(
         "rounded-[16px] sm:rounded-[24px] shadow-sm border p-4 sm:p-6 flex flex-col justify-between min-w-0 transition-all duration-300",
-        isAlert ? "bg-error-secondary/30 border-error-primary/20" : "bg-white border-gray-100"
+        isAlert ? "bg-error-secondary border-error-primary/50 shadow-[0_0_15px_rgba(255,82,105,0.15)]" : "bg-white border-gray-100"
       )}
     >
       <div className="flex justify-between items-start mb-3 sm:mb-4 gap-2">
         <div className="space-y-0.5 sm:space-y-1 min-w-0">
-          <h3 className="text-[11px] sm:text-sm font-medium text-text-secondary leading-tight">
+          <h3 className={cn("text-[11px] sm:text-sm font-medium leading-tight", isAlert ? "text-error-primary/80" : "text-text-secondary")}>
             {title}
           </h3>
-          <p className="text-lg sm:text-2xl lg:text-3xl font-bold text-text-primary truncate">
+          <p className={cn("text-lg sm:text-2xl lg:text-3xl font-bold truncate", isAlert ? "text-error-primary" : "text-text-primary")}>
             {value}
           </p>
         </div>
@@ -52,7 +52,7 @@ const HighlightCard = ({
         </div>
       </div>
       <div className="flex flex-wrap items-center mt-auto">
-        <span className="text-[10px] sm:text-sm text-text-secondary truncate">
+        <span className={cn("text-[10px] sm:text-sm truncate", isAlert ? "text-error-primary/80 font-medium" : "text-text-secondary")}>
           {description}
         </span>
       </div>

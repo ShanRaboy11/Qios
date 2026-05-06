@@ -3,21 +3,18 @@
 import React, { Suspense } from "react";
 import { CartProvider } from "@/contexts/CartContext";
 
-import IngredientsInventory from "@/components/organisms/IngredientsInventory";
 import { InventoryRecipeMatrix } from "@/components/organisms/InventoryRecipeMatrix";
 import KitchenPreparationDashboard from "@/components/organisms/KitchenPreparationDashboard";
 import { LiveActivityFeed } from "@/components/organisms/LiveActivityFeed";
 import { LoginForm } from "@/components/organisms/LoginForm";
 import MenuCatalog from "@/components/organisms/MenuCatalog";
-import MenuInventory from "@/components/organisms/MenuInventory";
 import { PromoBanner } from "@/components/organisms/PromoBanner";
 import { QrScanner } from "@/components/organisms/QrScanner";
 import { RecipeMatrixView } from "@/components/organisms/RecipeMatrixView";
 import { SystemActivity } from "@/components/organisms/SystemActivity";
-import TenantManagement from "@/components/organisms/TenantManagement";
 import { ThresholdSettingsPanel } from "@/components/organisms/ThresholdSettingsPanel";
 import { ChatbotUI } from "@/components/organisms/ChatbotUI";
-import MenuCategoryManagement from "@/components/organisms/MenuCategoryManagement";
+import OrderEditor from "@/components/organisms/OrderEditor";
 import OrderSummary from "@/components/organisms/OrderSummary";
 
 export default function DraftPage() {
@@ -46,14 +43,6 @@ export default function DraftPage() {
             <MenuCatalog initialItems={[]} />
           </SectionWrapper>
 
-          <SectionWrapper title="Menu Inventory">
-            <MenuInventory />
-          </SectionWrapper>
-
-          <SectionWrapper title="Ingredients Inventory">
-            <IngredientsInventory />
-          </SectionWrapper>
-
           <SectionWrapper title="Inventory Recipe Matrix">
             <div className="container mx-auto">
               <InventoryRecipeMatrix />
@@ -64,10 +53,6 @@ export default function DraftPage() {
             <div className="p-4 bg-gray-100">
               <RecipeMatrixView />
             </div>
-          </SectionWrapper>
-
-          <SectionWrapper title="Tenant Management">
-            <TenantManagement />
           </SectionWrapper>
 
           <SectionWrapper title="Kitchen Preparation Dashboard">
@@ -96,10 +81,6 @@ export default function DraftPage() {
 
           <SectionWrapper title="Chatbot UI">
             <ChatbotUI />
-          </SectionWrapper>
-
-          <SectionWrapper title="Menu Category Management">
-            <MenuCategoryManagement />
           </SectionWrapper>
 
           <SectionWrapper title="Order Summary">

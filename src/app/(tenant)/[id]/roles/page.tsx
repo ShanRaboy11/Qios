@@ -2,16 +2,36 @@
 
 import React from "react";
 import RolesManagement from "@/components/organisms/RolesManagement";
+import { Button } from "@/components/atoms/Button";
+import { ArrowLeft } from "lucide-react";
+import { useRouter, useParams } from "next/navigation";
 
-export default function RoleManagementPage() {
+export default function RolesPage() {
+  const router = useRouter();
+  const params = useParams();
+  const tenantId = params.id as string;
+
   return (
-    <div className="flex flex-col h-full w-full max-w-7xl mx-auto py-6 md:py-8 px-4 sm:px-6 lg:px-8">
-      {/* header */}
-      <div className="mb-6 md:mb-8">
-        <h1 className="h2 text-text-primary mb-2">Role Management</h1>
-        <p className="b1 text-text-secondary">Manage role permissions and access controls</p>
+    <>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+        <div>
+          <h2 className="h2 text-text-primary">Role Management</h2>
+          <p className="b1 text-text-secondary mt-2">
+            Configure system roles and their permissions
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            shape="rounded"
+            leftIcon={<ArrowLeft size={18} />}
+            onClick={() => router.push(`/${tenantId}/staff`)}
+          >
+            Back to Staff
+          </Button>
+        </div>
       </div>
       <RolesManagement />
-    </div>
+    </>
   );
 }
