@@ -6,6 +6,8 @@ import { Button } from "@/components/atoms/Button";
 import { ArrowRight, Menu, X, User, LogOut, Settings } from "lucide-react";
 import { Avatar } from "@/components/atoms/Avatar";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 interface NavbarProps {
   variant?: "filled" | "transparent";
@@ -27,6 +29,17 @@ export const Navbar = ({
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const navRef = useRef<HTMLElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    try {
+      const supabase = createSupabaseBrowserClient();
+      await supabase.auth.signOut();
+    } catch {
+      // ignore
+    }
+    router.push("/login");
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -222,7 +235,7 @@ export const Navbar = ({
                   className="w-full text-left px-4 py-2.5 text-[14px] text-[#EF4444] hover:bg-red-50 flex items-center gap-3 transition-colors font-bold"
                   onClick={() => {
                     setIsProfileOpen(false);
-                    window.location.href = "/";
+                    handleLogout();
                   }}
                 >
                   <LogOut className="w-[18px] h-[18px]" />
@@ -317,7 +330,7 @@ export const Navbar = ({
               className="w-full text-left py-3 px-2 text-[18px] text-[#EF4444] hover:text-[#EF4444] active:text-[#EF4444] flex items-center gap-3 transition-colors font-bold rounded-xl hover:bg-red-50"
               onClick={() => {
                 setIsOpen(false);
-                window.location.href = "/";
+                handleLogout();
               }}
             >
               <LogOut className="w-5 h-5" />

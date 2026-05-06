@@ -30,19 +30,14 @@ export async function middleware(request: NextRequest) {
   );
 
   const isAuthRoute = request.nextUrl.pathname === "/login";
-  const isPublicRoute =
-    isAuthRoute ||
-    request.nextUrl.pathname === "/" ||
-    request.nextUrl.pathname === "/onboarding" ||
-    request.nextUrl.pathname.startsWith("/onboarding") ||
-    request.nextUrl.pathname.startsWith("/_next") ||
-    request.nextUrl.pathname.startsWith("/api") ||
-    request.nextUrl.pathname.startsWith("/public");
+  
+  // For now, only restrict admin (super admin) pages
+  const isProtectedRoute = request.nextUrl.pathname.startsWith("/admin");
+  const isPublicRoute = !isProtectedRoute && !isAuthRoute;
 
-  // Refresh session if expired - required for Server Components
   // Skip auth check for public routes to avoid unnecessary network calls
   let user = null;
-  if (!isPublicRoute) {
+  if (isProtectedRoute || isAuthRoute) {
     const {
       data: { user: authUser },
     } = await supabase.auth.getUser();
@@ -50,7 +45,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Redirect to login if accessing protected routes without session
-  if (!user && !isPublicRoute) {
+  if (!user && isProtectedRoute) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = "/login";
     return NextResponse.redirect(loginUrl);
