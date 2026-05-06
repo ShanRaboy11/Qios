@@ -55,19 +55,9 @@ function AdminDashboardContent() {
   const [initialTenantFilter, setInitialTenantFilter] = useState<
     string | undefined
   >();
-  const [isTransitioning, setIsTransitioning] = useState(false);
-  const transitionTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(
-    null,
-  );
   const router = useRouter();
 
-  React.useEffect(() => {
-    return () => {
-      if (transitionTimerRef.current) {
-        clearTimeout(transitionTimerRef.current);
-      }
-    };
-  }, []);
+
 
   React.useEffect(() => {
     const view = searchParams.get("view") as ViewState;
@@ -89,18 +79,12 @@ function AdminDashboardContent() {
   const handleNavigation = (view: ViewState, tenantFilter?: string) => {
     if (currentView === view && view !== "tenant") return;
 
-    if (transitionTimerRef.current) {
-      clearTimeout(transitionTimerRef.current);
-    }
-
-    setIsTransitioning(true);
-
-    // Keep transitions quick so the directory feels responsive.
-    transitionTimerRef.current = setTimeout(() => {
-      setInitialTenantFilter(tenantFilter);
-      setCurrentView(view);
-      setIsTransitioning(false);
-    }, 220);
+    setInitialTenantFilter(tenantFilter);
+    setCurrentView(view);
+    
+    // update URL using pushState for deep linking without reload
+    const newUrl = view === "dashboard" ? "/admin/dashboard" : `/admin/${view}`;
+    window.history.pushState(null, "", newUrl);
   };
 
   return (
@@ -158,40 +142,8 @@ function AdminDashboardContent() {
         onNavigate={(view) => handleNavigation(view as ViewState)}
       />
       <div className="max-w-[1440px] mx-auto flex flex-col p-4 md:p-8 lg:p-12 mt-28 relative z-[90]">
-        <AnimatePresence mode="wait">
-          {isTransitioning ? (
-            <motion.div
-              key="skeleton"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="w-full flex flex-col gap-6 mt-4 px-1"
-            >
-              {/* top row skeleton */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-                {[1, 2, 3, 4].map((i) => (
-                  <div
-                    key={i}
-                    className="h-[120px] bg-white border border-gray-100 shadow-sm rounded-[24px] animate-pulse"
-                  />
-                ))}
-              </div>
-
-              {/* main content skeleton */}
-              <div className="h-[400px] w-full bg-white border border-gray-100 shadow-sm rounded-[24px] animate-pulse" />
-
-              {/* bottom row skeleton */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
-                {[1, 2, 3].map((i) => (
-                  <div
-                    key={i}
-                    className="h-[250px] bg-white border border-gray-100 shadow-sm rounded-[24px] animate-pulse"
-                  />
-                ))}
-              </div>
-            </motion.div>
-          ) : currentView === "dashboard" ? (
+        <AnimatePresence mode="popLayout">
+          {currentView === "dashboard" ? (
             <motion.div
               key="dashboard"
               initial={{ opacity: 0, y: 20 }}

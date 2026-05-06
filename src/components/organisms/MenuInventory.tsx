@@ -3233,28 +3233,12 @@ export default function MenuInventory() {
   return (
     <>
       <ResponsiveStyles />
-      <div className="bg-bg-primary min-h-screen font-inter text-text-primary p-4 md:p-6 lg:p-20">
-        <div
-          style={{
-            background: "#fff",
-            borderRadius: 24,
-            border: `1px solid rgba(255,198,112,0.25)`,
-            boxShadow: "0 4px 24px rgba(0,0,0,0.02)",
-            minHeight: "80vh",
-            display: "flex",
-            flexDirection: "column",
-          }}
-        >
+      <div className="w-full font-inter text-text-primary flex flex-col">
+        <div className="w-full bg-white rounded-3xl p-6 shadow-sm border border-black/5 flex flex-col min-h-[60vh]">
           <header
             style={{
-              padding: "32px 32px 24px",
+              paddingBottom: "24px",
               borderBottom: `1px dashed rgba(255,198,112,0.3)`,
-              position: "sticky",
-              top: 0,
-              zIndex: 30,
-              background: "#fff",
-              borderTopLeftRadius: 24,
-              borderTopRightRadius: 24,
             }}
           >
             <PageHeader tab={tab} />

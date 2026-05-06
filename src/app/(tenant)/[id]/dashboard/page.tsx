@@ -16,10 +16,12 @@ import { useSearchParams, useRouter, useParams } from "next/navigation";
 // import the new organisms
 import MenuInventory from "@/components/organisms/MenuInventory";
 import IngredientsInventory from "@/components/organisms/IngredientsInventory";
+import MenuCategoryManagement from "@/components/organisms/MenuCategoryManagement";
 import StaffManagement from "@/components/organisms/StaffManagement";
 import RolesManagement from "@/components/organisms/RolesManagement";
 import SalesManagement from "@/components/organisms/SalesManagement";
 import AuditLogsManagement from "@/components/organisms/AuditLogsManagement";
+import { Button } from "@/components/atoms/Button";
 
 type ViewState =
   | "dashboard"
@@ -62,22 +64,11 @@ function TenantDashboardContent() {
       : "dashboard";
 
   const [currentView, setCurrentView] = useState<ViewState>(initialView);
-  const [isTransitioning, setIsTransitioning] = useState(false);
-  const transitionTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(
-    null,
-  );
-
   const router = useRouter();
   const paramsHook = useParams();
   const tenantId = paramsHook.id as string;
 
-  React.useEffect(() => {
-    return () => {
-      if (transitionTimerRef.current) {
-        clearTimeout(transitionTimerRef.current);
-      }
-    };
-  }, []);
+
 
   React.useEffect(() => {
     const view = searchParams.get("view") as ViewState;
@@ -106,18 +97,11 @@ function TenantDashboardContent() {
 
     if (currentView === view) return;
 
-    if (transitionTimerRef.current) {
-      clearTimeout(transitionTimerRef.current);
-    }
-
-    setIsTransitioning(true);
-
-    transitionTimerRef.current = setTimeout(() => {
-      setCurrentView(view as ViewState);
-      setIsTransitioning(false);
-      // optionally update url without reload
-      router.push(`/${tenantId}/dashboard?view=${view}`, { scroll: false });
-    }, 220);
+    setCurrentView(view as ViewState);
+    
+    // update URL using pushState for deep linking without reload
+    const newUrl = view === "dashboard" ? `/${tenantId}/dashboard` : `/${tenantId}/${view}`;
+    window.history.pushState(null, "", newUrl);
   };
 
   return (
@@ -177,42 +161,8 @@ function TenantDashboardContent() {
       />
 
       <div className="flex-1 max-w-[1440px] w-full mx-auto flex flex-col p-4 md:p-8 lg:p-12 mt-28 relative z-[90] pb-20">
-        <AnimatePresence mode="wait">
-          {isTransitioning ? (
-            <motion.div
-              key="skeleton"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="w-full flex flex-col gap-6 mt-4 px-1"
-            >
-              {/* header skeleton */}
-              <div className="flex flex-col md:flex-row justify-between md:items-end gap-4 mb-4">
-                <div className="flex flex-col gap-2">
-                  <div className="h-10 w-64 bg-white border border-gray-100 shadow-sm rounded-xl animate-pulse" />
-                  <div className="h-5 w-48 bg-white border border-gray-100 shadow-sm rounded-lg animate-pulse" />
-                </div>
-                <div className="h-10 w-full md:w-[280px] bg-white border border-gray-100 shadow-sm rounded-xl animate-pulse" />
-              </div>
-
-              {/* top row skeleton */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-                {[1, 2, 3, 4].map((i) => (
-                  <div
-                    key={i}
-                    className="h-[120px] bg-white border border-gray-100 shadow-sm rounded-[24px] animate-pulse"
-                  />
-                ))}
-              </div>
-
-              {/* main content skeleton */}
-              <div className="flex flex-col lg:flex-row gap-6">
-                <div className="w-full lg:w-[65%] h-[400px] bg-white border border-gray-100 shadow-sm rounded-[24px] animate-pulse" />
-                <div className="w-full lg:w-[35%] h-[400px] bg-white border border-gray-100 shadow-sm rounded-[24px] animate-pulse" />
-              </div>
-            </motion.div>
-          ) : currentView === "dashboard" ? (
+        <AnimatePresence mode="popLayout">
+          {currentView === "dashboard" ? (
             <motion.div
               key="dashboard"
               initial={{ opacity: 0, y: 20 }}
@@ -270,7 +220,7 @@ function TenantDashboardContent() {
                   </p>
                 </div>
               </div>
-              <MenuInventory />
+              <MenuCategoryManagement />
             </motion.div>
           ) : currentView === "inventory" ? (
             <motion.div
@@ -289,7 +239,10 @@ function TenantDashboardContent() {
                   </p>
                 </div>
               </div>
-              <IngredientsInventory />
+              <div className="flex flex-col gap-8 w-full">
+                <MenuInventory />
+                <IngredientsInventory />
+              </div>
             </motion.div>
           ) : currentView === "staff" ? (
             <motion.div
@@ -309,13 +262,14 @@ function TenantDashboardContent() {
                 </div>
                 {/* Wait, the "Add New Staff" button is now in StaffManagement.tsx. I removed it. Let's add it back here! */}
                 <div className="flex items-center gap-3">
-                  <button
-                    className="flex items-center justify-center gap-2 px-4 py-2 bg-brand-primary text-white rounded-full font-bold hover:bg-brand-primary/90 transition-colors"
-                    onClick={() => router.push(`/${tenantId}/dashboard?view=roles`)}
+                  <Button
+                    variant="primary"
+                    shape="rounded"
+                    leftIcon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>}
+                    onClick={() => handleNavigation("roles")}
                   >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
                     Add New Staff
-                  </button>
+                  </Button>
                 </div>
               </div>
               <StaffManagement />
@@ -380,7 +334,7 @@ function TenantDashboardContent() {
           ) : null}
         </AnimatePresence>
       </div>
-      <div className="bottom-0 inset-x-0 h-40 bg-gradient-to-t from-white via-white/50 to-transparent z-[100] pointer-events-none" />
+      <div className="relative bottom-0 inset-x-0 h-40 bg-gradient-to-t from-white via-white/50 to-transparent z-[2] pointer-events-none" />
       <Footer hideSocials />
     </div>
   );

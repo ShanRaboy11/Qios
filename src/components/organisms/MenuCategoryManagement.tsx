@@ -411,8 +411,8 @@ const MenuCategoryManagement = () => {
     .map((i) => ({ label: `${i.name} (₱${i.price})`, value: i.id }));
 
   return (
-    <div className="min-h-screen bg-bg-primary p-4 md:p-8 font-inter relative overflow-hidden flex flex-col">
-      <div className="flex flex-1 gap-6 md:gap-8 max-w-[1400px] mx-auto w-full relative">
+    <div className="font-inter relative flex flex-col w-full">
+      <div className="flex flex-col w-full relative">
         {/* left side: dashboard (100% or 60% when drawer open) */}
         <div
           className={cn(
@@ -430,27 +430,9 @@ const MenuCategoryManagement = () => {
           )}
 
           {/* item dashboard (main panel) */}
-          <main className="flex flex-col min-w-0 border-4 border-white rounded-[32px] md:rounded-[40px] shadow-xl relative h-[85vh] overflow-hidden bg-white/30 backdrop-blur-md">
-            {/* dashboard global header */}
-            <div className="p-6 md:p-8 flex-shrink-0 flex flex-col gap-6 border-b border-black/5 bg-white/50 backdrop-blur-sm">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="h2 text-text-primary">Menu Items</h2>
-                  <p className="b1 text-text-secondary mt-1">
-                    Manage categories and items for your menu
-                  </p>
-                </div>
-                <div className="hidden sm:flex items-center gap-2">
-                  <Button
-                    variant="primary"
-                    onClick={() => setIsCategoryModalOpen(true)}
-                    leftIcon={<Plus size={18} />}
-                    className="b3"
-                  >
-                    Create Category
-                  </Button>
-                </div>
-              </div>
+          <main className="flex flex-col min-w-0 w-full">
+            {/* dashboard tools */}
+            <div className="flex-shrink-0 flex flex-col gap-6 mb-6">
 
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
                 <div className="relative flex-1 max-w-md w-full">
@@ -504,8 +486,8 @@ const MenuCategoryManagement = () => {
             {/* dashboard accordion content */}
             <div
               className={cn(
-                "flex-1 p-6 md:p-8 custom-scrollbar",
-                draftItem ? "overflow-hidden" : "overflow-y-auto",
+                "flex-1 custom-scrollbar",
+                draftItem ? "overflow-hidden" : "",
               )}
             >
               {categories.length === 0 ? (

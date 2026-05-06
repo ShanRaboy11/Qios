@@ -11,6 +11,7 @@ interface HighlightCardProps {
   icon: React.ReactNode;
   iconBgColor: string;
   iconTextColor: string;
+  isAlert?: boolean;
 }
 
 const HighlightCard = ({
@@ -20,9 +21,15 @@ const HighlightCard = ({
   icon,
   iconBgColor,
   iconTextColor,
+  isAlert = false,
 }: HighlightCardProps) => {
   return (
-    <div className="bg-white rounded-[16px] sm:rounded-[24px] shadow-sm border border-gray-100 p-4 sm:p-6 flex flex-col justify-between min-w-0">
+    <div
+      className={cn(
+        "rounded-[16px] sm:rounded-[24px] shadow-sm border p-4 sm:p-6 flex flex-col justify-between min-w-0 transition-all duration-300",
+        isAlert ? "bg-error-secondary/30 border-error-primary/20" : "bg-white border-gray-100"
+      )}
+    >
       <div className="flex justify-between items-start mb-3 sm:mb-4 gap-2">
         <div className="space-y-0.5 sm:space-y-1 min-w-0">
           <h3 className="text-[11px] sm:text-sm font-medium text-text-secondary leading-tight">
@@ -79,6 +86,7 @@ export const SecurityHighlightsCards = () => {
         icon={<UserX size={24} />}
         iconBgColor="bg-error-secondary"
         iconTextColor="text-error-primary"
+        isAlert={true}
       />
       <HighlightCard
         title="Security Alerts"
