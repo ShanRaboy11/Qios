@@ -4,6 +4,8 @@ import React, { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { Plus, Search, SlidersHorizontal } from "lucide-react";
 import { FormField } from "@/components/molecules/FormField";
+import OrderEditor from "./OrderEditor";
+import { CartDrawer } from "./CartDrawer";
 
 export type Category = "Snacks" | "Meal" | "Vegan" | "Dessert" | "Drinks";
 
@@ -54,7 +56,7 @@ const CATEGORIES: { label: Category; icon: React.ReactNode }[] = [
   { label: "Drinks", icon: <DrinksIcon /> },
 ];
 
-export const MenuItem = ({ item }: { item: MenuItemData }) => {
+export const MenuItem = ({ item, onSelect }: { item: MenuItemData; onSelect?: (item: MenuItemData) => void }) => {
   return (
     <div className="w-full max-w-[192px] h-60 relative group transition-all duration-300 ease-out hover:-translate-y-1">
       <div className="w-full h-full px-4 pt-24 pb-5 left-0 top-[50px] absolute bg-[#ffd77a] rounded-2xl flex flex-col justify-start items-start gap-2.5 shadow-sm group-hover:shadow-xl transition-shadow border border-[#ffc670]/20">
@@ -75,6 +77,7 @@ export const MenuItem = ({ item }: { item: MenuItemData }) => {
           <div className="w-6 h-6 right-0 bottom-2 absolute">
             <button
               disabled={!item.available}
+              onClick={() => onSelect && onSelect(item)}
               className="w-6 h-6 bg-[#ff5269] rounded-[5px] flex items-center justify-center text-white hover:opacity-90 transition-all active:scale-90 disabled:bg-gray-400"
             >
               <Plus size={14} strokeWidth={3} />
@@ -92,6 +95,7 @@ export const MenuItem = ({ item }: { item: MenuItemData }) => {
 export default function MenuCatalog({ initialItems }: { initialItems: MenuItemData[] }) {
   const [query, setQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<Category>("Snacks");
+  const [selectedItem, setSelectedItem] = useState<MenuItemData | null>(null);
 
   const filteredItems = useMemo(() => {
     return initialItems.filter((item) => {
@@ -167,7 +171,7 @@ export default function MenuCatalog({ initialItems }: { initialItems: MenuItemDa
           )}> 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-x-6 md:gap-x-8 gap-y-20 md:gap-y-24 justify-items-center">
               {filteredItems.map((item) => (
-                <MenuItem key={item.id} item={item} />
+                <MenuItem key={item.id} item={item} onSelect={setSelectedItem} />
               ))}
             </div>
             
@@ -179,6 +183,12 @@ export default function MenuCatalog({ initialItems }: { initialItems: MenuItemDa
           </div>
         </div>
       </div>
+
+      {selectedItem && (
+        <OrderEditor menuItem={selectedItem} onClose={() => setSelectedItem(null)} />
+      )}
+      
+      <CartDrawer />
     </div>
   );
 }

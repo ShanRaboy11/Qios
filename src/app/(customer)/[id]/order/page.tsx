@@ -1,5 +1,6 @@
 import React from "react";
 import MenuCatalog, { MenuItemData } from "@/components/organisms/MenuCatalog";
+import { CartProvider } from "@/contexts/CartContext";
 
 const dummyMenu: MenuItemData[] = [
   {
@@ -23,7 +24,9 @@ const dummyMenu: MenuItemData[] = [
 export default function CustomerMenuPage({ params }: { params: Promise<{ tenantId: string }> }) {
   return (
     <main className="min-h-screen bg-bg-primary">
-      <MenuCatalog initialItems={dummyMenu} />
+      <CartProvider>
+        <MenuCatalog initialItems={dummyMenu} />
+      </CartProvider>
     </main>
   );
 }

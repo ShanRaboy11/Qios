@@ -7,6 +7,8 @@ import { Button } from "@/components/atoms/Button";
 import { Badge } from "@/components/atoms/Badge";
 import { Checkbox } from "@/components/atoms/Checkbox";
 import { Radio } from "@/components/atoms/Radio";
+import { MenuItemData } from "./MenuCatalog";
+import { useCart } from "@/contexts/CartContext";
 
 // types
 interface Modifier {
@@ -61,12 +63,17 @@ const SIZES: Size[] = [
   {
     id: "s2",
     name: "Large",
-    description: "Gentle kick, great for sensitive palates",
-    price: 0,
+    description: "Extra portion for bigger appetites",
+    price: 50,
   },
 ];
 
-const OrderEditor = () => {
+interface OrderEditorProps {
+  menuItem: MenuItemData;
+  onClose: () => void;
+}
+
+const OrderEditor = ({ menuItem, onClose }: OrderEditorProps) => {
   // state
   const [quantity, setQuantity] = useState(1);
   const [selectedModifiers, setSelectedModifiers] = useState<string[]>([]);
@@ -81,11 +88,25 @@ const OrderEditor = () => {
     );
   };
 
+  const { addToCart } = useCart();
+
   const handleAddToOrder = () => {
+    addToCart({
+      menuItem,
+      quantity,
+      selectedSize,
+      selectedModifiers,
+      specialInstructions: instructions,
+      totalPrice,
+    });
     setShowSuccessModal(true);
+    setTimeout(() => {
+      setShowSuccessModal(false);
+      onClose();
+    }, 1500); // Close after showing success for 1.5s
   };
 
-  const basePrice = 500;
+  const basePrice = menuItem.price;
   const sizePrice = SIZES.find((s) => s.id === selectedSize)?.price ?? 0;
   const modifiersTotal = selectedModifiers.reduce((sum, id) => {
     const mod = MODIFIERS.find((m) => m.id === id);
@@ -94,13 +115,14 @@ const OrderEditor = () => {
   const totalPrice = (basePrice + sizePrice + modifiersTotal) * quantity;
 
   return (
-    <div className="max-w-[700px] mx-auto bg-bg-primary rounded-[40px] md:rounded-[48px] border-[8px] md:border-[12px] border-white shadow-[var(--kds-shadow-hover)] overflow-hidden relative font-inter my-4 md:my-8">
-      {/* drag handle bar */}
-      <div className="flex justify-center pt-4 pb-1">
-        <div className="w-12 h-1.5 bg-brand-accent rounded-full" />
-      </div>
+    <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200" onClick={onClose}>
+      <div className="w-full max-w-[700px] max-h-[90vh] flex flex-col bg-bg-primary rounded-[40px] md:rounded-[48px] border-[8px] md:border-[12px] border-white shadow-[var(--kds-shadow-hover)] relative font-inter overflow-hidden" onClick={(e) => e.stopPropagation()}>
+        {/* drag handle bar */}
+        <div className="flex justify-center pt-4 pb-1 shrink-0 bg-bg-primary z-30">
+          <div className="w-12 h-1.5 bg-brand-accent rounded-full" />
+        </div>
 
-      <div className="p-4 md:p-6 space-y-5 md:space-y-6">
+      <div className="p-4 md:p-6 space-y-5 md:space-y-6 overflow-y-auto no-scrollbar flex-grow">
         {/* hero product card */}
         <div className="relative bg-brand-secondary rounded-[28px] md:rounded-[40px] p-6 md:p-12 overflow-hidden flex items-center justify-between min-h-[200px] md:min-h-[280px]">
           <div className="relative z-10 space-y-2 md:space-y-3 max-w-[55%] md:max-w-[60%]">
@@ -113,24 +135,24 @@ const OrderEditor = () => {
               Bestseller
             </Badge>
             <h1 className="text-2xl md:text-4xl font-extrabold text-text-primary leading-tight">
-              Chicken Adobo
+              {menuItem.name}
             </h1>
             <p className="b4 md:b2 text-text-primary/70">
-              Slow-cooked in vinegar, soy, & garlic
+              Freshly prepared {menuItem.category.toLowerCase()} option
             </p>
           </div>
 
           {/* product image in circular frame */}
           <div className="absolute right-[10%] md:right-8 top-1/2 -translate-y-1/2 w-[120px] h-[120px] md:w-[200px] md:h-[200px] rounded-full overflow-hidden border-4 border-white/60 shadow-xl flex-shrink-0">
             <img
-              src="https://images.unsplash.com/photo-1541544741938-0af808871cc0?q=80&w=1000&auto=format&fit=crop"
-              alt="Chicken Adobo"
+              src={menuItem.imageUrl}
+              alt={menuItem.name}
               className="w-full h-full object-cover"
             />
           </div>
 
           {/* close button */}
-          <button className="absolute top-4 md:top-6 right-4 md:right-6 bg-white/90 hover:bg-white p-2 rounded-full shadow-md transition-all active:scale-95 z-20">
+          <button onClick={onClose} className="absolute top-4 md:top-6 right-4 md:right-6 bg-white/90 hover:bg-white p-2 rounded-full shadow-md transition-all active:scale-95 z-20">
             <X size={20} className="text-text-primary" />
           </button>
         </div>
@@ -250,7 +272,7 @@ const OrderEditor = () => {
                   </div>
                 </div>
                 <span className="b3 font-bold text-success-primary shrink-0">
-                  Free
+                  {size.price === 0 ? "Free" : `+₱${size.price.toFixed(2)}`}
                 </span>
               </label>
             ))}
@@ -298,7 +320,7 @@ const OrderEditor = () => {
       {/* success modal overlay */}
       {showSuccessModal && (
         <div
-          className="fixed inset-0 z-[200] flex items-end md:items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200"
           onClick={() => setShowSuccessModal(false)}
         >
           <div
@@ -332,7 +354,7 @@ const OrderEditor = () => {
                   Added to Order!
                 </h3>
                 <p className="b4 text-text-secondary">
-                  {quantity}x Chicken Adobo has been added to your cart.
+                  {quantity}x {menuItem.name} has been added to your cart.
                 </p>
               </div>
 
@@ -378,6 +400,7 @@ const OrderEditor = () => {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 };
