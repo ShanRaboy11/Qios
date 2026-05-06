@@ -57,6 +57,7 @@ export const MenuItemCard = ({
           "relative flex items-center w-full max-w-[450px] min-h-[150px] sm:min-h-[170px] group cursor-pointer",
           className,
         )}
+        onClick={onAdd}
       >
         {/* Card Background Shifted Right */}
         <div className="absolute top-0 bottom-0 right-0 left-12 sm:left-16 bg-[#FFDC72] rounded-[32px] shadow-sm transition-all duration-300 group-hover:shadow-md z-0" />
