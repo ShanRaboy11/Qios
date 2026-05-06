@@ -7,8 +7,10 @@ import { FeatureToggle } from "@/components/molecules/FeatureToggle";
 import {
   Plus, Search, ShieldAlert, Check, Copy, Trash2,
   GripVertical, LineChart, Package, X, Smartphone, Users, Shield,
+  Loader2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type FeatureGroup = { [key: string]: boolean };
 type Features = {
@@ -134,13 +136,53 @@ const PRESET_COLORS = [
 ];
 
 export default function SubscriptionManagement() {
-  const [plans, setPlans] = useState<SubscriptionPlan[]>(INITIAL_PLANS);
-  const [selectedPlanId, setSelectedPlanId] = useState<string>(plans[0].id);
+  const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
+  const [selectedPlanId, setSelectedPlanId] = useState<string>("");
   const [draftPlan, setDraftPlan] = useState<SubscriptionPlan | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isCreatePlanModalOpen, setIsCreatePlanModalOpen] = useState(false);
   const [showTemplateReminder, setShowTemplateReminder] = useState(false);
   const [draggedPlanId, setDraggedPlanId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  
+  const supabase = createSupabaseBrowserClient();
+
+  useEffect(() => {
+    async function fetchPlans() {
+      try {
+        const { data, error } = await supabase
+          .from("subscription_plans")
+          .select("*")
+          .order("price_monthly");
+          
+        if (error) throw error;
+        
+        if (data && data.length > 0) {
+          const parsed = data.map((d: any) => ({
+            id: d.id,
+            name: d.name,
+            color: d.color,
+            badge: d.badge,
+            priceMonthly: d.price_monthly,
+            priceAnnually: d.price_annually,
+            features: typeof d.features === 'string' ? JSON.parse(d.features) : d.features,
+          }));
+          setPlans(parsed);
+          setSelectedPlanId(parsed[0].id);
+        } else {
+          setPlans(INITIAL_PLANS);
+          setSelectedPlanId(INITIAL_PLANS[0].id);
+        }
+      } catch (error) {
+        console.error("Error fetching subscription plans:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    fetchPlans();
+  }, []);
 
   const activePlan = plans.find((p) => p.id === selectedPlanId);
 
@@ -158,9 +200,53 @@ export default function SubscriptionManagement() {
     setDraftPlan({ ...draftPlan, features: { ...draftPlan.features, [category]: { ...draftPlan.features[category], [key]: value } } });
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!draftPlan) return;
-    setPlans(plans.map((p) => (p.id === draftPlan.id ? draftPlan : p)));
+    setSaving(true);
+    
+    try {
+      const payload = {
+        name: draftPlan.name,
+        color: draftPlan.color,
+        badge: draftPlan.badge,
+        price_monthly: draftPlan.priceMonthly,
+        price_annually: draftPlan.priceAnnually,
+        features: draftPlan.features,
+      };
+
+      const isNew = draftPlan.id.startsWith("p"); // local initial id
+      let data, error;
+      
+      if (isNew) {
+        ({ data, error } = await supabase
+          .from("subscription_plans")
+          .insert([payload])
+          .select()
+          .single());
+      } else {
+        ({ data, error } = await supabase
+          .from("subscription_plans")
+          .update(payload)
+          .eq("id", draftPlan.id)
+          .select()
+          .single());
+      }
+      
+      if (error) throw error;
+      
+      const newPlan = {
+        ...draftPlan,
+        id: data.id,
+      };
+
+      setPlans(plans.map((p) => (p.id === draftPlan.id ? newPlan : p)));
+      setSelectedPlanId(newPlan.id);
+    } catch (error) {
+      console.error("Error saving plan:", error);
+      alert("Failed to save plan. See console.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleDragStart = (e: React.DragEvent, id: string) => {
@@ -205,14 +291,43 @@ export default function SubscriptionManagement() {
     setSelectedPlanId(newPlan.id);
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (plans.length <= 1) return;
+    
+    const isNew = selectedPlanId.startsWith("p");
+    
+    if (!isNew) {
+      setSaving(true);
+      try {
+        const { error } = await supabase
+          .from("subscription_plans")
+          .delete()
+          .eq("id", selectedPlanId);
+          
+        if (error) throw error;
+      } catch (error) {
+        console.error("Error deleting plan:", error);
+        alert("Failed to delete plan. See console.");
+        setSaving(false);
+        return;
+      }
+    }
+    
     const newPlans = plans.filter((p) => p.id !== selectedPlanId);
     setPlans(newPlans);
     setSelectedPlanId(newPlans[0].id);
+    setSaving(false);
   };
 
   const filteredPlans = plans.filter((p) => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[500px]">
+        <Loader2 className="w-8 h-8 animate-spin text-[var(--color-brand-primary)]" />
+      </div>
+    );
+  }
 
   return (
     <>
@@ -285,8 +400,8 @@ export default function SubscriptionManagement() {
                     </div>
                   </div>
                   <div className="flex gap-2 self-end sm:self-auto">
-                    <Button variant="ghost" size="icon" onClick={handleDuplicate} title="Duplicate Plan"><Copy size={18} /></Button>
-                    <Button variant="ghost" size="icon" onClick={handleDelete} title="Delete Plan" className="hover:bg-warning-secondary hover:text-warning-primary" disabled={plans.length <= 1}><Trash2 size={18} /></Button>
+                    <Button variant="ghost" size="icon" onClick={handleDuplicate} title="Duplicate Plan" disabled={saving}><Copy size={18} /></Button>
+                    <Button variant="ghost" size="icon" onClick={handleDelete} title="Delete Plan" className="hover:bg-warning-secondary hover:text-warning-primary" disabled={plans.length <= 1 || saving}><Trash2 size={18} /></Button>
                   </div>
                 </div>
 
@@ -373,7 +488,7 @@ export default function SubscriptionManagement() {
                 {hasChanges && (
                   <Button variant="ghost" onClick={handleDiscard} className="text-warning-primary hover:bg-warning-secondary">Discard Changes</Button>
                 )}
-                <Button variant={hasChanges ? "primary" : "ghost"} onClick={handleSave} disabled={!hasChanges} className={cn(!hasChanges && "opacity-50")}>
+                <Button variant={hasChanges ? "primary" : "ghost"} onClick={handleSave} disabled={!hasChanges || saving} loading={saving} className={cn(!hasChanges && "opacity-50")}>
                   Save Changes
                 </Button>
               </div>

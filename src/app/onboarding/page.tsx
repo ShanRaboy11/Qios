@@ -47,8 +47,7 @@ const steps = [
   { id: 3, title: "Business Information", icon: Building2 },
   { id: 4, title: "Document Requirements", icon: FileCheck },
   { id: 5, title: "Subscription Package", icon: ShoppingBag },
-  { id: 6, title: "Operational Strategy", icon: Component },
-  { id: 7, title: "Application Summary", icon: ClipboardCheck },
+  { id: 6, title: "Application Summary", icon: ClipboardCheck },
 ];
 
 function MobileStepBar({
@@ -597,38 +596,6 @@ export default function OnboardingPage() {
     }
   };
 
-  const handleOperationalContinue = async (featureData: OperationalSetupConfig) => {
-    setError("");
-    setSuccess("");
-
-    if (!tenantId) {
-      return setError("Please save business information first.");
-    }
-    try {
-      setOperationalData(featureData);
-
-      const promise = saveOnboardingProgress({
-        tenantId,
-        featureData,
-      })
-        .then((res) => {
-          if (res?.tenantId) setTenantId(res.tenantId);
-        })
-        .catch((err: any) => setError(err?.message || "Unable to save operational strategy in background."))
-        .finally(() => {
-          pendingSaveProgress.current = null;
-        });
-
-      pendingSaveProgress.current = promise;
-
-      setSuccess("Progress saved locally. Finalizing in background.");
-      setCurrentStep(7);
-      scrollToTop();
-    } catch (err: any) {
-      setError(err.message || "Unable to start operational save.");
-    }
-  };
-
   const handleSubmitApplication = async () => {
     setLoading(true);
     setError("");
@@ -829,20 +796,10 @@ export default function OnboardingPage() {
             )}
 
             {currentStep === 6 && (
-              <OperationalSetup
-                selectedPlan={getSelectedPlan(subscriptionData.packageId)}
-                onFinish={handleOperationalContinue}
-                onBack={prevStep}
-                loading={loading}
-              />
-            )}
-
-            {currentStep === 7 && (
               <ReviewSummary
                 adminEmail={authData.email}
                 businessData={businessData}
                 selectedPlan={getSelectedPlan(subscriptionData.packageId)}
-                operationalData={operationalData}
                 onBack={prevStep}
                 onSubmit={handleSubmitApplication}
                 loading={loading}

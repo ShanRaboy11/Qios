@@ -13,7 +13,6 @@ interface ReviewSummaryProps {
     owner: string;
   };
   selectedPlan: SubscriptionPlan;
-  operationalData: OperationalSetupConfig;
   onBack: () => void;
   onSubmit: () => Promise<void> | void;
   loading?: boolean;
@@ -129,7 +128,6 @@ export function ReviewSummary({
   adminEmail,
   businessData,
   selectedPlan,
-  operationalData,
   onBack,
   onSubmit,
   loading = false,
@@ -206,38 +204,6 @@ export function ReviewSummary({
             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-400">Selected Plan</p>
             <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">{PLAN_LABEL[selectedPlan]}</p>
           </div>
-
-          <div className="rounded-2xl border border-neutral-100 bg-neutral-50 px-4 py-3.5 shadow-sm">
-            <p className="text-sm text-[var(--color-text-secondary)]">Inventory Logic</p>
-            <p className="mt-1 text-sm font-semibold text-[var(--color-text-primary)]">
-              {OPERATIONS_LABELS.inventoryMode[operationalData.inventoryMode]}
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-neutral-100 bg-neutral-50 px-4 py-3.5 shadow-sm">
-            <p className="text-sm text-[var(--color-text-secondary)]">Service Workflow</p>
-            <p className="mt-1 text-sm font-semibold text-[var(--color-text-primary)]">
-              {OPERATIONS_LABELS.serviceWorkflow[operationalData.serviceWorkflow]}
-            </p>
-          </div>
-
-          {showPrimaryMetric && (
-            <div className="rounded-2xl border border-neutral-100 bg-neutral-50 px-4 py-3.5 shadow-sm">
-              <p className="text-sm text-[var(--color-text-secondary)]">Primary Metric</p>
-              <p className="mt-1 text-sm font-semibold text-[var(--color-text-primary)]">
-                {OPERATIONS_LABELS.dashboardFocus[operationalData.dashboardFocus]}
-              </p>
-            </div>
-          )}
-
-          {showMultiStoreLogic && (
-            <div className="rounded-2xl border border-neutral-100 bg-neutral-50 px-4 py-3.5 shadow-sm">
-              <p className="text-sm text-[var(--color-text-secondary)]">Multi-Store Logic</p>
-              <p className="mt-1 text-sm font-semibold text-[var(--color-text-primary)]">
-                {OPERATIONS_LABELS.supplyLogic[operationalData.supplyLogic]}
-              </p>
-            </div>
-          )}
         </div>
       </div>
 
