@@ -993,11 +993,18 @@ export async function updateTenantStatus(
   }
 
   // Prefer the tenant's registered business email, then fall back to owner auth email.
-  const { data: tenant } = await supabase
+  const { data: tenant, error: tenantFetchError } = await supabase
     .from("tenants")
     .select("business_email")
     .eq("id", tenantId)
     .maybeSingle();
+
+  if (tenantFetchError) {
+    console.error(
+      "[updateTenantStatus] Failed to fetch tenant business_email:",
+      tenantFetchError.message,
+    );
+  }
 
   let recipientEmail =
     typeof tenant?.business_email === "string" &&
@@ -1005,33 +1012,90 @@ export async function updateTenantStatus(
       ? tenant.business_email.trim()
       : null;
 
+  console.log(
+    "[updateTenantStatus] business_email from DB:",
+    recipientEmail ?? "(none)",
+  );
+
   // Find owner to resolve fallback email if tenant business_email is unavailable.
-  const { data: adminProfiles } = await supabase
+  const { data: adminProfiles, error: profilesError } = await supabase
     .from("profiles")
     .select("id, full_name")
     .eq("tenant_id", tenantId)
     .eq("role", "admin")
     .limit(1);
 
+  if (profilesError) {
+    console.error(
+      "[updateTenantStatus] Failed to fetch admin profiles:",
+      profilesError.message,
+    );
+  }
+
   if (adminProfiles && adminProfiles.length > 0) {
     const adminId = adminProfiles[0].id;
     // Get user email using Supabase identity
     const {
       data: { user },
+      error: authUserError,
     } = await supabase.auth.admin.getUserById(adminId);
+
+    if (authUserError) {
+      console.error(
+        "[updateTenantStatus] Failed to fetch auth user:",
+        authUserError.message,
+      );
+    }
+
+    console.log(
+      "[updateTenantStatus] Auth user email (fallback):",
+      user?.email ?? "(none)",
+    );
 
     if (!recipientEmail && user?.email) {
       recipientEmail = user.email;
     }
+  } else {
+    console.warn(
+      "[updateTenantStatus] No admin profile found for tenant:",
+      tenantId,
+    );
   }
+
+  console.log(
+    "[updateTenantStatus] Final recipient email:",
+    recipientEmail ?? "(none — email will not be sent)",
+  );
 
   if (recipientEmail && status !== "pending") {
     const { sendBusinessVerificationEmail } = await import("@/lib/email");
-    await sendBusinessVerificationEmail({
+    console.log(
+      "[updateTenantStatus] Sending",
+      status,
+      "email to:",
+      recipientEmail,
+    );
+    const emailResult = await sendBusinessVerificationEmail({
       to: recipientEmail,
       status,
       comments: trimmedComments,
     });
+    if (!emailResult.success) {
+      console.error(
+        "[updateTenantStatus] Email send failed. Reason:",
+        emailResult.reason,
+        emailResult.error,
+      );
+    } else {
+      console.log(
+        "[updateTenantStatus] Email sent successfully. MessageId:",
+        emailResult.messageId,
+      );
+    }
+  } else if (!recipientEmail) {
+    console.warn(
+      "[updateTenantStatus] No recipient email resolved — skipping email notification.",
+    );
   }
 
   revalidatePath("/admin/tenants");
