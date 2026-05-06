@@ -14,7 +14,7 @@ import {
 import { Button } from "@/components/atoms/Button";
 import { cn } from "@/lib/utils";
 
-// ── validation helpers ────────────────────────────────────────
+// validation helpers
 const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
 const isValidPhone = (v: string) => /^9\d{9}$/.test(v.replace(/\s/g, ""));
 
@@ -22,7 +22,7 @@ type Errors = Partial<
   Record<"name" | "email" | "phone" | "subject" | "message", string>
 >;
 
-// ── reusable field label ──────────────────────────────────────
+// reusable field label
 function FieldLabel({
   htmlFor,
   children,
@@ -40,7 +40,7 @@ function FieldLabel({
   );
 }
 
-// ── reusable text input ───────────────────────────────────────
+// reusable text input
 function TextInput({
   id,
   type = "text",
@@ -117,7 +117,7 @@ function TextInput({
   );
 }
 
-// ── reusable textarea ─────────────────────────────────────────
+// reusable textarea
 function TextArea({
   id,
   placeholder,
@@ -167,7 +167,7 @@ function TextArea({
   );
 }
 
-// ── contact method pill ───────────────────────────────────────
+// contact method pill
 function ContactMethodPill({
   id,
   icon,
@@ -223,7 +223,7 @@ function ContactMethodPill({
   );
 }
 
-// ── main component ────────────────────────────────────────────
+// main component
 export default function ContactForm() {
   const [form, setForm] = useState({
     name: "",
@@ -303,7 +303,6 @@ export default function ContactForm() {
       className="relative w-full py-32 px-6 bg-bg-primary overflow-hidden"
       id="contact-form"
     >
-      {/* background blobs (matching subscription plans) */}
       <div className="absolute top-0 inset-x-0 h-48 bg-gradient-to-b from-bg-primary via-bg-primary/50 to-transparent pointer-events-none z-10" />
       <div
         className="absolute -top-[10%] -left-[10%] w-[60%] h-[60%] rounded-full opacity-40 pointer-events-none"
@@ -432,7 +431,7 @@ export default function ContactForm() {
             </div>
           </div>
 
-          {/* form — always visible */}
+          {/* form */}
           <form onSubmit={handleSubmit} noValidate className="p-8 space-y-6">
             {/* row 1: name + email */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">

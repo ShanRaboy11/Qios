@@ -11,7 +11,6 @@ interface HighlightCardProps {
   icon: React.ReactNode;
   iconBgColor: string;
   iconTextColor: string;
-  isAlert?: boolean;
 }
 
 const HighlightCard = ({
@@ -21,21 +20,15 @@ const HighlightCard = ({
   icon,
   iconBgColor,
   iconTextColor,
-  isAlert = false,
 }: HighlightCardProps) => {
   return (
-    <div
-      className={cn(
-        "bg-white rounded-[16px] sm:rounded-[24px] shadow-sm border p-4 sm:p-6 flex flex-col justify-between min-w-0 transition-all duration-300 hover:-translate-y-1 hover:shadow-md cursor-pointer",
-        isAlert ? "border-error-primary/30 bg-error-secondary/10" : "border-gray-100"
-      )}
-    >
+    <div className="bg-white rounded-[16px] sm:rounded-[24px] shadow-sm border border-gray-100 p-4 sm:p-6 flex flex-col justify-between min-w-0">
       <div className="flex justify-between items-start mb-3 sm:mb-4 gap-2">
         <div className="space-y-0.5 sm:space-y-1 min-w-0">
           <h3 className="text-[11px] sm:text-sm font-medium text-text-secondary leading-tight">
             {title}
           </h3>
-          <p className={cn("text-lg sm:text-2xl lg:text-3xl font-bold truncate", isAlert ? "text-error-primary" : "text-text-primary")}>
+          <p className="text-lg sm:text-2xl lg:text-3xl font-bold text-text-primary truncate">
             {value}
           </p>
         </div>
@@ -86,7 +79,6 @@ export const SecurityHighlightsCards = () => {
         icon={<UserX size={24} />}
         iconBgColor="bg-error-secondary"
         iconTextColor="text-error-primary"
-        isAlert={true}
       />
       <HighlightCard
         title="Security Alerts"

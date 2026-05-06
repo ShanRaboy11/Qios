@@ -105,7 +105,7 @@ function AdminDashboardContent() {
 
   return (
     <div className="min-h-screen bg-bg-primary overflow-x-hidden relative">
-      {/* Background Moving Blobs */}
+      {/* background moving blobs */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
         <motion.div
           animate={{
@@ -168,7 +168,7 @@ function AdminDashboardContent() {
               transition={{ duration: 0.2 }}
               className="w-full flex flex-col gap-6 mt-4 px-1"
             >
-              {/* Top Row Skeleton */}
+              {/* top row skeleton */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                 {[1, 2, 3, 4].map((i) => (
                   <div
@@ -178,10 +178,10 @@ function AdminDashboardContent() {
                 ))}
               </div>
 
-              {/* Main Content Skeleton */}
+              {/* main content skeleton */}
               <div className="h-[400px] w-full bg-white border border-gray-100 shadow-sm rounded-[24px] animate-pulse" />
 
-              {/* Bottom Row Skeleton */}
+              {/* bottom row skeleton */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
                 {[1, 2, 3].map((i) => (
                   <div
@@ -227,9 +227,9 @@ function AdminDashboardContent() {
             >
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                 <div>
-                  <span className="h1 text-text-primary">System Activity</span>
-                  <p className="h4 text-text-secondary mt-2">
-                    Monitor all actions and events across your system.
+                  <h2 className="h2 text-text-primary">System Activity</h2>
+                  <p className="b1 text-text-secondary mt-2">
+                    Monitor all actions and events across your system
                   </p>
                 </div>
               </div>
@@ -246,9 +246,9 @@ function AdminDashboardContent() {
             >
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                 <div>
-                  <span className="h1 text-text-primary">Subscription and Plans</span>
-                  <p className="h4 text-text-secondary mt-2">
-                    Configure subscription plans and feature access.
+                  <h2 className="h2 text-text-primary">Subscription and Plans</h2>
+                  <p className="b1 text-text-secondary mt-2">
+                    Configure subscription plans and feature access
                   </p>
                 </div>
               </div>
@@ -265,9 +265,9 @@ function AdminDashboardContent() {
             >
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                 <div>
-                  <span className="h1 text-text-primary">Settings</span>
-                  <p className="h4 text-text-secondary mt-2">
-                    Configure system preferences and administrator settings.
+                  <h2 className="h2 text-text-primary">Settings</h2>
+                  <p className="b1 text-text-secondary mt-2">
+                    Configure system preferences and administrator settings
                   </p>
                 </div>
               </div>
@@ -284,9 +284,9 @@ function AdminDashboardContent() {
             >
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                 <div>
-                  <span className="h1 text-text-primary">Tenant Directory</span>
-                  <p className="h4 text-text-secondary mt-2">
-                    Manage all registered tenants and their statuses.
+                  <h2 className="h2 text-text-primary">Tenant Directory</h2>
+                  <p className="b1 text-text-secondary mt-2">
+                    Manage all registered tenants and their statuses
                   </p>
                 </div>
               </div>

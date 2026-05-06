@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import { TenantDashboardHeader } from "@/components/organisms/TenantDashboardHeader";
 import { TenantMetricsSection } from "@/components/organisms/TenantMetricsSection";
 import { SalesAndPurchaseChart } from "@/components/organisms/SalesAndPurchaseChart";
@@ -11,52 +11,118 @@ import Link from "next/link";
 import { Navbar } from "@/components/organisms/navbar";
 import { Footer } from "@/components/organisms/footer";
 import { motion, AnimatePresence } from "framer-motion";
-import { useRouter, useParams } from "next/navigation";
+import { useSearchParams, useRouter, useParams } from "next/navigation";
+
+// import the new organisms
+import MenuInventory from "@/components/organisms/MenuInventory";
+import IngredientsInventory from "@/components/organisms/IngredientsInventory";
+import StaffManagement from "@/components/organisms/StaffManagement";
+import RolesManagement from "@/components/organisms/RolesManagement";
+import SalesManagement from "@/components/organisms/SalesManagement";
+import AuditLogsManagement from "@/components/organisms/AuditLogsManagement";
 
 type ViewState =
   | "dashboard"
   | "menu"
   | "inventory"
   | "staff"
+  | "roles"
   | "sales"
   | "audit_logs";
 
-export default function TenantDashboardPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const [currentView, setCurrentView] = useState<ViewState>("dashboard");
+export default function TenantDashboardPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-bg-primary flex items-center justify-center">
+          <div className="w-8 h-8 border-4 border-brand-primary border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      }
+    >
+      <TenantDashboardContent />
+    </Suspense>
+  );
+}
+
+function TenantDashboardContent() {
+  const searchParams = useSearchParams();
+  const initialViewParam = searchParams.get("view") as ViewState | null;
+  const initialView =
+    initialViewParam &&
+    [
+      "dashboard",
+      "menu",
+      "inventory",
+      "staff",
+      "roles",
+      "sales",
+      "audit_logs",
+    ].includes(initialViewParam)
+      ? initialViewParam
+      : "dashboard";
+
+  const [currentView, setCurrentView] = useState<ViewState>(initialView);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const transitionTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
 
   const router = useRouter();
   const paramsHook = useParams();
   const tenantId = paramsHook.id as string;
 
-  const handleNavigation = (view: string) => {
-    if (view === "staff" || view === "settings") {
-      router.push(`/${tenantId}/${view}`);
-      return;
-    }
+  React.useEffect(() => {
+    return () => {
+      if (transitionTimerRef.current) {
+        clearTimeout(transitionTimerRef.current);
+      }
+    };
+  }, []);
 
-    if (view === "inventory" || view === "menu" || view === "sales") {
+  React.useEffect(() => {
+    const view = searchParams.get("view") as ViewState;
+    if (
+      view &&
+      [
+        "dashboard",
+        "menu",
+        "inventory",
+        "staff",
+        "roles",
+        "sales",
+        "audit_logs",
+      ].includes(view) &&
+      view !== currentView
+    ) {
+      setCurrentView(view);
+    }
+  }, [searchParams, currentView]);
+
+  const handleNavigation = (view: string) => {
+    if (view === "settings") {
       router.push(`/${tenantId}/${view}`);
       return;
     }
 
     if (currentView === view) return;
 
+    if (transitionTimerRef.current) {
+      clearTimeout(transitionTimerRef.current);
+    }
+
     setIsTransitioning(true);
 
-    // Simulate loading delay for skeleton
-    setTimeout(() => {
+    transitionTimerRef.current = setTimeout(() => {
       setCurrentView(view as ViewState);
       setIsTransitioning(false);
-    }, 600);
+      // optionally update url without reload
+      router.push(`/${tenantId}/dashboard?view=${view}`, { scroll: false });
+    }, 220);
   };
 
   return (
-    <div className="min-h-screen bg-bg-primary overflow-x-hidden relative">
+    <div className="min-h-screen bg-bg-primary overflow-x-hidden relative flex flex-col">
+      {/* background moving blobs */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-[1]">
         <motion.div
           animate={{
@@ -110,7 +176,7 @@ export default function TenantDashboardPage({
         className="z-[100]"
       />
 
-      <div className="max-w-[1440px] mx-auto flex flex-col p-4 md:p-8 lg:p-12 mt-28 relative z-[90] pb-20">
+      <div className="flex-1 max-w-[1440px] w-full mx-auto flex flex-col p-4 md:p-8 lg:p-12 mt-28 relative z-[90] pb-20">
         <AnimatePresence mode="wait">
           {isTransitioning ? (
             <motion.div
@@ -121,7 +187,7 @@ export default function TenantDashboardPage({
               transition={{ duration: 0.2 }}
               className="w-full flex flex-col gap-6 mt-4 px-1"
             >
-              {/* Header Skeleton */}
+              {/* header skeleton */}
               <div className="flex flex-col md:flex-row justify-between md:items-end gap-4 mb-4">
                 <div className="flex flex-col gap-2">
                   <div className="h-10 w-64 bg-white border border-gray-100 shadow-sm rounded-xl animate-pulse" />
@@ -130,10 +196,7 @@ export default function TenantDashboardPage({
                 <div className="h-10 w-full md:w-[280px] bg-white border border-gray-100 shadow-sm rounded-xl animate-pulse" />
               </div>
 
-              {/* Alert Banner Skeleton */}
-              <div className="h-12 w-full bg-red-50 border border-red-100 shadow-sm rounded-xl animate-pulse" />
-
-              {/* Top Row Skeleton */}
+              {/* top row skeleton */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                 {[1, 2, 3, 4].map((i) => (
                   <div
@@ -143,7 +206,7 @@ export default function TenantDashboardPage({
                 ))}
               </div>
 
-              {/* Main Content Skeleton */}
+              {/* main content skeleton */}
               <div className="flex flex-col lg:flex-row gap-6">
                 <div className="w-full lg:w-[65%] h-[400px] bg-white border border-gray-100 shadow-sm rounded-[24px] animate-pulse" />
                 <div className="w-full lg:w-[35%] h-[400px] bg-white border border-gray-100 shadow-sm rounded-[24px] animate-pulse" />
@@ -156,11 +219,11 @@ export default function TenantDashboardPage({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3, ease: "easeInOut" }}
-              className="flex flex-col gap-8"
+              className="flex flex-col gap-8 w-full"
             >
               <TenantDashboardHeader />
 
-              {/* Low Stock Alert */}
+              {/* low stock alert */}
               <AlertBanner
                 message={
                   <>
@@ -174,7 +237,7 @@ export default function TenantDashboardPage({
                     </Link>
                   </>
                 }
-                onClose={() => {}} // Placeholder for close action
+                onClose={() => {}} // placeholder for close action
               />
 
               <TenantMetricsSection />
@@ -190,33 +253,131 @@ export default function TenantDashboardPage({
 
               <DashboardListsSection />
             </motion.div>
-          ) : (
+          ) : currentView === "menu" ? (
             <motion.div
-              key={currentView}
+              key="menu"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3, ease: "easeInOut" }}
-              className="mt-4"
+              className="mt-4 flex flex-col w-full"
             >
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                 <div>
-                  <span className="h1 text-text-primary capitalize">
-                    {currentView.replace("_", " ")}
-                  </span>
-                  <p className="h4 text-text-secondary mt-2">
-                    Manage your {currentView.replace("_", " ")} and
-                    configurations.
+                  <h2 className="h2 text-text-primary">Menu Management</h2>
+                  <p className="b1 text-text-secondary mt-2">
+                    Manage your restaurant&apos;s digital menu, categories, and item availability
                   </p>
                 </div>
               </div>
-              <div className="flex items-center justify-center h-[400px] bg-white rounded-[24px] shadow-sm">
-                <h2 className="text-2xl font-bold text-text-primary">
-                  Coming Soon
-                </h2>
-              </div>
+              <MenuInventory />
             </motion.div>
-          )}
+          ) : currentView === "inventory" ? (
+            <motion.div
+              key="inventory"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+              className="mt-4 flex flex-col w-full"
+            >
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                <div>
+                  <h2 className="h2 text-text-primary">Inventory Configuration</h2>
+                  <p className="b1 text-text-secondary mt-2">
+                    Track ingredients, set stock alerts, and manage recipe deductions
+                  </p>
+                </div>
+              </div>
+              <IngredientsInventory />
+            </motion.div>
+          ) : currentView === "staff" ? (
+            <motion.div
+              key="staff"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+              className="mt-4 flex flex-col w-full"
+            >
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                <div>
+                  <h2 className="h2 text-text-primary">Staff Management</h2>
+                  <p className="b1 text-text-secondary mt-2">
+                    Manage employee records, monitor performance, and track attendance
+                  </p>
+                </div>
+                {/* Wait, the "Add New Staff" button is now in StaffManagement.tsx. I removed it. Let's add it back here! */}
+                <div className="flex items-center gap-3">
+                  <button
+                    className="flex items-center justify-center gap-2 px-4 py-2 bg-brand-primary text-white rounded-full font-bold hover:bg-brand-primary/90 transition-colors"
+                    onClick={() => router.push(`/${tenantId}/dashboard?view=roles`)}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                    Add New Staff
+                  </button>
+                </div>
+              </div>
+              <StaffManagement />
+            </motion.div>
+          ) : currentView === "roles" ? (
+            <motion.div
+              key="roles"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+              className="mt-4 flex flex-col w-full"
+            >
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                <div>
+                  <h2 className="h2 text-text-primary">Role Management</h2>
+                  <p className="b1 text-text-secondary mt-2">
+                    Define staff roles, configure permissions, and control system access
+                  </p>
+                </div>
+              </div>
+              <RolesManagement />
+            </motion.div>
+          ) : currentView === "sales" ? (
+            <motion.div
+              key="sales"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+              className="mt-4 flex flex-col w-full"
+            >
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                <div>
+                  <h2 className="h2 text-text-primary">Sales</h2>
+                  <p className="b1 text-text-secondary mt-2">
+                    View revenue insights, transaction history, and detailed sales reports
+                  </p>
+                </div>
+              </div>
+              <SalesManagement />
+            </motion.div>
+          ) : currentView === "audit_logs" ? (
+            <motion.div
+              key="audit_logs"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+              className="mt-4 flex flex-col w-full"
+            >
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                <div>
+                  <h2 className="h2 text-text-primary">Audits</h2>
+                  <p className="b1 text-text-secondary mt-2">
+                    Monitor system activity, user actions, and security logs
+                  </p>
+                </div>
+              </div>
+              <AuditLogsManagement />
+            </motion.div>
+          ) : null}
         </AnimatePresence>
       </div>
       <div className="bottom-0 inset-x-0 h-40 bg-gradient-to-t from-white via-white/50 to-transparent z-[100] pointer-events-none" />
