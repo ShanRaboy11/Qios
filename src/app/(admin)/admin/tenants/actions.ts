@@ -1012,11 +1012,6 @@ export async function updateTenantStatus(
       ? tenant.business_email.trim()
       : null;
 
-  console.log(
-    "[updateTenantStatus] business_email from DB:",
-    recipientEmail ?? "(none)",
-  );
-
   // Find owner to resolve fallback email if tenant business_email is unavailable.
   const { data: adminProfiles, error: profilesError } = await supabase
     .from("profiles")
