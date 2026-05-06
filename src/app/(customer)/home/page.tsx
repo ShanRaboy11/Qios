@@ -10,14 +10,20 @@ import { CategoryToggle } from "@/components/molecules/CategoryToggle";
 import { MenuItemCard } from "@/components/molecules/MenuItemCard";
 import { PromoBanner } from "@/components/organisms/PromoBanner";
 import { ChevronRight } from "lucide-react";
+import OrderEditor from "@/components/organisms/OrderEditor";
+import { CartDrawer } from "@/components/organisms/CartDrawer";
+import { CartProvider } from "@/contexts/CartContext";
+import { MenuItemData } from "@/components/organisms/MenuCatalog";
 
 export default function CustomerHomePage() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedItem, setSelectedItem] = useState<MenuItemData | null>(null);
 
   const isCategoryView = selectedCategory !== null;
 
   return (
-    <motion.main
+    <CartProvider>
+      <motion.main
       layout
       animate={{ backgroundColor: isCategoryView ? "#FF5269" : "#FFDC72" }}
       className="flex flex-col min-h-screen w-full overflow-x-hidden relative transition-colors duration-500"
@@ -87,30 +93,35 @@ export default function CustomerHomePage() {
                           price={105.5}
                           imageSrc="/images/sushi.png"
                           title="Sushi"
+                          onAdd={() => setSelectedItem({ id: '1', name: 'Sushi', price: 105.5, available: true, category: 'Meal', imageUrl: '/images/sushi.png' })}
                         />
                         <MenuItemCard
                           variant="bestseller"
                           price={250.5}
                           imageSrc="/images/steak.png"
                           title="Steak"
+                          onAdd={() => setSelectedItem({ id: '2', name: 'Steak', price: 250.5, available: true, category: 'Meal', imageUrl: '/images/steak.png' })}
                         />
                         <MenuItemCard
                           variant="bestseller"
                           price={80.5}
                           imageSrc="/images/pasta.png"
                           title="Pasta"
+                          onAdd={() => setSelectedItem({ id: '3', name: 'Pasta', price: 80.5, available: true, category: 'Meal', imageUrl: '/images/pasta.png' })}
                         />
                         <MenuItemCard
                           variant="bestseller"
                           price={100.5}
                           imageSrc="/images/cupcake.png"
                           title="Cupcake"
+                          onAdd={() => setSelectedItem({ id: '4', name: 'Cupcake', price: 100.5, available: true, category: 'Dessert', imageUrl: '/images/cupcake.png' })}
                         />
                         <MenuItemCard
                           variant="bestseller"
                           price={120.0}
                           imageSrc="/images/noodles.png"
                           title="Noodles"
+                          onAdd={() => setSelectedItem({ id: '5', name: 'Noodles', price: 120.0, available: true, category: 'Meal', imageUrl: '/images/noodles.png' })}
                         />
                       </div>
                     </div>
@@ -131,13 +142,15 @@ export default function CustomerHomePage() {
                           price={2.29}
                           availability="20 Bowls available"
                           imageSrc="/images/noodles.png"
+                          onAdd={() => setSelectedItem({ id: '6', name: 'Spicy seasoned seafood noodles', price: 2.29, available: true, category: 'Meal', imageUrl: '/images/noodles.png' })}
                         />
                         <MenuItemCard
                           variant="horizontal"
-                          title="Spicy seasoned seafood noodles"
-                          price={2.29}
-                          availability="20 Bowls available"
-                          imageSrc="/images/noodles.png"
+                          title="Classic Burger with Fries"
+                          price={5.99}
+                          availability="15 Meals available"
+                          imageSrc="/images/food-placeholder.png"
+                          onAdd={() => setSelectedItem({ id: '7', name: 'Classic Burger with Fries', price: 5.99, available: true, category: 'Meal', imageUrl: '/images/food-placeholder.png' })}
                         />
                       </div>
                     </div>
@@ -182,6 +195,7 @@ export default function CustomerHomePage() {
                             price={2.29}
                             availability="20 Bowls available"
                             imageSrc="/images/noodles.png"
+                            onAdd={() => setSelectedItem({ id: `cat-${i}`, name: 'Spicy seasoned seafood noodles', price: 2.29, available: true, category: 'Meal', imageUrl: '/images/noodles.png' })}
                           />
                         </motion.div>
                       ))}
@@ -193,6 +207,12 @@ export default function CustomerHomePage() {
           </motion.div>
         </div>
       </div>
+      
+      {selectedItem && (
+        <OrderEditor menuItem={selectedItem} onClose={() => setSelectedItem(null)} />
+      )}
+      <CartDrawer />
     </motion.main>
+    </CartProvider>
   );
 }
