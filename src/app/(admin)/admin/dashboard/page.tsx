@@ -11,11 +11,9 @@ import { AdminSettings } from "@/components/organisms/AdminSettings";
 import { Footer } from "@/components/organisms/footer";
 import SubscriptionManagement from "@/components/organisms/SubscriptionManagement";
 import { Navbar } from "@/components/organisms/navbar";
-import { LogOut } from "lucide-react";
 
 import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams, useRouter } from "next/navigation";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type ViewState =
   | "dashboard"
@@ -87,16 +85,6 @@ function AdminDashboardContent() {
       setCurrentView(view);
     }
   }, [searchParams]);
-
-  const handleLogout = async () => {
-    try {
-      const supabase = createSupabaseBrowserClient();
-      await supabase.auth.signOut();
-    } catch {
-      // ignore if supabase not configured
-    }
-    router.push("/login");
-  };
 
   const handleNavigation = (view: ViewState, tenantFilter?: string) => {
     if (currentView === view && view !== "tenant") return;
