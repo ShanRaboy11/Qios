@@ -374,8 +374,13 @@ export async function resolveOnboardingAccess({
     );
   }
 
-  const nextStep = tenant
-    ? deriveNextStep(
+  if (tenant?.status === "onboarding") {
+    return {
+      status: "resume-onboarding",
+      userExists,
+      userVerified,
+      adminEmail: authUser?.email || normalizedEmail,
+      nextStep: deriveNextStep(
         {
           business_name: tenant.business_name,
           business_email: tenant.business_email,
@@ -386,34 +391,7 @@ export async function resolveOnboardingAccess({
           settings: (tenant.settings as Record<string, unknown> | null) || null,
         },
         userVerified,
-      )
-    : undefined;
-
-  const shouldResumeOnboarding =
-    tenant &&
-    (tenant.status === "onboarding" ||
-      (tenant.status === "pending" &&
-        typeof nextStep === "number" &&
-        nextStep < 7));
-
-  if (tenant && shouldResumeOnboarding && tenant.status !== "onboarding") {
-    const { error: statusSyncError } = await supabase
-      .from("tenants")
-      .update({ status: "onboarding" })
-      .eq("id", tenant.id);
-
-    if (!statusSyncError) {
-      tenant.status = "onboarding";
-    }
-  }
-
-  if (tenant && shouldResumeOnboarding) {
-    return {
-      status: "resume-onboarding",
-      userExists,
-      userVerified,
-      adminEmail: authUser?.email || normalizedEmail,
-      nextStep: nextStep || 3,
+      ),
       userId: authUser?.id,
       tenantId: tenant.id,
       businessName: tenant.business_name || undefined,
@@ -436,7 +414,18 @@ export async function resolveOnboardingAccess({
       userExists,
       userVerified,
       adminEmail: authUser?.email || normalizedEmail,
-      nextStep: nextStep || 7,
+      nextStep: deriveNextStep(
+        {
+          business_name: tenant.business_name,
+          business_email: tenant.business_email,
+          owner_name: tenant.owner_name,
+          subscription_plan: tenant.subscription_plan as SubscriptionPlan,
+          verification_doc_urls:
+            (tenant.verification_doc_urls as string[]) || [],
+          settings: (tenant.settings as Record<string, unknown> | null) || null,
+        },
+        userVerified,
+      ),
       userId: authUser?.id,
       tenantId: tenant.id,
       businessName: tenant.business_name || undefined,
@@ -630,9 +619,7 @@ export async function saveOnboardingProgress(
   data: SaveOnboardingProgressInput,
 ) {
   const supabase = createSupabaseAdminClient();
-  const updatePayload: Record<string, unknown> = {
-    status: "onboarding",
-  };
+  const updatePayload: Record<string, unknown> = {};
 
   if (data.businessData?.name) {
     updatePayload.business_name = data.businessData.name;
