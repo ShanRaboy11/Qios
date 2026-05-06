@@ -968,7 +968,7 @@ export default function RolesManagement() {
                   </Button>
                 </div>
               ) : (
-                <div className="flex flex-col gap-6 text-center pt-4">
+                <div className="flex flex-col gap-6 text-center pt-2">
                   {/* success icon with pinging effect */}
                   <div className="relative w-16 h-16 mx-auto mb-2">
                     <div
