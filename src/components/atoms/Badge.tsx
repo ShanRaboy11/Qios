@@ -14,7 +14,7 @@ export type BadgeColor =
 export type BadgeVariant = "solid" | "subtle" | "outline" | "ghost";
 export type BadgeShape = "pill" | "rounded";
 
-export interface BadgeProps {
+export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   children: React.ReactNode;
   color?: BadgeColor;
   variant?: BadgeVariant;
@@ -89,17 +89,19 @@ export const Badge = ({
   leftIcon,
   rightIcon,
   className,
+  ...props
 }: BadgeProps) => {
   const styles = badgeStyles[color][variant];
 
   return (
-    <div
+    <span
       className={cn(
         "inline-flex items-center gap-1.5 px-3 py-1 b4 whitespace-nowrap transition-all",
         shapeStyles[shape],
         styles,
         className,
       )}
+      {...props}
     >
       {leftIcon && (
         <span className="flex-shrink-0 flex items-center">{leftIcon}</span>
@@ -108,7 +110,7 @@ export const Badge = ({
       {rightIcon && (
         <span className="flex-shrink-0 flex items-center">{rightIcon}</span>
       )}
-    </div>
+    </span>
   );
 };
 
