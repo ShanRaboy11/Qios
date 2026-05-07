@@ -136,7 +136,60 @@ h4,
   }
 }
 
-/* ─── KDS Design Tokens ─────────────────────────────────────── */
+/* 3d flip utilities */
+.perspective-2000 {
+  perspective: 2000px;
+}
+
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+}
+
+@keyframes bubbleFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+@keyframes robotBreathe {
+  0%,
+  100% {
+    transform: scaleY(1) scaleX(1);
+  }
+  50% {
+    transform: scaleY(1.03) scaleX(0.982);
+  }
+}
+@keyframes arcFade {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  40%,
+  60% {
+    opacity: 0.9;
+  }
+}
+@keyframes glowPulse {
+  0%,
+  100% {
+    opacity: 0.5;
+    width: 110px;
+  }
+  50% {
+    opacity: 1;
+    width: 130px;
+  }
+}
+
+/* kds design tokens */
 :root {
   --kds-gold: #ffd77a;
   --kds-gold-soft: #fff3da;
@@ -164,7 +217,7 @@ h4,
   --kds-shadow-gold: 0 4px 18px rgba(255, 215, 122, 0.45);
 }
 
-/* ─── KDS Animations ────────────────────────────────────────── */
+/* kds animations */
 @keyframes kds-slide-up {
   from {
     opacity: 0;
@@ -217,7 +270,7 @@ h4,
   animation: kds-tick 1s step-start infinite;
 }
 
-/* ─── Scrollbar Utility ─────────────────────────────────────── */
+/* scrollbar utility */
 .scrollbar-none {
   scrollbar-width: none;
   -ms-overflow-style: none;
