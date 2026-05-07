@@ -181,7 +181,17 @@ export const INGREDIENT_DATA: IngredientData[] = [
   { cat: "Dairy & Eggs", name: "Butter", stock: 2, max: 8, unit: "kg" },
 ];
 
-export const DISH_ICONS = ["🍜", "🍗", "🥩", "🥦", "🍚", "🍲", "🍝", "🍮", "🍛"];
+export const DISH_ICONS = [
+  "🍜",
+  "🍗",
+  "🥩",
+  "🥦",
+  "🍚",
+  "🍲",
+  "🍝",
+  "🍮",
+  "🍛",
+];
 
 /* ------------------------------------------------------------------ */
 /*  Icons                                                               */
@@ -1701,7 +1711,16 @@ function Toolbar({
             gap: 2,
           }}
         >
-          <div style={{ padding: "8px 12px", fontSize: 11, fontWeight: 800, color: MUTED, textTransform: "uppercase", letterSpacing: 0.5 }}>
+          <div
+            style={{
+              padding: "8px 12px",
+              fontSize: 11,
+              fontWeight: 800,
+              color: MUTED,
+              textTransform: "uppercase",
+              letterSpacing: 0.5,
+            }}
+          >
             Filter by Status
           </div>
           {["All", "High Stock", "Medium Stock", "Low Stock"].map((opt) => (
@@ -1713,7 +1732,8 @@ function Toolbar({
               }}
               style={{
                 width: "100%",
-                background: filter === opt ? "rgba(255,82,105,0.08)" : "transparent",
+                background:
+                  filter === opt ? "rgba(255,82,105,0.08)" : "transparent",
                 border: "none",
                 textAlign: "left",
                 padding: "10px 12px",
@@ -2987,10 +3007,7 @@ function IngredientSection({
               gap: 16,
             }}
           >
-            <AddIngredientCard
-              catName={catName}
-              onAction={onAction}
-            />
+            <AddIngredientCard catName={catName} onAction={onAction} />
             {items.map((item) => (
               <IngredientCard key={item.name} data={item} onAction={onAction} />
             ))}
@@ -3122,7 +3139,9 @@ export default function MenuInventory() {
     );
     if (filter !== "All") {
       const matchStatus = filter.split(" ")[0].toLowerCase();
-      list = list.filter((i) => pctToStatus(Math.round((i.stock / i.max) * 100)) === matchStatus);
+      list = list.filter(
+        (i) => pctToStatus(Math.round((i.stock / i.max) * 100)) === matchStatus,
+      );
     }
     return list;
   }, [search, filter]);

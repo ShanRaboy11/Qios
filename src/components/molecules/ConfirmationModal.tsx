@@ -89,9 +89,9 @@ export function ActionConfirmationModal({
       <>
         Are you sure you want to remove{" "}
         <span className="font-semibold text-text-primary">
-          "{activePlanName ?? "this plan"}"
-        </span>{" "}
-        from the menu? This action cannot be undone.
+          "{activePlanName ?? "this item"}"
+        </span>
+        ? This action cannot be undone.
       </>
     ));
   const resolvedConfirmLabel =
@@ -126,16 +126,15 @@ export function ActionConfirmationModal({
                 : "w-14 h-14 rounded-2xl",
               action === "copy" && "bg-[#fff3da]",
               action === "save" && "bg-[#e0fad6]",
-            action === "approve" && "bg-[#e0fad6]",
-            action === "reject" && "bg-[#fff0f0]",
+              action === "approve" && "bg-[#e0fad6]",
+              action === "reject" && "bg-[#fff0f0]",
             )}
             style={{
-              boxShadow:
-                isDeleteLike
-                  ? "0 4px 18px rgba(255,82,105,0.18)"
-                  : action === "copy"
-                    ? "0 4px 18px rgba(255,215,122,0.35)"
-                    : "0 4px 18px rgba(31,173,102,0.18)",
+              boxShadow: isDeleteLike
+                ? "0 4px 18px rgba(255,82,105,0.18)"
+                : action === "copy"
+                  ? "0 4px 18px rgba(255,215,122,0.35)"
+                  : "0 4px 18px rgba(31,173,102,0.18)",
             }}
           >
             {isDeleteLike ? (
@@ -197,7 +196,7 @@ export function ActionConfirmationModal({
             {resolvedTitle}
           </h3>
 
-          <p className="text-[13px] text-text-secondary mt-2 leading-relaxed max-w-[260px]">
+          <p className="text-[13px] text-text-secondary mt-2 leading-relaxed max-w-[270px]">
             {resolvedMessage}
           </p>
         </div>

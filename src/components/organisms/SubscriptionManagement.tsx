@@ -154,6 +154,8 @@ export default function SubscriptionManagement() {
   const normalizePlanName = (name: string) => name.trim().toLowerCase();
   const formatPlanLabel = (name: string) =>
     name ? name.charAt(0).toUpperCase() + name.slice(1) : name;
+  const formatPlanInput = (name: string) =>
+    name ? name.charAt(0).toUpperCase() + name.slice(1) : "";
 
   useEffect(() => {
     async function fetchPlans() {
@@ -556,9 +558,12 @@ export default function SubscriptionManagement() {
                         Plan Name
                       </label>
                       <Input
-                        value={draftPlan.name}
+                        value={formatPlanInput(draftPlan.name)}
                         onChange={(e) =>
-                          setDraftPlan({ ...draftPlan, name: e.target.value })
+                          setDraftPlan({
+                            ...draftPlan,
+                            name: e.target.value.toLowerCase(),
+                          })
                         }
                         className="text-lg !bg-white/80 !py-1.5 !h-10"
                       />
