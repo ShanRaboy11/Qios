@@ -32,7 +32,8 @@ export function ReviewSummary({
   onSubmit,
   loading = false,
 }: ReviewSummaryProps) {
-  const showPrimaryMetric = selectedPlan === "business" || selectedPlan === "enterprise";
+  const showPrimaryMetric =
+    selectedPlan === "business" || selectedPlan === "enterprise";
   const showMultiStoreLogic = selectedPlan === "enterprise";
 
   return (
@@ -50,7 +51,8 @@ export function ReviewSummary({
               Review your application
             </h2>
             <p className="mt-2 text-sm text-[var(--color-text-secondary)] leading-relaxed max-w-2xl">
-              Confirm your business details, package choice, and operational strategy before submitting the application for review.
+              Confirm your business details, package choice, and operational
+              strategy before submitting the application for review.
             </p>
           </div>
         </div>
@@ -59,41 +61,55 @@ export function ReviewSummary({
       <div className="rounded-3xl border border-neutral-100 bg-white p-6 shadow-sm">
         <div className="flex items-center gap-2">
           <ClipboardCheck className="h-5 w-5 text-[var(--color-brand-primary)]" />
-          <h3 className="text-lg font-bold text-[var(--color-text-primary)]">Application Details</h3>
+          <h3 className="text-lg font-bold text-[var(--color-text-primary)]">
+            Application Details
+          </h3>
         </div>
 
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
           <div className="rounded-2xl border border-neutral-100 bg-neutral-50 px-4 py-4 shadow-sm sm:col-span-2">
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-400">Admin Email</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-400">
+              Admin Email
+            </p>
             <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)] break-all">
               {adminEmail || "-"}
             </p>
           </div>
 
           <div className="rounded-2xl border border-neutral-100 bg-neutral-50 px-4 py-4 shadow-sm">
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-400">Business Name</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-400">
+              Business Name
+            </p>
             <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
               {businessData.name || "-"}
             </p>
           </div>
 
           <div className="rounded-2xl border border-neutral-100 bg-neutral-50 px-4 py-4 shadow-sm">
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-400">Owner Name</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-400">
+              Owner Name
+            </p>
             <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
               {businessData.owner || "-"}
             </p>
           </div>
 
           <div className="rounded-2xl border border-neutral-100 bg-neutral-50 px-4 py-4 shadow-sm sm:col-span-2">
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-400">Business Email</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-400">
+              Business Email
+            </p>
             <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)] break-all">
               {businessData.email || "-"}
             </p>
           </div>
 
           <div className="rounded-2xl border border-neutral-100 bg-white px-4 py-4 shadow-sm sm:col-span-2">
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-400">Selected Plan</p>
-            <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">{PLAN_LABEL[selectedPlan]}</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-400">
+              Selected Plan
+            </p>
+            <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
+              {PLAN_LABEL[selectedPlan]}
+            </p>
           </div>
         </div>
       </div>
@@ -101,7 +117,8 @@ export function ReviewSummary({
       <div className="rounded-3xl border border-green-100 bg-green-50 px-5 py-4 text-sm text-green-800 flex items-start gap-2">
         <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0" />
         <p>
-          Final check: make sure all details are correct. Once submitted, your application status moves to pending review.
+          Final check: make sure all details are correct. Once submitted, your
+          application status moves to pending review.
         </p>
       </div>
 

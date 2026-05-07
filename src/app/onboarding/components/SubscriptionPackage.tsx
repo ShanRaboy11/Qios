@@ -1,7 +1,15 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Check, Info, Sparkles, Rocket, ArrowLeft, Zap, Loader2 } from "lucide-react";
+import {
+  Check,
+  Info,
+  Sparkles,
+  Rocket,
+  ArrowLeft,
+  Zap,
+  Loader2,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/atoms/Button";
 import { Badge } from "@/components/atoms/Badge";
@@ -62,21 +70,29 @@ export function SubscriptionPackage({
           .select("*")
           // Order alphabetically or by price. Since price_monthly is text like "1,499", we might just not order here or assume the DB is sequential
           .order("created_at");
-          
+
         if (error) throw error;
-        
+
         if (dbData && dbData.length > 0) {
           const parsed = dbData.map((d: any) => ({
             ...d,
             priceMonthly: d.price_monthly,
             priceAnnually: d.price_annually,
-            features: typeof d.features === "string" ? JSON.parse(d.features) : d.features,
+            features:
+              typeof d.features === "string"
+                ? JSON.parse(d.features)
+                : d.features,
           }));
           setPlans(parsed);
-          
+
           if (!data.packageId) {
-             const defaultPlan = parsed.find((p: any) => p.name.toLowerCase() === "basic" || p.name.toLowerCase() === "starter") || parsed[0];
-             setSelectedId(defaultPlan.id);
+            const defaultPlan =
+              parsed.find(
+                (p: any) =>
+                  p.name.toLowerCase() === "basic" ||
+                  p.name.toLowerCase() === "starter",
+              ) || parsed[0];
+            setSelectedId(defaultPlan.id);
           }
         }
       } catch (error) {
@@ -85,7 +101,7 @@ export function SubscriptionPackage({
         setLoading(false);
       }
     }
-    
+
     fetchPlans();
   }, []);
 
@@ -115,8 +131,11 @@ export function SubscriptionPackage({
 
   const activePackage = plans.find((p) => p.id === selectedId) || plans[0];
 
-  const activeColorHex = activePackage.color.match(/#([0-9a-fA-F]{6})/)?.[0] || "#ffc670";
-  const isDark = activeColorHex.toLowerCase() === "#18181b" || activeColorHex.toLowerCase() === "#000000";
+  const activeColorHex =
+    activePackage.color.match(/#([0-9a-fA-F]{6})/)?.[0] || "#ffc670";
+  const isDark =
+    activeColorHex.toLowerCase() === "#18181b" ||
+    activeColorHex.toLowerCase() === "#000000";
 
   return (
     <div className="flex flex-col items-center space-y-6 lg:space-y-10 animate-in fade-in slide-in-from-right-8 duration-500 w-full overflow-visible">
@@ -135,7 +154,9 @@ export function SubscriptionPackage({
                 ? "text-white shadow-md"
                 : "bg-transparent text-[var(--color-text-secondary)] hover:text-black",
             )}
-            style={selectedId === pkg.id ? { backgroundColor: activeColorHex } : {}}
+            style={
+              selectedId === pkg.id ? { backgroundColor: activeColorHex } : {}
+            }
           >
             {pkg.name}
           </button>
@@ -149,7 +170,7 @@ export function SubscriptionPackage({
         )}
         style={{
           borderColor: `${activeColorHex}80`,
-          backgroundImage: `linear-gradient(to bottom, #ffffff, ${isDark ? "#e4e4e7" : activeColorHex + "20"})`
+          backgroundImage: `linear-gradient(to bottom, #ffffff, ${isDark ? "#e4e4e7" : activeColorHex + "20"})`,
         }}
       >
         {/* Header Section */}
@@ -179,7 +200,10 @@ export function SubscriptionPackage({
 
           <div className="mt-2 flex items-center justify-center gap-2 b4 text-text-secondary font-medium">
             <span>Billed monthly</span>
-            <span className="font-bold text-lg" style={{ color: activeColorHex }}>
+            <span
+              className="font-bold text-lg"
+              style={{ color: activeColorHex }}
+            >
               •
             </span>
             <span>cancel anytime</span>
@@ -187,48 +211,50 @@ export function SubscriptionPackage({
         </div>
 
         {/* Features Section */}
-        <div className="p-8 lg:p-10 space-y-8">
+        <div className="space-y-8">
           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-text-secondary/60 text-center">
             What's Included
           </p>
 
-          <div className="flex flex-col gap-6">
-            {(Object.keys(CATEGORY_LABELS) as Array<keyof Features>).map((categoryKey) => {
-              const featuresInCategory = activePackage.features[categoryKey];
-              if (!featuresInCategory) return null;
+          <div className="flex flex-col gap-6 pl-16 pb-10 lg:pl-24 pb-10">
+            {(Object.keys(CATEGORY_LABELS) as Array<keyof Features>).map(
+              (categoryKey) => {
+                const featuresInCategory = activePackage.features[categoryKey];
+                if (!featuresInCategory) return null;
 
-              const enabledFeatures = Object.entries(featuresInCategory)
-                .filter(([_, isEnabled]) => isEnabled)
-                .map(([featureName]) => featureName);
+                const enabledFeatures = Object.entries(featuresInCategory)
+                  .filter(([_, isEnabled]) => isEnabled)
+                  .map(([featureName]) => featureName);
 
-              if (enabledFeatures.length === 0) return null;
+                if (enabledFeatures.length === 0) return null;
 
-              return (
-                <div key={categoryKey}>
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-text-secondary mb-3">
-                    {CATEGORY_LABELS[categoryKey]}
-                  </h4>
-                  <ul className="space-y-3">
-                    {enabledFeatures.map((feature, idx) => (
-                      <li key={idx} className="flex items-start gap-3">
-                        <div
-                          className="mt-0.5 shrink-0 w-5 h-5 rounded-full flex items-center justify-center"
-                          style={{ backgroundColor: `${activeColorHex}20` }}
-                        >
-                          <Check
-                            className="w-3 h-3 stroke-[4px]"
-                            style={{ color: activeColorHex }}
-                          />
-                        </div>
-                        <span className="text-sm lg:text-base text-text-primary font-medium leading-snug">
-                          {feature}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              );
-            })}
+                return (
+                  <div key={categoryKey}>
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-text-secondary mb-3">
+                      {CATEGORY_LABELS[categoryKey]}
+                    </h4>
+                    <ul className="space-y-3">
+                      {enabledFeatures.map((feature, idx) => (
+                        <li key={idx} className="flex items-start gap-3">
+                          <div
+                            className="mt-0.5 shrink-0 w-5 h-5 rounded-full flex items-center justify-center"
+                            style={{ backgroundColor: `${activeColorHex}20` }}
+                          >
+                            <Check
+                              className="w-3 h-3 stroke-[4px]"
+                              style={{ color: activeColorHex }}
+                            />
+                          </div>
+                          <span className="text-sm lg:text-base text-text-primary font-medium leading-snug">
+                            {feature}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                );
+              },
+            )}
           </div>
         </div>
       </div>
@@ -249,7 +275,10 @@ export function SubscriptionPackage({
           shape="pill"
           size="lg"
           className="flex-1 h-14 b2 font-bold text-lg shadow-lg text-white transition-all active:scale-[0.98]"
-          style={{ backgroundColor: activeColorHex, boxShadow: `0 10px 15px -3px ${activeColorHex}40` }}
+          style={{
+            backgroundColor: activeColorHex,
+            boxShadow: `0 10px 15px -3px ${activeColorHex}40`,
+          }}
           onClick={() => {
             setData({ packageId: selectedId });
             onNext();

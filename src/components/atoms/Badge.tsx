@@ -35,27 +35,31 @@ const badgeStyles = {
     subtle: "bg-brand-primary/20 text-brand-primary",
     outline:
       "bg-brand-primary/20 border border-brand-primary text-brand-primary",
-    ghost: "bg-white/30 text-brand-primary border border-white/30 backdrop-blur-sm",
+    ghost:
+      "bg-white/30 text-brand-primary border border-white/30 backdrop-blur-sm",
   },
   accent: {
     solid: "bg-brand-accent text-text-tertiary backdrop-blur-sm",
     subtle: "bg-brand-accent/20 text-brand-accent",
     outline: "bg-brand-accent/20 border border-brand-accent text-brand-accent",
-    ghost: "bg-white/40 text-brand-accent border border-white/30 backdrop-blur-sm",
+    ghost:
+      "bg-white/40 text-brand-accent border border-white/30 backdrop-blur-sm",
   },
   success: {
     solid: "bg-success-primary text-text-tertiary backdrop-blur-sm",
     subtle: "bg-success-secondary text-success-primary",
     outline:
       "bg-success-secondary border border-success-primary text-success-primary",
-    ghost: "bg-white/40 text-success-primary border border-white/30 backdrop-blur-sm",
+    ghost:
+      "bg-white/40 text-success-primary border border-white/30 backdrop-blur-sm",
   },
   error: {
     solid: "bg-warning-primary text-text-tertiary backdrop-blur-sm",
     subtle: "bg-warning-secondary text-warning-primary",
     outline:
       "bg-warning-secondary border border-warning-primary text-warning-primary",
-    ghost: "bg-white/40 text-warning-primary border border-white/30 backdrop-blur-sm",
+    ghost:
+      "bg-white/40 text-warning-primary border border-white/30 backdrop-blur-sm",
   },
   info: {
     solid: "bg-[#3B82F6] text-white backdrop-blur-sm",
