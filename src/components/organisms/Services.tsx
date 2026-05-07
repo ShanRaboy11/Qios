@@ -263,8 +263,14 @@ export default function Services() {
   const CTAContent = (
     <div className="flex flex-col items-center justify-center text-center bg-brand-primary rounded-[2.5rem] p-10 md:p-16 relative overflow-hidden shadow-xl h-full border border-white/20">
       <div className="absolute inset-0 bg-[url('/noise.png')] opacity-10 mix-blend-overlay" />
-      <div className="absolute -top-24 -right-24 w-80 h-80 bg-white/30 blur-3xl rounded-full" />
-      <div className="absolute -bottom-24 -left-24 w-80 h-80 bg-brand-accent/20 blur-3xl rounded-full" />
+
+      {/* digital grid pattern for depth */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff10_1px,transparent_1px),linear-gradient(to_bottom,#ffffff10_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_100%,#000_70%,transparent_100%)]" />
+
+      {/* enhanced animated blobs */}
+      <div className="absolute -top-24 -right-24 w-80 h-80 bg-white/30 blur-3xl rounded-full animate-pulse" />
+      <div className="absolute -bottom-24 -left-24 w-80 h-80 bg-brand-accent/30 blur-3xl rounded-full animate-[bounce_10s_infinite]" />
+
       <div className="relative z-10 flex flex-col items-center gap-6 max-w-2xl [transform:translateZ(60px)]">
         <h2 className="font-figtree text-3xl md:text-[38px] font-bold leading-[125%] text-white tracking-tight">
           Ready to upgrade your business?
@@ -644,6 +650,10 @@ export default function Services() {
               <div className="absolute inset-0 [backface-visibility:hidden] [transform:rotateX(180deg)]">
                 <div className="flex flex-col items-center justify-center text-center bg-brand-accent rounded-[2.5rem] p-10 md:p-16 relative overflow-hidden shadow-xl h-full border border-white/20">
                   <div className="absolute inset-0 bg-[url('/noise.png')] opacity-10 mix-blend-overlay" />
+
+                  {/* back side decorative grid */}
+                  <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff10_1px,transparent_1px),linear-gradient(to_bottom,#ffffff10_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(circle_at_center,#000_70%,transparent_100%)]" />
+
                   <div className="relative z-10 flex flex-col items-center gap-6 max-w-2xl [transform:translateZ(80px)]">
                     <h2 className="font-figtree text-3xl md:text-[38px] font-bold leading-[125%] text-white tracking-tight">
                       Ready to upgrade your business?
