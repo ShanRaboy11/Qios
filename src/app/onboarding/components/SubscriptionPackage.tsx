@@ -85,7 +85,7 @@ export function SubscriptionPackage({
           }));
           setPlans(parsed);
 
-          if (!data.packageId) {
+          if (!data.packageId || data.packageId === "starter" || data.packageId === "basic") {
             const defaultPlan =
               parsed.find(
                 (p: any) =>
@@ -93,6 +93,12 @@ export function SubscriptionPackage({
                   p.name.toLowerCase() === "starter",
               ) || parsed[0];
             setSelectedId(defaultPlan.id);
+            setData({ packageId: defaultPlan.id });
+          } else if (parsed.find((p: any) => p.name.toLowerCase() === data.packageId)) {
+            // handle case where parent has human readable name instead of uuid
+            const matchedPlan = parsed.find((p: any) => p.name.toLowerCase() === data.packageId);
+            setSelectedId(matchedPlan.id);
+            setData({ packageId: matchedPlan.id });
           }
         }
       } catch (error) {

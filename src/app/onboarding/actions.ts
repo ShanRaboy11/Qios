@@ -83,10 +83,27 @@ type ResolveOnboardingAccessResult = {
 };
 
 const getSubscriptionPlan = (packageId: string): SubscriptionPlan => {
-  if (packageId === "basic" || packageId === "starter") return "basic";
-  if (packageId === "business" || packageId === "growth") return "business";
-  if (packageId === "enterprise" || packageId === "enterprises")
-    return "enterprise";
+  if (!packageId) return "basic";
+  const lowerId = packageId.toLowerCase();
+  
+  if (
+    lowerId === "basic" || 
+    lowerId === "starter" || 
+    lowerId === "b3c2d4a5-1e6f-4c8d-9b1e-0a1f2e3d4c5b"
+  ) return "basic";
+  
+  if (
+    lowerId === "business" || 
+    lowerId === "growth" || 
+    lowerId === "d1e2f3a4-b5c6-4d7e-8c9b-1a2f3e4d5c6b"
+  ) return "business";
+  
+  if (
+    lowerId === "enterprise" || 
+    lowerId === "enterprises" || 
+    lowerId === "f5a4b3c2-e1d0-4e8f-9a1b-2c3d4e5f6a9b"
+  ) return "enterprise";
+  
   return "basic";
 };
 
