@@ -236,8 +236,8 @@ export default function Services() {
         }}
       />
 
-      <div className="flex flex-col gap-20 md:gap-48 w-full max-w-[1440px] mx-auto px-6 md:px-12 lg:px-24 relative z-10">
-        {/* page hero section - lengthened wrap for bigger screens */}
+      <div className="flex flex-col gap-20 md:gap-72 w-full max-w-[1440px] mx-auto px-6 md:px-12 lg:px-24 relative z-10">
+        {/* page hero section */}
         <div className="max-w-4xl mx-auto relative z-10 w-full">
           <div className="text-center mb-10 space-y-3">
             <p className="b3 text-brand-primary uppercase tracking-widest">
@@ -254,7 +254,7 @@ export default function Services() {
           </div>
         </div>
 
-        {/* features section - lowered cards more for mobile small screens */}
+        {/* features section */}
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24 items-center">
           <div className="flex flex-col text-left space-y-3">
             <span className="b3 text-brand-primary tracking-widest uppercase">
@@ -323,18 +323,18 @@ export default function Services() {
         </section>
 
         {/* what makes us different */}
-        <section className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center">
+        <section className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-32 items-center">
           <div className="order-2 lg:order-1 relative">
-            <div className="relative rounded-[3rem] overflow-hidden bg-gradient-to-tr from-brand-secondary/20 to-brand-primary/40 aspect-square flex items-center justify-center border border-black/5 p-8">
-              <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.05] mix-blend-overlay" />
-              <div className="relative z-10 bg-white rounded-[2rem] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.14)] p-8 w-full max-w-sm flex flex-col gap-6 transform rotate-[-3deg] hover:rotate-0 transition-all duration-700">
+            <div className="relative rounded-[3rem] overflow-hidden bg-gradient-to-tr from-brand-secondary/40 to-brand-primary/60 aspect-square flex items-center justify-center border border-black/10 p-8 shadow-inner">
+              <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.15] mix-blend-overlay" />
+              <div className="relative z-10 bg-white rounded-[2rem] shadow-[0_20px_40px_-12px_rgba(0,0,0,0.15)] p-8 w-full max-w-sm flex flex-col gap-6 transform rotate-[-3deg] hover:rotate-0 transition-all duration-700">
                 <div className="flex items-center justify-between border-b border-gray-100 pb-4">
                   <div className="flex gap-2">
                     <div className="w-3 h-3 rounded-full bg-red-400" />
                     <div className="w-3 h-3 rounded-full bg-yellow-400" />
                     <div className="w-3 h-3 rounded-full bg-green-400" />
                   </div>
-                  <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                  <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
                     Dashboard v2.0
                   </div>
                 </div>
@@ -342,7 +342,7 @@ export default function Services() {
                   <div className="h-4 bg-gray-100 rounded-md w-full animate-pulse" />
                   <div className="h-4 bg-gray-100 rounded-md w-5/6 animate-pulse" />
                 </div>
-                <div className="h-32 bg-brand-primary/5 border-2 border-dashed border-brand-primary/20 rounded-2xl flex flex-col items-center justify-center gap-3">
+                <div className="h-32 bg-brand-primary/10 border-2 border-dashed border-brand-primary/40 rounded-2xl flex flex-col items-center justify-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-brand-primary/20 flex items-center justify-center">
                     <Zap size={20} className="text-brand-primary" />
                   </div>
@@ -359,27 +359,28 @@ export default function Services() {
               Our Edge
             </span>
             <h1 className="h1 text-text-primary tracking-tight leading-tight max-md:text-[34px]">
-              What Makes Us Different
+              What Makes Us <span style={gradientHeaderStyle}>Different</span>
             </h1>
-            <p className="h4 text-text-secondary max-w-xl leading-relaxed max-md:text-base">
+            <p className="h4 text-text-secondary max-w-xl leading-relaxed max-md:text-base mt-2">
               Unlike legacy POS systems that lock you into expensive hardware
               contracts, Qios is a software-first solution that puts the power
               back in your hands.
             </p>
-            <div className="flex flex-col gap-6 pt-5">
+            <div className="flex flex-col gap-8 pt-8">
               {differentiators.map((diff, idx) => (
                 <div
                   key={idx}
-                  className="group flex items-start gap-5 p-4 rounded-2xl hover:bg-white hover:shadow-md transition-all duration-300 border border-transparent hover:border-black/5"
+                  className="flex items-start gap-5 transition-all duration-300"
                 >
-                  <div className="mt-1 bg-brand-primary/10 rounded-xl p-2 text-brand-primary group-hover:scale-110 transition-transform">
-                    <CheckCircle2 size={22} />
+                  {/* removed rectangular background from icons */}
+                  <div className="mt-1 text-brand-primary shrink-0">
+                    <CheckCircle2 size={28} />
                   </div>
-                  <div>
-                    <h4 className="text-lg font-bold text-text-primary">
+                  <div className="space-y-1">
+                    <h4 className="text-[20px] font-bold text-text-primary tracking-tight">
                       {diff.title}
                     </h4>
-                    <p className="text-base text-text-secondary leading-relaxed mt-1">
+                    <p className="text-[17px] text-text-secondary leading-relaxed">
                       {diff.desc}
                     </p>
                   </div>
