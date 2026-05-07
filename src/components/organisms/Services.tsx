@@ -236,7 +236,7 @@ export default function Services() {
         }}
       />
 
-      <div className="flex flex-col gap-20 md:gap-72 w-full max-w-[1440px] mx-auto px-6 md:px-12 lg:px-24 relative z-10">
+      <div className="flex flex-col gap-20 md:gap-48 w-full max-w-[1440px] mx-auto px-6 md:px-12 lg:px-24 relative z-10">
         {/* page hero section */}
         <div className="max-w-4xl mx-auto relative z-10 w-full">
           <div className="text-center mb-10 space-y-3">
@@ -255,10 +255,10 @@ export default function Services() {
         </div>
 
         {/* features section */}
-        <section className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24 items-center">
+        <section className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24 items-center mt-4">
           <div className="flex flex-col text-left space-y-3">
             <span className="b3 text-brand-primary tracking-widest uppercase">
-              Features
+              The Features
             </span>
             <h1 className="h1 text-text-primary tracking-tight leading-tight max-md:text-[34px]">
               You Are In <span style={gradientHeaderStyle}>Good Hands</span>
@@ -323,7 +323,7 @@ export default function Services() {
         </section>
 
         {/* what makes us different */}
-        <section className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-32 items-center">
+        <section className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-32 items-center mt-16 md:mt-32">
           <div className="order-2 lg:order-1 relative">
             <div className="relative rounded-[3rem] overflow-hidden bg-gradient-to-tr from-brand-secondary/40 to-brand-primary/60 aspect-square flex items-center justify-center border border-black/10 p-8 shadow-inner">
               <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.15] mix-blend-overlay" />
@@ -372,15 +372,14 @@ export default function Services() {
                   key={idx}
                   className="flex items-start gap-5 transition-all duration-300"
                 >
-                  {/* removed rectangular background from icons */}
                   <div className="mt-1 text-brand-primary shrink-0">
                     <CheckCircle2 size={28} />
                   </div>
                   <div className="space-y-1">
-                    <h4 className="text-[20px] font-bold text-text-primary tracking-tight">
+                    <h4 className="font-figtree font-bold text-lg md:text-[25px] leading-[125%] text-text-primary tracking-tight">
                       {diff.title}
                     </h4>
-                    <p className="text-[17px] text-text-secondary leading-relaxed">
+                    <p className="b1 text-text-secondary leading-relaxed">
                       {diff.desc}
                     </p>
                   </div>
@@ -390,43 +389,46 @@ export default function Services() {
           </div>
         </section>
 
-        {/* onboarding */}
-        <section className="flex flex-col items-center">
-          <div className="flex flex-col items-center text-center max-w-4xl mx-auto mb-20 space-y-3">
+        {/* onboarding - fixed mobile card height and metallic numbers */}
+        <section className="flex flex-col items-center mt-32 md:mt-56">
+          <div className="flex flex-col items-center text-center max-w-4xl mx-auto mb-10 md:mb-20 space-y-3">
             <span className="b3 text-brand-primary tracking-widest uppercase">
-              Onboarding
+              The Process
             </span>
             <h1 className="h1 text-text-primary tracking-tight leading-tight max-md:text-[34px]">
-              The Process
+              Here&apos;s How It <span style={gradientHeaderStyle}>Works</span>
             </h1>
             <p className="h4 text-text-secondary max-w-2xl leading-relaxed max-md:text-base">
-              Getting started is fast and painless. Hover over each step to see
-              how we help you transition to digital seamlessly.
+              Getting started is fast and painless. We help you transition to
+              digital seamlessly through these proven steps.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 w-full">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 w-full items-start mt-6 md:mt-8">
             {processSteps.map((step, idx) => (
-              <div key={idx} className="group h-[320px] [perspective:1000px]">
-                <div className="relative h-full w-full transition-all duration-700 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)]">
-                  {/* front face */}
-                  <div className="absolute inset-0 bg-white rounded-[2rem] border border-black/5 p-8 flex flex-col items-center text-center justify-center shadow-lg [backface-visibility:hidden]">
-                    <div className="w-16 h-16 rounded-2xl bg-brand-primary/10 flex items-center justify-center border border-brand-primary/20 mb-6">
-                      {step.icon}
-                    </div>
-                    <span className="text-brand-accent font-bold text-xs mb-3 tracking-[0.2em]">
-                      STEP {step.step}
-                    </span>
-                    <h3 className="text-xl font-bold text-text-primary">
+              <div
+                key={idx}
+                className={cn(
+                  "group relative p-[2px] rounded-[2.2rem] overflow-hidden transition-all duration-500 shadow-xl",
+                  idx % 2 !== 0 ? "lg:-mt-12" : "lg:mt-0",
+                )}
+              >
+                {/* visible moving outline anim */}
+                <div className="absolute inset-[-150%] bg-[conic-gradient(from_0deg,transparent_20%,#ffc670_40%,#ff5269_50%,#ffc670_60%,transparent_80%)] animate-[spin_4s_linear_infinite] opacity-60 group-hover:opacity-100 transition-opacity duration-500" />
+
+                <div className="relative bg-white bg-gradient-to-br from-white via-white/80 to-brand-primary/30 rounded-[2.1rem] p-6 md:p-10 flex flex-col max-md:min-h-[260px] md:min-h-[380px] z-10 transition-colors duration-300">
+                  {/* metallic number layout */}
+                  <span className="text-7xl md:text-8xl font-black text-slate-400/20 select-none leading-none transition-all duration-500 group-hover:text-slate-500/40 group-hover:scale-105">
+                    {step.step.replace(/^0/, "")}
+                  </span>
+
+                  <div className="mt-auto max-md:mt-6">
+                    <h3 className="font-figtree font-bold text-lg md:text-[25px] leading-[125%] text-text-primary mb-2 md:mb-3">
                       {step.title}
                     </h3>
-                  </div>
-                  {/* back face */}
-                  <div className="absolute inset-0 h-full w-full rounded-[2rem] bg-brand-primary p-8 flex flex-col items-center text-center justify-center text-white [transform:rotateY(180deg)] [backface-visibility:hidden] shadow-2xl">
-                    <p className="text-lg leading-relaxed font-medium">
+                    <p className="b1 text-text-secondary leading-relaxed line-clamp-4">
                       {step.desc}
                     </p>
-                    <div className="mt-6 w-10 h-1 bg-white/30 rounded-full" />
                   </div>
                 </div>
               </div>
