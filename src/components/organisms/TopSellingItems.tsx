@@ -4,11 +4,46 @@ import React from "react";
 import Image from "next/image";
 
 const mockTopItems = [
-  { id: 1, name: "Truffle Burger", category: "Mains", sales: 342, revenue: 125000, trend: "+12%" },
-  { id: 2, name: "Sweet Potato Fries", category: "Sides", sales: 289, revenue: 43350, trend: "+5%" },
-  { id: 3, name: "Iced Caramel Macchiato", category: "Beverages", sales: 256, revenue: 51200, trend: "+18%" },
-  { id: 4, name: "Classic Cheeseburger", category: "Mains", sales: 210, revenue: 63000, trend: "-2%" },
-  { id: 5, name: "Onion Rings", category: "Sides", sales: 185, revenue: 27750, trend: "+8%" },
+  {
+    id: 1,
+    name: "Truffle Burger",
+    category: "Mains",
+    sales: 342,
+    revenue: 125000,
+    trend: "+12%",
+  },
+  {
+    id: 2,
+    name: "Sweet Potato Fries",
+    category: "Sides",
+    sales: 289,
+    revenue: 43350,
+    trend: "+5%",
+  },
+  {
+    id: 3,
+    name: "Iced Caramel Macchiato",
+    category: "Beverages",
+    sales: 256,
+    revenue: 51200,
+    trend: "+18%",
+  },
+  {
+    id: 4,
+    name: "Classic Cheeseburger",
+    category: "Mains",
+    sales: 210,
+    revenue: 63000,
+    trend: "-2%",
+  },
+  {
+    id: 5,
+    name: "Onion Rings",
+    category: "Sides",
+    sales: 185,
+    revenue: 27750,
+    trend: "+8%",
+  },
 ];
 
 export const TopSellingItems = () => {
@@ -16,7 +51,9 @@ export const TopSellingItems = () => {
     <div className="bg-white rounded-[24px] shadow-sm border border-gray-100 overflow-hidden flex flex-col h-full w-full">
       <div className="p-6 border-b border-gray-50 flex justify-between items-center">
         <div>
-          <h3 className="font-bold text-xl text-text-primary">Top Selling Items</h3>
+          <h3 className="font-bold text-xl text-text-primary">
+            Top Selling Items
+          </h3>
           <p className="text-sm text-text-secondary mt-1">
             Highest performing menu items
           </p>
@@ -64,7 +101,9 @@ export const TopSellingItems = () => {
                     <p className="font-bold text-text-primary text-sm">
                       ₱{item.revenue.toLocaleString()}
                     </p>
-                    <p className={`text-[11px] font-medium ${item.trend.startsWith("+") ? "text-success-primary" : "text-error-primary"}`}>
+                    <p
+                      className={`text-[11px] font-medium ${item.trend.startsWith("+") ? "text-success-primary" : "text-error-primary"}`}
+                    >
                       {item.trend}
                     </p>
                   </td>

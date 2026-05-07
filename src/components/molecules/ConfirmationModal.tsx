@@ -17,6 +17,9 @@ type ActionConfirmationModalProps = {
   cancelLabel?: string;
   confirmVariant?: ButtonVariant;
   saving?: boolean;
+  requireReason?: boolean;
+  reasonValue?: string;
+  onReasonChange?: (val: string) => void;
   onClose: () => void;
   onConfirm: () => void;
 };
@@ -32,12 +35,18 @@ export function ActionConfirmationModal({
   cancelLabel = "Cancel",
   confirmVariant,
   saving = false,
+  requireReason = false,
+  reasonValue,
+  onReasonChange,
   onClose,
   onConfirm,
 }: ActionConfirmationModalProps) {
   if (!isOpen || !action) {
     return null;
   }
+
+  const formatName = (s?: string) =>
+    s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
 
   const isDeleteLike = action === "delete" || action === "reject";
   const resolvedTitle =
@@ -57,7 +66,7 @@ export function ActionConfirmationModal({
       <>
         Your edits to{" "}
         <span className="font-semibold text-text-primary">
-          "{draftPlanName ?? "this plan"}"
+          "{formatName(draftPlanName) ?? "this plan"}"
         </span>{" "}
         will be saved permanently.
       </>
@@ -65,7 +74,7 @@ export function ActionConfirmationModal({
       <>
         A new copy of{" "}
         <span className="font-semibold text-text-primary">
-          "{activePlanName ?? "this plan"}"
+          "{formatName(activePlanName) ?? "this plan"}"
         </span>{" "}
         will be created.
       </>
@@ -73,7 +82,7 @@ export function ActionConfirmationModal({
       <>
         Are you sure you want to approve{" "}
         <span className="font-semibold text-text-primary">
-          "{activePlanName ?? "this user"}"
+          "{formatName(activePlanName) ?? "this user"}"
         </span>{" "}
         and grant full access?
       </>
@@ -81,7 +90,7 @@ export function ActionConfirmationModal({
       <>
         Are you sure you want to reject{" "}
         <span className="font-semibold text-text-primary">
-          "{activePlanName ?? "this user"}"
+          "{formatName(activePlanName) ?? "this user"}"
         </span>{" "}
         ? This action cannot be undone immediately.
       </>
@@ -89,7 +98,7 @@ export function ActionConfirmationModal({
       <>
         Are you sure you want to remove{" "}
         <span className="font-semibold text-text-primary">
-          "{activePlanName ?? "this item"}"
+          "{formatName(activePlanName) ?? "this item"}"
         </span>
         ? This action cannot be undone.
       </>
@@ -200,6 +209,21 @@ export function ActionConfirmationModal({
             {resolvedMessage}
           </p>
         </div>
+
+        {requireReason && (
+          <div className="px-6 pb-2">
+            <label className="b4 ml-1 font-medium text-text-secondary">
+              Reason {"(Required)"}
+            </label>
+            <textarea
+              placeholder="Please provide a reason..."
+              value={reasonValue ?? ""}
+              onChange={(e) => onReasonChange?.(e.target.value)}
+              rows={4}
+              className="w-full bg-white text-sm md:text-[16px] px-4 py-3 transition-all duration-300 outline-none rounded-2xl border-2 border-[#E5E5E5] focus:border-brand-primary focus:shadow-[0_0_0_2px_rgba(255,198,112,0.15)] placeholder:text-text-secondary text-text-primary resize-y"
+            />
+          </div>
+        )}
 
         <div className="h-px bg-black/[0.05] mx-6" />
 

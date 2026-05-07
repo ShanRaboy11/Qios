@@ -29,7 +29,10 @@ export const TenantStoreSettings = () => {
               <label className="text-sm font-medium text-text-primary">
                 Store Name (Trading Name)
               </label>
-              <Input defaultValue="Macatual Branch" className="py-2.5 rounded-xl" />
+              <Input
+                defaultValue="Macatual Branch"
+                className="py-2.5 rounded-xl"
+              />
             </div>
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-text-primary">

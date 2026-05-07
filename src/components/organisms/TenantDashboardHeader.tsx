@@ -23,9 +23,7 @@ export const TenantDashboardHeader = ({
         <span className="h2 md:text-[36px] leading-tight">
           Welcome, {adminName}
         </span>
-        <p className="b1 text-text-secondary mt-1">
-          {subtitle}
-        </p>
+        <p className="b1 text-text-secondary mt-1">{subtitle}</p>
       </div>
       <div className="shrink-0">
         <DateRangePicker />

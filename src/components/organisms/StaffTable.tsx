@@ -24,7 +24,14 @@ interface StaffTableProps {
   onViewProfile?: (staff: StaffEntry) => void;
 }
 
-export const StaffTable = ({ data, onEdit, onResetPassword, onDeactivate, onClearFilters, onViewProfile }: StaffTableProps) => {
+export const StaffTable = ({
+  data,
+  onEdit,
+  onResetPassword,
+  onDeactivate,
+  onClearFilters,
+  onViewProfile,
+}: StaffTableProps) => {
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
 
   if (data.length === 0) {
@@ -54,33 +61,50 @@ export const StaffTable = ({ data, onEdit, onResetPassword, onDeactivate, onClea
           </thead>
           <tbody>
             {data.map((staff) => (
-              <tr 
-                key={staff.id} 
+              <tr
+                key={staff.id}
                 className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors group cursor-pointer"
                 onClick={() => onViewProfile?.(staff)}
               >
                 <td className="py-4 px-6">
                   <div className="flex items-center gap-3">
-                    <Avatar 
-                      initials={staff.name} 
-                      src={staff.avatar} 
-                      status={staff.status === "Active" ? "online" : staff.status === "On Leave" ? "away" : "offline"} 
+                    <Avatar
+                      initials={staff.name}
+                      src={staff.avatar}
+                      status={
+                        staff.status === "Active"
+                          ? "online"
+                          : staff.status === "On Leave"
+                            ? "away"
+                            : "offline"
+                      }
                     />
                     <div>
-                      <div className="font-bold text-text-primary group-hover:text-brand-primary transition-colors">{staff.name}</div>
-                      <div className="text-xs text-text-secondary">{staff.email}</div>
+                      <div className="font-bold text-text-primary group-hover:text-brand-primary transition-colors">
+                        {staff.name}
+                      </div>
+                      <div className="text-xs text-text-secondary">
+                        {staff.email}
+                      </div>
                     </div>
                   </div>
                 </td>
                 <td className="py-4 px-6">
-                  <div className="font-medium text-text-primary">{staff.role}</div>
-                  <div className="text-xs text-text-secondary">{staff.department}</div>
+                  <div className="font-medium text-text-primary">
+                    {staff.role}
+                  </div>
+                  <div className="text-xs text-text-secondary">
+                    {staff.department}
+                  </div>
                 </td>
                 <td className="py-4 px-6 text-center">
-                  <Badge 
+                  <Badge
                     color={
-                      staff.status === "Active" ? "success" : 
-                      staff.status === "On Leave" ? "warning" : "error"
+                      staff.status === "Active"
+                        ? "success"
+                        : staff.status === "On Leave"
+                          ? "warning"
+                          : "error"
                     }
                     variant="subtle"
                     shape="pill"
@@ -93,7 +117,7 @@ export const StaffTable = ({ data, onEdit, onResetPassword, onDeactivate, onClea
                   {staff.lastActive}
                 </td>
                 <td className="py-4 px-6 text-right relative">
-                  <button 
+                  <button
                     onClick={(e) => {
                       e.stopPropagation();
                       toggleDropdown(staff.id);
@@ -105,32 +129,41 @@ export const StaffTable = ({ data, onEdit, onResetPassword, onDeactivate, onClea
 
                   {openDropdownId === staff.id && (
                     <>
-                      <div 
-                        className="fixed inset-0 z-40" 
+                      <div
+                        className="fixed inset-0 z-40"
                         onClick={(e) => {
                           e.stopPropagation();
                           setOpenDropdownId(null);
-                        }} 
+                        }}
                       />
-                      <div 
+                      <div
                         className="absolute right-0 top-10 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50 animate-in fade-in zoom-in-95 duration-200"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <button 
-                          onClick={() => { onEdit?.(staff.id); setOpenDropdownId(null); }}
+                        <button
+                          onClick={() => {
+                            onEdit?.(staff.id);
+                            setOpenDropdownId(null);
+                          }}
                           className="w-full text-left px-4 py-2.5 text-sm text-text-primary hover:bg-gray-50 flex items-center gap-3 transition-colors"
                         >
                           <Edit2 size={16} /> Edit Profile
                         </button>
-                        <button 
-                          onClick={() => { onResetPassword?.(staff.id); setOpenDropdownId(null); }}
+                        <button
+                          onClick={() => {
+                            onResetPassword?.(staff.id);
+                            setOpenDropdownId(null);
+                          }}
                           className="w-full text-left px-4 py-2.5 text-sm text-text-primary hover:bg-gray-50 flex items-center gap-3 transition-colors"
                         >
                           <KeyRound size={16} /> Reset Password
                         </button>
                         <div className="h-px bg-gray-100 my-1" />
-                        <button 
-                          onClick={() => { onDeactivate?.(staff.id); setOpenDropdownId(null); }}
+                        <button
+                          onClick={() => {
+                            onDeactivate?.(staff.id);
+                            setOpenDropdownId(null);
+                          }}
                           className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors font-medium"
                         >
                           <UserX size={16} /> Deactivate Account

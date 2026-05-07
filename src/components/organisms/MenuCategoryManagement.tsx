@@ -437,7 +437,6 @@ const MenuCategoryManagement = () => {
           <main className="flex flex-col min-w-0 w-full">
             {/* dashboard tools */}
             <div className="flex-shrink-0 flex flex-col gap-6 mb-6">
-
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
                 <div className="relative flex-1 max-w-md w-full">
                   <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">

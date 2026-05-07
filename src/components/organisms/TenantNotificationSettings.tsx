@@ -25,27 +25,39 @@ export const TenantNotificationSettings = () => {
             className="mb-0 py-2 border-gray-100"
           />
           <div className="space-y-3 pt-2">
-             <div className="flex items-center justify-between p-4 rounded-xl border border-gray-100">
-                <div>
-                  <h4 className="font-medium text-text-primary">Daily Sales Summary</h4>
-                  <p className="text-sm text-text-secondary">Receive an end-of-day digest of transactions.</p>
-                </div>
-                <Toggle variant="accent" defaultIsOn={true} />
-             </div>
-             <div className="flex items-center justify-between p-4 rounded-xl border border-gray-100">
-                <div>
-                  <h4 className="font-medium text-text-primary">Low Stock Alerts</h4>
-                  <p className="text-sm text-text-secondary">Get notified when ingredients drop below threshold.</p>
-                </div>
-                <Toggle variant="accent" defaultIsOn={true} />
-             </div>
-             <div className="flex items-center justify-between p-4 rounded-xl border border-gray-100">
-                <div>
-                  <h4 className="font-medium text-text-primary">Staff Overtime</h4>
-                  <p className="text-sm text-text-secondary">Alerts when staff exceed their scheduled hours.</p>
-                </div>
-                <Toggle variant="accent" defaultIsOn={false} />
-             </div>
+            <div className="flex items-center justify-between p-4 rounded-xl border border-gray-100">
+              <div>
+                <h4 className="font-medium text-text-primary">
+                  Daily Sales Summary
+                </h4>
+                <p className="text-sm text-text-secondary">
+                  Receive an end-of-day digest of transactions.
+                </p>
+              </div>
+              <Toggle variant="accent" defaultIsOn={true} />
+            </div>
+            <div className="flex items-center justify-between p-4 rounded-xl border border-gray-100">
+              <div>
+                <h4 className="font-medium text-text-primary">
+                  Low Stock Alerts
+                </h4>
+                <p className="text-sm text-text-secondary">
+                  Get notified when ingredients drop below threshold.
+                </p>
+              </div>
+              <Toggle variant="accent" defaultIsOn={true} />
+            </div>
+            <div className="flex items-center justify-between p-4 rounded-xl border border-gray-100">
+              <div>
+                <h4 className="font-medium text-text-primary">
+                  Staff Overtime
+                </h4>
+                <p className="text-sm text-text-secondary">
+                  Alerts when staff exceed their scheduled hours.
+                </p>
+              </div>
+              <Toggle variant="accent" defaultIsOn={false} />
+            </div>
           </div>
         </div>
 

@@ -36,7 +36,7 @@ export const TenantProfileSettings = () => {
                 Allowed: JPG, PNG
               </span>
             </div>
-            
+
             <div className="flex-1 space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
@@ -53,24 +53,24 @@ export const TenantProfileSettings = () => {
                 </div>
               </div>
               <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-text-primary">
-                    Email Address
-                  </label>
-                  <Input
-                    defaultValue="manager@macatual.com"
-                    type="email"
-                    className="py-2.5 rounded-xl"
-                  />
+                <label className="text-sm font-medium text-text-primary">
+                  Email Address
+                </label>
+                <Input
+                  defaultValue="manager@macatual.com"
+                  type="email"
+                  className="py-2.5 rounded-xl"
+                />
               </div>
               <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-text-primary">
-                    Phone Number
-                  </label>
-                  <Input
-                    defaultValue="+63 912 345 6789"
-                    type="tel"
-                    className="py-2.5 rounded-xl"
-                  />
+                <label className="text-sm font-medium text-text-primary">
+                  Phone Number
+                </label>
+                <Input
+                  defaultValue="+63 912 345 6789"
+                  type="tel"
+                  className="py-2.5 rounded-xl"
+                />
               </div>
             </div>
           </div>
