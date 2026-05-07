@@ -19,7 +19,7 @@ type OnboardingBusinessData = {
 };
 
 type OnboardingSubscriptionData = {
-  packageId?: string;
+  packageName?: string;
 };
 
 type PartialOperationalSetupConfig = Partial<OperationalSetupConfig>;
@@ -66,7 +66,7 @@ type ResolveOnboardingAccessResult = {
   businessName?: string;
   businessEmail?: string;
   ownerName?: string;
-  subscriptionPlan?: SubscriptionPlan;
+  subscriptionPlan?: string;
   verificationDocUrls?: string[];
   operationalSetup?: PartialOperationalSetupConfig;
   tenant?: {
@@ -74,20 +74,12 @@ type ResolveOnboardingAccessResult = {
     business_name: string | null;
     business_email: string | null;
     owner_name: string | null;
-    subscription_plan: SubscriptionPlan | null;
+    subscription_plan: string | null;
     verification_doc_urls: string[] | null;
     settings: Record<string, unknown> | null;
     status: string | null;
     [key: string]: unknown;
   };
-};
-
-const getSubscriptionPlan = (packageId: string): SubscriptionPlan => {
-  if (packageId === "basic" || packageId === "starter") return "basic";
-  if (packageId === "business" || packageId === "growth") return "business";
-  if (packageId === "enterprise" || packageId === "enterprises")
-    return "enterprise";
-  return "basic";
 };
 
 const normalizeEmail = (email: string) => email.trim().toLowerCase();
@@ -633,10 +625,8 @@ export async function saveOnboardingProgress(
     updatePayload.owner_name = data.businessData.owner;
   }
 
-  if (data.subscriptionData?.packageId) {
-    updatePayload.subscription_plan = getSubscriptionPlan(
-      data.subscriptionData.packageId,
-    );
+  if (data.subscriptionData?.packageName) {
+    updatePayload.subscription_plan = data.subscriptionData.packageName;
   }
 
   const tenantSettings = buildTenantSettings(data.featureData);
@@ -786,21 +776,12 @@ export async function saveDocumentUploads(data: DocumentUploadInput) {
 export async function processOnboarding(data: {
   tenantId: string;
   businessData: { name: string; email: string; owner: string };
-  subscriptionData: { packageId: string };
+  subscriptionData: { packageName: string };
   featureData: OperationalSetupConfig;
   userId?: string;
   adminEmail?: string;
 }) {
   const supabase = createSupabaseAdminClient();
-  const subscriptionPlan = getSubscriptionPlan(data.subscriptionData.packageId);
-  const tenantSettings: TenantSettings = {
-    inventory_mode: data.featureData.inventoryMode,
-    service_workflow: data.featureData.serviceWorkflow,
-    dashboard_focus: data.featureData.dashboardFocus,
-    ...(subscriptionPlan === "enterprise"
-      ? { supply_logic: data.featureData.supplyLogic }
-      : {}),
-  };
 
   const { error: tenantError } = await supabase
     .from("tenants")
@@ -808,8 +789,8 @@ export async function processOnboarding(data: {
       business_name: data.businessData.name,
       business_email: normalizeEmail(data.businessData.email),
       owner_name: data.businessData.owner,
-      subscription_plan: subscriptionPlan,
-      settings: tenantSettings,
+      subscription_plan: data.subscriptionData.packageName,
+      settings: null,
       status: "pending",
     })
     .eq("id", data.tenantId);
@@ -853,7 +834,9 @@ export async function processOnboarding(data: {
   }
 
   try {
-    const toEmail = data.adminEmail || data.businessData.email;
+    const toEmail = data.adminEmail;
+    if (!toEmail)
+      throw new Error("Admin email is required to send confirmation.");
     await sendRegistrationSuccessEmail({
       to: toEmail,
       adminName: data.businessData.owner.trim(),

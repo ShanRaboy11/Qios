@@ -4,13 +4,13 @@ import React, { useState, useEffect } from "react";
 import { TenantProfileHeader } from "./TenantProfileHeader";
 import { TenantProfileBentoGrid } from "./TenantProfileBentoGrid";
 import { Modal } from "@/components/molecules/Modal";
+import { ActionConfirmationModal } from "@/components/molecules/ConfirmationModal";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { Button } from "@/components/atoms/Button";
 import { FormField } from "@/components/molecules/FormField";
 import { Dropdown } from "@/components/molecules/Dropdown";
 import { motion, AnimatePresence } from "framer-motion";
 import { TenantProfileSkeleton } from "./TenantProfileSkeleton";
-import { Navbar } from "./navbar";
-import { Footer } from "./footer";
 import {
   getTenantProfileDetails,
   updateTenantSubscription,
@@ -47,7 +47,9 @@ interface TenantProfilePageProps {
 type PackageId = "starter" | "growth" | "enterprises";
 type BillingCycle = "monthly" | "annually";
 
-const PACKAGE_OPTIONS: { label: string; value: PackageId }[] = [
+// will be loaded from DB
+// const PACKAGE_OPTIONS kept for typing fallback
+const DEFAULT_PACKAGE_OPTIONS: { label: string; value: string }[] = [
   { label: "Starter", value: "starter" },
   { label: "Growth", value: "growth" },
   { label: "Enterprises", value: "enterprises" },
@@ -58,23 +60,7 @@ const BILLING_CYCLE_OPTIONS: { label: string; value: BillingCycle }[] = [
   { label: "Annually", value: "annually" },
 ];
 
-function planLabelFromPackageId(packageId: PackageId) {
-  const selected = PACKAGE_OPTIONS.find((option) => option.value === packageId);
-  return selected?.label ?? "Starter";
-}
-
-function packageIdFromPlanLabel(planLabel: string): PackageId {
-  const normalized = planLabel.trim().toLowerCase();
-  if (normalized.includes("growth") || normalized.includes("business")) {
-    return "growth";
-  }
-
-  if (normalized.includes("enterprise")) {
-    return "enterprises";
-  }
-
-  return "starter";
-}
+// plan label/id helpers are handled dynamically via `subscriptionOptions` fetched from DB
 
 function billingCycleFromLabel(label: string): BillingCycle {
   return label.trim().toLowerCase().includes("annual") ? "annually" : "monthly";
@@ -113,10 +99,15 @@ export const TenantProfilePage = ({ tenantId }: TenantProfilePageProps) => {
   });
   const [reason, setReason] = useState("");
   const [isManagePlanOpen, setIsManagePlanOpen] = useState(false);
-  const [selectedPackageId, setSelectedPackageId] =
-    useState<PackageId>("starter");
+  const [selectedPackageId, setSelectedPackageId] = useState<string>(
+    "starter",
+  );
   const [selectedBillingCycle, setSelectedBillingCycle] =
     useState<BillingCycle>("monthly");
+  const [subscriptionOptions, setSubscriptionOptions] =
+    useState<{ label: string; value: string }[]>(DEFAULT_PACKAGE_OPTIONS);
+
+  const supabase = createSupabaseBrowserClient();
   const [isUpdatingPlan, setIsUpdatingPlan] = useState(false);
   const [managePlanError, setManagePlanError] = useState<string | null>(null);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
@@ -153,6 +144,38 @@ export const TenantProfilePage = ({ tenantId }: TenantProfilePageProps) => {
       isMounted = false;
     };
   }, [tenantId]);
+
+  // load subscription plans from DB
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        let resp = await supabase
+          .from("subscription_plans")
+          .select("name,display_order")
+          .order("display_order", { ascending: true });
+
+        if (resp.error) {
+          resp = await supabase
+            .from("subscription_plans")
+            .select("name")
+            .order("created_at", { ascending: true });
+        }
+
+        const data = resp.data ?? [];
+        const opts = data.map((d: any) => ({
+          label: d.name ? d.name.charAt(0).toUpperCase() + d.name.slice(1) : d.name,
+          value: d.name,
+        }));
+        if (mounted && opts.length > 0) setSubscriptionOptions(opts);
+      } catch (err) {
+        console.error("Failed to load subscription plans", err);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const handleStatusChange = (newStatus: TenantProfileData["status"]) => {
     if (!tenant) return;
@@ -300,7 +323,11 @@ export const TenantProfilePage = ({ tenantId }: TenantProfilePageProps) => {
   const openManagePlan = () => {
     if (!tenant) return;
 
-    setSelectedPackageId(packageIdFromPlanLabel(tenant.plan));
+    // try to find matching option by label, fallback to lowercased plan
+    const match = subscriptionOptions.find(
+      (o) => o.label.toLowerCase() === tenant.plan.toLowerCase(),
+    );
+    setSelectedPackageId(match ? match.value : tenant.plan.toLowerCase());
     setSelectedBillingCycle(billingCycleFromLabel(tenant.billingCycle));
     setManagePlanError(null);
     setIsManagePlanOpen(true);
@@ -325,12 +352,18 @@ export const TenantProfilePage = ({ tenantId }: TenantProfilePageProps) => {
         selectedBillingCycle,
       );
 
+      const planLabel =
+        subscriptionOptions.find((o) => o.value === selectedPackageId)?.label ??
+        (selectedPackageId
+          ? selectedPackageId.charAt(0).toUpperCase() + selectedPackageId.slice(1)
+          : "");
+
       setTenant((prev) =>
         prev
           ? {
               ...prev,
-              plan: planLabelFromPackageId(selectedPackageId),
-              type: planLabelFromPackageId(selectedPackageId),
+              plan: planLabel,
+              type: planLabel,
               billingCycle: billingLabelFromCycle(selectedBillingCycle),
             }
           : null,
@@ -363,64 +396,7 @@ export const TenantProfilePage = ({ tenantId }: TenantProfilePageProps) => {
             transition={{ duration: 0.3, ease: "easeOut" }}
             className="flex flex-col w-full"
           >
-            <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-              <motion.div
-                animate={{
-                  x: [0, 100, -50, 0],
-                  y: [0, -100, 50, 0],
-                  scale: [1, 1.2, 0.8, 1],
-                }}
-                transition={{
-                  duration: 60,
-                  repeat: Infinity,
-                  repeatType: "reverse",
-                  ease: "easeInOut",
-                }}
-                className="absolute top-[10%] left-[20%] w-[500px] h-[500px] bg-[#FFE5BE] rounded-full mix-blend-multiply filter blur-[80px] opacity-15"
-              />
-              <motion.div
-                animate={{
-                  x: [0, -120, 80, 0],
-                  y: [0, 80, -120, 0],
-                  scale: [1, 0.8, 1.2, 1],
-                }}
-                transition={{
-                  duration: 75,
-                  repeat: Infinity,
-                  repeatType: "reverse",
-                  ease: "easeInOut",
-                }}
-                className="absolute top-[40%] right-[10%] w-[600px] h-[600px] bg-[#FFDF96] rounded-full mix-blend-multiply filter blur-[100px] opacity-20"
-              />
-              <motion.div
-                animate={{
-                  x: [0, 150, -100, 0],
-                  y: [0, 100, -150, 0],
-                  scale: [1, 1.3, 0.9, 1],
-                }}
-                transition={{
-                  duration: 66,
-                  repeat: Infinity,
-                  repeatType: "reverse",
-                  ease: "easeInOut",
-                }}
-                className="absolute bottom-[-10%] left-[40%] w-[700px] h-[700px] bg-[#FFBDC6] rounded-full mix-blend-multiply filter blur-[120px] opacity-15"
-              />
-            </div>
-
-            <Navbar
-              variant="transparent"
-              type="admin"
-              activeView="tenant"
-              onNavigate={(view) => {
-                // If they click dashboard, navigate back
-                if (view === "dashboard") {
-                  window.location.href = "/admin/dashboard";
-                }
-              }}
-            />
-
-            <div className="max-w-[1440px] mx-auto flex flex-col gap-8 p-4 md:p-8 lg:p-12 mt-28 relative z-[50] w-full">
+            <div className="flex flex-col gap-8 w-full">
               {loadError && (
                 <div className="rounded-2xl border border-warning-primary/20 bg-warning-primary/5 px-4 py-3 text-sm text-warning-primary">
                   {loadError}
@@ -444,74 +420,30 @@ export const TenantProfilePage = ({ tenantId }: TenantProfilePageProps) => {
         )}
       </AnimatePresence>
 
-      <div className=" w-full relative bottom-0 inset-x-0 h-40 bg-gradient-to-t from-white via-white/50 to-transparent z-[2] pointer-events-none -mt-20" />
-      <Footer hideSocials />
-
-      <Modal isOpen={modal.isOpen} onClose={closeModal} title={modal.title}>
-        <div className="flex flex-col gap-6">
-          <p className="text-[15px] text-text-secondary">{modal.description}</p>
-
-          {modal.requireReason &&
-            (modal.type === "reject_tenant" ? (
-              <div className="flex flex-col gap-1.5 w-full">
-                <label className="b4 ml-1 font-medium text-text-secondary">
-                  Reason (Required)
-                </label>
-                <textarea
-                  placeholder="e.g., Please revise your submitted permits and upload a clearer copy of the business registration."
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                  rows={5}
-                  className="w-full bg-white text-sm md:text-[16px] px-6 py-3.5 transition-all duration-300 outline-none rounded-2xl border-2 border-[#E5E5E5] focus:border-brand-primary focus:shadow-[0_0_0_2px_rgba(255,198,112,0.15)] placeholder:text-text-secondary text-text-primary resize-y min-h-[132px]"
-                />
-              </div>
-            ) : (
-              <FormField
-                label="Reason (Required)"
-                placeholder="e.g., Document is blurred, Information mismatch..."
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                className="w-full"
-              />
-            ))}
-
-          {statusActionError && (
-            <p className="text-sm text-warning-primary">{statusActionError}</p>
-          )}
-
-          <div className="flex items-center justify-end gap-3 pt-2">
-            <Button
-              variant="warning"
-              onClick={closeModal}
-              disabled={isUpdatingStatus}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant={
-                modal.type?.includes("reject") ||
-                modal.type?.includes("revision")
-                  ? "primary"
-                  : "primary"
-              }
-              className={
-                modal.type?.includes("reject") ||
-                modal.type?.includes("revision") ||
-                modal.type?.includes("suspend")
-                  ? ""
-                  : ""
-              }
-              disabled={
-                isUpdatingStatus ||
-                (modal.requireReason && reason.trim() === "")
-              }
-              onClick={confirmAction}
-            >
-              {isUpdatingStatus ? "Saving..." : "Confirm"}
-            </Button>
-          </div>
-        </div>
-      </Modal>
+      {/* Approve / Reactivate / Reject use shared confirmation modal (keeps Cancel ghost variant). */}
+      {(modal.type === "approve_tenant" ||
+        modal.type === "reactivate_tenant" ||
+        modal.type === "reject_tenant") && tenant && (
+        <ActionConfirmationModal
+          isOpen={modal.isOpen}
+          action={
+            modal.type === "reject_tenant" ? "reject" : "approve"
+          }
+          activePlanName={tenant.business_name}
+          title={modal.title}
+          message={modal.description}
+          confirmLabel={
+            modal.type === "reject_tenant" ? "Reject" : "Confirm"
+          }
+          confirmVariant={modal.type === "reject_tenant" ? "outline" : "primary"}
+          requireReason={modal.requireReason}
+          reasonValue={reason}
+          onReasonChange={(v) => setReason(v)}
+          saving={isUpdatingStatus}
+          onClose={closeModal}
+          onConfirm={confirmAction}
+        />
+      )}
 
       <Modal
         isOpen={isManagePlanOpen}
@@ -525,11 +457,9 @@ export const TenantProfilePage = ({ tenantId }: TenantProfilePageProps) => {
 
           <Dropdown
             label="Plan"
-            options={PACKAGE_OPTIONS}
+            options={subscriptionOptions}
             value={selectedPackageId}
-            onSelect={(option) =>
-              setSelectedPackageId(option.value as PackageId)
-            }
+            onSelect={(option) => setSelectedPackageId(option.value as string)}
           />
 
           <Dropdown

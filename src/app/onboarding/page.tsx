@@ -39,7 +39,7 @@ import {
 } from "./actions";
 import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-import type { OperationalSetupConfig, SubscriptionPlan } from "@/types/tenant";
+import type { OperationalSetupConfig } from "@/types/tenant";
 
 const steps = [
   { id: 1, title: "Account Creation", icon: IdCard },
@@ -47,8 +47,7 @@ const steps = [
   { id: 3, title: "Business Information", icon: Building2 },
   { id: 4, title: "Document Requirements", icon: FileCheck },
   { id: 5, title: "Subscription Package", icon: ShoppingBag },
-  { id: 6, title: "Operational Strategy", icon: Component },
-  { id: 7, title: "Application Summary", icon: ClipboardCheck },
+  { id: 6, title: "Application Summary", icon: ClipboardCheck },
 ];
 
 function MobileStepBar({
@@ -105,19 +104,22 @@ export default function OnboardingPage() {
     confirm: "",
   });
   const [subscriptionData, setSubscriptionData] = useState({
-    packageId: "starter",
+    packageName: "",
   });
   const [documentData, setDocumentData] = useState<Record<string, File>>({});
-  const [existingDocumentUrls, setExistingDocumentUrls] = useState<Record<string, string>>({});
+  const [existingDocumentUrls, setExistingDocumentUrls] = useState<
+    Record<string, string>
+  >({});
   const [verificationCode, setVerificationCode] = useState("");
   const [tenantId, setTenantId] = useState("");
   const [userId, setUserId] = useState("");
-  const [operationalData, setOperationalData] = useState<OperationalSetupConfig>({
-    inventoryMode: "unit",
-    serviceWorkflow: "pickup",
-    dashboardFocus: "revenue",
-    supplyLogic: "local",
-  });
+  const [operationalData, setOperationalData] =
+    useState<OperationalSetupConfig>({
+      inventoryMode: "unit",
+      serviceWorkflow: "pickup",
+      dashboardFocus: "revenue",
+      supplyLogic: "local",
+    });
 
   // Pending background save promises (optimistic saves)
   const pendingSaveBusiness = useRef<Promise<any> | null>(null);
@@ -140,7 +142,7 @@ export default function OnboardingPage() {
       setVerificationCode("");
       setExistingDocumentUrls({});
       setDocumentData({});
-      setSubscriptionData({ packageId: "starter" });
+      setSubscriptionData({ packageName: "" });
       setOperationalData({
         inventoryMode: "unit",
         serviceWorkflow: "pickup",
@@ -160,19 +162,10 @@ export default function OnboardingPage() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [registrationData, setRegistrationData] = useState({
     adminName: "",
-    businessEmail: "",
+    adminEmail: "",
   });
 
   const validateEmail = (email: string) => /\S+@\S+\.\S+/.test(email);
-
-  const getSelectedPlan = (packageId: string): SubscriptionPlan => {
-    if (packageId === "basic" || packageId === "starter") return "basic";
-    if (packageId === "business" || packageId === "growth") return "business";
-    if (packageId === "enterprise" || packageId === "enterprises") {
-      return "enterprise";
-    }
-    return "basic";
-  };
 
   const mapOperationalSetup = (settings?: Record<string, unknown> | null) => {
     if (!settings) {
@@ -198,7 +191,7 @@ export default function OnboardingPage() {
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
   const dispatchVerificationCode = async ({
-    email = businessData.email || authData.email,
+    email = authData.email || businessData.email,
     businessName = businessData.name || businessData.email || authData.email,
   }: {
     email?: string;
@@ -212,7 +205,9 @@ export default function OnboardingPage() {
     return res.verificationCode;
   };
 
-  const hydrateForm = (access: Awaited<ReturnType<typeof resolveOnboardingAccess>>) => {
+  const hydrateForm = (
+    access: Awaited<ReturnType<typeof resolveOnboardingAccess>>,
+  ) => {
     const tenant = access.tenant;
 
     setUserId(access.userId || "");
@@ -229,7 +224,7 @@ export default function OnboardingPage() {
     });
 
     setSubscriptionData({
-      packageId: tenant?.subscription_plan || access.subscriptionPlan || "starter",
+      packageName: tenant?.subscription_plan || access.subscriptionPlan || "",
     });
 
     setOperationalData((prev) => ({
@@ -241,7 +236,9 @@ export default function OnboardingPage() {
     const verificationDocUrls =
       tenant?.verification_doc_urls || access.verificationDocUrls || [];
 
-    const nextExistingUrls = DOCUMENT_REQUIREMENTS.reduce<Record<string, string>>((acc, requirement, index) => {
+    const nextExistingUrls = DOCUMENT_REQUIREMENTS.reduce<
+      Record<string, string>
+    >((acc, requirement, index) => {
       const nextUrl = verificationDocUrls[index];
       if (nextUrl) {
         acc[requirement.id] = nextUrl;
@@ -273,7 +270,7 @@ export default function OnboardingPage() {
         setVerificationCode("");
         setExistingDocumentUrls({});
         setDocumentData({});
-        setSubscriptionData({ packageId: "starter" });
+        setSubscriptionData({ packageName: "" });
         setOperationalData({
           inventoryMode: "unit",
           serviceWorkflow: "pickup",
@@ -312,10 +309,12 @@ export default function OnboardingPage() {
     access: Awaited<ReturnType<typeof resolveOnboardingAccess>>,
   ) => {
     const supabase = createSupabaseBrowserClient();
-    const { data, error: signInError } = await supabase.auth.signInWithPassword({
-      email: authData.email,
-      password: authData.password,
-    });
+    const { data, error: signInError } = await supabase.auth.signInWithPassword(
+      {
+        email: authData.email,
+        password: authData.password,
+      },
+    );
 
     if (signInError || !data.user) {
       throw new Error(
@@ -362,9 +361,11 @@ export default function OnboardingPage() {
         setVerificationCode("");
         setExistingDocumentUrls({});
         setDocumentData({});
-        setSubscriptionData({ packageId: "starter" });
+        setSubscriptionData({ packageName: "" });
 
-        setError("This email is already registered and onboarding has been submitted.");
+        setError(
+          "This email is already registered and onboarding has been submitted.",
+        );
         return;
       }
 
@@ -382,7 +383,9 @@ export default function OnboardingPage() {
       } catch (err: any) {
         const msg = err.message || "";
         if (/already/i.test(msg) || /exists/i.test(msg)) {
-          const refreshedAccess = await resolveOnboardingAccess({ email: authData.email });
+          const refreshedAccess = await resolveOnboardingAccess({
+            email: authData.email,
+          });
 
           if (refreshedAccess.userVerified) {
             await loginAndResume(refreshedAccess);
@@ -411,7 +414,9 @@ export default function OnboardingPage() {
       setSuccess("Enter the 6-digit OTP sent to your email.");
       scrollToTop();
     } catch (err: any) {
-      setError(err.message || "An error occurred during signup. Please try again.");
+      setError(
+        err.message || "An error occurred during signup. Please try again.",
+      );
     } finally {
       setLoading(false);
     }
@@ -428,7 +433,9 @@ export default function OnboardingPage() {
         if (access.userId) {
           setUserId(access.userId);
         } else {
-          throw new Error("Could not resolve your account. Please return to Step 1 and try again.");
+          throw new Error(
+            "Could not resolve your account. Please return to Step 1 and try again.",
+          );
         }
       }
 
@@ -482,7 +489,10 @@ export default function OnboardingPage() {
           }
         })
         .catch((err: any) => {
-          setError(err?.message || "Unable to save business information in background.");
+          setError(
+            err?.message ||
+              "Unable to save business information in background.",
+          );
         })
         .finally(() => {
           pendingSaveBusiness.current = null;
@@ -517,7 +527,10 @@ export default function OnboardingPage() {
     }
 
     try {
-      const filesData: Record<string, { name: string; base64: string; type: string }> = {};
+      const filesData: Record<
+        string,
+        { name: string; base64: string; type: string }
+      > = {};
       for (const [key, file] of Object.entries(documentData)) {
         const reader = new FileReader();
         const base64 = await new Promise<string>((resolve) => {
@@ -582,50 +595,24 @@ export default function OnboardingPage() {
         .then((res) => {
           if (res?.tenantId) setTenantId(res.tenantId);
         })
-        .catch((err: any) => setError(err?.message || "Unable to save subscription in background."))
+        .catch((err: any) =>
+          setError(
+            err?.message || "Unable to save subscription in background.",
+          ),
+        )
         .finally(() => {
           pendingSaveProgress.current = null;
         });
 
       pendingSaveProgress.current = promise;
 
-      setSuccess("Progress saved locally. Updating subscription in background.");
+      setSuccess(
+        "Progress saved locally. Updating subscription in background.",
+      );
       setCurrentStep(6);
       scrollToTop();
     } catch (err: any) {
       setError(err.message || "Unable to start subscription save.");
-    }
-  };
-
-  const handleOperationalContinue = async (featureData: OperationalSetupConfig) => {
-    setError("");
-    setSuccess("");
-
-    if (!tenantId) {
-      return setError("Please save business information first.");
-    }
-    try {
-      setOperationalData(featureData);
-
-      const promise = saveOnboardingProgress({
-        tenantId,
-        featureData,
-      })
-        .then((res) => {
-          if (res?.tenantId) setTenantId(res.tenantId);
-        })
-        .catch((err: any) => setError(err?.message || "Unable to save operational strategy in background."))
-        .finally(() => {
-          pendingSaveProgress.current = null;
-        });
-
-      pendingSaveProgress.current = promise;
-
-      setSuccess("Progress saved locally. Finalizing in background.");
-      setCurrentStep(7);
-      scrollToTop();
-    } catch (err: any) {
-      setError(err.message || "Unable to start operational save.");
     }
   };
 
@@ -635,7 +622,9 @@ export default function OnboardingPage() {
 
     try {
       if (!tenantId) {
-        throw new Error("Your onboarding session is incomplete. Please continue from business information.");
+        throw new Error(
+          "Your onboarding session is incomplete. Please continue from business information.",
+        );
       }
 
       const res = await processOnboarding({
@@ -650,7 +639,7 @@ export default function OnboardingPage() {
       if (res.success) {
         setRegistrationData({
           adminName: res.ownerName,
-          businessEmail: res.businessEmail,
+          adminEmail: authData.email,
         });
         setShowSuccessModal(true);
       }
@@ -780,7 +769,11 @@ export default function OnboardingPage() {
 
             {currentStep === 3 && (
               <>
-                <BusinessInformation data={businessData} setData={setBusinessData} error={error} />
+                <BusinessInformation
+                  data={businessData}
+                  setData={setBusinessData}
+                  error={error}
+                />
                 <div className="mt-8 flex flex-col items-center w-full">
                   <div className="flex flex-row gap-3 w-full">
                     <Button
@@ -829,20 +822,10 @@ export default function OnboardingPage() {
             )}
 
             {currentStep === 6 && (
-              <OperationalSetup
-                selectedPlan={getSelectedPlan(subscriptionData.packageId)}
-                onFinish={handleOperationalContinue}
-                onBack={prevStep}
-                loading={loading}
-              />
-            )}
-
-            {currentStep === 7 && (
               <ReviewSummary
                 adminEmail={authData.email}
                 businessData={businessData}
-                selectedPlan={getSelectedPlan(subscriptionData.packageId)}
-                operationalData={operationalData}
+                selectedPlanName={subscriptionData.packageName}
                 onBack={prevStep}
                 onSubmit={handleSubmitApplication}
                 loading={loading}
@@ -857,7 +840,7 @@ export default function OnboardingPage() {
       {showSuccessModal && (
         <RegistrationSuccessModal
           adminName={registrationData.adminName}
-          businessEmail={registrationData.businessEmail}
+          adminEmail={registrationData.adminEmail}
           onClose={handleModalClose}
         />
       )}

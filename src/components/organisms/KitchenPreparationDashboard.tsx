@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { Button } from "@/components/atoms/Button";
 
-type OrderStatus = 'pending' | 'preparing' | 'ready' | 'completed';
+type OrderStatus = "pending" | "preparing" | "ready" | "completed";
 
 interface OrderItem {
   id: string;
@@ -31,7 +31,12 @@ const initialOrders: Order[] = [
     type: "Dine-in",
     targetTimePercentage: 86,
     items: [
-      { id: "1", name: "Garlic Fried Rice", notes: "Extra crispy", quantity: 1 },
+      {
+        id: "1",
+        name: "Garlic Fried Rice",
+        notes: "Extra crispy",
+        quantity: 1,
+      },
       { id: "2", name: "Soy Chicken", notes: "Extra crispy", quantity: 1 },
       { id: "3", name: "Mango Shake", notes: "Medium", quantity: 1 },
     ],
@@ -44,7 +49,12 @@ const initialOrders: Order[] = [
     type: "Takeout",
     targetTimePercentage: 53,
     items: [
-      { id: "4", name: "Kare-Kare Meal", notes: "Mild to peanut sauce", quantity: 1 },
+      {
+        id: "4",
+        name: "Kare-Kare Meal",
+        notes: "Mild to peanut sauce",
+        quantity: 1,
+      },
       { id: "5", name: "Lumpia Shanghai", notes: "10 pieces", quantity: 2 },
     ],
   },
@@ -93,8 +103,8 @@ export default function KitchenPreparationDashboard() {
   const updateOrderStatus = (orderId: string, newStatus: OrderStatus) => {
     setOrders((prev) =>
       prev.map((order) =>
-        order.id === orderId ? { ...order, status: newStatus } : order
-      )
+        order.id === orderId ? { ...order, status: newStatus } : order,
+      ),
     );
   };
 
@@ -103,36 +113,56 @@ export default function KitchenPreparationDashboard() {
   const readyOrders = orders.filter((o) => o.status === "ready");
 
   const renderOrderCard = (order: Order) => (
-    <div key={order.id} className="bg-white rounded-[24px] overflow-hidden shadow-sm border-[1.5px] border-[#ffc670]/40 p-4 flex flex-col gap-4 transition-all hover:shadow-md hover:border-[#ffc670]/80">
+    <div
+      key={order.id}
+      className="bg-white rounded-[24px] overflow-hidden shadow-sm border-[1.5px] border-[#ffc670]/40 p-4 flex flex-col gap-4 transition-all hover:shadow-md hover:border-[#ffc670]/80"
+    >
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-2">
-          <span className="font-bold text-lg text-text-primary">{order.id}</span>
+          <span className="font-bold text-lg text-text-primary">
+            {order.id}
+          </span>
         </div>
-        <div className={`px-2.5 py-1 rounded-lg text-xs font-bold ${order.targetTimePercentage > 100 ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-text-secondary'}`}>
+        <div
+          className={`px-2.5 py-1 rounded-lg text-xs font-bold ${order.targetTimePercentage > 100 ? "bg-red-100 text-red-600" : "bg-gray-100 text-text-secondary"}`}
+        >
           {order.time}
         </div>
       </div>
 
       <div className="flex items-center gap-2 text-xs text-text-secondary font-medium">
-        <span className="px-2 py-0.5 bg-gray-100 rounded-md shrink-0">{order.counter}</span>
+        <span className="px-2 py-0.5 bg-gray-100 rounded-md shrink-0">
+          {order.counter}
+        </span>
         <span>•</span>
         <span className="truncate">{order.type}</span>
         <span>•</span>
-        <span className={`${order.targetTimePercentage > 100 ? 'text-red-500 font-bold' : ''} shrink-0`}>
+        <span
+          className={`${order.targetTimePercentage > 100 ? "text-red-500 font-bold" : ""} shrink-0`}
+        >
           {order.targetTimePercentage}%
         </span>
       </div>
 
       <div className="flex flex-col gap-3">
         {order.items.map((item) => (
-          <div key={item.id} className="flex justify-between items-start border-b border-gray-50 pb-2 last:border-0 last:pb-0">
+          <div
+            key={item.id}
+            className="flex justify-between items-start border-b border-gray-50 pb-2 last:border-0 last:pb-0"
+          >
             <div className="flex gap-3">
               <div className="bg-gray-100 text-text-secondary w-6 h-6 rounded flex items-center justify-center text-xs font-bold shrink-0">
                 {item.quantity}x
               </div>
               <div className="flex flex-col">
-                <span className="text-sm font-semibold text-text-primary">{item.name}</span>
-                {item.notes && <span className="text-xs text-text-secondary mt-0.5 line-clamp-1">{item.notes}</span>}
+                <span className="text-sm font-semibold text-text-primary">
+                  {item.name}
+                </span>
+                {item.notes && (
+                  <span className="text-xs text-text-secondary mt-0.5 line-clamp-1">
+                    {item.notes}
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -140,25 +170,25 @@ export default function KitchenPreparationDashboard() {
       </div>
 
       <div className="mt-auto pt-2 flex">
-        {order.status === 'pending' && (
+        {order.status === "pending" && (
           <button
-            onClick={() => updateOrderStatus(order.id, 'preparing')}
+            onClick={() => updateOrderStatus(order.id, "preparing")}
             className="w-full py-2.5 rounded-xl text-sm font-bold transition-all bg-white text-text-primary hover:bg-bg-primary active:bg-gray-100 border border-brand-primary shadow-sm"
           >
             Start Preparing
           </button>
         )}
-        {order.status === 'preparing' && (
+        {order.status === "preparing" && (
           <button
-            onClick={() => updateOrderStatus(order.id, 'ready')}
+            onClick={() => updateOrderStatus(order.id, "ready")}
             className="w-full py-2.5 rounded-xl text-sm font-bold transition-all bg-success-primary text-text-tertiary hover:bg-success-primary/90 active:bg-success-primary/80 shadow-sm"
           >
             Mark Ready
           </button>
         )}
-        {order.status === 'ready' && (
+        {order.status === "ready" && (
           <Button
-            onClick={() => updateOrderStatus(order.id, 'completed')}
+            onClick={() => updateOrderStatus(order.id, "completed")}
             variant="primary"
             className="w-full py-2.5 rounded-xl text-sm font-bold shadow-sm flex items-center justify-center gap-2"
           >
@@ -170,16 +200,22 @@ export default function KitchenPreparationDashboard() {
   );
 
   return (
-    <div className="flex flex-col bg-[#F8FAFC] min-h-screen p-4 md:p-6 lg:p-8 gap-6 md:gap-8 font-inter">
+    <div className="flex flex-col min-h-screen p-4 md:p-6 lg:p-8 gap-6 md:gap-8 font-inter bg-transparent">
       {/* Dashboard Header Element */}
       <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4 bg-white p-6 rounded-2xl shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-100">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-text-primary font-figtree tracking-tight">Kitchen Operations</h1>
-          <p className="text-text-secondary mt-1 text-sm md:text-base font-medium">Real-time active order management system</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-text-primary font-figtree tracking-tight">
+            Kitchen Operations
+          </h1>
+          <p className="text-text-secondary mt-1 text-sm md:text-base font-medium">
+            Real-time active order management system
+          </p>
         </div>
         <div className="flex items-center gap-3 bg-success-primary/10 px-4 py-2.5 rounded-xl border border-success-primary/20 shadow-sm self-start md:self-auto">
-           <span className="w-2.5 h-2.5 rounded-full bg-success-primary animate-pulse"></span>
-           <span className="text-sm font-bold text-success-primary tracking-wide">SYSTEM LIVE</span>
+          <span className="w-2.5 h-2.5 rounded-full bg-success-primary animate-pulse"></span>
+          <span className="text-sm font-bold text-success-primary tracking-wide">
+            SYSTEM LIVE
+          </span>
         </div>
       </div>
 
@@ -190,18 +226,26 @@ export default function KitchenPreparationDashboard() {
             {pendingOrders.length}
           </div>
           <div className="flex flex-col justify-center min-w-0">
-            <p className="text-[9px] md:text-[11px] text-text-secondary font-bold uppercase tracking-widest mb-0.5 truncate">Pending</p>
-            <p className="text-sm md:text-[19px] font-bold text-text-primary leading-none truncate">In Queue</p>
+            <p className="text-[9px] md:text-[11px] text-text-secondary font-bold uppercase tracking-widest mb-0.5 truncate">
+              Pending
+            </p>
+            <p className="text-sm md:text-[19px] font-bold text-text-primary leading-none truncate">
+              In Queue
+            </p>
           </div>
         </div>
-        
+
         <div className="bg-white p-3 md:p-5 rounded-[20px] shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-100 flex items-center gap-3 md:gap-4 transition-transform hover:-translate-y-0.5">
           <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl bg-brand-accent/10 border border-brand-accent/20 flex items-center justify-center text-brand-accent font-bold text-lg md:text-2xl shadow-sm shrink-0">
             {preparingOrders.length}
           </div>
           <div className="flex flex-col justify-center min-w-0">
-            <p className="text-[9px] md:text-[11px] text-brand-accent/80 font-bold uppercase tracking-widest mb-0.5 truncate">Preparing</p>
-            <p className="text-sm md:text-[19px] font-bold text-text-primary leading-none truncate">Active</p>
+            <p className="text-[9px] md:text-[11px] text-brand-accent/80 font-bold uppercase tracking-widest mb-0.5 truncate">
+              Preparing
+            </p>
+            <p className="text-sm md:text-[19px] font-bold text-text-primary leading-none truncate">
+              Active
+            </p>
           </div>
         </div>
 
@@ -210,18 +254,26 @@ export default function KitchenPreparationDashboard() {
             {readyOrders.length}
           </div>
           <div className="flex flex-col justify-center min-w-0">
-            <p className="text-[9px] md:text-[11px] text-success-primary/80 font-bold uppercase tracking-widest mb-0.5 truncate">Ready</p>
-            <p className="text-sm md:text-[19px] font-bold text-text-primary leading-none truncate">Pickup</p>
+            <p className="text-[9px] md:text-[11px] text-success-primary/80 font-bold uppercase tracking-widest mb-0.5 truncate">
+              Ready
+            </p>
+            <p className="text-sm md:text-[19px] font-bold text-text-primary leading-none truncate">
+              Pickup
+            </p>
           </div>
         </div>
 
         <div className="bg-white p-3 md:p-5 rounded-[20px] shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-100 flex items-center gap-3 md:gap-4 transition-transform hover:-translate-y-0.5">
           <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl bg-brand-primary/20 border border-brand-primary/30 flex items-center justify-center text-brand-primary font-bold text-lg md:text-2xl shadow-sm shrink-0">
-            {orders.filter((o) => o.status !== 'completed').length}
+            {orders.filter((o) => o.status !== "completed").length}
           </div>
           <div className="flex flex-col justify-center min-w-0">
-            <p className="text-[9px] md:text-[11px] text-brand-dark/70 font-bold uppercase tracking-widest mb-0.5 truncate">Total</p>
-            <p className="text-sm md:text-[19px] font-bold text-text-primary leading-none truncate">All Orders</p>
+            <p className="text-[9px] md:text-[11px] text-brand-dark/70 font-bold uppercase tracking-widest mb-0.5 truncate">
+              Total
+            </p>
+            <p className="text-sm md:text-[19px] font-bold text-text-primary leading-none truncate">
+              All Orders
+            </p>
           </div>
         </div>
       </div>
@@ -232,8 +284,12 @@ export default function KitchenPreparationDashboard() {
         <div className="flex flex-col gap-4 bg-white p-4 rounded-2xl border border-gray-100">
           <div className="flex items-center gap-2 mb-1 px-1">
             <div className="w-3 h-3 rounded-full bg-gray-400 shadow-sm"></div>
-            <h2 className="text-lg font-bold text-text-primary">Pending Orders</h2>
-            <span className="ml-auto bg-gray-50 border border-gray-200 text-text-secondary px-2.5 py-0.5 rounded-full text-xs font-bold shadow-sm">{pendingOrders.length}</span>
+            <h2 className="text-lg font-bold text-text-primary">
+              Pending Orders
+            </h2>
+            <span className="ml-auto bg-gray-50 border border-gray-200 text-text-secondary px-2.5 py-0.5 rounded-full text-xs font-bold shadow-sm">
+              {pendingOrders.length}
+            </span>
           </div>
           <div className="flex flex-col gap-4 overflow-y-auto">
             {pendingOrders.map(renderOrderCard)}
@@ -249,8 +305,12 @@ export default function KitchenPreparationDashboard() {
         <div className="flex flex-col gap-4 bg-white p-4 rounded-2xl border border-gray-100">
           <div className="flex items-center gap-2 mb-1 px-1">
             <div className="w-3 h-3 rounded-full bg-brand-accent shadow-sm shadow-brand-accent/30"></div>
-            <h2 className="text-lg font-bold text-text-primary">Preparing Now</h2>
-            <span className="ml-auto bg-brand-accent/5 border border-brand-accent/20 text-brand-accent px-2.5 py-0.5 rounded-full text-xs font-bold shadow-sm">{preparingOrders.length}</span>
+            <h2 className="text-lg font-bold text-text-primary">
+              Preparing Now
+            </h2>
+            <span className="ml-auto bg-brand-accent/5 border border-brand-accent/20 text-brand-accent px-2.5 py-0.5 rounded-full text-xs font-bold shadow-sm">
+              {preparingOrders.length}
+            </span>
           </div>
           <div className="flex flex-col gap-4 overflow-y-auto">
             {preparingOrders.map(renderOrderCard)}
@@ -266,8 +326,12 @@ export default function KitchenPreparationDashboard() {
         <div className="flex flex-col gap-4 bg-white p-4 rounded-2xl border border-gray-100">
           <div className="flex items-center gap-2 mb-1 px-1">
             <div className="w-3 h-3 rounded-full bg-success-primary shadow-sm shadow-success-secondary"></div>
-            <h2 className="text-lg font-bold text-text-primary">Ready for Pickup</h2>
-            <span className="ml-auto bg-success-primary/5 border border-success-primary/20 text-success-primary px-2.5 py-0.5 rounded-full text-xs font-bold shadow-sm">{readyOrders.length}</span>
+            <h2 className="text-lg font-bold text-text-primary">
+              Ready for Pickup
+            </h2>
+            <span className="ml-auto bg-success-primary/5 border border-success-primary/20 text-success-primary px-2.5 py-0.5 rounded-full text-xs font-bold shadow-sm">
+              {readyOrders.length}
+            </span>
           </div>
           <div className="flex flex-col gap-4 overflow-y-auto">
             {readyOrders.map(renderOrderCard)}

@@ -5,10 +5,13 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/atoms/Button";
 import { ArrowRight, Menu, X, User, LogOut, Settings } from "lucide-react";
 import { Avatar } from "@/components/atoms/Avatar";
+import Link from "next/link";
+import { useRouter, useParams, usePathname } from "next/navigation";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 interface NavbarProps {
   variant?: "filled" | "transparent";
-  type?: "default" | "admin" | "tenant";
+  type?: "default" | "admin" | "tenant" | "employee";
   activeView?: string;
   onNavigate?: (view: string) => void;
   className?: string;
@@ -26,6 +29,20 @@ export const Navbar = ({
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const navRef = useRef<HTMLElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+  const params = useParams();
+  const pathname = usePathname();
+  const tenantId = (params?.id as string) || "default-tenant";
+
+  const handleLogout = async () => {
+    try {
+      const supabase = createSupabaseBrowserClient();
+      await supabase.auth.signOut();
+    } catch {
+      // ignore
+    }
+    router.push("/login");
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -58,25 +75,49 @@ export const Navbar = ({
   }, [isOpen]);
 
   const defaultLinks = [
-    { label: "Home", href: "#home", id: "home" },
-    { label: "Services", href: "#services", id: "services" },
-    { label: "Contact", href: "#contact", id: "contact" },
+    { label: "Home", href: "/", id: "home" },
+    { label: "Services", href: "/services", id: "services" },
+    { label: "Contact", href: "/contact", id: "contact" },
   ];
 
   const adminLinks = [
-    { label: "Dashboard", href: "#", id: "dashboard" },
-    { label: "Tenant Directory", href: "#", id: "tenant" },
-    { label: "Subscription and Plans", href: "#", id: "subscription" },
-    { label: "System Activity", href: "#", id: "system_activity" },
+    { label: "Dashboard", href: "/admin/dashboard", id: "dashboard" },
+    {
+      label: "Tenant Directory",
+      href: "/admin/tenant_directory",
+      id: "tenant_directory",
+    },
+    {
+      label: "Subscription and Plans",
+      href: "/admin/subscription",
+      id: "subscription",
+    },
+    {
+      label: "System Activity",
+      href: "/admin/system_activity",
+      id: "system_activity",
+    },
   ];
 
   const tenantLinks = [
+    { label: "Dashboard", href: `/${tenantId}/dashboard`, id: "dashboard" },
+    { label: "Menu Management", href: `/${tenantId}/menu`, id: "menu" },
+    {
+      label: "Inventory Configuration",
+      href: `/${tenantId}/inventory`,
+      id: "inventory",
+    },
+    { label: "Staff Management", href: `/${tenantId}/staff`, id: "staff" },
+    { label: "Sales", href: `/${tenantId}/sales`, id: "sales" },
+    { label: "Audit Logs", href: `/${tenantId}/audit_logs`, id: "audit_logs" },
+  ];
+
+  const employeeLinks = [
     { label: "Dashboard", href: "#", id: "dashboard" },
-    { label: "Menu Management", href: "#", id: "menu" },
-    { label: "Inventory Configuration", href: "#", id: "inventory" },
-    { label: "Staff Management", href: "#", id: "staff" },
-    { label: "Sales", href: "#", id: "sales" },
-    { label: "Audit Logs", href: "#", id: "audit_logs" },
+    { label: "Order Queue", href: "#", id: "queue" },
+    { label: "Scanner", href: "#", id: "scanner" },
+    { label: "Inventory Audit", href: "#", id: "inventory_audit" },
+    { label: "Transactions", href: "#", id: "transactions" },
   ];
 
   const links =
@@ -84,7 +125,9 @@ export const Navbar = ({
       ? adminLinks
       : type === "tenant"
         ? tenantLinks
-        : defaultLinks;
+        : type === "employee"
+          ? employeeLinks
+          : defaultLinks;
 
   return (
     <nav
@@ -106,8 +149,19 @@ export const Navbar = ({
         )}
       />
 
-      <div
-        className="font-ibrand shrink-0 relative"
+      <Link
+        href={
+          type === "admin" || type === "tenant" || type === "employee"
+            ? "#"
+            : "/"
+        }
+        onClick={(e) => {
+          if (type === "admin" || type === "tenant" || type === "employee") {
+            e.preventDefault();
+            onNavigate?.("dashboard");
+          }
+        }}
+        className="font-ibrand shrink-0 relative cursor-pointer"
         style={{
           textAlign: "right",
           fontSize: "50px",
@@ -122,7 +176,7 @@ export const Navbar = ({
         }}
       >
         Qios
-      </div>
+      </Link>
 
       <div
         className={cn(
@@ -135,16 +189,20 @@ export const Navbar = ({
             key={link.id}
             href={link.href}
             onClick={(e) => {
-              if (type === "admin" || type === "tenant") {
+              if (
+                type === "admin" ||
+                type === "tenant" ||
+                type === "employee"
+              ) {
                 e.preventDefault();
                 onNavigate?.(link.id);
               }
             }}
             className={cn(
               "transition-colors font-inter font-medium text-[18px] shrink-0",
-              ((type === "admin" || type === "tenant") &&
+              ((type === "admin" || type === "tenant" || type === "employee") &&
                 activeView === link.id) ||
-                (type === "default" && link.id === "home")
+                (type === "default" && pathname === link.href)
                 ? "text-brand-accent"
                 : "text-text-primary hover:text-brand-accent",
             )}
@@ -153,16 +211,18 @@ export const Navbar = ({
           </a>
         ))}
 
-        {type !== "admin" && type !== "tenant" ? (
+        {type !== "admin" && type !== "tenant" && type !== "employee" ? (
           <div className="shrink-0">
-            <Button
-              variant="accent"
-              shape="rounded"
-              className="text-[18px]"
-              rightIcon={<ArrowRight size={18} strokeWidth={2.5} />}
-            >
-              Get Started
-            </Button>
+            <Link href="/login">
+              <Button
+                variant="accent"
+                shape="rounded"
+                className="text-[18px]"
+                rightIcon={<ArrowRight size={18} strokeWidth={2.5} />}
+              >
+                Get Started
+              </Button>
+            </Link>
           </div>
         ) : (
           <div className="shrink-0 relative" ref={profileRef}>
@@ -170,9 +230,9 @@ export const Navbar = ({
               onClick={() => setIsProfileOpen(!isProfileOpen)}
               className="rounded-full border border-brand-accent/20 hover:scale-110 transition-transform duration-300 focus:outline-none ring-2 ring-transparent focus:ring-brand-accent/50 shadow-sm"
             >
-              <Avatar 
-                initials={type === "admin" ? "AD" : "TU"} 
-                size="md" 
+              <Avatar
+                initials={type === "admin" ? "AD" : "TU"}
+                size="md"
                 status="online"
               />
             </button>
@@ -181,10 +241,18 @@ export const Navbar = ({
               <div className="absolute right-0 top-[calc(100%+12px)] w-56 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 py-2">
                 <div className="px-4 py-3 border-b border-gray-50 mb-2">
                   <p className="text-[15px] font-bold text-text-primary truncate">
-                    {type === "admin" ? "Admin User" : "Tenant User"}
+                    {type === "admin"
+                      ? "Admin User"
+                      : type === "employee"
+                        ? "Employee User"
+                        : "Tenant User"}
                   </p>
                   <p className="text-[13px] text-text-secondary truncate mt-0.5">
-                    {type === "admin" ? "admin@qios.com" : "tenant@qios.com"}
+                    {type === "admin"
+                      ? "admin@qios.com"
+                      : type === "employee"
+                        ? "employee@qios.com"
+                        : "tenant@qios.com"}
                   </p>
                 </div>
                 <button
@@ -202,7 +270,7 @@ export const Navbar = ({
                   className="w-full text-left px-4 py-2.5 text-[14px] text-[#EF4444] hover:bg-red-50 flex items-center gap-3 transition-colors font-bold"
                   onClick={() => {
                     setIsProfileOpen(false);
-                    window.location.href = "/";
+                    handleLogout();
                   }}
                 >
                   <LogOut className="w-[18px] h-[18px]" />
@@ -249,7 +317,11 @@ export const Navbar = ({
             key={link.id}
             href={link.href}
             onClick={(e) => {
-              if (type === "admin" || type === "tenant") {
+              if (
+                type === "admin" ||
+                type === "tenant" ||
+                type === "employee"
+              ) {
                 e.preventDefault();
                 onNavigate?.(link.id);
               }
@@ -257,9 +329,9 @@ export const Navbar = ({
             }}
             className={cn(
               "transition-colors font-inter font-medium text-[18px] active:opacity-70",
-              ((type === "admin" || type === "tenant") &&
+              ((type === "admin" || type === "tenant" || type === "employee") &&
                 activeView === link.id) ||
-                (type === "default" && link.id === "home")
+                (type === "default" && pathname === link.href)
                 ? "text-brand-accent"
                 : "text-text-primary hover:text-brand-accent active:text-brand-accent",
             )}
@@ -269,14 +341,16 @@ export const Navbar = ({
         ))}
         {type !== "admin" && type !== "tenant" ? (
           <div className="pt-2">
-            <Button
-              variant="accent"
-              shape="rounded"
-              className="w-full justify-center active:scale-[0.98] transition-transform text-[18px]"
-              rightIcon={<ArrowRight size={18} strokeWidth={2.5} />}
-            >
-              Get Started
-            </Button>
+            <Link href="/login" onClick={() => setIsOpen(false)}>
+              <Button
+                variant="accent"
+                shape="rounded"
+                className="w-full justify-center active:scale-[0.98] transition-transform text-[18px]"
+                rightIcon={<ArrowRight size={18} strokeWidth={2.5} />}
+              >
+                Get Started
+              </Button>
+            </Link>
           </div>
         ) : (
           <div className="pt-4 mt-2 border-t border-gray-100 flex flex-col gap-2">
@@ -294,7 +368,7 @@ export const Navbar = ({
               className="w-full text-left py-3 px-2 text-[18px] text-[#EF4444] hover:text-[#EF4444] active:text-[#EF4444] flex items-center gap-3 transition-colors font-bold rounded-xl hover:bg-red-50"
               onClick={() => {
                 setIsOpen(false);
-                window.location.href = "/";
+                handleLogout();
               }}
             >
               <LogOut className="w-5 h-5" />

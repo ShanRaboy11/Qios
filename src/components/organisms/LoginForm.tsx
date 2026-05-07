@@ -507,6 +507,18 @@ export const LoginForm = () => {
               {isLoading ? "Signing in..." : "Sign In"}
             </Button>
           </div>
+
+          {/* Sign Up Link */}
+          <div className="text-center mt-2">
+            <span className="text-text-secondary text-sm">Don't have an account? </span>
+            <button
+              type="button"
+              onClick={() => router.push("/onboarding")}
+              className="text-brand-primary font-bold hover:text-brand-accent transition-colors focus:outline-none text-sm"
+            >
+              Sign up
+            </button>
+          </div>
         </form>
       </div>
     </div>

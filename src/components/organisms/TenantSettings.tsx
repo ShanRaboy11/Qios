@@ -67,8 +67,8 @@ export const TenantSettings = () => {
                     ? "bg-red-500 text-white shadow-md shadow-red-500/20"
                     : "bg-brand-accent text-white shadow-md shadow-brand-accent/20"
                   : isDanger
-                  ? "bg-white text-red-500 hover:bg-red-50 border border-gray-100"
-                  : "bg-white text-text-primary hover:bg-gray-50 hover:text-brand-accent border border-gray-100"
+                    ? "bg-white text-red-500 hover:bg-red-50 border border-gray-100"
+                    : "bg-white text-text-primary hover:bg-gray-50 hover:text-brand-accent border border-gray-100",
               )}
             >
               <Icon
@@ -78,8 +78,8 @@ export const TenantSettings = () => {
                   isActive
                     ? "text-white"
                     : isDanger
-                    ? "text-red-500 group-hover:text-red-600"
-                    : "text-text-secondary group-hover:text-brand-accent"
+                      ? "text-red-500 group-hover:text-red-600"
+                      : "text-text-secondary group-hover:text-brand-accent",
                 )}
               />
               <span className="font-medium text-[15px]">{tab.label}</span>
@@ -92,37 +92,79 @@ export const TenantSettings = () => {
       <div className="flex-1 bg-white rounded-[24px] shadow-sm border border-gray-100 p-6 md:p-8 overflow-hidden w-full">
         <AnimatePresence mode="wait">
           {activeTab === "profile" && (
-            <motion.div key="profile" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
+            <motion.div
+              key="profile"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+            >
               <TenantProfileSettings />
             </motion.div>
           )}
           {activeTab === "store" && (
-            <motion.div key="store" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
+            <motion.div
+              key="store"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+            >
               <TenantStoreSettings />
             </motion.div>
           )}
           {activeTab === "branding" && (
-            <motion.div key="branding" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
+            <motion.div
+              key="branding"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+            >
               <TenantBrandingSettings />
             </motion.div>
           )}
           {activeTab === "security" && (
-            <motion.div key="security" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
+            <motion.div
+              key="security"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+            >
               <TenantSecuritySettings />
             </motion.div>
           )}
           {activeTab === "notifications" && (
-            <motion.div key="notifications" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
+            <motion.div
+              key="notifications"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+            >
               <TenantNotificationSettings />
             </motion.div>
           )}
           {activeTab === "billing" && (
-            <motion.div key="billing" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
+            <motion.div
+              key="billing"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+            >
               <TenantBillingSettings />
             </motion.div>
           )}
           {activeTab === "danger" && (
-            <motion.div key="danger" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
+            <motion.div
+              key="danger"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+            >
               <TenantDangerZone />
             </motion.div>
           )}

@@ -2,7 +2,11 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { Send, RotateCcw, ChevronDown } from "lucide-react";
-import { ChatBubble, MessageRole, Reaction } from "@/components/molecules/ChatBubble";
+import {
+  ChatBubble,
+  MessageRole,
+  Reaction,
+} from "@/components/molecules/ChatBubble";
 import { ChatbotLogo } from "@/components/molecules/ChatbotLogo";
 import { cn } from "@/lib/utils";
 
@@ -70,7 +74,8 @@ const MOCK_RESPONSES: { keywords: string[]; reply: string }[] = [
   },
   {
     keywords: ["thank", "thanks", "appreciate"],
-    reply: "You're very welcome! Let me know if there's anything else I can help with. 😊",
+    reply:
+      "You're very welcome! Let me know if there's anything else I can help with. 😊",
   },
   {
     keywords: ["bye", "goodbye", "see you", "later"],
@@ -95,11 +100,16 @@ function getMockReply(input: string): string {
     r.keywords.some((kw) => lower.includes(kw)),
   );
   if (match) return match.reply;
-  return FALLBACK_RESPONSES[Math.floor(Math.random() * FALLBACK_RESPONSES.length)];
+  return FALLBACK_RESPONSES[
+    Math.floor(Math.random() * FALLBACK_RESPONSES.length)
+  ];
 }
 
 function getTimestamp(): string {
-  return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  return new Date().toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 function uid(): string {
@@ -206,7 +216,6 @@ export function ChatbotUI() {
     <div className="flex items-center justify-center w-full min-h-screen bg-[#FFF8E1] p-4">
       {/* Phone-like shell */}
       <div className="flex flex-col w-full max-w-[420px] h-[85vh] max-h-[780px] rounded-3xl shadow-2xl overflow-hidden border border-[#F0E0B0] bg-white">
-
         {/* ── Header ── */}
         <div className="flex items-center justify-between px-4 py-3 bg-[#2D2D2D]">
           <div className="flex items-center gap-3">

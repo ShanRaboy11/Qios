@@ -20,12 +20,10 @@ export const TenantDashboardHeader = ({
   return (
     <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 w-full cursor-default">
       <div className="flex flex-col">
-        <span className="h1 md:text-[36px] leading-tight">
+        <span className="h2 md:text-[36px] leading-tight">
           Welcome, {adminName}
         </span>
-        <p className="text-[15px] font-figtree text-text-secondary mt-1">
-          {subtitle}
-        </p>
+        <p className="b1 text-text-secondary mt-1">{subtitle}</p>
       </div>
       <div className="shrink-0">
         <DateRangePicker />

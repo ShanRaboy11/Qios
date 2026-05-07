@@ -25,7 +25,7 @@ export const TenantProfileHeader = ({
         className="flex items-center gap-2 hover:scale-105 transition-all duration-300 w-fit"
       >
         <ArrowLeft className="w-5 h-5" />
-        <span className="b1 text-text-secondary">Back to Tenant Directory</span>
+        <span className="b1 text-text-primary font-medium">Back to Tenant Directory</span>
       </Link>
 
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mt-5">

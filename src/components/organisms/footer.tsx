@@ -12,6 +12,7 @@ export const Footer = ({ hideSocials, variant = "default" }: FooterProps) => {
   const shouldHideSocials = hideSocials || variant === "admin";
   return (
     <footer
+      id="contact"
       className="relative w-full max-w-full overflow-hidden bg-white transition-all duration-300
       xl:h-[376px] 
       lg:h-[570px] 

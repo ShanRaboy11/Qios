@@ -1,4 +1,4 @@
-export type SubscriptionPlan = "basic" | "business" | "enterprise";
+export type SubscriptionPlan = string;
 export type InventoryMode = "unit" | "recipe";
 export type ServiceWorkflow = "pickup" | "dine_in";
 export type DashboardFocus = "speed" | "revenue";

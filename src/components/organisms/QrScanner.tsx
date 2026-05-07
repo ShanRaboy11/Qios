@@ -17,7 +17,9 @@ type ScanState = "idle" | "requesting" | "scanning" | "success" | "error";
 
 // ── Corner brackets ────────────────────────────────────────────────────────────
 const ScanBrackets = ({ active }: { active: boolean }) => {
-  const color = active ? "var(--color-brand-primary)" : "rgba(255,198,112,0.35)";
+  const color = active
+    ? "var(--color-brand-primary)"
+    : "rgba(255,198,112,0.35)";
   const glow = active ? "drop-shadow(0 0 5px rgba(255,198,112,0.75))" : "none";
   const base: React.CSSProperties = {
     position: "absolute",
@@ -28,27 +30,152 @@ const ScanBrackets = ({ active }: { active: boolean }) => {
   };
   return (
     <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-      <span style={{ ...base, top: 16, left: 16, borderTop: `2.5px solid ${color}`, borderLeft: `2.5px solid ${color}`, borderRadius: "4px 0 0 0" }} />
-      <span style={{ ...base, top: 16, right: 16, borderTop: `2.5px solid ${color}`, borderRight: `2.5px solid ${color}`, borderRadius: "0 4px 0 0" }} />
-      <span style={{ ...base, bottom: 16, left: 16, borderBottom: `2.5px solid ${color}`, borderLeft: `2.5px solid ${color}`, borderRadius: "0 0 0 4px" }} />
-      <span style={{ ...base, bottom: 16, right: 16, borderBottom: `2.5px solid ${color}`, borderRight: `2.5px solid ${color}`, borderRadius: "0 0 4px 0" }} />
+      <span
+        style={{
+          ...base,
+          top: 16,
+          left: 16,
+          borderTop: `2.5px solid ${color}`,
+          borderLeft: `2.5px solid ${color}`,
+          borderRadius: "4px 0 0 0",
+        }}
+      />
+      <span
+        style={{
+          ...base,
+          top: 16,
+          right: 16,
+          borderTop: `2.5px solid ${color}`,
+          borderRight: `2.5px solid ${color}`,
+          borderRadius: "0 4px 0 0",
+        }}
+      />
+      <span
+        style={{
+          ...base,
+          bottom: 16,
+          left: 16,
+          borderBottom: `2.5px solid ${color}`,
+          borderLeft: `2.5px solid ${color}`,
+          borderRadius: "0 0 0 4px",
+        }}
+      />
+      <span
+        style={{
+          ...base,
+          bottom: 16,
+          right: 16,
+          borderBottom: `2.5px solid ${color}`,
+          borderRight: `2.5px solid ${color}`,
+          borderRadius: "0 0 4px 0",
+        }}
+      />
     </div>
   );
 };
 
 // ── Decorative QR placeholder icon — uniform single color ─────────────────────
 const QrPlaceholder = () => (
-  <svg width="68" height="68" viewBox="0 0 64 64" fill="none" aria-hidden="true">
-    <rect x="8" y="8" width="20" height="20" rx="3" stroke="var(--color-text-secondary)" strokeWidth="2" strokeOpacity="0.4" />
-    <rect x="13" y="13" width="10" height="10" rx="1.5" fill="var(--color-text-secondary)" fillOpacity="0.25" />
-    <rect x="36" y="8" width="20" height="20" rx="3" stroke="var(--color-text-secondary)" strokeWidth="2" strokeOpacity="0.4" />
-    <rect x="41" y="13" width="10" height="10" rx="1.5" fill="var(--color-text-secondary)" fillOpacity="0.25" />
-    <rect x="8" y="36" width="20" height="20" rx="3" stroke="var(--color-text-secondary)" strokeWidth="2" strokeOpacity="0.4" />
-    <rect x="13" y="41" width="10" height="10" rx="1.5" fill="var(--color-text-secondary)" fillOpacity="0.25" />
-    <rect x="36" y="36" width="8" height="8" rx="1.5" fill="var(--color-text-secondary)" fillOpacity="0.25" />
-    <rect x="48" y="36" width="8" height="8" rx="1.5" fill="var(--color-text-secondary)" fillOpacity="0.25" />
-    <rect x="36" y="48" width="8" height="8" rx="1.5" fill="var(--color-text-secondary)" fillOpacity="0.25" />
-    <rect x="48" y="48" width="8" height="8" rx="1.5" fill="var(--color-text-secondary)" fillOpacity="0.25" />
+  <svg
+    width="68"
+    height="68"
+    viewBox="0 0 64 64"
+    fill="none"
+    aria-hidden="true"
+  >
+    <rect
+      x="8"
+      y="8"
+      width="20"
+      height="20"
+      rx="3"
+      stroke="var(--color-text-secondary)"
+      strokeWidth="2"
+      strokeOpacity="0.4"
+    />
+    <rect
+      x="13"
+      y="13"
+      width="10"
+      height="10"
+      rx="1.5"
+      fill="var(--color-text-secondary)"
+      fillOpacity="0.25"
+    />
+    <rect
+      x="36"
+      y="8"
+      width="20"
+      height="20"
+      rx="3"
+      stroke="var(--color-text-secondary)"
+      strokeWidth="2"
+      strokeOpacity="0.4"
+    />
+    <rect
+      x="41"
+      y="13"
+      width="10"
+      height="10"
+      rx="1.5"
+      fill="var(--color-text-secondary)"
+      fillOpacity="0.25"
+    />
+    <rect
+      x="8"
+      y="36"
+      width="20"
+      height="20"
+      rx="3"
+      stroke="var(--color-text-secondary)"
+      strokeWidth="2"
+      strokeOpacity="0.4"
+    />
+    <rect
+      x="13"
+      y="41"
+      width="10"
+      height="10"
+      rx="1.5"
+      fill="var(--color-text-secondary)"
+      fillOpacity="0.25"
+    />
+    <rect
+      x="36"
+      y="36"
+      width="8"
+      height="8"
+      rx="1.5"
+      fill="var(--color-text-secondary)"
+      fillOpacity="0.25"
+    />
+    <rect
+      x="48"
+      y="36"
+      width="8"
+      height="8"
+      rx="1.5"
+      fill="var(--color-text-secondary)"
+      fillOpacity="0.25"
+    />
+    <rect
+      x="36"
+      y="48"
+      width="8"
+      height="8"
+      rx="1.5"
+      fill="var(--color-text-secondary)"
+      fillOpacity="0.25"
+    />
+    <rect
+      x="48"
+      y="48"
+      width="8"
+      height="8"
+      rx="1.5"
+      fill="var(--color-text-secondary)"
+      fillOpacity="0.25"
+    />
   </svg>
 );
 
@@ -91,7 +218,10 @@ export const QrScanner = (): JSX.Element => {
     }
     const vw = video.videoWidth;
     const vh = video.videoHeight;
-    if (!vw || !vh) { animFrameRef.current = requestAnimationFrame(scanFrame); return; }
+    if (!vw || !vh) {
+      animFrameRef.current = requestAnimationFrame(scanFrame);
+      return;
+    }
     const ctx = canvas.getContext("2d");
     if (!ctx) {
       stopCamera();
@@ -99,10 +229,15 @@ export const QrScanner = (): JSX.Element => {
       setScanState("error");
       return;
     }
-    if (canvas.width !== vw || canvas.height !== vh) { canvas.width = vw; canvas.height = vh; }
+    if (canvas.width !== vw || canvas.height !== vh) {
+      canvas.width = vw;
+      canvas.height = vh;
+    }
     ctx.drawImage(video, 0, 0, vw, vh);
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "dontInvert" });
+    const code = jsQR(imageData.data, imageData.width, imageData.height, {
+      inversionAttempts: "dontInvert",
+    });
     if (code) {
       stopCamera();
       setOrderId(code.data);
@@ -119,13 +254,23 @@ export const QrScanner = (): JSX.Element => {
     scanSessionRef.current += 1;
     const sessionId = scanSessionRef.current;
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-      if (sessionId !== scanSessionRef.current) { stream.getTracks().forEach((t) => t.stop()); return; }
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment" },
+      });
+      if (sessionId !== scanSessionRef.current) {
+        stream.getTracks().forEach((t) => t.stop());
+        return;
+      }
       streamRef.current = stream;
-      if (videoRef.current) { videoRef.current.srcObject = stream; await videoRef.current.play(); }
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+      }
       if (sessionId !== scanSessionRef.current) return;
       const track = stream.getVideoTracks()[0];
-      const capabilities = track.getCapabilities?.() as Record<string, unknown> | undefined;
+      const capabilities = track.getCapabilities?.() as
+        | Record<string, unknown>
+        | undefined;
       if (capabilities && "torch" in capabilities) setTorchSupported(true);
       setScanState("scanning");
       animFrameRef.current = requestAnimationFrame(scanFrame);
@@ -146,15 +291,31 @@ export const QrScanner = (): JSX.Element => {
     if (!track) return;
     const next = !torchOn;
     try {
-      await track.applyConstraints({ advanced: [{ torch: next } as MediaTrackConstraintSet] });
+      await track.applyConstraints({
+        advanced: [{ torch: next } as MediaTrackConstraintSet],
+      });
       setTorchOn(next);
     } catch {}
   };
 
-  const handleStopScan = () => { stopCamera(); setScanState("idle"); setErrorMessage(""); };
-  const handleScanAgain = () => { setOrderId(""); setScanState("idle"); };
-  const handleSearchOrder = () => { /* Connect to routing / order lookup */ };
-  const handleClose = () => { stopCamera(); setScanState("idle"); setOrderId(""); setErrorMessage(""); };
+  const handleStopScan = () => {
+    stopCamera();
+    setScanState("idle");
+    setErrorMessage("");
+  };
+  const handleScanAgain = () => {
+    setOrderId("");
+    setScanState("idle");
+  };
+  const handleSearchOrder = () => {
+    /* Connect to routing / order lookup */
+  };
+  const handleClose = () => {
+    stopCamera();
+    setScanState("idle");
+    setOrderId("");
+    setErrorMessage("");
+  };
   const handleInputKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && orderId.trim()) handleSearchOrder();
   };
@@ -486,12 +647,29 @@ export const QrScanner = (): JSX.Element => {
         </div>
 
         {/* Hidden decode canvas */}
-        <canvas ref={canvasRef} style={{ display: "none" }} aria-hidden="true" />
+        <canvas
+          ref={canvasRef}
+          style={{ display: "none" }}
+          aria-hidden="true"
+        />
 
-        <div style={{ position: "relative", display: "flex", flexDirection: "column", zIndex: 10 }}>
-
+        <div
+          style={{
+            position: "relative",
+            display: "flex",
+            flexDirection: "column",
+            zIndex: 10,
+          }}
+        >
           {/* ── Header ── */}
-          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 28 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "flex-start",
+              justifyContent: "space-between",
+              marginBottom: 28,
+            }}
+          >
             <div>
               {/* Badge uses accent color */}
               <div className="qrs-badge">
@@ -502,7 +680,12 @@ export const QrScanner = (): JSX.Element => {
               <h2 className="qrs-title">Scan QR Code</h2>
             </div>
             {/* Close — no background blob, plain icon button */}
-            <button className="qrs-close" type="button" onClick={handleClose} aria-label="Close scanner">
+            <button
+              className="qrs-close"
+              type="button"
+              onClick={handleClose}
+              aria-label="Close scanner"
+            >
               <X size={16} />
             </button>
           </div>
@@ -525,7 +708,9 @@ export const QrScanner = (): JSX.Element => {
               aria-label="Camera feed for QR scanning"
             />
 
-            {scanState === "scanning" && <div className="qrs-scanline" aria-hidden="true" />}
+            {scanState === "scanning" && (
+              <div className="qrs-scanline" aria-hidden="true" />
+            )}
 
             {(scanState === "idle" || scanState === "scanning") && (
               <ScanBrackets active={scanState === "scanning"} />
@@ -536,7 +721,9 @@ export const QrScanner = (): JSX.Element => {
                 type="button"
                 onClick={handleToggleTorch}
                 className={`qrs-torch${torchOn ? " on" : ""}`}
-                aria-label={torchOn ? "Turn off flashlight" : "Turn on flashlight"}
+                aria-label={
+                  torchOn ? "Turn off flashlight" : "Turn on flashlight"
+                }
               >
                 <Flashlight size={15} />
               </button>
@@ -560,7 +747,11 @@ export const QrScanner = (): JSX.Element => {
             {/* Requesting */}
             {scanState === "requesting" && (
               <div className="qrs-state">
-                <Loader2 size={48} className="qrs-spin" style={{ color: "var(--color-brand-primary)" }} />
+                <Loader2
+                  size={48}
+                  className="qrs-spin"
+                  style={{ color: "var(--color-brand-primary)" }}
+                />
                 <p className="qrs-state-label">Starting camera…</p>
               </div>
             )}
@@ -568,10 +759,36 @@ export const QrScanner = (): JSX.Element => {
             {/* Success */}
             {scanState === "success" && (
               <div className="qrs-state qrs-state-success">
-                <svg width="56" height="56" viewBox="0 0 56 56" fill="none" aria-hidden="true">
-                  <circle cx="28" cy="28" r="26" stroke="var(--color-success-primary)" strokeWidth="1.5" strokeOpacity="0.28" />
-                  <circle cx="28" cy="28" r="19" stroke="var(--color-success-primary)" strokeWidth="1" strokeOpacity="0.18" />
-                  <path d="M17 28l8 8 14-16" stroke="var(--color-success-primary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                <svg
+                  width="56"
+                  height="56"
+                  viewBox="0 0 56 56"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <circle
+                    cx="28"
+                    cy="28"
+                    r="26"
+                    stroke="var(--color-success-primary)"
+                    strokeWidth="1.5"
+                    strokeOpacity="0.28"
+                  />
+                  <circle
+                    cx="28"
+                    cy="28"
+                    r="19"
+                    stroke="var(--color-success-primary)"
+                    strokeWidth="1"
+                    strokeOpacity="0.18"
+                  />
+                  <path
+                    d="M17 28l8 8 14-16"
+                    stroke="var(--color-success-primary)"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </svg>
                 <p className="qrs-success-title">QR Code detected!</p>
                 <button
@@ -588,7 +805,10 @@ export const QrScanner = (): JSX.Element => {
             {/* Error */}
             {scanState === "error" && (
               <div className="qrs-state qrs-state-error">
-                <XCircle size={48} style={{ color: "var(--color-brand-accent)", opacity: 0.8 }} />
+                <XCircle
+                  size={48}
+                  style={{ color: "var(--color-brand-accent)", opacity: 0.8 }}
+                />
                 <p className="qrs-error-msg">{errorMessage}</p>
                 <button
                   type="button"
@@ -611,8 +831,17 @@ export const QrScanner = (): JSX.Element => {
 
           {/* ── Manual input ── */}
           <div className={`qrs-input-wrap${orderId ? " has-value" : ""}`}>
-            <ScanLine size={17} style={{ color: "var(--color-text-secondary)", opacity: 0.45, flexShrink: 0 }} />
-            <label htmlFor="order-id-input" className="sr-only">Order ID</label>
+            <ScanLine
+              size={17}
+              style={{
+                color: "var(--color-text-secondary)",
+                opacity: 0.45,
+                flexShrink: 0,
+              }}
+            />
+            <label htmlFor="order-id-input" className="sr-only">
+              Order ID
+            </label>
             <input
               id="order-id-input"
               type="text"
@@ -669,7 +898,6 @@ export const QrScanner = (): JSX.Element => {
               Search Order
             </Button>
           </div>
-
         </div>
       </div>
     </>

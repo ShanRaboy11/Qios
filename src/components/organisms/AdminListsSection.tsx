@@ -136,7 +136,10 @@ export interface AdminListsSectionProps {
   onViewPendingTenants?: () => void;
 }
 
-export const AdminListsSection = ({ onViewSystemActivity, onViewPendingTenants }: AdminListsSectionProps) => {
+export const AdminListsSection = ({
+  onViewSystemActivity,
+  onViewPendingTenants,
+}: AdminListsSectionProps) => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 pb-10">
       {/* Recent Transactions */}
@@ -145,7 +148,7 @@ export const AdminListsSection = ({ onViewSystemActivity, onViewPendingTenants }
           <span className="h4 font-semibold text-text-primary">
             Recent Transactions
           </span>
-          <button 
+          <button
             onClick={onViewSystemActivity}
             className="text-[13px] font-bold text-text-secondary hover:text-text-primary underline"
           >
@@ -187,7 +190,7 @@ export const AdminListsSection = ({ onViewSystemActivity, onViewPendingTenants }
           <span className="h4 font-semibold text-text-primary">
             Recently Registered
           </span>
-          <button 
+          <button
             onClick={onViewPendingTenants}
             className="text-[13px] font-bold text-text-secondary hover:text-text-primary underline"
           >

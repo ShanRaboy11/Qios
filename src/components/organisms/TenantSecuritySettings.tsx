@@ -36,10 +36,10 @@ export const TenantSecuritySettings = () => {
                 Current Password
               </label>
               <div className="relative">
-                <Input 
-                  type={showCurrentPassword ? "text" : "password"} 
-                  placeholder="••••••••" 
-                  className="py-2.5 rounded-xl pr-10" 
+                <Input
+                  type={showCurrentPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  className="py-2.5 rounded-xl pr-10"
                 />
                 <button
                   type="button"
@@ -49,7 +49,11 @@ export const TenantSecuritySettings = () => {
                   }}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-brand-accent transition-colors z-10 p-1"
                 >
-                  {showCurrentPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  {showCurrentPassword ? (
+                    <EyeOff size={18} />
+                  ) : (
+                    <Eye size={18} />
+                  )}
                 </button>
               </div>
             </div>
@@ -58,10 +62,10 @@ export const TenantSecuritySettings = () => {
                 New Password
               </label>
               <div className="relative">
-                <Input 
-                  type={showNewPassword ? "text" : "password"} 
-                  placeholder="New Password" 
-                  className="py-2.5 rounded-xl pr-10" 
+                <Input
+                  type={showNewPassword ? "text" : "password"}
+                  placeholder="New Password"
+                  className="py-2.5 rounded-xl pr-10"
                 />
                 <button
                   type="button"
@@ -80,10 +84,10 @@ export const TenantSecuritySettings = () => {
                 Confirm New Password
               </label>
               <div className="relative">
-                <Input 
-                  type={showConfirmPassword ? "text" : "password"} 
-                  placeholder="Confirm Password" 
-                  className="py-2.5 rounded-xl pr-10" 
+                <Input
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder="Confirm Password"
+                  className="py-2.5 rounded-xl pr-10"
                 />
                 <button
                   type="button"
@@ -93,12 +97,18 @@ export const TenantSecuritySettings = () => {
                   }}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-brand-accent transition-colors z-10 p-1"
                 >
-                  {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  {showConfirmPassword ? (
+                    <EyeOff size={18} />
+                  ) : (
+                    <Eye size={18} />
+                  )}
                 </button>
               </div>
             </div>
             <div className="sm:col-span-2 flex justify-end mt-2">
-               <Button variant="outline" shape="rounded">Update Password</Button>
+              <Button variant="outline" shape="rounded">
+                Update Password
+              </Button>
             </div>
           </div>
         </div>
@@ -109,20 +119,20 @@ export const TenantSecuritySettings = () => {
             className="mb-0 py-2 border-gray-100"
           />
           <div className="flex items-center justify-between p-4 mt-2 rounded-xl border border-gray-100">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-brand-primary/10 flex items-center justify-center">
-                  <Shield className="w-5 h-5 text-brand-accent" />
-                </div>
-                <div>
-                  <h4 className="font-medium text-text-primary">
-                    Require 2FA for Login
-                  </h4>
-                  <p className="text-sm text-text-secondary hidden sm:block">
-                    Add an extra layer of security using an authenticator app.
-                  </p>
-                </div>
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-full bg-brand-primary/10 flex items-center justify-center">
+                <Shield className="w-5 h-5 text-brand-accent" />
               </div>
-              <Toggle variant="accent" defaultIsOn={false} />
+              <div>
+                <h4 className="font-medium text-text-primary">
+                  Require 2FA for Login
+                </h4>
+                <p className="text-sm text-text-secondary hidden sm:block">
+                  Add an extra layer of security using an authenticator app.
+                </p>
+              </div>
+            </div>
+            <Toggle variant="accent" defaultIsOn={false} />
           </div>
         </div>
 
@@ -148,9 +158,12 @@ export const TenantSecuritySettings = () => {
             />
           </div>
           <div className="flex justify-end mt-4">
-             <Button variant="outline" className="text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600">
-               Log Out All Other Sessions
-             </Button>
+            <Button
+              variant="outline"
+              className="text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600"
+            >
+              Log Out All Other Sessions
+            </Button>
           </div>
         </div>
       </div>

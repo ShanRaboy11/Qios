@@ -1,13 +1,21 @@
-import React from "react";
-import MenuInventory from "@/components/organisms/MenuInventory";
+"use client";
 
-export default function TenantMenuInventoryPage({ params }: { params: Promise<{ id: string }> }) {
+import React from "react";
+import MenuCategoryManagement from "@/components/organisms/MenuCategoryManagement";
+
+export default function MenuPage() {
   return (
-    <main className="min-h-screen bg-bg-primary">
-      <div className="max-w-7xl mx-auto py-8">
-        <h1 className="text-3xl font-bold text-text-primary mb-8 px-6 md:px-8">Menu Inventory</h1>
-        <MenuInventory />
+    <>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+        <div>
+          <h2 className="h2 text-text-primary">Menu Management</h2>
+          <p className="b1 text-text-secondary mt-2">
+            Manage your restaurant&apos;s digital menu, categories, and item
+            availability
+          </p>
+        </div>
       </div>
-    </main>
+      <MenuCategoryManagement />
+    </>
   );
 }

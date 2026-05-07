@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 
 export const TenantBrandingSettings = () => {
   const [primaryColor, setPrimaryColor] = useState("#FFC670");
-  
+
   const presetColors = [
     "#FFC670", // Qios default
     "#3B82F6", // Blue
@@ -25,7 +25,8 @@ export const TenantBrandingSettings = () => {
           Branding & Appearance
         </h2>
         <p className="text-sm text-text-secondary">
-          Customize the look and feel of your customer-facing interfaces like Kiosks and QR Menus.
+          Customize the look and feel of your customer-facing interfaces like
+          Kiosks and QR Menus.
         </p>
       </div>
 
@@ -48,7 +49,7 @@ export const TenantBrandingSettings = () => {
                     "w-10 h-10 rounded-full border-2 transition-all duration-200 shadow-sm",
                     primaryColor === color
                       ? "border-text-primary scale-110"
-                      : "border-transparent hover:scale-105"
+                      : "border-transparent hover:scale-105",
                   )}
                   style={{ backgroundColor: color }}
                   title={`Set primary color to ${color}`}
@@ -60,7 +61,10 @@ export const TenantBrandingSettings = () => {
                   className="w-10 h-10 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50 cursor-pointer overflow-hidden transition-all group-hover:border-brand-accent group-hover:bg-brand-accent/5"
                   title="Custom Color"
                 >
-                  <Palette size={18} className="text-gray-400 group-hover:text-brand-accent" />
+                  <Palette
+                    size={18}
+                    className="text-gray-400 group-hover:text-brand-accent"
+                  />
                   <input
                     type="color"
                     value={primaryColor}
@@ -74,7 +78,8 @@ export const TenantBrandingSettings = () => {
               </div>
             </div>
             <p className="text-xs text-text-secondary mt-3">
-              This color will be used for primary buttons, active states, and highlights on your menus.
+              This color will be used for primary buttons, active states, and
+              highlights on your menus.
             </p>
           </div>
         </div>
@@ -93,8 +98,12 @@ export const TenantBrandingSettings = () => {
                 <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm mb-3 group-hover:scale-110 transition-transform">
                   <Upload size={20} className="text-brand-accent" />
                 </div>
-                <span className="text-sm font-medium text-text-primary">Click to upload logo</span>
-                <span className="text-xs text-text-secondary mt-1">PNG, JPG (Square, Max 2MB)</span>
+                <span className="text-sm font-medium text-text-primary">
+                  Click to upload logo
+                </span>
+                <span className="text-xs text-text-secondary mt-1">
+                  PNG, JPG (Square, Max 2MB)
+                </span>
               </div>
             </div>
 
@@ -106,8 +115,12 @@ export const TenantBrandingSettings = () => {
                 <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm mb-3 group-hover:scale-110 transition-transform">
                   <ImageIcon size={20} className="text-brand-accent" />
                 </div>
-                <span className="text-sm font-medium text-text-primary">Click to upload splash image</span>
-                <span className="text-xs text-text-secondary mt-1">Portrait 1080x1920 (Max 5MB)</span>
+                <span className="text-sm font-medium text-text-primary">
+                  Click to upload splash image
+                </span>
+                <span className="text-xs text-text-secondary mt-1">
+                  Portrait 1080x1920 (Max 5MB)
+                </span>
               </div>
             </div>
           </div>
