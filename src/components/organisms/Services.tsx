@@ -134,6 +134,13 @@ function Card({
 export default function Services() {
   const [activeTestimonial, setActiveTestimonial] = useState(0);
 
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveTestimonial((prev) => (prev + 1) % testimonials.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [activeTestimonial]);
+
   const features = [
     {
       icon: <ShieldCheck className="w-6 h-6 md:w-8 md:h-8 text-brand-accent" />,
@@ -474,11 +481,11 @@ export default function Services() {
           </div>
         </section>
 
-        {/* testimonials */}
+        {/* testimonials slider */}
         <section className="flex flex-col mt-32 md:mt-56">
           <div className="flex flex-col items-center text-center max-w-4xl mx-auto mb-16 space-y-3">
             <span className="b3 text-brand-primary uppercase tracking-widest">
-              Partners Testimonials
+              Partner Testimonials
             </span>
             <h1 className="h1 text-text-primary tracking-tight leading-tight max-md:text-[34px]">
               Don&apos;t Just Take Our{" "}
@@ -491,6 +498,7 @@ export default function Services() {
           </div>
 
           <div className="relative w-full max-w-4xl mx-auto px-4 [perspective:1200px]">
+            {/* decorative quote icon background */}
             <Quote className="absolute -top-12 -left-6 md:-left-12 w-20 h-20 md:w-24 md:h-24 text-brand-primary/10 -z-10" />
 
             {/* tilt card implementation */}
@@ -500,14 +508,14 @@ export default function Services() {
                 const rect = e.currentTarget.getBoundingClientRect();
                 const x = (e.clientX - rect.left) / rect.width - 0.5;
                 const y = (e.clientY - rect.top) / rect.height - 0.5;
-                e.currentTarget.style.transform = `rotateX(${y * -10}deg) rotateY(${x * 10}deg)`;
+                e.currentTarget.style.transform = `rotateX(${y * -8}deg) rotateY(${x * 8}deg)`;
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = `rotateX(0deg) rotateY(0deg)`;
               }}
               style={{ transformStyle: "preserve-3d" }}
             >
-              <Card className="flex flex-col justify-between min-h-[360px] shadow-[0_20px_50px_rgba(0,0,0,0.1)] border-brand-primary/10 bg-white/90 backdrop-blur-xl [transform:translateZ(0)] hover:shadow-[0_30px_60px_rgba(0,0,0,0.12)]">
+              <Card className="flex flex-col justify-between min-h-[360px] shadow-[0_20px_50px_rgba(0,0,0,0.08)] border-brand-primary/10 bg-white/90 backdrop-blur-xl [transform:translateZ(0)]">
                 <div className="flex flex-col gap-6 [transform:translateZ(40px)]">
                   <div className="flex gap-1 text-yellow-400">
                     {[1, 2, 3, 4, 5].map((star) => (
@@ -559,34 +567,38 @@ export default function Services() {
               </Card>
             </div>
 
+            {/* mobile navigation - chevrons instead of text */}
             <div className="flex md:hidden items-center justify-center gap-6 mt-8">
               <button
                 onClick={prevTestimonial}
-                className="p-2 text-brand-primary font-bold"
+                className="w-10 h-10 rounded-full border border-black/10 flex items-center justify-center text-text-secondary bg-white shadow-sm active:scale-95 transition-transform"
               >
-                PREV
+                <ChevronLeft size={20} />
               </button>
+
               <div className="flex gap-2">
                 {testimonials.map((_, idx) => (
                   <div
                     key={idx}
                     className={cn(
-                      "h-2 rounded-full transition-all",
+                      "h-1.5 rounded-full transition-all duration-300",
                       activeTestimonial === idx
                         ? "w-6 bg-brand-primary"
-                        : "w-2 bg-black/10",
+                        : "w-1.5 bg-black/10",
                     )}
                   />
                 ))}
               </div>
+
               <button
                 onClick={nextTestimonial}
-                className="p-2 text-brand-primary font-bold"
+                className="w-10 h-10 rounded-full border border-black/10 flex items-center justify-center text-text-secondary bg-white shadow-sm active:scale-95 transition-transform"
               >
-                NEXT
+                <ChevronRight size={20} />
               </button>
             </div>
 
+            {/* desktop pagination dots */}
             <div className="hidden md:flex items-center justify-center gap-2 mt-8">
               {testimonials.map((_, idx) => (
                 <button
