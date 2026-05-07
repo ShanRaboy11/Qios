@@ -40,7 +40,7 @@ export function OnboardingSidebar({ steps, currentStep }: SidebarProps) {
   return (
     <div
       className={cn(
-        // FIXED: Removed 'sticky' and 'top' classes. 
+        // FIXED: Removed 'sticky' and 'top' classes.
         // Added 'lg:min-h-screen' and 'lg:self-stretch' to ensure background stretches to footer.
         "w-full lg:w-[45%] xl:w-[55%] h-auto lg:min-h-screen lg:self-stretch relative z-40 overflow-hidden",
         "flex flex-col justify-center items-center px-6 py-12 lg:py-24",

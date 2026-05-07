@@ -1,88 +1,49 @@
 "use client";
 
-import React, { useState } from "react";
-import { Check, Info, Sparkles, Rocket, ArrowLeft, Zap } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import {
+  Check,
+  Info,
+  Sparkles,
+  Rocket,
+  ArrowLeft,
+  Zap,
+  Loader2,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/atoms/Button";
 import { Badge } from "@/components/atoms/Badge";
-import SubscriptionPlans from "@/components/organisms/SubscriptionPlans";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
-type PlanVariant = "basic" | "business" | "enterprise";
-
-interface Package {
-  id: string;
-  variant: PlanVariant;
-  name: string;
-  badge?: string;
-  description: string;
-  price: string;
-  featuresTitle: string;
-  features: string[];
-  notes: { label: string }[];
-  icon: React.ReactNode;
+interface FeatureGroup {
+  [key: string]: boolean;
 }
 
-const packages: Package[] = [
-  {
-    id: "starter",
-    variant: "basic",
-    name: "Starter",
-    badge: "Starter Ready",
-    description: "Perfect for small F&B operators starting digital.",
-    price: "1,499",
-    featuresTitle: "What's Included",
-    features: [
-      "QR mobile ordering",
-      "Simple digital menu + cart",
-      "Order status tracking",
-      "Basic sales summary",
-      "1 store only",
-    ],
-    notes: [{ label: "Cancel anytime" }, { label: "7-day guarantee" }],
-    icon: <Zap size={20} />,
-  },
-  {
-    id: "growth",
-    variant: "business",
-    name: "Growth",
-    description: "Advanced tools for growing multi-branch operators.",
-    price: "3,499",
-    featuresTitle: "Everything in Basic, plus",
-    features: [
-      "AI chat ordering functionality",
-      "Customizable menu options",
-      "Staff accounts with login",
-      "Live sales dashboard",
-      "Inventory & performance tracking",
-      "Detailed analytical reports",
-      "Multi-device support",
-    ],
-    notes: [{ label: "Cancel anytime" }, { label: "14-day guarantee" }],
-    icon: <Rocket size={20} />,
-  },
-  {
-    id: "enterprises",
-    variant: "enterprise",
-    name: "Enterprises",
-    badge: "Premium Suite",
-    description: "Custom solutions for chains and large franchises.",
-    price: "7,999",
-    featuresTitle: "Everything in Business, plus",
-    features: [
-      "Multi-branch management",
-      "Advanced stock tracking",
-      "Deep efficiency analytics",
-      "Full activity audit logs",
-      "Custom settings per branch",
-      "External API integration",
-    ],
-    notes: [
-      { label: "30-day cancellation notice" },
-      { label: "Onboarding support" },
-    ],
-    icon: <Sparkles size={20} />,
-  },
-];
+interface Features {
+  customer: FeatureGroup;
+  employee_ops: FeatureGroup;
+  inventory: FeatureGroup;
+  analytics: FeatureGroup;
+  admin_controls: FeatureGroup;
+}
+
+interface SubscriptionPlanData {
+  id: string;
+  name: string;
+  color: string;
+  badge: string;
+  price_monthly: string;
+  price_annually: string;
+  features: Features;
+}
+
+const CATEGORY_LABELS: Record<keyof Features, string> = {
+  customer: "Customer Features",
+  employee_ops: "Employee & Operations",
+  inventory: "Inventory Tracking",
+  analytics: "Analytics & Insights",
+  admin_controls: "Admin Controls",
+};
 
 export function SubscriptionPackage({
   data,
@@ -95,44 +56,106 @@ export function SubscriptionPackage({
   onNext: () => void;
   onBack: () => void;
 }) {
-  const [selectedId, setSelectedId] = useState(data.packageId || "starter");
+  const [selectedId, setSelectedId] = useState(data.packageId || "");
+  const [plans, setPlans] = useState<SubscriptionPlanData[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const supabase = createSupabaseBrowserClient();
+
+  useEffect(() => {
+    async function fetchPlans() {
+      try {
+        const { data: dbData, error } = await supabase
+          .from("subscription_plans")
+          .select("*")
+          // Order alphabetically or by price. Since price_monthly is text like "1,499", we might just not order here or assume the DB is sequential
+          .order("created_at");
+
+        if (error) throw error;
+
+        if (dbData && dbData.length > 0) {
+          const parsed = dbData.map((d: any) => ({
+            ...d,
+            priceMonthly: d.price_monthly,
+            priceAnnually: d.price_annually,
+            features:
+              typeof d.features === "string"
+                ? JSON.parse(d.features)
+                : d.features,
+          }));
+          setPlans(parsed);
+
+          if (
+            !data.packageId ||
+            data.packageId === "starter" ||
+            data.packageId === "basic"
+          ) {
+            const defaultPlan =
+              parsed.find(
+                (p: any) =>
+                  p.name.toLowerCase() === "basic" ||
+                  p.name.toLowerCase() === "starter",
+              ) || parsed[0];
+            setSelectedId(defaultPlan.id);
+            setData({ packageId: defaultPlan.id });
+          } else if (
+            parsed.find((p: any) => p.name.toLowerCase() === data.packageId)
+          ) {
+            // handle case where parent has human readable name instead of uuid
+            const matchedPlan = parsed.find(
+              (p: any) => p.name.toLowerCase() === data.packageId,
+            );
+            setSelectedId(matchedPlan.id);
+            setData({ packageId: matchedPlan.id });
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching subscription plans:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchPlans();
+  }, []);
+
   // Keep local selection in sync when parent updates (user navigates back)
-  React.useEffect(() => {
+  useEffect(() => {
     if (data.packageId && data.packageId !== selectedId) {
       setSelectedId(data.packageId);
     }
-  }, [data.packageId]);
+  }, [data.packageId, selectedId]);
 
-  const activePackage =
-    packages.find((p) => p.id === selectedId) || packages[0];
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[500px]">
+        <Loader2 className="w-8 h-8 text-[var(--color-brand-primary)] animate-spin" />
+        <p className="mt-4 text-text-secondary text-sm">Loading plans...</p>
+      </div>
+    );
+  }
 
-  const styles = {
-    basic: {
-      border: "border-[#ffc670]/80",
-      bg: "bg-gradient-to-b from-white to-[#FFF1D6]",
-      checkBg: "bg-[#ffc670]/20",
-      checkIcon: "text-[#ffc670]",
-    },
-    business: {
-      border: "border-[#ff5269]/80",
-      bg: "bg-gradient-to-b from-white to-[#FFDFE4]",
-      checkBg: "bg-[#ff5269]/20",
-      checkIcon: "text-[#ff5269]",
-    },
-    enterprise: {
-      border: "border-[#1fad66]/80",
-      bg: "bg-gradient-to-b from-white to-[#DFF2E8]",
-      checkBg: "bg-[#1fad66]/20",
-      checkIcon: "text-[#1fad66]",
-    },
-  }[activePackage.variant];
+  if (plans.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[500px]">
+        <p className="text-text-secondary text-sm">No plans available.</p>
+      </div>
+    );
+  }
+
+  const activePackage = plans.find((p) => p.id === selectedId) || plans[0];
+
+  const activeColorHex =
+    activePackage.color.match(/#([0-9a-fA-F]{6})/)?.[0] || "#ffc670";
+  const isDark =
+    activeColorHex.toLowerCase() === "#18181b" ||
+    activeColorHex.toLowerCase() === "#000000";
 
   return (
-    /* CHANGED: Set items-center globally to center all components */
     <div className="flex flex-col items-center space-y-6 lg:space-y-10 animate-in fade-in slide-in-from-right-8 duration-500 w-full overflow-visible">
       {/* PACKAGE SELECTION TABS */}
       <div className="inline-flex items-center bg-white rounded-[50px] p-1 lg:p-1.5 border border-neutral-100 shadow-sm overflow-x-auto max-w-full">
-        {packages.map((pkg) => (
+        {plans.map((pkg) => (
           <button
             key={pkg.id}
             onClick={() => {
@@ -142,9 +165,12 @@ export function SubscriptionPackage({
             className={cn(
               "px-6 py-2 lg:px-7 lg:py-3 rounded-[40px] b3 transition-all duration-300 whitespace-nowrap font-bold",
               selectedId === pkg.id
-                ? "bg-[var(--color-brand-primary)] text-white shadow-md"
+                ? "text-white shadow-md"
                 : "bg-transparent text-[var(--color-text-secondary)] hover:text-black",
             )}
+            style={
+              selectedId === pkg.id ? { backgroundColor: activeColorHex } : {}
+            }
           >
             {pkg.name}
           </button>
@@ -154,31 +180,22 @@ export function SubscriptionPackage({
       {/* 2. PRICING CARD */}
       <div
         className={cn(
-          "relative max-w-[460px] w-full rounded-[2.5rem] border transition-all duration-500 overflow-hidden shadow-lg",
-          styles.bg,
-          styles.border,
+          "relative max-w-[500px] w-full rounded-[2.5rem] border-2 transition-all duration-500 overflow-hidden shadow-lg",
         )}
+        style={{
+          borderColor: `${activeColorHex}80`,
+          backgroundImage: `linear-gradient(to bottom, #ffffff, ${isDark ? "#e4e4e7" : activeColorHex + "20"})`,
+        }}
       >
         {/* Header Section */}
         <div className="p-8 lg:p-10 text-center border-b border-black/5">
           <div className="flex flex-col items-center gap-3 mb-4">
-            {(activePackage.badge || activePackage.variant === "business") && (
+            {activePackage.badge && (
               <Badge
-                color={
-                  activePackage.variant === "enterprise"
-                    ? "success"
-                    : activePackage.variant === "business"
-                      ? "error"
-                      : "primary"
-                }
-                variant={
-                  activePackage.variant === "business" ? "solid" : "subtle"
-                }
-                className="text-[10px] py-1 px-4 font-bold uppercase tracking-wider"
+                className="text-[10px] py-1 px-4 font-bold uppercase tracking-wider text-white"
+                style={{ backgroundColor: activeColorHex }}
               >
-                {activePackage.variant === "business"
-                  ? "Most Popular"
-                  : activePackage.badge}
+                {activePackage.badge}
               </Badge>
             )}
             <h2 className="text-3xl lg:text-[40px] font-bold text-text-primary leading-tight">
@@ -186,13 +203,9 @@ export function SubscriptionPackage({
             </h2>
           </div>
 
-          <p className="text-sm text-text-secondary max-w-[280px] mx-auto leading-relaxed mb-8">
-            {activePackage.description}
-          </p>
-
-          <div className="flex items-baseline justify-center">
+          <div className="flex items-baseline justify-center mt-6">
             <span className="text-4xl lg:text-5xl font-bold text-text-primary">
-              ₱ {activePackage.price}
+              ₱ {activePackage.price_monthly}
             </span>
             <span className="text-lg font-medium text-text-secondary ml-1">
               /month
@@ -201,7 +214,10 @@ export function SubscriptionPackage({
 
           <div className="mt-2 flex items-center justify-center gap-2 b4 text-text-secondary font-medium">
             <span>Billed monthly</span>
-            <span className="text-[var(--color-brand-primary)] font-bold text-lg">
+            <span
+              className="font-bold text-lg"
+              style={{ color: activeColorHex }}
+            >
               •
             </span>
             <span>cancel anytime</span>
@@ -209,50 +225,60 @@ export function SubscriptionPackage({
         </div>
 
         {/* Features Section */}
-        <div className="p-8 lg:p-10 space-y-6">
+        <div className="space-y-8">
           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-text-secondary/60 text-center">
-            {activePackage.featuresTitle}
+            What's Included
           </p>
 
-          <ul className="space-y-4">
-            {activePackage.features.map((feature, idx) => (
-              <li key={idx} className="flex items-start gap-4">
-                <div
-                  className={cn(
-                    "mt-1 shrink-0 w-5 h-5 rounded-full flex items-center justify-center",
-                    styles.checkBg,
-                  )}
-                >
-                  <Check
-                    className={cn("w-3 h-3 stroke-[4px]", styles.checkIcon)}
-                  />
-                </div>
-                <span className="text-sm lg:text-[17px] text-text-primary font-medium leading-tight font-inter">
-                  {feature}
-                </span>
-              </li>
-            ))}
-          </ul>
+          <div className="flex flex-col gap-6 pl-16 pb-10 lg:pl-24 pb-10">
+            {(Object.keys(CATEGORY_LABELS) as Array<keyof Features>).map(
+              (categoryKey) => {
+                const featuresInCategory = activePackage.features[categoryKey];
+                if (!featuresInCategory) return null;
 
-          <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 pt-6 border-t border-black/5">
-            {activePackage.notes.map((note, i) => (
-              <div key={i} className="flex items-center gap-1.5 opacity-70">
-                <Info size={12} className="text-text-secondary" />
-                <span className="text-[10px] font-bold text-text-secondary uppercase tracking-tight">
-                  {note.label}
-                </span>
-              </div>
-            ))}
+                const enabledFeatures = Object.entries(featuresInCategory)
+                  .filter(([_, isEnabled]) => isEnabled)
+                  .map(([featureName]) => featureName);
+
+                if (enabledFeatures.length === 0) return null;
+
+                return (
+                  <div key={categoryKey}>
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-text-secondary mb-3">
+                      {CATEGORY_LABELS[categoryKey]}
+                    </h4>
+                    <ul className="space-y-3">
+                      {enabledFeatures.map((feature, idx) => (
+                        <li key={idx} className="flex items-start gap-3">
+                          <div
+                            className="mt-0.5 shrink-0 w-5 h-5 rounded-full flex items-center justify-center"
+                            style={{ backgroundColor: `${activeColorHex}20` }}
+                          >
+                            <Check
+                              className="w-3 h-3 stroke-[4px]"
+                              style={{ color: activeColorHex }}
+                            />
+                          </div>
+                          <span className="text-sm lg:text-base text-text-primary font-medium leading-snug">
+                            {feature}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                );
+              },
+            )}
           </div>
         </div>
       </div>
 
       {/* SELECTION BUTTONS */}
-      <div className="w-full max-w-[460px] flex flex-row gap-10">
+      <div className="w-full max-w-[500px] flex flex-row gap-6">
         <Button
           variant="ghost"
           size="lg"
-          className="h-13 lg:h-13 px-5 b2 border-neutral-200 text-neutral-500 transition-all"
+          className="h-13 lg:h-13 px-5 b2 border-neutral-200 text-neutral-500 transition-all font-semibold shrink-0"
           onClick={onBack}
         >
           <ArrowLeft className="w-5 h-5 mr-1" />
@@ -262,10 +288,11 @@ export function SubscriptionPackage({
           variant="primary"
           shape="pill"
           size="lg"
-          className={cn(
-            "flex-1 h-13 lg:h-13 b2 font-bold text-lg shadow-lg shadow-secondary bg-[var(--color-brand-secondary)] text-white transition-all active:scale-[0.98]",
-            activePackage.variant === "business" && "bg-[#ff5269]",
-          )}
+          className="flex-1 h-14 b2 font-bold text-lg shadow-lg text-white transition-all active:scale-[0.98]"
+          style={{
+            backgroundColor: activeColorHex,
+            boxShadow: `0 10px 15px -3px ${activeColorHex}40`,
+          }}
           onClick={() => {
             setData({ packageId: selectedId });
             onNext();

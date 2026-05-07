@@ -31,7 +31,11 @@ export interface OperationalSetupProps {
   loading?: boolean;
 }
 
-type OptionValue = InventoryMode | ServiceWorkflow | DashboardFocus | SupplyLogic;
+type OptionValue =
+  | InventoryMode
+  | ServiceWorkflow
+  | DashboardFocus
+  | SupplyLogic;
 
 type OptionCard = {
   value: OptionValue;
@@ -64,7 +68,12 @@ const TIER_FEATURES: Record<
       },
       {
         title: "Order Tracking",
-        description: "See orders progress from confirmation through completion.",
+        description:
+          "See orders progress from confirmation through completion.",
+      },
+      {
+        title: "Simple Sales Summary",
+        description: "Basic reporting of transactions.",
       },
       {
         title: "Single Store Coverage",
@@ -80,16 +89,17 @@ const TIER_FEATURES: Record<
         description: "Automate menu guidance and customer assistance.",
       },
       {
-        title: "Real-time Sales",
-        description: "Watch sales move as orders are placed.",
+        title: "Inventory Tracking",
+        description:
+          "Track current stock levels by fixed unit quantity per item.",
       },
       {
-        title: "Operational Analytics",
-        description: "Track speed, revenue, and modifier trends.",
+        title: "Live Revenue Dashboard",
+        description: "View real-time total sales and daily income summaries.",
       },
       {
-        title: "Employee Shift Management",
-        description: "Coordinate staffing and floor coverage.",
+        title: "Employee Accounts",
+        description: "Create and manage staff accounts.",
       },
     ],
   },
@@ -97,16 +107,17 @@ const TIER_FEATURES: Record<
     tier: "Enterprise",
     items: [
       {
+        title: "Advanced Inventory",
+        description:
+          "Recipe-based tracking, automated deductions, and variance reports.",
+      },
+      {
+        title: "Deep Efficiency Analytics",
+        description: "Order velocity analytics and full activity audit logs.",
+      },
+      {
         title: "Multi-branch Oversight",
         description: "Compare branches from a shared command center.",
-      },
-      {
-        title: "Priority Support",
-        description: "Faster onboarding support for larger teams.",
-      },
-      {
-        title: "Centralized Controls",
-        description: "Unify policies, stock rules, and reporting across locations.",
       },
       {
         title: "Advanced Governance",
@@ -120,14 +131,12 @@ const TIER_FEATURES: Record<
 function getCumulativeFeatures(plan: SubscriptionPlan) {
   const order: SubscriptionPlan[] = ["basic", "business", "enterprise"];
   const planIndex = order.indexOf(plan);
-  return order
-    .slice(0, planIndex + 1)
-    .flatMap((p) =>
-      TIER_FEATURES[p].items.map((item) => ({
-        ...item,
-        tier: TIER_FEATURES[p].tier,
-      })),
-    );
+  return order.slice(0, planIndex + 1).flatMap((p) =>
+    TIER_FEATURES[p].items.map((item) => ({
+      ...item,
+      tier: TIER_FEATURES[p].tier,
+    })),
+  );
 }
 
 const PlanBadge = ({
@@ -186,6 +195,7 @@ function OptionGroup<T extends OptionValue>({
   onChange,
   disabled = false,
   lockLabel,
+  selectedPlan,
 }: {
   title: string;
   icon: LucideIcon;
@@ -195,6 +205,7 @@ function OptionGroup<T extends OptionValue>({
   onChange: (nextValue: T) => void;
   disabled?: boolean;
   lockLabel?: string;
+  selectedPlan?: SubscriptionPlan;
 }) {
   return (
     <section className={cn("space-y-3 w-full", disabled && "opacity-60")}>
@@ -208,7 +219,12 @@ function OptionGroup<T extends OptionValue>({
             <h3 className="text-sm font-semibold leading-tight text-[var(--color-text-primary)]">
               {title}
             </h3>
-            {disabled && lockLabel && (
+            {title === "Inventory Logic" && selectedPlan === "basic" && (
+              <span className="rounded-full border border-neutral-200 bg-white px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-neutral-400">
+                Business Plan Required
+              </span>
+            )}
+            {disabled && title !== "Inventory Logic" && lockLabel && (
               <span className="rounded-full border border-neutral-200 bg-white px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-neutral-400">
                 {lockLabel}
               </span>
@@ -220,14 +236,23 @@ function OptionGroup<T extends OptionValue>({
         </div>
       </div>
 
-      {/* Option Cards */}
       <div
         className="grid grid-cols-1 gap-3 sm:grid-cols-2"
         role="radiogroup"
         aria-label={title}
       >
         {options.map((option) => {
-          const selected = selectedValue === option.value;
+          const isRecipeDisabled =
+            title === "Inventory Logic" &&
+            option.value === "recipe" &&
+            selectedPlan !== "enterprise";
+          const isSpeedDisabled =
+            title === "Primary Metric" &&
+            option.value === "speed" &&
+            selectedPlan !== "enterprise";
+          const isOptionDisabled =
+            disabled || isRecipeDisabled || isSpeedDisabled;
+          const selected = selectedValue === option.value && !isOptionDisabled;
 
           return (
             <button
@@ -235,11 +260,12 @@ function OptionGroup<T extends OptionValue>({
               type="button"
               role="radio"
               aria-checked={selected}
-              disabled={disabled}
+              disabled={isOptionDisabled}
               onClick={() => onChange(option.value as T)}
               className={cn(
                 "relative rounded-2xl border-2 p-4 text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-primary)]/30",
-                disabled && "pointer-events-none cursor-not-allowed",
+                isOptionDisabled &&
+                  "opacity-60 pointer-events-none cursor-not-allowed",
                 selected
                   ? "border-[var(--color-brand-primary)] bg-[var(--color-brand-primary)]/5 shadow-sm"
                   : "border-neutral-200 bg-white hover:border-neutral-300 hover:shadow-sm active:scale-[0.99]",
@@ -254,8 +280,6 @@ function OptionGroup<T extends OptionValue>({
                     {option.description}
                   </p>
                 </div>
-
-                {/* Radio indicator */}
                 <div
                   className={cn(
                     "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-all duration-200",
@@ -264,7 +288,9 @@ function OptionGroup<T extends OptionValue>({
                       : "border-neutral-300 bg-white",
                   )}
                 >
-                  {selected && <div className="h-2 w-2 rounded-full bg-white" />}
+                  {selected && (
+                    <div className="h-2 w-2 rounded-full bg-white" />
+                  )}
                 </div>
               </div>
             </button>
@@ -302,6 +328,25 @@ export function OperationalSetup({
     setConfig((prev) => ({ ...prev, [key]: value }));
   };
 
+  // Reset to allowed defaults when changing plans
+  React.useEffect(() => {
+    if (selectedPlan === "basic") {
+      setConfig((prev) => ({
+        ...prev,
+        inventoryMode: "none" as any, // if basic doesn't have inventory
+        dashboardFocus: "revenue",
+      }));
+    } else if (selectedPlan === "business") {
+      setConfig((prev) => ({
+        ...prev,
+        inventoryMode:
+          prev.inventoryMode === "recipe" ? "unit" : prev.inventoryMode,
+        dashboardFocus:
+          prev.dashboardFocus === "speed" ? "revenue" : prev.dashboardFocus,
+      }));
+    }
+  }, [selectedPlan]);
+
   return (
     <div className="flex w-full max-w-[960px] flex-col items-center gap-6 pb-8">
       {/* Main Config Card */}
@@ -333,6 +378,8 @@ export function OperationalSetup({
               description="Choose how stock is consumed when an order is confirmed."
               selectedValue={config.inventoryMode}
               onChange={(value) => updateConfig("inventoryMode", value)}
+              disabled={selectedPlan === "basic"}
+              selectedPlan={selectedPlan}
               options={[
                 {
                   value: "unit",
@@ -344,7 +391,9 @@ export function OperationalSetup({
                   value: "recipe",
                   title: "Production Style (Recipe-Based)",
                   description:
-                    "Best for kitchens. Automatically deducts raw ingredients based on your recipe matrix.",
+                    selectedPlan === "enterprise"
+                      ? "Best for kitchens. Automatically deducts raw ingredients based on your recipe matrix."
+                      : "Upgrade to Enterprise to unlock Recipe-Based deductions.",
                 },
               ]}
             />
@@ -357,6 +406,7 @@ export function OperationalSetup({
               description="Set how the order is fulfilled after payment or confirmation."
               selectedValue={config.serviceWorkflow}
               onChange={(value) => updateConfig("serviceWorkflow", value)}
+              selectedPlan={selectedPlan}
               options={[
                 {
                   value: "pickup",
@@ -382,12 +432,15 @@ export function OperationalSetup({
                 description="Choose which dashboard lens should dominate the management experience."
                 selectedValue={config.dashboardFocus}
                 onChange={(value) => updateConfig("dashboardFocus", value)}
+                selectedPlan={selectedPlan}
                 options={[
                   {
                     value: "speed",
                     title: "Efficiency (Prep Speed)",
                     description:
-                      "Dashboard prioritizes kitchen fulfillment times and highlights preparation bottlenecks.",
+                      selectedPlan === "enterprise"
+                        ? "Dashboard prioritizes kitchen fulfillment times and highlights preparation bottlenecks."
+                        : "Upgrade to Enterprise to unlock Prep Speed analytics.",
                   },
                   {
                     value: "revenue",

@@ -11,15 +11,21 @@ type AuthCredentialsProps = {
     password: string;
     confirm: string;
   };
-  setData: React.Dispatch<React.SetStateAction<{
-    email: string;
-    password: string;
-    confirm: string;
-  }>>;
+  setData: React.Dispatch<
+    React.SetStateAction<{
+      email: string;
+      password: string;
+      confirm: string;
+    }>
+  >;
   onAutoResume?: (email: string) => Promise<void> | void;
 };
 
-export function AuthCredentials({ data, setData, onAutoResume }: AuthCredentialsProps) {
+export function AuthCredentials({
+  data,
+  setData,
+  onAutoResume,
+}: AuthCredentialsProps) {
   useEffect(() => {
     let isActive = true;
 

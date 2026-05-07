@@ -48,9 +48,7 @@ export default function RootLayout({
           Wrapping the app in a div with suppressHydrationWarning prevents the
           warning from cascading down to the children components.
         */}
-        <div suppressHydrationWarning>
-          {children}
-        </div>
+        <div suppressHydrationWarning>{children}</div>
       </body>
     </html>
   );
