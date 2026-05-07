@@ -261,25 +261,26 @@ export default function Services() {
   };
 
   const CTAContent = (
-    <div className="flex flex-col items-center justify-center text-center bg-brand-primary rounded-[2.5rem] p-10 md:p-16 relative overflow-hidden shadow-2xl h-full border border-white/20">
+    <div className="flex flex-col items-center justify-center text-center bg-brand-primary rounded-[2.5rem] p-10 md:p-16 relative overflow-hidden shadow-xl h-full border border-white/20">
       <div className="absolute inset-0 bg-[url('/noise.png')] opacity-10 mix-blend-overlay" />
       <div className="absolute -top-24 -right-24 w-80 h-80 bg-white/30 blur-3xl rounded-full" />
       <div className="absolute -bottom-24 -left-24 w-80 h-80 bg-brand-accent/20 blur-3xl rounded-full" />
       <div className="relative z-10 flex flex-col items-center gap-6 max-w-2xl [transform:translateZ(60px)]">
-        <h2 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight leading-tight">
-          Ready to upgrade your restaurant?
+        <h2 className="font-figtree text-3xl md:text-[38px] font-bold leading-[125%] text-white tracking-tight">
+          Ready to upgrade your business?
         </h2>
-        <p className="text-white/90 text-lg md:text-xl">
-          Start your free 14-day trial today. No credit card required.
+        <p className="text-base md:text-[22px] leading-[140%] text-white/90">
+          Join hundreds of modern restaurants that have digitized their
+          operations. Start your 14-day free trial today—no credit card
+          required, cancel anytime.
         </p>
         <Button
-          variant="accent"
-          size="lg"
+          variant="outline"
           shape="rounded"
-          rightIcon={<ArrowRight size={20} />}
-          className="mt-6 bg-white text-brand-primary hover:bg-brand-primary hover:text-white border-none px-10 py-5 text-lg font-bold shadow-xl transition-all"
+          size="md"
+          className="mt-6 border-white text-white hover:bg-white hover:border-white hover:text-brand-primary font-bold px-10 relative z-30 pointer-events-auto"
         >
-          Get Started Now
+          Book a Demo
         </Button>
       </div>
     </div>
@@ -306,7 +307,7 @@ export default function Services() {
         }}
       />
 
-      <div className="flex flex-col gap-20 md:gap-48 w-full max-w-[1440px] mx-auto px-6 md:px-12 lg:px-24 relative z-10">
+      <div className="flex flex-col gap-20 md:gap-32 w-full max-w-[1440px] mx-auto px-6 md:px-12 lg:px-24 relative z-10">
         {/* page hero section */}
         <div className="max-w-4xl mx-auto relative z-10 w-full">
           <div className="text-center mb-10 space-y-3">
@@ -617,30 +618,46 @@ export default function Services() {
         </section>
 
         {/* 3d cta card section */}
-        <section className="flex justify-center mb-16 px-4">
-          <div className="group [perspective:2000px] w-full max-w-5xl h-[450px]">
+        <section className="flex justify-center px-4 mt-12 md:mt-20 mb-8 md:mb-10">
+          <div
+            onClick={() => {
+              const isMobile = window.innerWidth < 768;
+              {
+                /* mobile delay */
+              }
+              setTimeout(
+                () => {
+                  window.location.href = "/contact";
+                },
+                isMobile ? 1000 : 0,
+              );
+            }}
+            className="group [perspective:2000px] w-full max-w-5xl h-[450px]"
+          >
             <div className="relative w-full h-full transition-all duration-[1200ms] cubic-bezier(0.175, 0.885, 0.32, 1.275) [transform-style:preserve-3d] group-hover:[transform:rotateX(180deg)] cursor-pointer">
               {/* front side */}
               <div className="absolute inset-0 [backface-visibility:hidden]">
                 {CTAContent}
               </div>
 
-              {/* back side (3d depth) */}
+              {/* back side */}
               <div className="absolute inset-0 [backface-visibility:hidden] [transform:rotateX(180deg)]">
-                <div className="flex flex-col items-center justify-center text-center bg-brand-accent rounded-[2.5rem] p-10 md:p-16 relative overflow-hidden shadow-2xl h-full border border-white/20">
+                <div className="flex flex-col items-center justify-center text-center bg-brand-accent rounded-[2.5rem] p-10 md:p-16 relative overflow-hidden shadow-xl h-full border border-white/20">
                   <div className="absolute inset-0 bg-[url('/noise.png')] opacity-10 mix-blend-overlay" />
                   <div className="relative z-10 flex flex-col items-center gap-6 max-w-2xl [transform:translateZ(80px)]">
-                    <h2 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight leading-tight">
-                      Special Offer: Get 20% Off Your First Year
+                    <h2 className="font-figtree text-3xl md:text-[38px] font-bold leading-[125%] text-white tracking-tight">
+                      Ready to upgrade your business?
                     </h2>
-                    <p className="text-white/90 text-lg md:text-xl">
-                      Book a demo call today and our specialists will help you
-                      set up everything in 24 hours.
+                    <p className="text-base md:text-[22px] leading-[140%] text-white/90">
+                      Join hundreds of modern restaurants that have digitized
+                      their operations. Start your 14-day free trial today—no
+                      credit card required, cancel anytime.
                     </p>
                     <Button
-                      variant="primary"
-                      size="lg"
-                      className="mt-6 bg-white text-brand-accent border-none px-10 py-5 text-lg font-bold shadow-xl"
+                      variant="outline"
+                      shape="rounded"
+                      size="md"
+                      className="mt-6 bg-white border-white text-brand-accent font-bold px-10 pointer-events-none"
                     >
                       Book a Demo
                     </Button>
@@ -649,7 +666,7 @@ export default function Services() {
               </div>
 
               {/* side thickness for 3d effect */}
-              <div className="absolute inset-0 bg-black/10 rounded-[2.5rem] [transform:translateZ(-10px)]" />
+              <div className="absolute inset-0 bg-black/5 rounded-[2.5rem] [transform:translateZ(-10px)]" />
             </div>
           </div>
         </section>
