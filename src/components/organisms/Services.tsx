@@ -27,6 +27,69 @@ const gradientHeaderStyle = {
   WebkitTextFillColor: "transparent",
 };
 
+// internal helper for spotlight process cards
+function ProcessCard({ step, idx }: { step: any; idx: number }) {
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [isHovered, setIsHovered] = useState(false);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+  };
+
+  return (
+    <div
+      onMouseMove={handleMouseMove}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      className={cn(
+        "group relative p-[2px] rounded-[2.2rem] overflow-hidden transition-all duration-500 shadow-xl",
+        idx % 2 !== 0 ? "lg:-mt-12" : "lg:mt-0",
+      )}
+    >
+      {/* bolder moving outline animation */}
+      <div className="absolute inset-[-150%] bg-[conic-gradient(from_0deg,transparent_10%,#ffc670_30%,#ff5269_50%,#ffc670_70%,transparent_90%)] animate-[spin_3s_linear_infinite] opacity-100 z-0" />
+
+      <div className="relative bg-white bg-gradient-to-br from-white via-white/95 to-brand-primary/20 rounded-[2.1rem] p-5 md:p-10 flex flex-col max-md:min-h-[220px] md:min-h-[380px] z-10 transition-colors duration-300">
+        {/* metallic number with spotlight effect */}
+        <div className="relative inline-block leading-none">
+          <span
+            className={cn(
+              "text-7xl md:text-8xl font-black select-none transition-colors duration-500",
+              "text-slate-300/40", // metallic base
+            )}
+          >
+            {step.step.replace(/^0/, "")}
+          </span>
+
+          {/* spotlight layer - hidden on small screens */}
+          <span
+            className="absolute inset-0 text-7xl md:text-8xl font-black select-none leading-none pointer-events-none hidden md:block"
+            style={{
+              backgroundImage: `radial-gradient(circle at ${mousePos.x}px ${mousePos.y}px, #FFD77A 0%, #FF5269 35%, transparent 70%)`,
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              opacity: isHovered ? 1 : 0,
+              transition: "opacity 0.3s ease",
+            }}
+          >
+            {step.step.replace(/^0/, "")}
+          </span>
+        </div>
+
+        <div className="mt-auto max-md:mt-4">
+          <h3 className="font-figtree font-bold text-xl md:text-[25px] leading-[125%] text-text-primary mb-1 md:mb-3">
+            {step.title}
+          </h3>
+          <p className="b1 text-text-secondary leading-relaxed line-clamp-3 md:line-clamp-4">
+            {step.desc}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // reusable icon box
 function IconBox({
   children,
@@ -389,9 +452,9 @@ export default function Services() {
           </div>
         </section>
 
-        {/* onboarding - fixed mobile card height and metallic numbers */}
+        {/* onboarding */}
         <section className="flex flex-col items-center mt-32 md:mt-56">
-          <div className="flex flex-col items-center text-center max-w-4xl mx-auto mb-10 md:mb-20 space-y-3">
+          <div className="flex flex-col items-center text-center max-w-4xl mx-auto mb-10 md:mb-16 space-y-3">
             <span className="b3 text-brand-primary tracking-widest uppercase">
               The Process
             </span>
@@ -404,34 +467,9 @@ export default function Services() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 w-full items-start mt-6 md:mt-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 w-full items-start mt-4 md:mt-8">
             {processSteps.map((step, idx) => (
-              <div
-                key={idx}
-                className={cn(
-                  "group relative p-[2px] rounded-[2.2rem] overflow-hidden transition-all duration-500 shadow-xl",
-                  idx % 2 !== 0 ? "lg:-mt-12" : "lg:mt-0",
-                )}
-              >
-                {/* visible moving outline anim */}
-                <div className="absolute inset-[-150%] bg-[conic-gradient(from_0deg,transparent_20%,#ffc670_40%,#ff5269_50%,#ffc670_60%,transparent_80%)] animate-[spin_4s_linear_infinite] opacity-60 group-hover:opacity-100 transition-opacity duration-500" />
-
-                <div className="relative bg-white bg-gradient-to-br from-white via-white/80 to-brand-primary/30 rounded-[2.1rem] p-6 md:p-10 flex flex-col max-md:min-h-[260px] md:min-h-[380px] z-10 transition-colors duration-300">
-                  {/* metallic number layout */}
-                  <span className="text-7xl md:text-8xl font-black text-slate-400/20 select-none leading-none transition-all duration-500 group-hover:text-slate-500/40 group-hover:scale-105">
-                    {step.step.replace(/^0/, "")}
-                  </span>
-
-                  <div className="mt-auto max-md:mt-6">
-                    <h3 className="font-figtree font-bold text-lg md:text-[25px] leading-[125%] text-text-primary mb-2 md:mb-3">
-                      {step.title}
-                    </h3>
-                    <p className="b1 text-text-secondary leading-relaxed line-clamp-4">
-                      {step.desc}
-                    </p>
-                  </div>
-                </div>
-              </div>
+              <ProcessCard key={idx} step={step} idx={idx} />
             ))}
           </div>
         </section>
