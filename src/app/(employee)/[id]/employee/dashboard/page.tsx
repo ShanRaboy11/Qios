@@ -39,8 +39,12 @@ export default function EmployeeDashboard({
             className="flex flex-col w-full gap-6 md:gap-8"
           >
             <header className="mb-2">
-              <h1 className="text-3xl font-bold text-gray-900">Operational Overview</h1>
-              <p className="text-gray-600 mt-1">Your daily tasks and overall performance.</p>
+              <h1 className="text-3xl font-bold text-gray-900">
+                Operational Overview
+              </h1>
+              <p className="text-gray-600 mt-1">
+                Your daily tasks and overall performance.
+              </p>
             </header>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

@@ -1,0 +1,96 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import { Navbar } from "@/components/organisms/navbar";
+import { Footer } from "@/components/organisms/footer";
+import { motion } from "framer-motion";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+
+export default function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const pathname = usePathname();
+  const router = useRouter();
+
+  // map pathname to nav activeView
+  const viewMap: Record<string, string> = {
+    "/admin/dashboard": "dashboard",
+    "/admin/tenant_directory": "tenant_directory",
+    "/admin/system_activity": "system_activity",
+    "/admin/subscription": "subscription",
+    "/admin/settings": "settings",
+  };
+  const currentView = viewMap[pathname] || "dashboard";
+
+  const handleNavigation = (view: string) => {
+    if (view === currentView) return;
+    const url = view === "dashboard" ? "/admin/dashboard" : `/admin/${view}`;
+    router.push(url);
+  };
+
+  return (
+    <div className="min-h-screen bg-bg-primary overflow-x-hidden relative flex flex-col">
+      {/* background moving blobs */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <motion.div
+          animate={{
+            x: [0, 100, -50, 0],
+            y: [0, -100, 50, 0],
+            scale: [1, 1.2, 0.8, 1],
+          }}
+          transition={{
+            duration: 60,
+            repeat: Infinity,
+            repeatType: "reverse",
+            ease: "easeInOut",
+          }}
+          className="absolute top-[10%] left-[20%] w-[500px] h-[500px] bg-[#FFE5BE] rounded-full mix-blend-multiply filter blur-[80px] opacity-15"
+        />
+        <motion.div
+          animate={{
+            x: [0, -120, 80, 0],
+            y: [0, 80, -120, 0],
+            scale: [1, 0.8, 1.2, 1],
+          }}
+          transition={{
+            duration: 75,
+            repeat: Infinity,
+            repeatType: "reverse",
+            ease: "easeInOut",
+          }}
+          className="absolute top-[40%] right-[10%] w-[600px] h-[600px] bg-[#FFDF96] rounded-full mix-blend-multiply filter blur-[100px] opacity-20"
+        />
+        <motion.div
+          animate={{
+            x: [0, 150, -100, 0],
+            y: [0, 100, -150, 0],
+            scale: [1, 1.3, 0.9, 1],
+          }}
+          transition={{
+            duration: 66,
+            repeat: Infinity,
+            repeatType: "reverse",
+            ease: "easeInOut",
+          }}
+          className="absolute bottom-[-10%] left-[40%] w-[700px] h-[700px] bg-[#FFBDC6] rounded-full mix-blend-multiply filter blur-[120px] opacity-15"
+        />
+      </div>
+
+      <Navbar
+        variant="transparent"
+        type="admin"
+        activeView={currentView}
+        onNavigate={handleNavigation}
+      />
+
+      <div className="flex-1 max-w-[1440px] w-full mx-auto flex flex-col p-4 md:p-8 lg:p-12 mt-28 relative z-[90]">
+        {children}
+      </div>
+
+      <div className="relative bottom-0 inset-x-0 h-40 bg-gradient-to-t from-white via-white/50 to-transparent z-[2] pointer-events-none" />
+      <Footer hideSocials />
+    </div>
+  );
+}
