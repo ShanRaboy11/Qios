@@ -14,7 +14,7 @@ export type BadgeColor =
 export type BadgeVariant = "solid" | "subtle" | "outline" | "ghost";
 export type BadgeShape = "pill" | "rounded";
 
-export interface BadgeProps {
+export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   children: React.ReactNode;
   color?: BadgeColor;
   variant?: BadgeVariant;
@@ -35,27 +35,31 @@ const badgeStyles = {
     subtle: "bg-brand-primary/20 text-brand-primary",
     outline:
       "bg-brand-primary/20 border border-brand-primary text-brand-primary",
-    ghost: "bg-white/30 text-brand-primary border border-white/30 backdrop-blur-sm",
+    ghost:
+      "bg-white/30 text-brand-primary border border-white/30 backdrop-blur-sm",
   },
   accent: {
     solid: "bg-brand-accent text-text-tertiary backdrop-blur-sm",
     subtle: "bg-brand-accent/20 text-brand-accent",
     outline: "bg-brand-accent/20 border border-brand-accent text-brand-accent",
-    ghost: "bg-white/40 text-brand-accent border border-white/30 backdrop-blur-sm",
+    ghost:
+      "bg-white/40 text-brand-accent border border-white/30 backdrop-blur-sm",
   },
   success: {
     solid: "bg-success-primary text-text-tertiary backdrop-blur-sm",
     subtle: "bg-success-secondary text-success-primary",
     outline:
       "bg-success-secondary border border-success-primary text-success-primary",
-    ghost: "bg-white/40 text-success-primary border border-white/30 backdrop-blur-sm",
+    ghost:
+      "bg-white/40 text-success-primary border border-white/30 backdrop-blur-sm",
   },
   error: {
     solid: "bg-warning-primary text-text-tertiary backdrop-blur-sm",
     subtle: "bg-warning-secondary text-warning-primary",
     outline:
       "bg-warning-secondary border border-warning-primary text-warning-primary",
-    ghost: "bg-white/40 text-warning-primary border border-white/30 backdrop-blur-sm",
+    ghost:
+      "bg-white/40 text-warning-primary border border-white/30 backdrop-blur-sm",
   },
   info: {
     solid: "bg-[#3B82F6] text-white backdrop-blur-sm",
@@ -89,17 +93,19 @@ export const Badge = ({
   leftIcon,
   rightIcon,
   className,
+  ...props
 }: BadgeProps) => {
   const styles = badgeStyles[color][variant];
 
   return (
-    <div
+    <span
       className={cn(
         "inline-flex items-center gap-1.5 px-3 py-1 b4 whitespace-nowrap transition-all",
         shapeStyles[shape],
         styles,
         className,
       )}
+      {...props}
     >
       {leftIcon && (
         <span className="flex-shrink-0 flex items-center">{leftIcon}</span>
@@ -108,7 +114,7 @@ export const Badge = ({
       {rightIcon && (
         <span className="flex-shrink-0 flex items-center">{rightIcon}</span>
       )}
-    </div>
+    </span>
   );
 };
 

@@ -6,13 +6,13 @@ import { Button } from "@/components/atoms/Button";
 
 interface RegistrationSuccessModalProps {
   adminName: string;
-  businessEmail: string;
+  adminEmail: string;
   onClose: () => void;
 }
 
 export function RegistrationSuccessModal({
   adminName,
-  businessEmail,
+  adminEmail,
   onClose,
 }: RegistrationSuccessModalProps) {
   return (
@@ -45,7 +45,7 @@ export function RegistrationSuccessModal({
                 Confirmation Email Sent
               </p>
               <p className="text-xs text-blue-700 mt-1">
-                A detailed confirmation has been sent to {businessEmail}
+                A detailed confirmation has been sent to {adminEmail}
               </p>
             </div>
           </div>

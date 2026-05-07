@@ -83,10 +83,30 @@ type ResolveOnboardingAccessResult = {
 };
 
 const getSubscriptionPlan = (packageId: string): SubscriptionPlan => {
-  if (packageId === "basic" || packageId === "starter") return "basic";
-  if (packageId === "business" || packageId === "growth") return "business";
-  if (packageId === "enterprise" || packageId === "enterprises")
+  if (!packageId) return "basic";
+  const lowerId = packageId.toLowerCase();
+
+  if (
+    lowerId === "basic" ||
+    lowerId === "starter" ||
+    lowerId === "b3c2d4a5-1e6f-4c8d-9b1e-0a1f2e3d4c5b"
+  )
+    return "basic";
+
+  if (
+    lowerId === "business" ||
+    lowerId === "growth" ||
+    lowerId === "d1e2f3a4-b5c6-4d7e-8c9b-1a2f3e4d5c6b"
+  )
+    return "business";
+
+  if (
+    lowerId === "enterprise" ||
+    lowerId === "enterprises" ||
+    lowerId === "f5a4b3c2-e1d0-4e8f-9a1b-2c3d4e5f6a9b"
+  )
     return "enterprise";
+
   return "basic";
 };
 
@@ -793,14 +813,6 @@ export async function processOnboarding(data: {
 }) {
   const supabase = createSupabaseAdminClient();
   const subscriptionPlan = getSubscriptionPlan(data.subscriptionData.packageId);
-  const tenantSettings: TenantSettings = {
-    inventory_mode: data.featureData.inventoryMode,
-    service_workflow: data.featureData.serviceWorkflow,
-    dashboard_focus: data.featureData.dashboardFocus,
-    ...(subscriptionPlan === "enterprise"
-      ? { supply_logic: data.featureData.supplyLogic }
-      : {}),
-  };
 
   const { error: tenantError } = await supabase
     .from("tenants")
@@ -809,7 +821,7 @@ export async function processOnboarding(data: {
       business_email: normalizeEmail(data.businessData.email),
       owner_name: data.businessData.owner,
       subscription_plan: subscriptionPlan,
-      settings: tenantSettings,
+      settings: null,
       status: "pending",
     })
     .eq("id", data.tenantId);
@@ -853,7 +865,9 @@ export async function processOnboarding(data: {
   }
 
   try {
-    const toEmail = data.adminEmail || data.businessData.email;
+    const toEmail = data.adminEmail;
+    if (!toEmail)
+      throw new Error("Admin email is required to send confirmation.");
     await sendRegistrationSuccessEmail({
       to: toEmail,
       adminName: data.businessData.owner.trim(),

@@ -109,8 +109,6 @@ export default function DraftPage() {
           <MenuCategoryManagement />
         </SectionWrapper>
 
-
-
         <SectionWrapper title="Order Summary">
           <OrderSummary />
         </SectionWrapper>
