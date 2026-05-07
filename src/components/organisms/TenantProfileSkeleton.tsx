@@ -44,7 +44,10 @@ export const TenantProfileSkeleton = () => {
           <div className="w-48 h-8 bg-gray-200 rounded-md animate-pulse mb-6" />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-[120px] bg-gray-100 rounded-[20px] animate-pulse" />
+              <div
+                key={i}
+                className="h-[120px] bg-gray-100 rounded-[20px] animate-pulse"
+              />
             ))}
           </div>
         </div>

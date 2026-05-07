@@ -19,7 +19,7 @@ type OnboardingBusinessData = {
 };
 
 type OnboardingSubscriptionData = {
-  packageId?: string;
+  packageName?: string;
 };
 
 type PartialOperationalSetupConfig = Partial<OperationalSetupConfig>;
@@ -66,7 +66,7 @@ type ResolveOnboardingAccessResult = {
   businessName?: string;
   businessEmail?: string;
   ownerName?: string;
-  subscriptionPlan?: SubscriptionPlan;
+  subscriptionPlan?: string;
   verificationDocUrls?: string[];
   operationalSetup?: PartialOperationalSetupConfig;
   tenant?: {
@@ -74,40 +74,12 @@ type ResolveOnboardingAccessResult = {
     business_name: string | null;
     business_email: string | null;
     owner_name: string | null;
-    subscription_plan: SubscriptionPlan | null;
+    subscription_plan: string | null;
     verification_doc_urls: string[] | null;
     settings: Record<string, unknown> | null;
     status: string | null;
     [key: string]: unknown;
   };
-};
-
-const getSubscriptionPlan = (packageId: string): SubscriptionPlan => {
-  if (!packageId) return "basic";
-  const lowerId = packageId.toLowerCase();
-
-  if (
-    lowerId === "basic" ||
-    lowerId === "starter" ||
-    lowerId === "b3c2d4a5-1e6f-4c8d-9b1e-0a1f2e3d4c5b"
-  )
-    return "basic";
-
-  if (
-    lowerId === "business" ||
-    lowerId === "growth" ||
-    lowerId === "d1e2f3a4-b5c6-4d7e-8c9b-1a2f3e4d5c6b"
-  )
-    return "business";
-
-  if (
-    lowerId === "enterprise" ||
-    lowerId === "enterprises" ||
-    lowerId === "f5a4b3c2-e1d0-4e8f-9a1b-2c3d4e5f6a9b"
-  )
-    return "enterprise";
-
-  return "basic";
 };
 
 const normalizeEmail = (email: string) => email.trim().toLowerCase();
@@ -653,10 +625,8 @@ export async function saveOnboardingProgress(
     updatePayload.owner_name = data.businessData.owner;
   }
 
-  if (data.subscriptionData?.packageId) {
-    updatePayload.subscription_plan = getSubscriptionPlan(
-      data.subscriptionData.packageId,
-    );
+  if (data.subscriptionData?.packageName) {
+    updatePayload.subscription_plan = data.subscriptionData.packageName;
   }
 
   const tenantSettings = buildTenantSettings(data.featureData);
@@ -806,13 +776,12 @@ export async function saveDocumentUploads(data: DocumentUploadInput) {
 export async function processOnboarding(data: {
   tenantId: string;
   businessData: { name: string; email: string; owner: string };
-  subscriptionData: { packageId: string };
+  subscriptionData: { packageName: string };
   featureData: OperationalSetupConfig;
   userId?: string;
   adminEmail?: string;
 }) {
   const supabase = createSupabaseAdminClient();
-  const subscriptionPlan = getSubscriptionPlan(data.subscriptionData.packageId);
 
   const { error: tenantError } = await supabase
     .from("tenants")
@@ -820,7 +789,7 @@ export async function processOnboarding(data: {
       business_name: data.businessData.name,
       business_email: normalizeEmail(data.businessData.email),
       owner_name: data.businessData.owner,
-      subscription_plan: subscriptionPlan,
+      subscription_plan: data.subscriptionData.packageName,
       settings: null,
       status: "pending",
     })
