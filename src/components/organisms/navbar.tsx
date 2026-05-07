@@ -76,7 +76,7 @@ export const Navbar = ({
 
   const defaultLinks = [
     { label: "Home", href: "/", id: "home" },
-    { label: "Services", href: "#services", id: "services" },
+    { label: "Services", href: "/services", id: "services" },
     { label: "Contact", href: "/contact", id: "contact" },
   ];
 
