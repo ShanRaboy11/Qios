@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
 import { FeatureToggle } from "@/components/molecules/FeatureToggle";
+import { ActionConfirmationModal } from "@/components/molecules/ConfirmationModal";
 import { Plus, Search, Shield, ShieldAlert, Check, Copy, Trash2, GripVertical, ShoppingCart, Package, LineChart, QrCode, Users, X, Edit2, KeyRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -155,6 +156,7 @@ export default function RoleManagementPage() {
   const [draftRole, setDraftRole] = useState<Role | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState<"permissions" | "employees">("permissions");
+  const [confirmationAction, setConfirmationAction] = useState<"save" | "copy" | "delete" | null>(null);
   
   // modal & employee states
   const [isAddEmployeeModalOpen, setIsAddEmployeeModalOpen] = useState(false);
@@ -169,6 +171,7 @@ export default function RoleManagementPage() {
   const [draggedRoleId, setDraggedRoleId] = useState<string | null>(null);
 
   const activeRole = roles.find((r) => r.id === selectedRoleId);
+  const hasConfirmationOpen = confirmationAction !== null;
   
   // initialize draft when active role changes
   useEffect(() => {
@@ -198,6 +201,7 @@ export default function RoleManagementPage() {
   const handleSave = () => {
     if (!draftRole) return;
     setRoles(roles.map((r) => (r.id === draftRole.id ? draftRole : r)));
+    setConfirmationAction(null);
   };
 
   const handleDragStart = (e: React.DragEvent, id: string) => {
@@ -243,6 +247,7 @@ export default function RoleManagementPage() {
     setSelectedRoleId(newRole.id);
     setIsCreateRoleModalOpen(false);
     if (templateRole) setShowTemplateReminder(true);
+    setConfirmationAction(null);
   };
 
   const handleDuplicate = () => {
@@ -255,6 +260,7 @@ export default function RoleManagementPage() {
     };
     setRoles([...roles, newRole]);
     setSelectedRoleId(newRole.id);
+    setConfirmationAction(null);
   };
 
   const handleAddEmployee = () => {
@@ -294,7 +300,27 @@ export default function RoleManagementPage() {
     const newRoles = roles.filter((r) => r.id !== selectedRoleId);
     setRoles(newRoles);
     setSelectedRoleId(newRoles[0].id);
+    setConfirmationAction(null);
   };
+
+  const runConfirmedAction = () => {
+    if (confirmationAction === "save") {
+      handleSave();
+      return;
+    }
+
+    if (confirmationAction === "copy") {
+      handleDuplicate();
+      return;
+    }
+
+    if (confirmationAction === "delete") {
+      handleDelete();
+    }
+  };
+
+  const formatRoleName = (name: string) =>
+    name ? name.charAt(0).toUpperCase() + name.slice(1) : name;
 
   const filteredRoles = roles.filter((r) => r.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
@@ -359,7 +385,7 @@ export default function RoleManagementPage() {
                         "b2 font-bold transition-colors",
                         selectedRoleId === role.id ? "text-text-primary" : "text-text-primary/80"
                       )}>
-                        {role.name}
+                        {formatRoleName(role.name)}
                       </span>
                       <span className="b5 text-text-secondary">
                         {role.employees.length} {role.employees.length === 1 ? 'user' : 'users'}
@@ -409,13 +435,13 @@ export default function RoleManagementPage() {
                 </div>
 
                 <div className="flex gap-2 self-end sm:self-auto mt-2 sm:mt-0">
-                  <Button variant="ghost" size="icon" onClick={handleDuplicate} title="Duplicate Role">
+                  <Button variant="ghost" size="icon" onClick={() => setConfirmationAction("copy")} title="Duplicate Role">
                     <Copy size={18} />
                   </Button>
                   <Button 
                     variant="ghost" 
                     size="icon" 
-                    onClick={handleDelete} 
+                    onClick={() => setConfirmationAction("delete")} 
                     title="Delete Role"
                     className="hover:bg-warning-secondary hover:text-warning-primary"
                     disabled={roles.length <= 1}
@@ -578,7 +604,7 @@ export default function RoleManagementPage() {
                 )}
                 <Button 
                   variant={hasChanges ? "primary" : "ghost"}
-                  onClick={handleSave} 
+                  onClick={() => setConfirmationAction("save")} 
                   disabled={!hasChanges}
                   className={cn(!hasChanges && "opacity-50")}
                 >
@@ -599,6 +625,45 @@ export default function RoleManagementPage() {
         .custom-scrollbar::-webkit-scrollbar {
           width: 6px;
         }
+
+        <ActionConfirmationModal
+          isOpen={hasConfirmationOpen}
+          action={confirmationAction}
+          title={
+            confirmationAction === "save"
+              ? "Save Role Changes?"
+              : confirmationAction === "copy"
+                ? "Copy This Role?"
+                : "Delete This Role?"
+          }
+          message={
+            confirmationAction === "save" ? (
+              <>
+                Your edits to <span className="font-semibold text-text-primary">"{draftRole?.name ?? "this role"}"</span> will be saved locally.
+              </>
+            ) : confirmationAction === "copy" ? (
+              <>
+                A new copy of <span className="font-semibold text-text-primary">"{activeRole?.name ?? "this role"}"</span> will be created locally.
+              </>
+            ) : (
+              <>
+                Are you sure you want to remove <span className="font-semibold text-text-primary">"{activeRole?.name ?? "this role"}"</span>? This cannot be undone.
+              </>
+            )
+          }
+          confirmLabel={
+            confirmationAction === "save"
+              ? "Save Changes"
+              : confirmationAction === "copy"
+                ? "Create Copy"
+                : "Yes, Delete"
+          }
+          confirmVariant={confirmationAction === "delete" ? "outline" : "primary"}
+          activePlanName={activeRole?.name}
+          draftPlanName={draftRole?.name}
+          onClose={() => setConfirmationAction(null)}
+          onConfirm={runConfirmedAction}
+        />
         .custom-scrollbar::-webkit-scrollbar-track {
           background: transparent;
         }

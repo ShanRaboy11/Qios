@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import { ActionConfirmationModal } from "@/components/molecules/ConfirmationModal";
 
 /* ------------------------------------------------------------------ */
 /*  Tokens                                                              */
@@ -525,122 +526,26 @@ function ConfirmModal({
   title,
   message,
   confirmLabel,
-  confirmColor,
   onConfirm,
   onClose,
 }: {
   title: string;
   message: string;
   confirmLabel: string;
-  confirmColor: string;
   onConfirm: () => void;
   onClose: () => void;
 }) {
-  const [hov, setHov] = useState(false);
-  const [cancelHov, setCancelHov] = useState(false);
   return (
-    <ModalOverlay onClose={onClose}>
-      <div
-        style={{
-          background: "#fff",
-          borderRadius: 20,
-          width: "min(400px, 90vw)",
-          overflow: "hidden",
-          boxShadow: "0 20px 60px rgba(0,0,0,0.18)",
-        }}
-      >
-        <div
-          style={{
-            padding: "28px 28px 24px",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: 14,
-            textAlign: "center",
-          }}
-        >
-          <div
-            style={{
-              width: 52,
-              height: 52,
-              borderRadius: "50%",
-              background: confirmColor === ACCENT ? ACCENT_LIGHT : AMBER_LIGHT,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: confirmColor,
-            }}
-          >
-            <IcoWarning />
-          </div>
-          <div>
-            <div
-              style={{
-                fontSize: 17,
-                fontWeight: 800,
-                color: INK,
-                marginBottom: 6,
-              }}
-            >
-              {title}
-            </div>
-            <div style={{ fontSize: 13, color: MUTED, lineHeight: 1.5 }}>
-              {message}
-            </div>
-          </div>
-        </div>
-        <div
-          style={{
-            display: "flex",
-            gap: 10,
-            padding: "0 28px 24px",
-          }}
-        >
-          <button
-            onMouseEnter={() => setCancelHov(true)}
-            onMouseLeave={() => setCancelHov(false)}
-            onClick={onClose}
-            style={{
-              flex: 1,
-              height: 42,
-              borderRadius: 10,
-              border: `1.5px solid rgba(255,198,112,0.5)`,
-              background: cancelHov ? AMBER_LIGHT : "#fff",
-              color: AMBER_DARK,
-              fontSize: 13,
-              fontWeight: 700,
-              cursor: "pointer",
-              transition: "all .15s",
-            }}
-          >
-            Cancel
-          </button>
-          <button
-            onMouseEnter={() => setHov(true)}
-            onMouseLeave={() => setHov(false)}
-            onClick={onConfirm}
-            style={{
-              flex: 1,
-              height: 42,
-              borderRadius: 10,
-              border: "none",
-              background: hov
-                ? confirmColor === ACCENT
-                  ? ACCENT_DARK
-                  : AMBER_DARK
-                : confirmColor,
-              color: "#fff",
-              fontSize: 13,
-              fontWeight: 800,
-              cursor: "pointer",
-              transition: "all .15s",
-            }}
-          >
-            {confirmLabel}
-          </button>
-        </div>
-      </div>
-    </ModalOverlay>
+    <ActionConfirmationModal
+      isOpen
+      action="delete"
+      title={title}
+      message={message}
+      confirmLabel={confirmLabel}
+      confirmVariant="outline"
+      onClose={onClose}
+      onConfirm={onConfirm}
+    />
   );
 }
 
@@ -1568,7 +1473,6 @@ function ModalController({
         title="Remove Dish"
         message={`Are you sure you want to remove "${action.data.name}" from the menu? This action cannot be undone.`}
         confirmLabel="Yes, Remove"
-        confirmColor={ACCENT}
         onConfirm={onClose}
         onClose={onClose}
       />
@@ -1580,7 +1484,6 @@ function ModalController({
         title="Remove Ingredient"
         message={`Are you sure you want to remove "${action.data.name}" from inventory? This action cannot be undone.`}
         confirmLabel="Yes, Remove"
-        confirmColor={ACCENT}
         onConfirm={onClose}
         onClose={onClose}
       />

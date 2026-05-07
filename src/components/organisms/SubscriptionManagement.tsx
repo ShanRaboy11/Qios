@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
 import { FeatureToggle } from "@/components/molecules/FeatureToggle";
-import { ActionConfirmationModal } from "@/components/molecules/ActionConfirmationModal";
+import { ActionConfirmationModal } from "@/components/molecules/ConfirmationModal";
 import {
   Plus,
   Search,
@@ -56,15 +56,53 @@ const DEFAULT_FEATURES: Features = {
     "Employee Authentication": false,
     "QR Code Order Retrieval": false,
     "Order Modification & Validation": false,
-      <ActionConfirmationModal
-        isOpen={hasConfirmationOpen}
-        action={confirmationAction}
-        draftPlanName={draftPlan?.name}
-        activePlanName={activePlan?.name}
-        saving={saving}
-        onClose={() => setConfirmationAction(null)}
-        onConfirm={runConfirmedAction}
-      />
+    "Payment Confirmation": false,
+    "Order Queue Management": false,
+    "Transaction Logging": false,
+  },
+  inventory: {
+    "Unit-Based Inventory Tracking": false,
+    "Measurement-Based Inventory Tracking": false,
+    "Automated Stock Deduction": false,
+    "Physical Stock Input & Variance Reports": false,
+    "Shrinkage Alerts": false,
+  },
+  analytics: {
+    "Live Revenue Dashboard": false,
+    "Sales Reports Generation": false,
+    "Order Velocity Analytics": false,
+    "Staff Activity Monitoring": false,
+    "Cancellation & Void Monitoring": false,
+  },
+  admin_controls: {
+    "Admin Authentication": false,
+    "Role & Permissions Management": false,
+  },
+};
+
+const FEATURE_DESCRIPTIONS: Record<string, string> = {
+  "Browser-Based Ordering":
+    "Access the digital menu through QR code scanning without requiring login.",
+  "Text-Based AI Concierge":
+    "A chat interface for customers to type orders and get recommendations.",
+  "Menu Viewing & Item Customization":
+    "Browse items, select predefined meals, and choose add-ons or sizes.",
+  "Real-Time Price Calculation":
+    "Automatically compute total cost based on selected items and options.",
+  "Order Confirmation & QR Generation":
+    "Review order summary and generate a QR code with order ID.",
+  "Order Status Viewing": "View order progress (Pending, Preparing, Ready).",
+  "Employee Authentication": "Secure login for authorized store personnel.",
+  "QR Code Order Retrieval":
+    "Scan customer-generated QR codes to retrieve order details.",
+  "Order Modification & Validation":
+    "Adjust items within an active order and verify authenticity.",
+  "Payment Confirmation": "Confirm and finalize customer payments.",
+  "Order Queue Management":
+    "Send validated orders to the preparation dashboard and update status.",
+  "Transaction Logging": "Record completed transactions into revenue records.",
+  "Unit-Based Inventory Tracking":
+    "Track current stock levels by fixed unit quantity per item.",
   "Measurement-Based Inventory Tracking":
     "Track stock in grams/mL based on recipe matrix.",
   "Automated Stock Deduction":
@@ -114,6 +152,8 @@ export default function SubscriptionManagement() {
   const hasConfirmationOpen = confirmationAction !== null;
 
   const normalizePlanName = (name: string) => name.trim().toLowerCase();
+  const formatPlanLabel = (name: string) =>
+    name ? name.charAt(0).toUpperCase() + name.slice(1) : name;
 
   useEffect(() => {
     async function fetchPlans() {
@@ -490,7 +530,7 @@ export default function SubscriptionManagement() {
                         : "text-text-primary/80",
                     )}
                   >
-                    {plan.name}
+                    {formatPlanLabel(plan.name)}
                   </span>
                   {plan.badge && (
                     <span className="b5 text-text-secondary truncate mt-0.5">
@@ -802,7 +842,7 @@ export default function SubscriptionManagement() {
                     />
                     <div>
                       <span className="b2 font-bold text-text-primary group-hover:text-brand-primary transition-colors">
-                        {template.name} Plan
+                        {formatPlanLabel(template.name)} Plan
                       </span>
                       <p className="b4 text-text-secondary">
                         Pre-configured with standard{" "}
@@ -836,131 +876,15 @@ export default function SubscriptionManagement() {
         </div>
       )}
 
-      {hasConfirmationOpen && (
-  <div className="fixed inset-0 z-[60] flex items-center justify-center bg-text-primary/45 backdrop-blur-sm p-4">
-    <div
-      className="bg-white rounded-[28px] w-full max-w-sm shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
-      style={{ boxShadow: "0 24px 64px rgba(0,0,0,0.14), 0 4px 16px rgba(0,0,0,0.08)" }}
-    >
-      {/* Icon + Header */}
-      <div className="flex flex-col items-center text-center px-8 pt-8 pb-6">
-        {/* Action icon */}
-        <div
-          className={cn(
-            "flex items-center justify-center mb-5",
-            confirmationAction === "delete"
-              ? "w-14 h-14 rounded-full bg-[#fff0f0]"
-              : "w-14 h-14 rounded-2xl",
-            confirmationAction === "copy" && "bg-[#fff3da]",
-            confirmationAction === "save" && "bg-[#e0fad6]",
-          )}
-          style={{
-            boxShadow:
-              confirmationAction === "delete"
-                ? "0 4px 18px rgba(255,82,105,0.18)"
-                : confirmationAction === "copy"
-                  ? "0 4px 18px rgba(255,215,122,0.35)"
-                  : "0 4px 18px rgba(31,173,102,0.18)",
-          }}
-        >
-          {confirmationAction === "delete" ? (
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path
-                d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"
-                stroke="#ec1313"
-                strokeWidth="1.75"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path d="M12 9v4" stroke="#ec1313" strokeWidth="1.75" strokeLinecap="round" />
-              <circle cx="12" cy="17" r="1" fill="#ec1313" />
-            </svg>
-          ) : confirmationAction === "copy" ? (
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <rect x="8" y="8" width="12" height="12" rx="3" stroke="#c07a00" strokeWidth="1.75" />
-              <path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" stroke="#c07a00" strokeWidth="1.75" strokeLinecap="round" />
-            </svg>
-          ) : (
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z" stroke="#1fad66" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M17 21v-8H7v8M7 3v5h8" stroke="#1fad66" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          )}
-        </div>
-
-        {/* Title */}
-        <h3 className="font-bold text-[17px] text-text-primary leading-snug">
-          {confirmationAction === "save"
-            ? "Save Changes?"
-            : confirmationAction === "copy"
-              ? "Copy This Plan?"
-              : "Delete This Plan?"}
-        </h3>
-
-        {/* Subtitle */}
-        <p className="text-[13px] text-text-secondary mt-2 leading-relaxed max-w-[260px]">
-          {confirmationAction === "save" ? (
-            <>
-              Your edits to{" "}
-              <span className="font-semibold text-text-primary">
-                "{draftPlan?.name ?? "this plan"}"
-              </span>{" "}
-              will be saved permanently.
-            </>
-          ) : confirmationAction === "copy" ? (
-            <>
-              A new copy of{" "}
-              <span className="font-semibold text-text-primary">
-                "{activePlan?.name ?? "this plan"}"
-              </span>{" "}
-              will be created.
-            </>
-          ) : (
-            <>
-              Are you sure you want to remove{" "}
-              <span className="font-semibold text-text-primary">
-                "{activePlan?.name ?? "this plan"}"
-              </span>{" "}
-              from the menu? This action cannot be undone.
-            </>
-          )}
-        </p>
-      </div>
-
-      {/* Divider */}
-      <div className="h-px bg-black/[0.05] mx-6" />
-
-      {/* Actions */}
-      <div className="px-6 py-5 flex items-center gap-3">
-        <Button
-          variant="ghost"
-          onClick={() => setConfirmationAction(null)}
-          disabled={saving}
-          className="flex-1 rounded-xl h-11 text-[13.5px] font-medium text-text-secondary hover:bg-black/[0.04] hover:text-text-primary transition-all duration-150 border border-black/[0.07]"
-        >
-          Cancel
-        </Button>
-        <Button
-          variant={confirmationAction === "delete" ? "outline" : "primary"}
-          onClick={runConfirmedAction}
-          loading={saving}
-          disabled={saving}
-          className={cn(
-            "flex-1 rounded-xl h-11 text-[13.5px] font-semibold transition-all duration-200 shadow-sm active:scale-[0.98]",
-            confirmationAction === "delete" &&
-              "bg-warning-secondary text-warning-primary border-2 border-warning-primary/20 hover:bg-warning-primary hover:text-white hover:border-warning-primary hover:shadow-md",
-          )}
-        >
-          {confirmationAction === "save"
-            ? "Save Changes"
-            : confirmationAction === "copy"
-              ? "Create Copy"
-              : "Yes, Delete"}
-        </Button>
-      </div>
-    </div>
-  </div>
-)}
+      <ActionConfirmationModal
+        isOpen={hasConfirmationOpen}
+        action={confirmationAction}
+        draftPlanName={draftPlan?.name}
+        activePlanName={activePlan?.name}
+        saving={saving}
+        onClose={() => setConfirmationAction(null)}
+        onConfirm={runConfirmedAction}
+      />
     </>
   );
 }
