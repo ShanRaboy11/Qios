@@ -1,7 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
+import RolesManagement from "@/components/organisms/RolesManagement";
 import { Button } from "@/components/atoms/Button";
+import { ArrowLeft } from "lucide-react";
+import { useRouter, useParams } from "next/navigation";
 import { Input } from "@/components/atoms/Input";
 import { FeatureToggle } from "@/components/molecules/FeatureToggle";
 import { ActionConfirmationModal } from "@/components/molecules/ConfirmationModal";
@@ -150,6 +153,10 @@ const PRESET_COLORS = [
   "bg-text-primary", // dark
 ];
 
+export default function RolesPage() {
+  const router = useRouter();
+  const params = useParams();
+  const tenantId = params.id as string;
 export default function RoleManagementPage() {
   const [roles, setRoles] = useState<Role[]>(INITIAL_ROLES);
   const [selectedRoleId, setSelectedRoleId] = useState<string>(roles[0].id);
@@ -325,6 +332,13 @@ export default function RoleManagementPage() {
   const filteredRoles = roles.filter((r) => r.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
   return (
+    <>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+        <div>
+          <h2 className="h2 text-text-primary">Role Management</h2>
+          <p className="b1 text-text-secondary mt-2">
+            Configure system roles and their permissions
+          </p>
     <div className="flex flex-col h-full bg-bg-primary overflow-hidden rounded-2xl md:rounded-[32px] border-4 border-white shadow-xl max-w-7xl mx-4 xl:mx-auto my-4 md:my-8">
       {/* header */}
       <div className="flex-shrink-0 px-4 md:px-8 pt-6 md:pt-10 pb-4 md:pb-6">
@@ -618,6 +632,19 @@ export default function RoleManagementPage() {
             </div>
           )}
         </div>
+        <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            shape="rounded"
+            leftIcon={<ArrowLeft size={18} />}
+            onClick={() => router.push(`/${tenantId}/staff`)}
+          >
+            Back to Staff
+          </Button>
+        </div>
+      </div>
+      <RolesManagement />
+    </>
       </div>
       
       {/* scrollbar styling */}

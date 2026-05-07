@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { ChartCard } from "@/components/molecules/ChartCard";
 import {
   BarChart,
@@ -22,7 +22,7 @@ const companiesData = [
   { name: "T", value: 30 },
   { name: "W", value: 20 },
   { name: "T", value: 80 },
-  { name: "F", value: 60, isHighlighted: true }, // The red one
+  { name: "F", value: 60, isHighlighted: true },
   { name: "S", value: 50 },
   { name: "S", value: 50 },
 ];
@@ -49,6 +49,14 @@ const plansData = [
 ];
 
 export const AdminChartsSection = () => {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 mb-6">
       {/* Companies Bar Chart */}
@@ -115,7 +123,7 @@ export const AdminChartsSection = () => {
               Revenue
             </div>
           </div>
-          <div className="flex-grow">
+          <div className="flex-grow min-h-0">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart
                 data={revenueData}
@@ -169,7 +177,7 @@ export const AdminChartsSection = () => {
         className="lg:col-span-3"
       >
         <div className="h-[250px] w-full flex flex-col relative mt-4">
-          <div className="flex-grow flex items-center justify-center -mt-6">
+          <div className="flex-grow flex items-center justify-center -mt-6 min-h-0">
             <ResponsiveContainer width="100%" height={160}>
               <PieChart>
                 <Pie
