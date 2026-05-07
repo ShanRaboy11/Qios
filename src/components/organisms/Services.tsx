@@ -27,11 +27,22 @@ const gradientHeaderStyle = {
   WebkitTextFillColor: "transparent",
 };
 
-// reusable icon box
-function IconBox({ children }: { children: React.ReactNode }) {
+// reusable icon box - updated to match problem & solution icon container style
+function IconBox({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
   return (
-    <div className="w-[44px] h-[44px] md:w-[56px] md:h-[56px] rounded-[14px] md:rounded-[18px] flex items-center justify-center relative overflow-hidden bg-brand-accent/10 border border-brand-accent/20">
-      <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent" />
+    <div
+      className={cn(
+        "w-16 h-16 rounded-[20px] flex items-center justify-center relative overflow-hidden shadow-inner",
+        className,
+      )}
+    >
+      <div className="absolute inset-0 bg-white/10" />
       <div className="relative z-10">{children}</div>
     </div>
   );
@@ -66,24 +77,40 @@ export default function Services() {
       title: "Enterprise Security",
       description:
         "Bank-level encryption keeping your data strictly confidential and compliant with global standards.",
+      bgColor: "bg-brand-accent",
+      textColor: "text-white",
+      iconBg: "bg-white/20",
+      iconColor: "text-white",
     },
     {
       icon: <Zap className="w-6 h-6 md:w-8 md:h-8 text-brand-accent" />,
       title: "Fast Performance",
       description:
         "Sub-second load times for menus and instant updates across all your restaurant devices.",
+      bgColor: "bg-brand-primary",
+      textColor: "text-text-primary",
+      iconBg: "bg-white/40",
+      iconColor: "text-text-primary",
     },
     {
       icon: <Users className="w-6 h-6 md:w-8 md:h-8 text-brand-accent" />,
       title: "Multi-Tenant",
       description:
         "Seamlessly manage multiple store locations, menus, and staff from a single unified dashboard.",
+      bgColor: "bg-text-primary",
+      textColor: "text-white",
+      iconBg: "bg-white/10",
+      iconColor: "text-brand-primary",
     },
     {
       icon: <BarChart className="w-6 h-6 md:w-8 md:h-8 text-brand-accent" />,
       title: "Advanced Analytics",
       description:
         "Deep insights into peak hours, top-selling items, and customer behavior to drive more revenue.",
+      bgColor: "bg-success-primary",
+      textColor: "text-white",
+      iconBg: "bg-white/20",
+      iconColor: "text-white",
     },
   ];
 
@@ -189,9 +216,9 @@ export default function Services() {
   );
 
   return (
-    <section className="relative w-full py-24 bg-bg-primary overflow-hidden font-inter">
+    <section className="relative w-full py-32 bg-bg-primary overflow-hidden font-inter">
       {/* ambient background elements */}
-      <div className="absolute top-0 inset-x-0 h-64 bg-gradient-to-b from-bg-primary to-transparent pointer-events-none z-10" />
+      <div className="absolute top-0 inset-x-0 h-48 bg-gradient-to-b from-bg-primary via-bg-primary/50 to-transparent pointer-events-none z-10" />
       <div
         className="absolute -top-[5%] -left-[5%] w-[50%] h-[50%] rounded-full opacity-30 pointer-events-none"
         style={{
@@ -209,37 +236,39 @@ export default function Services() {
         }}
       />
 
-      <div className="flex flex-col gap-32 md:gap-48 w-full max-w-[1440px] mx-auto px-6 md:px-12 lg:px-24 relative z-10">
+      <div className="flex flex-col gap-20 md:gap-32 w-full max-w-[1440px] mx-auto px-6 md:px-12 lg:px-24 relative z-10">
         {/* page hero section */}
-        <div className="flex flex-col items-center text-center max-w-5xl mx-auto pt-10">
-          <p className="b3 text-brand-accent font-bold tracking-widest uppercase mb-4">
-            OUR SERVICES
-          </p>
-          <h1 className="max-md:text-[40px] h1 text-text-primary tracking-tight leading-[1.1] mb-6">
-            Powerful Solutions for <br className="hidden md:block" />
-            <span style={gradientHeaderStyle}>Modern Restaurants</span>
-          </h1>
-          <p className="max-md:text-lg h4 text-text-secondary max-w-3xl mx-auto leading-relaxed">
-            Everything you need to digitize your operations, from smart menus to
-            automated inventory and detailed analytics that grow your business.
-          </p>
+        <div className="max-w-4xl mx-auto relative z-10 w-full">
+          <div className="text-center mb-10 space-y-3">
+            <p className="b3 text-brand-primary uppercase tracking-widest">
+              OUR SERVICES
+            </p>
+            <h1 className="h1 text-text-primary tracking-tight leading-tight">
+              Powerful Solutions for <br className="hidden md:block" />
+              <span style={gradientHeaderStyle}>Modern Restaurants</span>
+            </h1>
+            <p className="h4 text-text-secondary max-w-2xl mx-auto leading-relaxed">
+              Everything you need to digitize your operations with smart menus,
+              automated inventory, and detailed analytics.
+            </p>
+          </div>
         </div>
 
-        {/* features section - split layout */}
+        {/* features section - split layout with wide colorful cards */}
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center">
-          <div className="flex flex-col text-left">
-            <span className="b3 font-bold text-brand-accent tracking-widest uppercase mb-4">
+          <div className="flex flex-col text-left space-y-3">
+            <span className="b3 text-brand-primary tracking-widest uppercase">
               Features
             </span>
-            <h2 className="max-md:text-[36px] h2 text-text-primary tracking-tight leading-tight">
-              You Are In <br /> Good Hands
-            </h2>
-            <p className="b1 text-text-secondary mt-6 max-w-lg leading-relaxed text-lg">
+            <h1 className="h1 text-text-primary tracking-tight leading-tight">
+              You Are In <span style={gradientHeaderStyle}>Good Hands</span>
+            </h1>
+            <p className="h4 text-text-secondary max-w-lg leading-relaxed">
               Our platform is built on modern, secure infrastructure designed to
               handle peak volumes without breaking a sweat. Manage everything
               with ease.
             </p>
-            <div className="mt-10 flex flex-wrap gap-4">
+            <div className="pt-7 flex flex-wrap gap-4">
               <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-full border border-black/5 shadow-sm">
                 <CheckCircle2 size={16} className="text-brand-primary" />
                 <span className="text-sm font-semibold">99.9% Uptime</span>
@@ -258,21 +287,34 @@ export default function Services() {
               delay={4500}
               pauseOnHover={true}
               width="100%"
-              height="360px"
+              height="380px"
             >
               {features.map((feature, idx) => (
                 <SwapCard
                   key={idx}
-                  customClass="!bg-white/95 backdrop-blur-xl p-10 !border-white shadow-2xl text-left w-full max-w-[420px] rounded-[2.5rem]"
+                  customClass={cn(
+                    "p-10 !border-white/10 shadow-2xl text-left w-full max-w-[540px] rounded-[2rem] flex flex-col justify-between",
+                    feature.bgColor,
+                    feature.textColor,
+                  )}
                 >
-                  <IconBox>{feature.icon}</IconBox>
-                  <div className="flex flex-col gap-4 mt-8">
-                    <h3 className="text-2xl font-bold text-text-primary">
-                      {feature.title}
-                    </h3>
-                    <p className="text-[17px] leading-relaxed text-text-secondary">
-                      {feature.description}
-                    </p>
+                  <div className="flex flex-col">
+                    <IconBox className={feature.iconBg}>
+                      {React.cloneElement(feature.icon as React.ReactElement, {
+                        className: cn(
+                          (feature.icon as React.ReactElement).props.className,
+                          feature.iconColor,
+                        ),
+                      })}
+                    </IconBox>
+                    <div className="flex flex-col gap-3 mt-8">
+                      <h3 className="text-3xl font-bold tracking-tight">
+                        {feature.title}
+                      </h3>
+                      <p className="text-lg leading-relaxed opacity-90 font-medium">
+                        {feature.description}
+                      </p>
+                    </div>
                   </div>
                 </SwapCard>
               ))}
@@ -280,7 +322,7 @@ export default function Services() {
           </div>
         </section>
 
-        {/* what makes us different - refined layout */}
+        {/* what makes us different */}
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center">
           <div className="order-2 lg:order-1 relative">
             <div className="relative rounded-[3rem] overflow-hidden bg-gradient-to-tr from-brand-secondary/20 to-brand-primary/40 aspect-square flex items-center justify-center border border-black/5 p-8">
@@ -312,21 +354,19 @@ export default function Services() {
             </div>
           </div>
 
-          <div className="order-1 lg:order-2 flex flex-col gap-8">
-            <div className="flex flex-col gap-4">
-              <span className="b3 font-bold text-brand-accent tracking-widest uppercase">
-                Our Edge
-              </span>
-              <h2 className="max-md:text-[36px] h2 text-text-primary tracking-tight leading-tight">
-                What Makes Us Different
-              </h2>
-            </div>
-            <p className="b1 text-text-secondary leading-relaxed text-lg">
+          <div className="order-1 lg:order-2 flex flex-col space-y-3">
+            <span className="b3 text-brand-primary tracking-widest uppercase">
+              Our Edge
+            </span>
+            <h1 className="h1 text-text-primary tracking-tight leading-tight">
+              What Makes Us Different
+            </h1>
+            <p className="h4 text-text-secondary max-w-xl leading-relaxed">
               Unlike legacy POS systems that lock you into expensive hardware
               contracts, Qios is a software-first solution that puts the power
               back in your hands.
             </p>
-            <div className="flex flex-col gap-6 mt-2">
+            <div className="flex flex-col gap-6 pt-5">
               {differentiators.map((diff, idx) => (
                 <div
                   key={idx}
@@ -349,16 +389,16 @@ export default function Services() {
           </div>
         </section>
 
-        {/* onboarding - flip cards per step */}
+        {/* onboarding */}
         <section className="flex flex-col items-center">
-          <div className="flex flex-col items-center text-center max-w-3xl mx-auto mb-20">
-            <span className="b3 font-bold text-brand-accent tracking-widest uppercase mb-4">
+          <div className="flex flex-col items-center text-center max-w-4xl mx-auto mb-20 space-y-3">
+            <span className="b3 text-brand-primary tracking-widest uppercase">
               Onboarding
             </span>
-            <h2 className="max-md:text-[36px] h2 text-text-primary tracking-tight leading-tight">
+            <h1 className="h1 text-text-primary tracking-tight leading-tight">
               The Process
-            </h2>
-            <p className="b1 text-text-secondary mt-6 text-lg">
+            </h1>
+            <p className="h4 text-text-secondary max-w-2xl leading-relaxed">
               Getting started is fast and painless. Hover over each step to see
               how we help you transition to digital seamlessly.
             </p>
@@ -393,19 +433,18 @@ export default function Services() {
           </div>
         </section>
 
-        {/* testimonials slider - refined ui */}
-        <section className="flex flex-col gap-16">
-          <div className="flex flex-col items-center text-center max-w-3xl mx-auto">
-            <span className="b3 font-bold text-brand-accent tracking-widest uppercase mb-4">
+        {/* testimonials */}
+        <section className="flex flex-col">
+          <div className="flex flex-col items-center text-center max-w-4xl mx-auto mb-16 space-y-3">
+            <span className="b3 text-brand-primary tracking-widest uppercase">
               Testimonials
             </span>
-            <h2 className="max-md:text-[36px] h2 text-text-primary tracking-tight leading-tight">
+            <h1 className="h1 text-text-primary tracking-tight leading-tight">
               Don&apos;t Take Our Words For It
-            </h2>
+            </h1>
           </div>
 
           <div className="relative w-full max-w-4xl mx-auto">
-            {/* decorative quote icon background */}
             <Quote className="absolute -top-12 -left-12 w-24 h-24 text-brand-primary/10 -z-10" />
 
             <Card className="flex flex-col gap-10 justify-between min-h-[380px] shadow-2xl shadow-brand-primary/5 border-brand-primary/10">
@@ -542,6 +581,7 @@ export default function Services() {
           </div>
         </section>
       </div>
+      <div className="absolute bottom-0 inset-x-0 h-48 bg-gradient-to-t from-bg-primary via-bg-primary/50 to-transparent pointer-events-none z-0" />
     </section>
   );
 }

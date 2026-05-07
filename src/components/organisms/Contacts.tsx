@@ -335,7 +335,7 @@ export default function ContactForm() {
           <p className="b3 text-brand-primary">GET IN TOUCH</p>
           <h1 className="max-md:text-[34px] h1 text-text-primary tracking-tight leading-tight">
             We&apos;d love to{" "}
-            <span style={gradientHeaderStyle}>hear from you.</span>
+            <span style={gradientHeaderStyle}>hear from you</span>
           </h1>
           <p className="max-md:text-base h4 text-text-secondary max-w-[520px] mx-auto">
             Whether you have a question, want a demo, or just want to say

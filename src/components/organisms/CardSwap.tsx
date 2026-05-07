@@ -123,12 +123,26 @@ const CardSwap: React.FC<CardSwapProps> = ({
   useEffect(() => {
     const total = refs.length;
     refs.forEach((r, i) => {
-      if (r.current)
+      if (r.current) {
+        // kill existing float to prevent overlaps
+        gsap.killTweensOf(r.current, "yPercent");
+
         placeNow(
           r.current,
           makeSlot(i, cardDistance, verticalDistance, total),
           skewAmount,
         );
+
+        // slow float up & down in succession
+        gsap.to(r.current, {
+          yPercent: "-=6",
+          duration: 2.5,
+          repeat: -1,
+          yoyo: true,
+          ease: "sine.inOut",
+          delay: i * 0.4,
+        });
+      }
     });
 
     const swap = () => {
