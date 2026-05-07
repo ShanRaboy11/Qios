@@ -475,69 +475,89 @@ export default function Services() {
         </section>
 
         {/* testimonials */}
-        <section className="flex flex-col">
+        <section className="flex flex-col mt-32 md:mt-56">
           <div className="flex flex-col items-center text-center max-w-4xl mx-auto mb-16 space-y-3">
-            <span className="b3 text-brand-primary tracking-widest uppercase">
-              Testimonials
+            <span className="b3 text-brand-primary uppercase tracking-widest">
+              Partners Testimonials
             </span>
             <h1 className="h1 text-text-primary tracking-tight leading-tight max-md:text-[34px]">
-              Don&apos;t Take Our Words For It
+              Don&apos;t Just Take Our{" "}
+              <span style={gradientHeaderStyle}>Words</span> For It
             </h1>
+            <p className="h4 text-text-secondary max-w-2xl leading-relaxed max-md:text-base">
+              Real stories from restaurant owners who transformed their
+              operations and scaled their business with Qios.
+            </p>
           </div>
 
-          <div className="relative w-full max-w-4xl mx-auto">
-            <Quote className="absolute -top-12 -left-12 w-24 h-24 text-brand-primary/10 -z-10" />
+          <div className="relative w-full max-w-4xl mx-auto px-4 [perspective:1200px]">
+            <Quote className="absolute -top-12 -left-6 md:-left-12 w-20 h-20 md:w-24 md:h-24 text-brand-primary/10 -z-10" />
 
-            <Card className="flex flex-col gap-10 justify-between min-h-[380px] shadow-2xl shadow-brand-primary/5 border-brand-primary/10">
-              <div className="flex flex-col gap-8">
-                <div className="flex gap-1 text-yellow-400">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Star
-                      key={star}
-                      size={22}
-                      fill="currentColor"
-                      strokeWidth={0}
-                    />
-                  ))}
+            {/* tilt card implementation */}
+            <div
+              className="relative transition-all duration-300 ease-out"
+              onMouseMove={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                const x = (e.clientX - rect.left) / rect.width - 0.5;
+                const y = (e.clientY - rect.top) / rect.height - 0.5;
+                e.currentTarget.style.transform = `rotateX(${y * -10}deg) rotateY(${x * 10}deg)`;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = `rotateX(0deg) rotateY(0deg)`;
+              }}
+              style={{ transformStyle: "preserve-3d" }}
+            >
+              <Card className="flex flex-col justify-between min-h-[360px] shadow-[0_20px_50px_rgba(0,0,0,0.1)] border-brand-primary/10 bg-white/90 backdrop-blur-xl [transform:translateZ(0)] hover:shadow-[0_30px_60px_rgba(0,0,0,0.12)]">
+                <div className="flex flex-col gap-6 [transform:translateZ(40px)]">
+                  <div className="flex gap-1 text-yellow-400">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star
+                        key={star}
+                        size={18}
+                        fill="currentColor"
+                        strokeWidth={0}
+                      />
+                    ))}
+                  </div>
+                  <p className="h4 italic text-text-primary leading-snug font-medium">
+                    &quot;{testimonials[activeTestimonial].quote}&quot;
+                  </p>
                 </div>
-                <p className="text-2xl md:text-3xl italic text-text-primary leading-snug font-medium">
-                  &quot;{testimonials[activeTestimonial].quote}&quot;
-                </p>
-              </div>
 
-              <div className="flex items-center justify-between mt-auto pt-8 border-t border-gray-100">
-                <div className="flex items-center gap-5">
-                  <Avatar
-                    initials={testimonials[activeTestimonial].initials}
-                    size="lg"
-                    className="ring-4 ring-brand-primary/10"
-                  />
-                  <div className="flex flex-col">
-                    <span className="text-lg font-bold text-text-primary">
-                      {testimonials[activeTestimonial].author}
-                    </span>
-                    <span className="text-sm font-medium text-text-secondary tracking-wide uppercase">
-                      {testimonials[activeTestimonial].role}
-                    </span>
+                <div className="flex items-center justify-between mt-12 pt-8 border-t border-gray-100 [transform:translateZ(30px)]">
+                  <div className="flex items-center gap-4">
+                    <Avatar
+                      initials={testimonials[activeTestimonial].initials}
+                      size="lg"
+                      className="rounded-full ring-4 ring-brand-primary/5 border-none"
+                    />
+                    <div className="flex flex-col">
+                      <span className="b3 text-text-primary">
+                        {testimonials[activeTestimonial].author}
+                      </span>
+                      <span className="b1 text-text-secondary">
+                        {testimonials[activeTestimonial].role}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="hidden md:flex items-center gap-3">
+                    <button
+                      onClick={prevTestimonial}
+                      className="w-12 h-12 rounded-full border border-black/5 flex items-center justify-center text-text-secondary bg-white hover:bg-brand-primary hover:text-white transition-all active:scale-95 shadow-sm"
+                    >
+                      <ChevronLeft size={24} />
+                    </button>
+                    <button
+                      onClick={nextTestimonial}
+                      className="w-12 h-12 rounded-full border border-black/5 flex items-center justify-center text-text-secondary bg-white hover:bg-brand-primary hover:text-white transition-all active:scale-95 shadow-sm"
+                    >
+                      <ChevronRight size={24} />
+                    </button>
                   </div>
                 </div>
-
-                <div className="hidden md:flex items-center gap-3">
-                  <button
-                    onClick={prevTestimonial}
-                    className="w-12 h-12 rounded-full border border-black/10 flex items-center justify-center text-text-secondary hover:bg-brand-primary hover:text-white hover:border-brand-primary transition-all active:scale-95"
-                  >
-                    <ChevronLeft size={24} />
-                  </button>
-                  <button
-                    onClick={nextTestimonial}
-                    className="w-12 h-12 rounded-full border border-black/10 flex items-center justify-center text-text-secondary hover:bg-brand-primary hover:text-white hover:border-brand-primary transition-all active:scale-95"
-                  >
-                    <ChevronRight size={24} />
-                  </button>
-                </div>
-              </div>
-            </Card>
+              </Card>
+            </div>
 
             <div className="flex md:hidden items-center justify-center gap-6 mt-8">
               <button
