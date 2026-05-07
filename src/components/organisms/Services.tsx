@@ -27,7 +27,7 @@ const gradientHeaderStyle = {
   WebkitTextFillColor: "transparent",
 };
 
-// reusable icon box - updated to match problem & solution icon container style
+// reusable icon box
 function IconBox({
   children,
   className,
@@ -236,34 +236,34 @@ export default function Services() {
         }}
       />
 
-      <div className="flex flex-col gap-20 md:gap-32 w-full max-w-[1440px] mx-auto px-6 md:px-12 lg:px-24 relative z-10">
-        {/* page hero section */}
+      <div className="flex flex-col gap-20 md:gap-48 w-full max-w-[1440px] mx-auto px-6 md:px-12 lg:px-24 relative z-10">
+        {/* page hero section - lengthened wrap for bigger screens */}
         <div className="max-w-4xl mx-auto relative z-10 w-full">
           <div className="text-center mb-10 space-y-3">
             <p className="b3 text-brand-primary uppercase tracking-widest">
               OUR SERVICES
             </p>
-            <h1 className="h1 text-text-primary tracking-tight leading-tight">
+            <h1 className="h1 text-text-primary tracking-tight leading-tight max-md:text-[34px]">
               Powerful Solutions for <br className="hidden md:block" />
               <span style={gradientHeaderStyle}>Modern Restaurants</span>
             </h1>
-            <p className="h4 text-text-secondary max-w-2xl mx-auto leading-relaxed">
+            <p className="h4 text-text-secondary max-w-[520px] lg:max-w-3xl mx-auto leading-relaxed max-md:text-base">
               Everything you need to digitize your operations with smart menus,
               automated inventory, and detailed analytics.
             </p>
           </div>
         </div>
 
-        {/* features section - split layout with wide colorful cards */}
-        <section className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center">
+        {/* features section - lowered cards more for mobile small screens */}
+        <section className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24 items-center">
           <div className="flex flex-col text-left space-y-3">
             <span className="b3 text-brand-primary tracking-widest uppercase">
               Features
             </span>
-            <h1 className="h1 text-text-primary tracking-tight leading-tight">
+            <h1 className="h1 text-text-primary tracking-tight leading-tight max-md:text-[34px]">
               You Are In <span style={gradientHeaderStyle}>Good Hands</span>
             </h1>
-            <p className="h4 text-text-secondary max-w-lg leading-relaxed">
+            <p className="h4 text-text-secondary max-w-lg leading-relaxed max-md:text-base">
               Our platform is built on modern, secure infrastructure designed to
               handle peak volumes without breaking a sweat. Manage everything
               with ease.
@@ -280,7 +280,7 @@ export default function Services() {
             </div>
           </div>
 
-          <div className="relative w-full h-[550px] flex items-center justify-center lg:justify-end pr-0 lg:pr-12">
+          <div className="relative w-full h-[450px] md:h-[550px] flex items-center justify-center lg:justify-end pr-0 lg:pr-12 mt-24 md:mt-0">
             <CardSwap
               cardDistance={45}
               verticalDistance={45}
@@ -293,7 +293,7 @@ export default function Services() {
                 <SwapCard
                   key={idx}
                   customClass={cn(
-                    "p-10 !border-white/10 shadow-2xl text-left w-full max-w-[540px] rounded-[2rem] flex flex-col justify-between",
+                    "p-8 md:p-10 !border-white/10 shadow-2xl text-left w-full max-w-[540px] rounded-[2rem] flex flex-col justify-between",
                     feature.bgColor,
                     feature.textColor,
                   )}
@@ -308,10 +308,10 @@ export default function Services() {
                       })}
                     </IconBox>
                     <div className="flex flex-col gap-3 mt-8">
-                      <h3 className="text-3xl font-bold tracking-tight">
+                      <h3 className="text-2xl md:text-3xl font-bold tracking-tight">
                         {feature.title}
                       </h3>
-                      <p className="text-lg leading-relaxed opacity-90 font-medium">
+                      <p className="text-base md:text-lg leading-relaxed opacity-90 font-medium">
                         {feature.description}
                       </p>
                     </div>
@@ -358,10 +358,10 @@ export default function Services() {
             <span className="b3 text-brand-primary tracking-widest uppercase">
               Our Edge
             </span>
-            <h1 className="h1 text-text-primary tracking-tight leading-tight">
+            <h1 className="h1 text-text-primary tracking-tight leading-tight max-md:text-[34px]">
               What Makes Us Different
             </h1>
-            <p className="h4 text-text-secondary max-w-xl leading-relaxed">
+            <p className="h4 text-text-secondary max-w-xl leading-relaxed max-md:text-base">
               Unlike legacy POS systems that lock you into expensive hardware
               contracts, Qios is a software-first solution that puts the power
               back in your hands.
@@ -395,10 +395,10 @@ export default function Services() {
             <span className="b3 text-brand-primary tracking-widest uppercase">
               Onboarding
             </span>
-            <h1 className="h1 text-text-primary tracking-tight leading-tight">
+            <h1 className="h1 text-text-primary tracking-tight leading-tight max-md:text-[34px]">
               The Process
             </h1>
-            <p className="h4 text-text-secondary max-w-2xl leading-relaxed">
+            <p className="h4 text-text-secondary max-w-2xl leading-relaxed max-md:text-base">
               Getting started is fast and painless. Hover over each step to see
               how we help you transition to digital seamlessly.
             </p>
@@ -439,7 +439,7 @@ export default function Services() {
             <span className="b3 text-brand-primary tracking-widest uppercase">
               Testimonials
             </span>
-            <h1 className="h1 text-text-primary tracking-tight leading-tight">
+            <h1 className="h1 text-text-primary tracking-tight leading-tight max-md:text-[34px]">
               Don&apos;t Take Our Words For It
             </h1>
           </div>
