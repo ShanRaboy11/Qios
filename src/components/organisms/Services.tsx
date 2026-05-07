@@ -522,7 +522,7 @@ export default function Services() {
               }}
               style={{ transformStyle: "preserve-3d" }}
             >
-              <Card className="flex flex-col justify-between min-h-[360px] shadow-[0_20px_50px_rgba(0,0,0,0.08)] border-brand-primary/10 bg-white/90 backdrop-blur-xl [transform:translateZ(0)]">
+              <Card className="flex flex-col justify-between h-[480px] md:h-auto md:min-h-[360px] shadow-[0_20px_50px_rgba(0,0,0,0.08)] border-brand-primary/10 bg-white/90 backdrop-blur-xl [transform:translateZ(0)]">
                 <div className="flex flex-col gap-6 [transform:translateZ(40px)]">
                   <div className="flex gap-1 text-yellow-400">
                     {[1, 2, 3, 4, 5].map((star) => (
@@ -534,12 +534,15 @@ export default function Services() {
                       />
                     ))}
                   </div>
-                  <p className="h4 italic text-text-primary leading-snug font-medium">
-                    &quot;{testimonials[activeTestimonial].quote}&quot;
-                  </p>
+                  {/* wrap quote in a fixed-size container */}
+                  <div className="min-h-[160px] md:min-h-0 md:pb-10">
+                    <p className="h4 italic text-text-primary leading-snug font-medium">
+                      &quot;{testimonials[activeTestimonial].quote}&quot;
+                    </p>
+                  </div>
                 </div>
 
-                <div className="flex items-center justify-between mt-12 pt-8 border-t border-gray-100 [transform:translateZ(30px)]">
+                <div className="flex items-center justify-between mt-auto pt-8 border-t border-gray-100 [transform:translateZ(30px)]">
                   <div className="flex items-center gap-4">
                     <Avatar
                       initials={testimonials[activeTestimonial].initials}
