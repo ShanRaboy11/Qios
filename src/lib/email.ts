@@ -51,9 +51,7 @@ const readSmtpConfig = (): SmtpConfig | null => {
     process.env.MAIL_PASSWORD ||
     process.env.MAIL_PASS;
   const fromName =
-    process.env.SMTP_FROM_NAME ||
-    process.env.MAIL_FROM_NAME ||
-    "Qios";
+    process.env.SMTP_FROM_NAME || process.env.MAIL_FROM_NAME || "Qios";
   const fromAddress =
     process.env.SMTP_USER ||
     process.env.SMTP_FROM_EMAIL ||
@@ -337,8 +335,15 @@ export const sendContactVerificationEmail = async ({
   const sep = `<td style="padding:0 8px;vertical-align:middle;font-size:22px;
                            color:${B.border};line-height:56px;">&middot;</td>`;
 
-  const isPersonalized = Boolean(businessName && !businessName.includes("@") && businessName.trim() && businessName.trim() !== to);
-  const subject = isPersonalized ? "Verify Your Business Email — Qios" : "Security Code — Qios";
+  const isPersonalized = Boolean(
+    businessName &&
+    !businessName.includes("@") &&
+    businessName.trim() &&
+    businessName.trim() !== to,
+  );
+  const subject = isPersonalized
+    ? "Verify Your Business Email — Qios"
+    : "Security Code — Qios";
 
   const greetingHtml = isPersonalized
     ? `<p style="margin:0 0 10px;font-size:15px;color:${B.textPrimary};">Hi <strong>${businessName}</strong>,</p>`

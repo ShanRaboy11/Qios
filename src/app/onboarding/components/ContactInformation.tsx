@@ -12,7 +12,12 @@ interface ContactInformationProps {
   onBack: () => void;
 }
 
-export function ContactInformation({ expectedCode, onResendCode, onVerified, onBack }: ContactInformationProps) {
+export function ContactInformation({
+  expectedCode,
+  onResendCode,
+  onVerified,
+  onBack,
+}: ContactInformationProps) {
   // Timer starts immediately as the code is sent during the transition from Step 1
   const [isTimerRunning, setIsTimerRunning] = useState(true);
   const [timeLeft, setTimeLeft] = useState(45);
@@ -29,7 +34,7 @@ export function ContactInformation({ expectedCode, onResendCode, onVerified, onB
     return () => clearInterval(interval);
   }, [isTimerRunning, timeLeft]);
 
-  const isOtpComplete = otp.every(digit => digit !== "");
+  const isOtpComplete = otp.every((digit) => digit !== "");
   const enteredCode = otp.join("");
 
   useEffect(() => {
@@ -51,7 +56,9 @@ export function ContactInformation({ expectedCode, onResendCode, onVerified, onB
     setLocalError("");
 
     if (!expectedCode) {
-      setLocalError("Verification code not received. Please go back and try again.");
+      setLocalError(
+        "Verification code not received. Please go back and try again.",
+      );
       return;
     }
 
@@ -82,29 +89,37 @@ export function ContactInformation({ expectedCode, onResendCode, onVerified, onB
   return (
     /* items-center centers the content horizontally */
     <div className="flex flex-col items-center w-full space-y-10 animate-in fade-in slide-in-from-right-8 duration-500 ">
-      
       {/* Timer and OTP */}
       <div className="flex flex-col items-center w-full max-w-[550px] space-y-12 pt-4">
         <div className="flex items-center gap-5">
           <div className="flex items-center gap-2 b2 font-bold text-text-primary text-xl">
-            <Clock size={20} className={timeLeft > 0 ? "text-[var(--color-brand-primary)]" : "text-neutral-400"} />
-            <span>00 : {timeLeft.toString().padStart(2, '0')}</span>
+            <Clock
+              size={20}
+              className={
+                timeLeft > 0
+                  ? "text-[var(--color-brand-primary)]"
+                  : "text-neutral-400"
+              }
+            />
+            <span>00 : {timeLeft.toString().padStart(2, "0")}</span>
           </div>
           <button
             type="button"
             onClick={handleResend}
             className={cn(
               "b2 border-b-2 font-bold transition-all",
-              timeLeft === 0 
-                ? "text-[var(--color-brand-primary)] border-[var(--color-brand-primary)] cursor-pointer" 
-                : "text-neutral-300 border-transparent cursor-not-allowed"
+              timeLeft === 0
+                ? "text-[var(--color-brand-primary)] border-[var(--color-brand-primary)] cursor-pointer"
+                : "text-neutral-300 border-transparent cursor-not-allowed",
             )}
           >
             Resend Code
           </button>
         </div>
 
-        {localError && <p className="text-sm text-red-500 text-center">{localError}</p>}
+        {localError && (
+          <p className="text-sm text-red-500 text-center">{localError}</p>
+        )}
 
         {/* Verification code is not displayed in any environment for security. */}
 
@@ -113,12 +128,18 @@ export function ContactInformation({ expectedCode, onResendCode, onVerified, onB
           {otp.map((digit, i) => (
             <input
               key={i}
-              ref={(el) => { otpInputs.current[i] = el; }}
-              type="text" maxLength={1} value={digit}
+              ref={(el) => {
+                otpInputs.current[i] = el;
+              }}
+              type="text"
+              maxLength={1}
+              value={digit}
               onChange={(e) => {
                 const val = e.target.value.replace(/\D/g, "");
-                const newOtp = [...otp]; newOtp[i] = val; setOtp(newOtp);
-                if (val && i < 5) otpInputs.current[i+1]?.focus();
+                const newOtp = [...otp];
+                newOtp[i] = val;
+                setOtp(newOtp);
+                if (val && i < 5) otpInputs.current[i + 1]?.focus();
               }}
               onKeyDown={(e) => {
                 if (e.key === "Backspace" && !digit && i > 0) {
@@ -127,17 +148,19 @@ export function ContactInformation({ expectedCode, onResendCode, onVerified, onB
               }}
               className={cn(
                 "w-10 h-10 bg-transparent border-b-2 text-center text-2xl outline-none transition-all duration-300",
-                digit !== "" || (i === 0 && otp[0] === "") ? "border-[var(--color-brand-primary)]" : "border-slate-200"
+                digit !== "" || (i === 0 && otp[0] === "")
+                  ? "border-[var(--color-brand-primary)]"
+                  : "border-slate-200",
               )}
             />
           ))}
         </div>
 
         <div className="flex flex-row gap-10 w-full justify-center">
-          <Button 
-            variant="ghost" 
-            size="lg" 
-            className="h-13 lg:h-13 px-5 b2 border-neutral-200 text-neutral-500 transition-all" 
+          <Button
+            variant="ghost"
+            size="lg"
+            className="h-13 lg:h-13 px-5 b2 border-neutral-200 text-neutral-500 transition-all"
             onClick={onBack}
           >
             <ArrowLeft className="w-5 h-5 mr-1" />
@@ -148,9 +171,9 @@ export function ContactInformation({ expectedCode, onResendCode, onVerified, onB
             size="lg"
             className={cn(
               "flex-1 h-13 lg:h-13 b2 transition-all duration-500 shadow-none border-none max-w-[480px] font-bold text-lg",
-              isOtpComplete 
-                ? "bg-[var(--color-brand-secondary)] text-text-tertiary scale-[1.02]" 
-                : "bg-neutral-300 text-white cursor-not-allowed"
+              isOtpComplete
+                ? "bg-[var(--color-brand-secondary)] text-text-tertiary scale-[1.02]"
+                : "bg-neutral-300 text-white cursor-not-allowed",
             )}
             onClick={handleVerify}
           >

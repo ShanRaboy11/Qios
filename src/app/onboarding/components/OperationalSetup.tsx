@@ -31,7 +31,11 @@ export interface OperationalSetupProps {
   loading?: boolean;
 }
 
-type OptionValue = InventoryMode | ServiceWorkflow | DashboardFocus | SupplyLogic;
+type OptionValue =
+  | InventoryMode
+  | ServiceWorkflow
+  | DashboardFocus
+  | SupplyLogic;
 
 type OptionCard = {
   value: OptionValue;
@@ -64,7 +68,8 @@ const TIER_FEATURES: Record<
       },
       {
         title: "Order Tracking",
-        description: "See orders progress from confirmation through completion.",
+        description:
+          "See orders progress from confirmation through completion.",
       },
       {
         title: "Simple Sales Summary",
@@ -85,7 +90,8 @@ const TIER_FEATURES: Record<
       },
       {
         title: "Inventory Tracking",
-        description: "Track current stock levels by fixed unit quantity per item.",
+        description:
+          "Track current stock levels by fixed unit quantity per item.",
       },
       {
         title: "Live Revenue Dashboard",
@@ -102,7 +108,8 @@ const TIER_FEATURES: Record<
     items: [
       {
         title: "Advanced Inventory",
-        description: "Recipe-based tracking, automated deductions, and variance reports.",
+        description:
+          "Recipe-based tracking, automated deductions, and variance reports.",
       },
       {
         title: "Deep Efficiency Analytics",
@@ -124,14 +131,12 @@ const TIER_FEATURES: Record<
 function getCumulativeFeatures(plan: SubscriptionPlan) {
   const order: SubscriptionPlan[] = ["basic", "business", "enterprise"];
   const planIndex = order.indexOf(plan);
-  return order
-    .slice(0, planIndex + 1)
-    .flatMap((p) =>
-      TIER_FEATURES[p].items.map((item) => ({
-        ...item,
-        tier: TIER_FEATURES[p].tier,
-      })),
-    );
+  return order.slice(0, planIndex + 1).flatMap((p) =>
+    TIER_FEATURES[p].items.map((item) => ({
+      ...item,
+      tier: TIER_FEATURES[p].tier,
+    })),
+  );
 }
 
 const PlanBadge = ({
@@ -231,51 +236,67 @@ function OptionGroup<T extends OptionValue>({
         </div>
       </div>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2" role="radiogroup" aria-label={title}>
-          {options.map((option) => {
-            const isRecipeDisabled = title === "Inventory Logic" && option.value === "recipe" && selectedPlan !== "enterprise";
-            const isSpeedDisabled = title === "Primary Metric" && option.value === "speed" && selectedPlan !== "enterprise";
-            const isOptionDisabled = disabled || isRecipeDisabled || isSpeedDisabled;
-            const selected = selectedValue === option.value && !isOptionDisabled;
+      <div
+        className="grid grid-cols-1 gap-3 sm:grid-cols-2"
+        role="radiogroup"
+        aria-label={title}
+      >
+        {options.map((option) => {
+          const isRecipeDisabled =
+            title === "Inventory Logic" &&
+            option.value === "recipe" &&
+            selectedPlan !== "enterprise";
+          const isSpeedDisabled =
+            title === "Primary Metric" &&
+            option.value === "speed" &&
+            selectedPlan !== "enterprise";
+          const isOptionDisabled =
+            disabled || isRecipeDisabled || isSpeedDisabled;
+          const selected = selectedValue === option.value && !isOptionDisabled;
 
-            return (
-              <button
-                key={option.value}
-                type="button"
-                role="radio"
-                aria-checked={selected}
-                disabled={isOptionDisabled}
-                onClick={() => onChange(option.value as T)}
-                className={cn(
-                  "relative rounded-2xl border-2 p-4 text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-primary)]/30",
-                  isOptionDisabled && "opacity-60 pointer-events-none cursor-not-allowed",
-                  selected
-                    ? "border-[var(--color-brand-primary)] bg-[var(--color-brand-primary)]/5 shadow-sm"
-                    : "border-neutral-200 bg-white hover:border-neutral-300 hover:shadow-sm active:scale-[0.99]"
-                )}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <span className="text-sm font-semibold leading-snug text-[var(--color-text-primary)]">
-                      {option.title}
-                    </span>
-                    <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-secondary)]">
-                      {option.description}
-                    </p>
-                  </div>
-                  <div
-                    className={cn(
-                      "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-all duration-200",
-                      selected ? "border-[var(--color-brand-primary)] bg-[var(--color-brand-primary)]" : "border-neutral-300 bg-white"
-                    )}
-                  >
-                    {selected && <div className="h-2 w-2 rounded-full bg-white" />}
-                  </div>
+          return (
+            <button
+              key={option.value}
+              type="button"
+              role="radio"
+              aria-checked={selected}
+              disabled={isOptionDisabled}
+              onClick={() => onChange(option.value as T)}
+              className={cn(
+                "relative rounded-2xl border-2 p-4 text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-primary)]/30",
+                isOptionDisabled &&
+                  "opacity-60 pointer-events-none cursor-not-allowed",
+                selected
+                  ? "border-[var(--color-brand-primary)] bg-[var(--color-brand-primary)]/5 shadow-sm"
+                  : "border-neutral-200 bg-white hover:border-neutral-300 hover:shadow-sm active:scale-[0.99]",
+              )}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <span className="text-sm font-semibold leading-snug text-[var(--color-text-primary)]">
+                    {option.title}
+                  </span>
+                  <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-secondary)]">
+                    {option.description}
+                  </p>
                 </div>
-              </button>
-            );
-          })}
-        </div>
+                <div
+                  className={cn(
+                    "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-all duration-200",
+                    selected
+                      ? "border-[var(--color-brand-primary)] bg-[var(--color-brand-primary)]"
+                      : "border-neutral-300 bg-white",
+                  )}
+                >
+                  {selected && (
+                    <div className="h-2 w-2 rounded-full bg-white" />
+                  )}
+                </div>
+              </div>
+            </button>
+          );
+        })}
+      </div>
     </section>
   );
 }
@@ -310,16 +331,18 @@ export function OperationalSetup({
   // Reset to allowed defaults when changing plans
   React.useEffect(() => {
     if (selectedPlan === "basic") {
-      setConfig(prev => ({
+      setConfig((prev) => ({
         ...prev,
         inventoryMode: "none" as any, // if basic doesn't have inventory
-        dashboardFocus: "revenue"
+        dashboardFocus: "revenue",
       }));
     } else if (selectedPlan === "business") {
-      setConfig(prev => ({
+      setConfig((prev) => ({
         ...prev,
-        inventoryMode: prev.inventoryMode === "recipe" ? "unit" : prev.inventoryMode,
-        dashboardFocus: prev.dashboardFocus === "speed" ? "revenue" : prev.dashboardFocus
+        inventoryMode:
+          prev.inventoryMode === "recipe" ? "unit" : prev.inventoryMode,
+        dashboardFocus:
+          prev.dashboardFocus === "speed" ? "revenue" : prev.dashboardFocus,
       }));
     }
   }, [selectedPlan]);
@@ -368,7 +391,9 @@ export function OperationalSetup({
                   value: "recipe",
                   title: "Production Style (Recipe-Based)",
                   description:
-                    selectedPlan === "enterprise" ? "Best for kitchens. Automatically deducts raw ingredients based on your recipe matrix." : "Upgrade to Enterprise to unlock Recipe-Based deductions.",
+                    selectedPlan === "enterprise"
+                      ? "Best for kitchens. Automatically deducts raw ingredients based on your recipe matrix."
+                      : "Upgrade to Enterprise to unlock Recipe-Based deductions.",
                 },
               ]}
             />
@@ -413,7 +438,9 @@ export function OperationalSetup({
                     value: "speed",
                     title: "Efficiency (Prep Speed)",
                     description:
-                      selectedPlan === "enterprise" ? "Dashboard prioritizes kitchen fulfillment times and highlights preparation bottlenecks." : "Upgrade to Enterprise to unlock Prep Speed analytics.",
+                      selectedPlan === "enterprise"
+                        ? "Dashboard prioritizes kitchen fulfillment times and highlights preparation bottlenecks."
+                        : "Upgrade to Enterprise to unlock Prep Speed analytics.",
                   },
                   {
                     value: "revenue",

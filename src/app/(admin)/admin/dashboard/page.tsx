@@ -246,7 +246,9 @@ function AdminDashboardContent() {
             >
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                 <div>
-                  <span className="h1 text-text-primary">Subscription and Plans</span>
+                  <span className="h1 text-text-primary">
+                    Subscription and Plans
+                  </span>
                   <p className="h4 text-text-secondary mt-2">
                     Configure subscription plans and feature access.
                   </p>
