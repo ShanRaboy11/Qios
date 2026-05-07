@@ -65,11 +65,20 @@ export function SubscriptionPackage({
   useEffect(() => {
     async function fetchPlans() {
       try {
-        const { data: dbData, error } = await supabase
+        let response = await supabase
           .from("subscription_plans")
           .select("*")
-          // Order alphabetically or by price. Since price_monthly is text like "1,499", we might just not order here or assume the DB is sequential
-          .order("created_at");
+          .order("display_order", { ascending: true, nullsFirst: false })
+          .order("created_at", { ascending: true });
+
+        if (response.error) {
+          response = await supabase
+            .from("subscription_plans")
+            .select("*")
+            .order("created_at", { ascending: true });
+        }
+
+        const { data: dbData, error } = response;
 
         if (error) throw error;
 
