@@ -810,14 +810,6 @@ export async function processOnboarding(data: {
 }) {
   const supabase = createSupabaseAdminClient();
   const subscriptionPlan = getSubscriptionPlan(data.subscriptionData.packageId);
-  const tenantSettings: TenantSettings = {
-    inventory_mode: data.featureData.inventoryMode,
-    service_workflow: data.featureData.serviceWorkflow,
-    dashboard_focus: data.featureData.dashboardFocus,
-    ...(subscriptionPlan === "enterprise"
-      ? { supply_logic: data.featureData.supplyLogic }
-      : {}),
-  };
 
   const { error: tenantError } = await supabase
     .from("tenants")
@@ -826,7 +818,7 @@ export async function processOnboarding(data: {
       business_email: normalizeEmail(data.businessData.email),
       owner_name: data.businessData.owner,
       subscription_plan: subscriptionPlan,
-      settings: tenantSettings,
+      settings: null,
       status: "pending",
     })
     .eq("id", data.tenantId);
@@ -870,7 +862,8 @@ export async function processOnboarding(data: {
   }
 
   try {
-    const toEmail = data.adminEmail || data.businessData.email;
+    const toEmail = data.adminEmail;
+    if (!toEmail) throw new Error("Admin email is required to send confirmation.");
     await sendRegistrationSuccessEmail({
       to: toEmail,
       adminName: data.businessData.owner.trim(),

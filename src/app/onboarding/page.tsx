@@ -162,7 +162,7 @@ export default function OnboardingPage() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [registrationData, setRegistrationData] = useState({
     adminName: "",
-    businessEmail: "",
+    adminEmail: "",
   });
 
   const validateEmail = (email: string) => /\S+@\S+\.\S+/.test(email);
@@ -218,7 +218,7 @@ export default function OnboardingPage() {
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
   const dispatchVerificationCode = async ({
-    email = businessData.email || authData.email,
+    email = authData.email || businessData.email,
     businessName = businessData.name || businessData.email || authData.email,
   }: {
     email?: string;
@@ -667,7 +667,7 @@ export default function OnboardingPage() {
       if (res.success) {
         setRegistrationData({
           adminName: res.ownerName,
-          businessEmail: res.businessEmail,
+          adminEmail: authData.email,
         });
         setShowSuccessModal(true);
       }
@@ -868,7 +868,7 @@ export default function OnboardingPage() {
       {showSuccessModal && (
         <RegistrationSuccessModal
           adminName={registrationData.adminName}
-          adminEmail={registrationData.businessEmail}
+          adminEmail={registrationData.adminEmail}
           onClose={handleModalClose}
         />
       )}
