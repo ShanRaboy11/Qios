@@ -19,6 +19,7 @@ export function ContactInformation({ expectedCode, onResendCode, onVerified, onB
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [localError, setLocalError] = useState("");
   const otpInputs = useRef<(HTMLInputElement | null)[]>([]);
+  const hasAutoVerifiedRef = useRef(false);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -30,6 +31,21 @@ export function ContactInformation({ expectedCode, onResendCode, onVerified, onB
 
   const isOtpComplete = otp.every(digit => digit !== "");
   const enteredCode = otp.join("");
+
+  useEffect(() => {
+    hasAutoVerifiedRef.current = false;
+  }, [expectedCode]);
+
+  useEffect(() => {
+    if (!isOtpComplete || !expectedCode) {
+      return;
+    }
+
+    if (enteredCode === expectedCode && !hasAutoVerifiedRef.current) {
+      hasAutoVerifiedRef.current = true;
+      void handleVerify();
+    }
+  }, [enteredCode, expectedCode, isOtpComplete]);
 
   const handleVerify = async () => {
     setLocalError("");
