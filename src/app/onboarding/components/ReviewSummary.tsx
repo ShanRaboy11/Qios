@@ -3,39 +3,28 @@
 import React from "react";
 import { ArrowLeft, CheckCircle2, ClipboardCheck } from "lucide-react";
 import { Button } from "@/components/atoms/Button";
-import type { OperationalSetupConfig, SubscriptionPlan } from "@/types/tenant";
 
 interface ReviewSummaryProps {
   adminEmail: string;
+  selectedPlanName: string;
   businessData: {
     name: string;
     email: string;
     owner: string;
   };
-  selectedPlan: SubscriptionPlan;
   onBack: () => void;
   onSubmit: () => Promise<void> | void;
   loading?: boolean;
 }
 
-const PLAN_LABEL: Record<SubscriptionPlan, string> = {
-  basic: "Basic",
-  business: "Business",
-  enterprise: "Enterprise",
-};
-
 export function ReviewSummary({
   adminEmail,
+  selectedPlanName,
   businessData,
-  selectedPlan,
   onBack,
   onSubmit,
   loading = false,
 }: ReviewSummaryProps) {
-  const showPrimaryMetric =
-    selectedPlan === "business" || selectedPlan === "enterprise";
-  const showMultiStoreLogic = selectedPlan === "enterprise";
-
   return (
     <div className="flex flex-col w-full max-w-[960px] mx-auto gap-6 animate-in fade-in slide-in-from-right-8 duration-500">
       <div className="rounded-[28px] border border-neutral-100 bg-white p-6 shadow-sm">
@@ -108,7 +97,7 @@ export function ReviewSummary({
               Selected Plan
             </p>
             <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
-              {PLAN_LABEL[selectedPlan]}
+              {selectedPlanName || "-"}
             </p>
           </div>
         </div>
