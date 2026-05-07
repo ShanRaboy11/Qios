@@ -8,7 +8,7 @@ export default async function Page({
 }) {
   const resolvedParams = await params;
   return (
-    <div className="min-h-screen bg-bg-primary overflow-x-hidden relative">
+    <div className="min-h-screen overflow-x-hidden relative">
       <TenantProfilePage tenantId={resolvedParams.id} />
     </div>
   );

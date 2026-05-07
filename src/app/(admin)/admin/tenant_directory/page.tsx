@@ -1,10 +1,10 @@
 "use client";
 
-import React from "react";
+import React, { Suspense } from "react";
 import TenantManagement from "@/components/organisms/TenantManagement";
 import { useSearchParams } from "next/navigation";
 
-export default function TenantDirectoryPage() {
+function TenantDirectoryContent() {
   const searchParams = useSearchParams();
   const filter = searchParams.get("filter") || undefined;
 
@@ -18,7 +18,16 @@ export default function TenantDirectoryPage() {
           </p>
         </div>
       </div>
+
       <TenantManagement initialStatusFilter={filter} />
     </div>
+  );
+}
+
+export default function TenantDirectoryPage() {
+  return (
+    <Suspense fallback={null}>
+      <TenantDirectoryContent />
+    </Suspense>
   );
 }

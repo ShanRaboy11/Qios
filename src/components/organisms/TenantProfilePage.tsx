@@ -9,8 +9,6 @@ import { FormField } from "@/components/molecules/FormField";
 import { Dropdown } from "@/components/molecules/Dropdown";
 import { motion, AnimatePresence } from "framer-motion";
 import { TenantProfileSkeleton } from "./TenantProfileSkeleton";
-import { Navbar } from "./navbar";
-import { Footer } from "./footer";
 import {
   getTenantProfileDetails,
   updateTenantSubscription,
@@ -363,64 +361,7 @@ export const TenantProfilePage = ({ tenantId }: TenantProfilePageProps) => {
             transition={{ duration: 0.3, ease: "easeOut" }}
             className="flex flex-col w-full"
           >
-            <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-              <motion.div
-                animate={{
-                  x: [0, 100, -50, 0],
-                  y: [0, -100, 50, 0],
-                  scale: [1, 1.2, 0.8, 1],
-                }}
-                transition={{
-                  duration: 60,
-                  repeat: Infinity,
-                  repeatType: "reverse",
-                  ease: "easeInOut",
-                }}
-                className="absolute top-[10%] left-[20%] w-[500px] h-[500px] bg-[#FFE5BE] rounded-full mix-blend-multiply filter blur-[80px] opacity-15"
-              />
-              <motion.div
-                animate={{
-                  x: [0, -120, 80, 0],
-                  y: [0, 80, -120, 0],
-                  scale: [1, 0.8, 1.2, 1],
-                }}
-                transition={{
-                  duration: 75,
-                  repeat: Infinity,
-                  repeatType: "reverse",
-                  ease: "easeInOut",
-                }}
-                className="absolute top-[40%] right-[10%] w-[600px] h-[600px] bg-[#FFDF96] rounded-full mix-blend-multiply filter blur-[100px] opacity-20"
-              />
-              <motion.div
-                animate={{
-                  x: [0, 150, -100, 0],
-                  y: [0, 100, -150, 0],
-                  scale: [1, 1.3, 0.9, 1],
-                }}
-                transition={{
-                  duration: 66,
-                  repeat: Infinity,
-                  repeatType: "reverse",
-                  ease: "easeInOut",
-                }}
-                className="absolute bottom-[-10%] left-[40%] w-[700px] h-[700px] bg-[#FFBDC6] rounded-full mix-blend-multiply filter blur-[120px] opacity-15"
-              />
-            </div>
-
-            <Navbar
-              variant="transparent"
-              type="admin"
-              activeView="tenant"
-              onNavigate={(view) => {
-                // If they click dashboard, navigate back
-                if (view === "dashboard") {
-                  window.location.href = "/admin/dashboard";
-                }
-              }}
-            />
-
-            <div className="max-w-[1440px] mx-auto flex flex-col gap-8 p-4 md:p-8 lg:p-12 mt-28 relative z-[50] w-full">
+            <div className="flex flex-col gap-8 w-full">
               {loadError && (
                 <div className="rounded-2xl border border-warning-primary/20 bg-warning-primary/5 px-4 py-3 text-sm text-warning-primary">
                   {loadError}
@@ -443,9 +384,6 @@ export const TenantProfilePage = ({ tenantId }: TenantProfilePageProps) => {
           </div>
         )}
       </AnimatePresence>
-
-      <div className=" w-full relative bottom-0 inset-x-0 h-40 bg-gradient-to-t from-white via-white/50 to-transparent z-[2] pointer-events-none -mt-20" />
-      <Footer hideSocials />
 
       <Modal isOpen={modal.isOpen} onClose={closeModal} title={modal.title}>
         <div className="flex flex-col gap-6">
