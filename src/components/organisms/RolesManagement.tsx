@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useParams } from "next/navigation";
+import { createClient } from "@supabase/supabase-js";
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
 import { FeatureToggle } from "@/components/molecules/FeatureToggle";
@@ -253,13 +255,18 @@ const PRESET_COLORS = [
 ];
 
 export default function RolesManagement() {
-  const [roles, setRoles] = useState<Role[]>(INITIAL_ROLES);
-  const [selectedRoleId, setSelectedRoleId] = useState<string>(roles[0].id);
+  const params = useParams();
+  const tenantId = Array.isArray(params?.id) ? params.id[0] : params?.id;
+
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [selectedRoleId, setSelectedRoleId] = useState<string | null>(null);
   const [draftRole, setDraftRole] = useState<Role | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState<"permissions" | "employees">(
     "permissions",
   );
+  const [isLoading, setIsLoading] = useState(true);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
 
   // modal & employee states
   const [isAddEmployeeModalOpen, setIsAddEmployeeModalOpen] = useState(false);
@@ -278,6 +285,65 @@ export default function RolesManagement() {
 
   // drag and drop state
   const [draggedRoleId, setDraggedRoleId] = useState<string | null>(null);
+
+  // initialize session and load roles
+  useEffect(() => {
+    const initSession = async () => {
+      try {
+        const supabase = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "",
+        );
+        const { data } = await supabase.auth.getSession();
+        if (data?.session?.access_token) {
+          setAccessToken(data.session.access_token);
+        }
+      } catch (e) {
+        console.error("Failed to get session:", e);
+      }
+    };
+    initSession();
+  }, []);
+
+  // load roles from api on mount and when tenantId/token changes
+  useEffect(() => {
+    if (!tenantId || !accessToken) {
+      setIsLoading(false);
+      return;
+    }
+
+    const loadRoles = async () => {
+      try {
+        setIsLoading(true);
+        const res = await fetch(`/api/tenants/${tenantId}/roles`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          // convert db format to ui format (add employees and permissions)
+          const formattedRoles: Role[] = data.map((r: any) => ({
+            id: r.id,
+            name: r.name,
+            color: r.color || "bg-brand-primary",
+            employees: [], // employees will be managed separately
+            permissions: r.permissions || DEFAULT_PERMISSIONS,
+          }));
+          setRoles(formattedRoles);
+          if (formattedRoles.length > 0 && !selectedRoleId) {
+            setSelectedRoleId(formattedRoles[0].id);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to load roles:", e);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadRoles();
+  }, [tenantId, accessToken]);
 
   const activeRole = roles.find((r) => r.id === selectedRoleId);
 
@@ -310,9 +376,40 @@ export default function RolesManagement() {
     });
   };
 
-  const handleSave = () => {
-    if (!draftRole) return;
-    setRoles(roles.map((r) => (r.id === draftRole.id ? draftRole : r)));
+  const handleSave = async () => {
+    if (!draftRole || !tenantId || !accessToken) return;
+    try {
+      const res = await fetch(
+        `/api/tenants/${tenantId}/roles/${draftRole.id}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({
+            name: draftRole.name,
+            color: draftRole.color,
+            permissions: draftRole.permissions,
+          }),
+        },
+      );
+      if (res.ok) {
+        const updated = await res.json();
+        setRoles(
+          roles.map((r) =>
+            r.id === updated.id
+              ? {
+                  ...updated,
+                  employees: r.employees,
+                }
+              : r,
+          ),
+        );
+      }
+    } catch (e) {
+      console.error("Failed to save role:", e);
+    }
   };
 
   const handleDragStart = (e: React.DragEvent, id: string) => {
@@ -346,34 +443,76 @@ export default function RolesManagement() {
     }
   };
 
-  const handleConfirmCreateRole = (templateRole?: Role) => {
-    const newRole: Role = {
-      id: `r${Date.now()}`,
-      name: templateRole ? templateRole.name : "New Role",
-      color: templateRole
-        ? templateRole.color
-        : PRESET_COLORS[Math.floor(Math.random() * PRESET_COLORS.length)],
-      employees: [],
-      permissions: templateRole
-        ? JSON.parse(JSON.stringify(templateRole.permissions))
-        : JSON.parse(JSON.stringify(DEFAULT_PERMISSIONS)),
-    };
-    setRoles([...roles, newRole]);
-    setSelectedRoleId(newRole.id);
-    setIsCreateRoleModalOpen(false);
-    if (templateRole) setShowTemplateReminder(true);
+  const handleConfirmCreateRole = async (templateRole?: Role) => {
+    if (!tenantId || !accessToken) return;
+    try {
+      const payload = {
+        name: templateRole ? templateRole.name : "New Role",
+        color: templateRole
+          ? templateRole.color
+          : PRESET_COLORS[Math.floor(Math.random() * PRESET_COLORS.length)],
+        permissions: templateRole
+          ? templateRole.permissions
+          : DEFAULT_PERMISSIONS,
+      };
+      const res = await fetch(`/api/tenants/${tenantId}/roles`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) {
+        const newRole = await res.json();
+        const formattedRole: Role = {
+          id: newRole.id,
+          name: newRole.name,
+          color: newRole.color || "bg-brand-primary",
+          employees: [],
+          permissions: newRole.permissions || DEFAULT_PERMISSIONS,
+        };
+        setRoles([...roles, formattedRole]);
+        setSelectedRoleId(formattedRole.id);
+        setIsCreateRoleModalOpen(false);
+        if (templateRole) setShowTemplateReminder(true);
+      }
+    } catch (e) {
+      console.error("Failed to create role:", e);
+    }
   };
 
-  const handleDuplicate = () => {
-    if (!activeRole) return;
-    const newRole: Role = {
-      ...JSON.parse(JSON.stringify(activeRole)),
-      id: `r${Date.now()}`,
-      name: `${activeRole.name} (Copy)`,
-      employees: [],
-    };
-    setRoles([...roles, newRole]);
-    setSelectedRoleId(newRole.id);
+  const handleDuplicate = async () => {
+    if (!activeRole || !tenantId || !accessToken) return;
+    try {
+      const payload = {
+        name: `${activeRole.name} (Copy)`,
+        color: activeRole.color,
+        permissions: activeRole.permissions,
+      };
+      const res = await fetch(`/api/tenants/${tenantId}/roles`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) {
+        const newRole = await res.json();
+        const formattedRole: Role = {
+          id: newRole.id,
+          name: newRole.name,
+          color: newRole.color || "bg-brand-primary",
+          employees: [],
+          permissions: newRole.permissions || DEFAULT_PERMISSIONS,
+        };
+        setRoles([...roles, formattedRole]);
+        setSelectedRoleId(formattedRole.id);
+      }
+    } catch (e) {
+      console.error("Failed to duplicate role:", e);
+    }
   };
 
   const handleAddEmployee = () => {
@@ -408,22 +547,40 @@ export default function RolesManagement() {
     });
   };
 
-  const handleDelete = () => {
-    if (roles.length <= 1) return; // don't delete last role
-    const newRoles = roles.filter((r) => r.id !== selectedRoleId);
-    setRoles(newRoles);
-    setSelectedRoleId(newRoles[0].id);
+  const handleDelete = async () => {
+    if (roles.length <= 1 || !tenantId || !accessToken || !selectedRoleId)
+      return;
+    try {
+      const res = await fetch(
+        `/api/tenants/${tenantId}/roles/${selectedRoleId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        },
+      );
+      if (res.ok) {
+        const newRoles = roles.filter((r) => r.id !== selectedRoleId);
+        setRoles(newRoles);
+        if (newRoles.length > 0) {
+          setSelectedRoleId(newRoles[0].id);
+        }
+      }
+    } catch (e) {
+      console.error("Failed to delete role:", e);
+    }
   };
 
-  const runConfirmedAction = () => {
+  const runConfirmedAction = async () => {
     if (!confirmationAction) return;
 
     if (confirmationAction === "save") {
-      handleSave();
+      await handleSave();
     } else if (confirmationAction === "copy") {
-      handleDuplicate();
+      await handleDuplicate();
     } else if (confirmationAction === "delete") {
-      handleDelete();
+      await handleDelete();
     }
 
     setConfirmationAction(null);
@@ -432,6 +589,16 @@ export default function RolesManagement() {
   const filteredRoles = roles.filter((r) =>
     r.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[700px]">
+        <div className="text-center b2 text-text-secondary">
+          Loading roles...
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
