@@ -80,14 +80,16 @@ export default function TenantLayout({
         />
       </div>
 
-      <Navbar
-        variant="transparent"
-        type="tenant"
-        activeView={currentView}
-        onNavigate={handleNavigation}
-      />
+      <div className="relative z-[40]">
+        <Navbar
+          variant="transparent"
+          type="tenant"
+          activeView={currentView}
+          onNavigate={handleNavigation}
+        />
+      </div>
 
-      <div className="flex-1 max-w-[1440px] w-full mx-auto flex flex-col p-4 md:p-8 lg:p-12 mt-28 relative z-[90]">
+      <div className="flex-1 max-w-[1440px] w-full mx-auto flex flex-col p-4 md:p-8 lg:p-12 mt-28 relative">
         {children}
       </div>
 
