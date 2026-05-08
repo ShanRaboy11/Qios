@@ -1,3 +1,4 @@
+import { NextRequest } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 async function requireAdminForTenant(
@@ -6,18 +7,19 @@ async function requireAdminForTenant(
   tenantId: string,
 ) {
   if (!token) {
-    return { ok: false, status: 401, message: "Missing access token" };
+    return { ok: false, status: 401, message: "missing access token" };
   }
 
   const { data: userData, error: userErr } = await admin.auth.getUser(token);
   if (userErr || !userData?.user) {
-    return { ok: false, status: 401, message: "Invalid access token" };
+    return { ok: false, status: 401, message: "invalid access token" };
   }
 
   const userId = userData.user.id;
+
   const { data: profile, error: profileErr } = await admin
     .from("profiles")
-    .select("role,tenant_id")
+    .select("role, tenant_id")
     .eq("id", userId)
     .eq("tenant_id", tenantId)
     .single();
@@ -26,73 +28,85 @@ async function requireAdminForTenant(
     return {
       ok: false,
       status: 403,
-      message: "Not authorized for this tenant",
+      message: "not authorized for this tenant",
     };
   }
 
   if (!(profile.role === "admin" || profile.role === "super_admin")) {
-    return { ok: false, status: 403, message: "Insufficient privileges" };
+    return { ok: false, status: 403, message: "insufficient privileges" };
   }
 
   return { ok: true, userId };
 }
 
+/* get roles */
 export async function GET(
-  req: Request,
-  { params }: { params: { tenantId: string } },
+  req: NextRequest,
+  context: { params: Promise<{ tenantId: string }> },
 ) {
   const admin = createSupabaseAdminClient();
+  const { tenantId } = await context.params;
+
   const token = req.headers.get("authorization")?.split(" ")[1] ?? null;
 
-  const auth = await requireAdminForTenant(admin, token, params.tenantId);
-  if (!auth.ok)
+  const auth = await requireAdminForTenant(admin, token, tenantId);
+  if (!auth.ok) {
     return new Response(JSON.stringify({ error: auth.message }), {
       status: auth.status,
     });
+  }
 
   const { data, error } = await admin
     .from("roles")
     .select("*")
-    .eq("tenant_id", params.tenantId)
+    .eq("tenant_id", tenantId)
     .order("created_at", { ascending: true });
 
-  if (error)
+  if (error) {
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
     });
+  }
+
   return new Response(JSON.stringify(data), { status: 200 });
 }
 
+/* create role */
 export async function POST(
-  req: Request,
-  { params }: { params: { tenantId: string } },
+  req: NextRequest,
+  context: { params: Promise<{ tenantId: string }> },
 ) {
   const admin = createSupabaseAdminClient();
+  const { tenantId } = await context.params;
+
   const token = req.headers.get("authorization")?.split(" ")[1] ?? null;
 
-  const auth = await requireAdminForTenant(admin, token, params.tenantId);
-  if (!auth.ok)
+  const auth = await requireAdminForTenant(admin, token, tenantId);
+  if (!auth.ok) {
     return new Response(JSON.stringify({ error: auth.message }), {
       status: auth.status,
     });
+  }
 
   let body: any;
   try {
     body = await req.json();
-  } catch (e) {
-    return new Response(JSON.stringify({ error: "Invalid JSON" }), {
+  } catch {
+    return new Response(JSON.stringify({ error: "invalid json" }), {
       status: 400,
     });
   }
 
   const { name, color, permissions } = body;
-  if (!name)
-    return new Response(JSON.stringify({ error: "Missing 'name'" }), {
+
+  if (!name) {
+    return new Response(JSON.stringify({ error: "missing name" }), {
       status: 400,
     });
+  }
 
   const payload = {
-    tenant_id: params.tenantId,
+    tenant_id: tenantId,
     name,
     color: color ?? null,
     permissions: permissions ?? {},
@@ -103,9 +117,12 @@ export async function POST(
     .insert(payload)
     .select()
     .single();
-  if (error)
+
+  if (error) {
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
     });
+  }
+
   return new Response(JSON.stringify(data), { status: 201 });
 }

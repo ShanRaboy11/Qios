@@ -1,3 +1,4 @@
+import { NextRequest } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 async function requireAdminForTenant(
@@ -6,18 +7,19 @@ async function requireAdminForTenant(
   tenantId: string,
 ) {
   if (!token) {
-    return { ok: false, status: 401, message: "Missing access token" };
+    return { ok: false, status: 401, message: "missing access token" };
   }
 
   const { data: userData, error: userErr } = await admin.auth.getUser(token);
   if (userErr || !userData?.user) {
-    return { ok: false, status: 401, message: "Invalid access token" };
+    return { ok: false, status: 401, message: "invalid access token" };
   }
 
   const userId = userData.user.id;
+
   const { data: profile, error: profileErr } = await admin
     .from("profiles")
-    .select("role,tenant_id")
+    .select("role, tenant_id")
     .eq("id", userId)
     .eq("tenant_id", tenantId)
     .single();
@@ -26,62 +28,72 @@ async function requireAdminForTenant(
     return {
       ok: false,
       status: 403,
-      message: "Not authorized for this tenant",
+      message: "not authorized for this tenant",
     };
   }
 
   if (!(profile.role === "admin" || profile.role === "super_admin")) {
-    return { ok: false, status: 403, message: "Insufficient privileges" };
+    return { ok: false, status: 403, message: "insufficient privileges" };
   }
 
   return { ok: true, userId };
 }
 
+/* get single role */
 export async function GET(
-  req: Request,
-  { params }: { params: { tenantId: string; roleId: string } },
+  req: NextRequest,
+  context: { params: Promise<{ tenantId: string; roleId: string }> },
 ) {
   const admin = createSupabaseAdminClient();
+  const { tenantId, roleId } = await context.params;
+
   const token = req.headers.get("authorization")?.split(" ")[1] ?? null;
 
-  const auth = await requireAdminForTenant(admin, token, params.tenantId);
-  if (!auth.ok)
+  const auth = await requireAdminForTenant(admin, token, tenantId);
+  if (!auth.ok) {
     return new Response(JSON.stringify({ error: auth.message }), {
       status: auth.status,
     });
+  }
 
   const { data, error } = await admin
     .from("roles")
     .select("*")
-    .eq("id", params.roleId)
-    .eq("tenant_id", params.tenantId)
+    .eq("id", roleId)
+    .eq("tenant_id", tenantId)
     .single();
 
-  if (error)
+  if (error) {
     return new Response(JSON.stringify({ error: error.message }), {
       status: 404,
     });
+  }
+
   return new Response(JSON.stringify(data), { status: 200 });
 }
 
+/* update role */
 export async function PATCH(
-  req: Request,
-  { params }: { params: { tenantId: string; roleId: string } },
+  req: NextRequest,
+  context: { params: Promise<{ tenantId: string; roleId: string }> },
 ) {
   const admin = createSupabaseAdminClient();
+  const { tenantId, roleId } = await context.params;
+
   const token = req.headers.get("authorization")?.split(" ")[1] ?? null;
 
-  const auth = await requireAdminForTenant(admin, token, params.tenantId);
-  if (!auth.ok)
+  const auth = await requireAdminForTenant(admin, token, tenantId);
+  if (!auth.ok) {
     return new Response(JSON.stringify({ error: auth.message }), {
       status: auth.status,
     });
+  }
 
   let body: any;
   try {
     body = await req.json();
-  } catch (e) {
-    return new Response(JSON.stringify({ error: "Invalid JSON" }), {
+  } catch {
+    return new Response(JSON.stringify({ error: "invalid json" }), {
       status: 400,
     });
   }
@@ -91,48 +103,57 @@ export async function PATCH(
   if (body.color !== undefined) update.color = body.color;
   if (body.permissions !== undefined) update.permissions = body.permissions;
 
-  if (Object.keys(update).length === 0)
-    return new Response(JSON.stringify({ error: "Nothing to update" }), {
+  if (Object.keys(update).length === 0) {
+    return new Response(JSON.stringify({ error: "nothing to update" }), {
       status: 400,
     });
+  }
 
   const { data, error } = await admin
     .from("roles")
     .update(update)
-    .eq("id", params.roleId)
-    .eq("tenant_id", params.tenantId)
+    .eq("id", roleId)
+    .eq("tenant_id", tenantId)
     .select()
     .single();
 
-  if (error)
+  if (error) {
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
     });
+  }
+
   return new Response(JSON.stringify(data), { status: 200 });
 }
 
+/* delete role */
 export async function DELETE(
-  req: Request,
-  { params }: { params: { tenantId: string; roleId: string } },
+  req: NextRequest,
+  context: { params: Promise<{ tenantId: string; roleId: string }> },
 ) {
   const admin = createSupabaseAdminClient();
+  const { tenantId, roleId } = await context.params;
+
   const token = req.headers.get("authorization")?.split(" ")[1] ?? null;
 
-  const auth = await requireAdminForTenant(admin, token, params.tenantId);
-  if (!auth.ok)
+  const auth = await requireAdminForTenant(admin, token, tenantId);
+  if (!auth.ok) {
     return new Response(JSON.stringify({ error: auth.message }), {
       status: auth.status,
     });
+  }
 
   const { error } = await admin
     .from("roles")
     .delete()
-    .eq("id", params.roleId)
-    .eq("tenant_id", params.tenantId);
+    .eq("id", roleId)
+    .eq("tenant_id", tenantId);
 
-  if (error)
+  if (error) {
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
     });
+  }
+
   return new Response(null, { status: 204 });
 }
