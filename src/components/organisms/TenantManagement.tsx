@@ -19,6 +19,7 @@ import { FormField } from "@/components/molecules/FormField";
 import { Dropdown } from "@/components/molecules/Dropdown";
 import { Badge } from "@/components/atoms/Badge";
 import { Button } from "@/components/atoms/Button";
+import { ActionConfirmationModal } from "@/components/molecules/ConfirmationModal";
 
 interface Tenant {
   id: string;
@@ -583,82 +584,54 @@ function ConfirmationModal({
   onConfirm: () => void;
   onCancel: () => void;
 }) {
-  const getModalContent = () => {
-    switch (actionType) {
-      case "approve":
-      case "reapprove":
-        return {
-          title: "Approve Tenant",
-          message: `Are you sure you want to approve ${tenant.business_name}? They will gain full access to the platform.`,
-          confirmText: "Approve",
-          confirmVariant: "primary",
-          icon: <Check className="w-6 h-6 text-[#22C55E]" />,
-        };
-      case "reject":
-        return {
-          title: "Reject Tenant",
-          message: `Are you sure you want to reject ${tenant.business_name}? This action cannot be undone immediately.`,
-          confirmText: "Reject",
-          confirmVariant: "warning",
-          icon: <X className="w-6 h-6 text-warning-primary" />,
-        };
-      case "deactivate":
-        return {
-          title: "Deactivate Tenant",
-          message: `Are you sure you want to suspend ${tenant.business_name}? Their access will be temporarily disabled.`,
-          confirmText: "Deactivate",
-          confirmVariant: "warning",
-          icon: <X className="w-6 h-6 text-warning-primary" />,
-        };
-      case "activate":
-        return {
-          title: "Activate Tenant",
-          message: `Are you sure you want to reactivate ${tenant.business_name}? Their access will be restored.`,
-          confirmText: "Activate",
-          confirmVariant: "primary",
-          icon: <Check className="w-6 h-6 text-[#22C55E]" />,
-        };
-      default:
-        return {
-          title: "",
-          message: "",
-          confirmText: "",
-          confirmVariant: "primary",
-          icon: null,
-        };
-    }
-  };
-
-  const content = getModalContent();
+  const sharedAction =
+    actionType === "approve" || actionType === "reapprove"
+      ? "approve"
+      : actionType === "reject"
+        ? "reject"
+        : actionType === "deactivate"
+          ? "delete"
+          : "approve";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-[24px] p-6 sm:p-8 w-full max-w-[400px] shadow-xl animate-in fade-in zoom-in duration-200">
-        <div className="flex flex-col items-center text-center">
-          <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center mb-4">
-            {content.icon}
-          </div>
-          <h3 className="text-[20px] font-bold text-[#2D2D2D] mb-2">
-            {content.title}
-          </h3>
-          <p className="text-[14px] text-text-secondary mb-8">
-            {content.message}
-          </p>
-
-          <div className="flex gap-3 w-full mt-4">
-            <Button onClick={onCancel} variant="outline" className="flex-1">
-              Cancel
-            </Button>
-            <Button
-              onClick={onConfirm}
-              variant={content.confirmVariant as any}
-              className="flex-1"
-            >
-              {content.confirmText}
-            </Button>
-          </div>
-        </div>
-      </div>
-    </div>
+    <ActionConfirmationModal
+      isOpen
+      action={sharedAction}
+      activePlanName={tenant.business_name}
+      title={
+        actionType === "approve" || actionType === "reapprove"
+          ? "Approve Tenant"
+          : actionType === "reject"
+            ? "Reject Tenant"
+            : actionType === "deactivate"
+              ? "Deactivate Tenant"
+              : "Activate Tenant"
+      }
+      message={
+        actionType === "approve" || actionType === "reapprove"
+          ? `Are you sure you want to approve ${tenant.business_name}? They will gain full access to the platform.`
+          : actionType === "reject"
+            ? `Are you sure you want to reject ${tenant.business_name}? This action cannot be undone immediately.`
+            : actionType === "deactivate"
+              ? `Are you sure you want to suspend ${tenant.business_name}? Their access will be temporarily disabled.`
+              : `Are you sure you want to reactivate ${tenant.business_name}? Their access will be restored.`
+      }
+      confirmLabel={
+        actionType === "approve" || actionType === "reapprove"
+          ? "Approve"
+          : actionType === "reject"
+            ? "Reject"
+            : actionType === "deactivate"
+              ? "Deactivate"
+              : "Activate"
+      }
+      confirmVariant={
+        actionType === "reject" || actionType === "deactivate"
+          ? "outline"
+          : "primary"
+      }
+      onClose={onCancel}
+      onConfirm={onConfirm}
+    />
   );
 }

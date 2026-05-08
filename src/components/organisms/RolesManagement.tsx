@@ -21,6 +21,7 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ActionConfirmationModal } from "@/components/molecules/ConfirmationModal";
 
 // types
 type PermissionGroup = {
@@ -271,6 +272,9 @@ export default function RolesManagement() {
 
   const [isCreateRoleModalOpen, setIsCreateRoleModalOpen] = useState(false);
   const [showTemplateReminder, setShowTemplateReminder] = useState(false);
+  const [confirmationAction, setConfirmationAction] = useState<
+    "save" | "copy" | "delete" | null
+  >(null);
 
   // drag and drop state
   const [draggedRoleId, setDraggedRoleId] = useState<string | null>(null);
@@ -411,6 +415,20 @@ export default function RolesManagement() {
     setSelectedRoleId(newRoles[0].id);
   };
 
+  const runConfirmedAction = () => {
+    if (!confirmationAction) return;
+
+    if (confirmationAction === "save") {
+      handleSave();
+    } else if (confirmationAction === "copy") {
+      handleDuplicate();
+    } else if (confirmationAction === "delete") {
+      handleDelete();
+    }
+
+    setConfirmationAction(null);
+  };
+
   const filteredRoles = roles.filter((r) =>
     r.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
@@ -540,7 +558,7 @@ export default function RolesManagement() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={handleDuplicate}
+                    onClick={() => setConfirmationAction("copy")}
                     title="Duplicate Role"
                   >
                     <Copy size={18} />
@@ -548,7 +566,7 @@ export default function RolesManagement() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={handleDelete}
+                    onClick={() => setConfirmationAction("delete")}
                     title="Delete Role"
                     className="hover:bg-warning-secondary hover:text-warning-primary"
                     disabled={roles.length <= 1}
@@ -818,7 +836,7 @@ export default function RolesManagement() {
                 )}
                 <Button
                   variant={hasChanges ? "primary" : "ghost"}
-                  onClick={handleSave}
+                  onClick={() => setConfirmationAction("save")}
                   disabled={!hasChanges}
                   className={cn(!hasChanges && "opacity-50")}
                 >
@@ -1029,6 +1047,15 @@ export default function RolesManagement() {
           </div>
         </div>
       )}
+      {/* confirmation modal for save / copy / delete */}
+      <ActionConfirmationModal
+        isOpen={!!confirmationAction}
+        action={confirmationAction}
+        draftPlanName={draftRole?.name}
+        activePlanName={activeRole?.name}
+        onClose={() => setConfirmationAction(null)}
+        onConfirm={runConfirmedAction}
+      />
     </>
   );
 }

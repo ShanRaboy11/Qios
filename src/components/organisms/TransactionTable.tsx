@@ -7,12 +7,54 @@ import { Search, Download, Filter } from "lucide-react";
 import { Button } from "@/components/atoms/Button";
 
 const mockTransactions = [
-  { id: "ORD-1029", time: "10:24 AM", items: "Truffle Burger, Fries...", total: 450, status: "Completed", method: "Cash" },
-  { id: "ORD-1030", time: "10:28 AM", items: "Iced Macchiato (2)", total: 320, status: "Completed", method: "E-Wallet" },
-  { id: "ORD-1031", time: "10:35 AM", items: "Classic Burger", total: 250, status: "Refunded", method: "Card" },
-  { id: "ORD-1032", time: "10:41 AM", items: "Chicken Wings (6pc)", total: 380, status: "Completed", method: "E-Wallet" },
-  { id: "ORD-1033", time: "10:55 AM", items: "Onion Rings, Soda", total: 180, status: "Completed", method: "Cash" },
-  { id: "ORD-1034", time: "11:05 AM", items: "Family Bundle A", total: 1250, status: "Completed", method: "Card" },
+  {
+    id: "ORD-1029",
+    time: "10:24 AM",
+    items: "Truffle Burger, Fries...",
+    total: 450,
+    status: "Completed",
+    method: "Cash",
+  },
+  {
+    id: "ORD-1030",
+    time: "10:28 AM",
+    items: "Iced Macchiato (2)",
+    total: 320,
+    status: "Completed",
+    method: "E-Wallet",
+  },
+  {
+    id: "ORD-1031",
+    time: "10:35 AM",
+    items: "Classic Burger",
+    total: 250,
+    status: "Refunded",
+    method: "Card",
+  },
+  {
+    id: "ORD-1032",
+    time: "10:41 AM",
+    items: "Chicken Wings (6pc)",
+    total: 380,
+    status: "Completed",
+    method: "E-Wallet",
+  },
+  {
+    id: "ORD-1033",
+    time: "10:55 AM",
+    items: "Onion Rings, Soda",
+    total: 180,
+    status: "Completed",
+    method: "Cash",
+  },
+  {
+    id: "ORD-1034",
+    time: "11:05 AM",
+    items: "Family Bundle A",
+    total: 1250,
+    status: "Completed",
+    method: "Card",
+  },
 ];
 
 export const TransactionTable = () => {
@@ -22,7 +64,9 @@ export const TransactionTable = () => {
     <div className="bg-white rounded-[24px] shadow-sm border border-gray-100 overflow-hidden flex flex-col h-full w-full">
       <div className="p-6 border-b border-gray-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h3 className="font-bold text-xl text-text-primary">Recent Transactions</h3>
+          <h3 className="font-bold text-xl text-text-primary">
+            Recent Transactions
+          </h3>
           <p className="text-sm text-text-secondary mt-1">
             Detailed log of all store orders
           </p>
@@ -37,10 +81,20 @@ export const TransactionTable = () => {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          <Button variant="outline" shape="rounded" className="px-3" title="Filter">
+          <Button
+            variant="outline"
+            shape="rounded"
+            className="px-3"
+            title="Filter"
+          >
             <Filter size={16} />
           </Button>
-          <Button variant="outline" shape="rounded" className="px-3" title="Export">
+          <Button
+            variant="outline"
+            shape="rounded"
+            className="px-3"
+            title="Export"
+          >
             <Download size={16} />
           </Button>
         </div>
@@ -95,11 +149,13 @@ export const TransactionTable = () => {
         </table>
       </div>
       <div className="p-4 border-t border-gray-50 flex justify-between items-center text-sm text-text-secondary">
-         <span>Showing 6 of 145 transactions</span>
-         <div className="flex gap-2">
-            <button className="px-3 py-1 rounded hover:bg-gray-100 disabled:opacity-50">Prev</button>
-            <button className="px-3 py-1 rounded hover:bg-gray-100">Next</button>
-         </div>
+        <span>Showing 6 of 145 transactions</span>
+        <div className="flex gap-2">
+          <button className="px-3 py-1 rounded hover:bg-gray-100 disabled:opacity-50">
+            Prev
+          </button>
+          <button className="px-3 py-1 rounded hover:bg-gray-100">Next</button>
+        </div>
       </div>
     </div>
   );

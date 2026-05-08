@@ -39,7 +39,7 @@ import {
 } from "./actions";
 import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-import type { OperationalSetupConfig, SubscriptionPlan } from "@/types/tenant";
+import type { OperationalSetupConfig } from "@/types/tenant";
 
 const steps = [
   { id: 1, title: "Account Creation", icon: IdCard },
@@ -104,7 +104,7 @@ export default function OnboardingPage() {
     confirm: "",
   });
   const [subscriptionData, setSubscriptionData] = useState({
-    packageId: "starter",
+    packageName: "",
   });
   const [documentData, setDocumentData] = useState<Record<string, File>>({});
   const [existingDocumentUrls, setExistingDocumentUrls] = useState<
@@ -142,7 +142,7 @@ export default function OnboardingPage() {
       setVerificationCode("");
       setExistingDocumentUrls({});
       setDocumentData({});
-      setSubscriptionData({ packageId: "starter" });
+      setSubscriptionData({ packageName: "" });
       setOperationalData({
         inventoryMode: "unit",
         serviceWorkflow: "pickup",
@@ -166,36 +166,6 @@ export default function OnboardingPage() {
   });
 
   const validateEmail = (email: string) => /\S+@\S+\.\S+/.test(email);
-
-  const getSelectedPlan = (packageId: string): SubscriptionPlan => {
-    if (!packageId) return "basic";
-    const lowerId = packageId.toLowerCase();
-
-    // Check UUIDs or name strings
-    if (
-      lowerId === "basic" ||
-      lowerId === "starter" ||
-      lowerId === "b3c2d4a5-1e6f-4c8d-9b1e-0a1f2e3d4c5b"
-    )
-      return "basic";
-
-    if (
-      lowerId === "business" ||
-      lowerId === "growth" ||
-      lowerId === "d1e2f3a4-b5c6-4d7e-8c9b-1a2f3e4d5c6b"
-    )
-      return "business";
-
-    if (
-      lowerId === "enterprise" ||
-      lowerId === "enterprises" ||
-      lowerId === "f5a4b3c2-e1d0-4e8f-9a1b-2c3d4e5f6a9b"
-    )
-      return "enterprise";
-
-    // Fallback if UUID from a dynamic plan
-    return "basic";
-  };
 
   const mapOperationalSetup = (settings?: Record<string, unknown> | null) => {
     if (!settings) {
@@ -254,8 +224,7 @@ export default function OnboardingPage() {
     });
 
     setSubscriptionData({
-      packageId:
-        tenant?.subscription_plan || access.subscriptionPlan || "starter",
+      packageName: tenant?.subscription_plan || access.subscriptionPlan || "",
     });
 
     setOperationalData((prev) => ({
@@ -301,7 +270,7 @@ export default function OnboardingPage() {
         setVerificationCode("");
         setExistingDocumentUrls({});
         setDocumentData({});
-        setSubscriptionData({ packageId: "starter" });
+        setSubscriptionData({ packageName: "" });
         setOperationalData({
           inventoryMode: "unit",
           serviceWorkflow: "pickup",
@@ -392,7 +361,7 @@ export default function OnboardingPage() {
         setVerificationCode("");
         setExistingDocumentUrls({});
         setDocumentData({});
-        setSubscriptionData({ packageId: "starter" });
+        setSubscriptionData({ packageName: "" });
 
         setError(
           "This email is already registered and onboarding has been submitted.",
@@ -856,7 +825,7 @@ export default function OnboardingPage() {
               <ReviewSummary
                 adminEmail={authData.email}
                 businessData={businessData}
-                selectedPlan={getSelectedPlan(subscriptionData.packageId)}
+                selectedPlanName={subscriptionData.packageName}
                 onBack={prevStep}
                 onSubmit={handleSubmitApplication}
                 loading={loading}

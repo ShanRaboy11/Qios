@@ -31,7 +31,9 @@ export const StaffLeaderboard = ({ data }: StaffLeaderboardProps) => {
               <th className="py-3 px-2 w-10 sm:w-12 text-center">Rank</th>
               <th className="py-3 px-2">Staff Name</th>
               <th className="py-3 px-2 w-16 sm:w-20 text-center">Volume</th>
-              <th className="py-3 px-2 w-24 sm:w-28 text-center">Performance</th>
+              <th className="py-3 px-2 w-24 sm:w-28 text-center">
+                Performance
+              </th>
             </tr>
           </thead>
           <tbody>

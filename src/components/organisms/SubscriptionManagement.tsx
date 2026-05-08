@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
 import { FeatureToggle } from "@/components/molecules/FeatureToggle";
+import { ActionConfirmationModal } from "@/components/molecules/ConfirmationModal";
 import {
   Plus,
   Search,
@@ -36,6 +37,7 @@ type SubscriptionPlan = {
   name: string;
   color: string;
   badge: string;
+  displayOrder: number;
   priceMonthly: string;
   priceAnnually: string;
   features: Features;
@@ -123,141 +125,6 @@ const FEATURE_DESCRIPTIONS: Record<string, string> = {
     "Create accounts, assign roles, and toggle feature access for staff.",
 };
 
-const INITIAL_PLANS: SubscriptionPlan[] = [
-  {
-    id: "p1",
-    name: "Basic",
-    color: "bg-[#ffc670]",
-    badge: "Starter Ready",
-    priceMonthly: "1,499",
-    priceAnnually: "15,290",
-    features: {
-      customer: {
-        "Browser-Based Ordering": true,
-        "Text-Based AI Concierge": false,
-        "Menu Viewing & Item Customization": true,
-        "Real-Time Price Calculation": true,
-        "Order Confirmation & QR Generation": true,
-        "Order Status Viewing": true,
-      },
-      employee_ops: {
-        "Employee Authentication": true,
-        "QR Code Order Retrieval": true,
-        "Order Modification & Validation": true,
-        "Payment Confirmation": true,
-        "Order Queue Management": true,
-        "Transaction Logging": true,
-      },
-      inventory: {
-        "Unit-Based Inventory Tracking": false,
-        "Measurement-Based Inventory Tracking": false,
-        "Automated Stock Deduction": false,
-        "Physical Stock Input & Variance Reports": false,
-        "Shrinkage Alerts": false,
-      },
-      analytics: {
-        "Live Revenue Dashboard": false,
-        "Sales Reports Generation": true,
-        "Order Velocity Analytics": false,
-        "Staff Activity Monitoring": false,
-        "Cancellation & Void Monitoring": false,
-      },
-      admin_controls: {
-        "Admin Authentication": true,
-        "Role & Permissions Management": true,
-      },
-    },
-  },
-  {
-    id: "p2",
-    name: "Business",
-    color: "bg-[#ff5269]",
-    badge: "Most Popular",
-    priceMonthly: "3,499",
-    priceAnnually: "35,690",
-    features: {
-      customer: {
-        "Browser-Based Ordering": true,
-        "Text-Based AI Concierge": true,
-        "Menu Viewing & Item Customization": true,
-        "Real-Time Price Calculation": true,
-        "Order Confirmation & QR Generation": true,
-        "Order Status Viewing": true,
-      },
-      employee_ops: {
-        "Employee Authentication": true,
-        "QR Code Order Retrieval": true,
-        "Order Modification & Validation": true,
-        "Payment Confirmation": true,
-        "Order Queue Management": true,
-        "Transaction Logging": true,
-      },
-      inventory: {
-        "Unit-Based Inventory Tracking": true,
-        "Measurement-Based Inventory Tracking": false,
-        "Automated Stock Deduction": true,
-        "Physical Stock Input & Variance Reports": false,
-        "Shrinkage Alerts": false,
-      },
-      analytics: {
-        "Live Revenue Dashboard": true,
-        "Sales Reports Generation": true,
-        "Order Velocity Analytics": false,
-        "Staff Activity Monitoring": false,
-        "Cancellation & Void Monitoring": false,
-      },
-      admin_controls: {
-        "Admin Authentication": true,
-        "Role & Permissions Management": true,
-      },
-    },
-  },
-  {
-    id: "p3",
-    name: "Enterprise",
-    color: "bg-[#1fad66]",
-    badge: "Premium Suite",
-    priceMonthly: "7,999",
-    priceAnnually: "81,590",
-    features: {
-      customer: {
-        "Browser-Based Ordering": true,
-        "Text-Based AI Concierge": true,
-        "Menu Viewing & Item Customization": true,
-        "Real-Time Price Calculation": true,
-        "Order Confirmation & QR Generation": true,
-        "Order Status Viewing": true,
-      },
-      employee_ops: {
-        "Employee Authentication": true,
-        "QR Code Order Retrieval": true,
-        "Order Modification & Validation": true,
-        "Payment Confirmation": true,
-        "Order Queue Management": true,
-        "Transaction Logging": true,
-      },
-      inventory: {
-        "Unit-Based Inventory Tracking": true,
-        "Measurement-Based Inventory Tracking": true,
-        "Automated Stock Deduction": true,
-        "Physical Stock Input & Variance Reports": true,
-        "Shrinkage Alerts": true,
-      },
-      analytics: {
-        "Live Revenue Dashboard": true,
-        "Sales Reports Generation": true,
-        "Order Velocity Analytics": true,
-        "Staff Activity Monitoring": true,
-        "Cancellation & Void Monitoring": true,
-      },
-      admin_controls: {
-        "Admin Authentication": true,
-        "Role & Permissions Management": true,
-      },
-    },
-  },
-];
-
 const PRESET_COLORS = [
   "bg-[#ffc670]",
   "bg-[#ff5269]",
@@ -277,25 +144,47 @@ export default function SubscriptionManagement() {
   const [draggedPlanId, setDraggedPlanId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [confirmationAction, setConfirmationAction] = useState<
+    "save" | "copy" | "delete" | null
+  >(null);
 
   const supabase = createSupabaseBrowserClient();
+  const hasConfirmationOpen = confirmationAction !== null;
+
+  const normalizePlanName = (name: string) => name.trim().toLowerCase();
+  const formatPlanLabel = (name: string) =>
+    name ? name.charAt(0).toUpperCase() + name.slice(1) : name;
+  const formatPlanInput = (name: string) =>
+    name ? name.charAt(0).toUpperCase() + name.slice(1) : "";
 
   useEffect(() => {
     async function fetchPlans() {
       try {
-        const { data, error } = await supabase
+        let response = await supabase
           .from("subscription_plans")
           .select("*")
-          .order("price_monthly");
+          .order("display_order", { ascending: true })
+          .order("created_at", { ascending: true });
+
+        if (response.error) {
+          response = await supabase
+            .from("subscription_plans")
+            .select("*")
+            .order("created_at", { ascending: true });
+        }
+
+        const { data, error } = response;
 
         if (error) throw error;
 
         if (data && data.length > 0) {
-          const parsed = data.map((d: any) => ({
+          const parsed = data.map((d: any, index: number) => ({
             id: d.id,
             name: d.name,
             color: d.color,
             badge: d.badge,
+            displayOrder:
+              typeof d.display_order === "number" ? d.display_order : index,
             priceMonthly: d.price_monthly,
             priceAnnually: d.price_annually,
             features:
@@ -306,8 +195,8 @@ export default function SubscriptionManagement() {
           setPlans(parsed);
           setSelectedPlanId(parsed[0].id);
         } else {
-          setPlans(INITIAL_PLANS);
-          setSelectedPlanId(INITIAL_PLANS[0].id);
+          setPlans([]);
+          setSelectedPlanId("");
         }
       } catch (error) {
         console.error("Error fetching subscription plans:", error);
@@ -328,7 +217,11 @@ export default function SubscriptionManagement() {
     }
   }, [activePlan]);
 
-  const hasChanges = JSON.stringify(activePlan) !== JSON.stringify(draftPlan);
+  const hasChanges = Boolean(
+    activePlan &&
+    draftPlan &&
+    JSON.stringify(activePlan) !== JSON.stringify(draftPlan),
+  );
 
   const handleFeatureChange = (
     category: keyof Features,
@@ -351,9 +244,10 @@ export default function SubscriptionManagement() {
 
     try {
       const payload = {
-        name: draftPlan.name,
+        name: normalizePlanName(draftPlan.name),
         color: draftPlan.color,
         badge: draftPlan.badge,
+        display_order: draftPlan.displayOrder,
         price_monthly: draftPlan.priceMonthly,
         price_annually: draftPlan.priceAnnually,
         features: draftPlan.features,
@@ -381,10 +275,21 @@ export default function SubscriptionManagement() {
 
       const newPlan = {
         ...draftPlan,
+        name: payload.name,
         id: data.id,
+        displayOrder:
+          typeof data.display_order === "number"
+            ? data.display_order
+            : draftPlan.displayOrder,
       };
 
-      setPlans(plans.map((p) => (p.id === draftPlan.id ? newPlan : p)));
+      setPlans((prevPlans) => {
+        const hasExisting = prevPlans.some((p) => p.id === draftPlan.id);
+        const nextPlans = hasExisting
+          ? prevPlans.map((p) => (p.id === draftPlan.id ? newPlan : p))
+          : [...prevPlans, newPlan];
+        return [...nextPlans].sort((a, b) => a.displayOrder - b.displayOrder);
+      });
       setSelectedPlanId(newPlan.id);
     } catch (error) {
       console.error("Error saving plan:", error);
@@ -405,13 +310,49 @@ export default function SubscriptionManagement() {
   const handleDrop = (e: React.DragEvent, targetId: string) => {
     e.preventDefault();
     if (!draggedPlanId || draggedPlanId === targetId) return;
+    const currentPlans = [...plans];
     const newPlans = [...plans];
     const di = newPlans.findIndex((p) => p.id === draggedPlanId);
     const ti = newPlans.findIndex((p) => p.id === targetId);
+    if (di < 0 || ti < 0) {
+      setDraggedPlanId(null);
+      return;
+    }
     const [dp] = newPlans.splice(di, 1);
     newPlans.splice(ti, 0, dp);
-    setPlans(newPlans);
+
+    const reorderedPlans = newPlans.map((plan, index) => ({
+      ...plan,
+      displayOrder: index,
+    }));
+
+    setPlans(reorderedPlans);
     setDraggedPlanId(null);
+
+    const persistedPlans = reorderedPlans.filter((p) => !p.id.startsWith("p"));
+    if (persistedPlans.length === 0) {
+      return;
+    }
+
+    void (async () => {
+      try {
+        const updatePromises = persistedPlans.map((plan) =>
+          supabase
+            .from("subscription_plans")
+            .update({ display_order: plan.displayOrder })
+            .eq("id", plan.id),
+        );
+        const results = await Promise.all(updatePromises);
+        const failed = results.find((result) => result.error);
+        if (failed?.error) {
+          throw failed.error;
+        }
+      } catch (error) {
+        console.error("Error persisting plan order:", error);
+        alert("Failed to save plan sequence. Reverting to previous order.");
+        setPlans(currentPlans);
+      }
+    })();
   };
 
   const handleDiscard = () => {
@@ -421,11 +362,12 @@ export default function SubscriptionManagement() {
   const handleConfirmCreatePlan = (templatePlan?: SubscriptionPlan) => {
     const newPlan: SubscriptionPlan = {
       id: `p${Date.now()}`,
-      name: templatePlan ? templatePlan.name : "New Plan",
+      name: normalizePlanName(templatePlan ? templatePlan.name : "new plan"),
       color: templatePlan
         ? templatePlan.color
         : PRESET_COLORS[Math.floor(Math.random() * PRESET_COLORS.length)],
       badge: templatePlan ? templatePlan.badge : "",
+      displayOrder: plans.length,
       priceMonthly: templatePlan ? templatePlan.priceMonthly : "0",
       priceAnnually: templatePlan ? templatePlan.priceAnnually : "0",
       features: templatePlan
@@ -443,7 +385,8 @@ export default function SubscriptionManagement() {
     const newPlan = {
       ...JSON.parse(JSON.stringify(activePlan)),
       id: `p${Date.now()}`,
-      name: `${activePlan.name} (Copy)`,
+      name: normalizePlanName(`${activePlan.name} copy`),
+      displayOrder: plans.length,
     };
     setPlans([...plans, newPlan]);
     setSelectedPlanId(newPlan.id);
@@ -471,10 +414,48 @@ export default function SubscriptionManagement() {
       }
     }
 
-    const newPlans = plans.filter((p) => p.id !== selectedPlanId);
+    const newPlans = plans
+      .filter((p) => p.id !== selectedPlanId)
+      .map((plan, index) => ({ ...plan, displayOrder: index }));
+
+    const persistedPlans = newPlans.filter((p) => !p.id.startsWith("p"));
+    if (persistedPlans.length > 0) {
+      try {
+        const results = await Promise.all(
+          persistedPlans.map((plan) =>
+            supabase
+              .from("subscription_plans")
+              .update({ display_order: plan.displayOrder })
+              .eq("id", plan.id),
+          ),
+        );
+        const failed = results.find((result) => result.error);
+        if (failed?.error) {
+          throw failed.error;
+        }
+      } catch (error) {
+        console.error("Error re-indexing plans after delete:", error);
+        alert("Plan was deleted but order update failed. Please refresh.");
+      }
+    }
+
     setPlans(newPlans);
     setSelectedPlanId(newPlans[0].id);
     setSaving(false);
+  };
+
+  const runConfirmedAction = async () => {
+    if (!confirmationAction) return;
+
+    if (confirmationAction === "save") {
+      await handleSave();
+    } else if (confirmationAction === "copy") {
+      handleDuplicate();
+    } else if (confirmationAction === "delete") {
+      await handleDelete();
+    }
+
+    setConfirmationAction(null);
   };
 
   const filteredPlans = plans.filter((p) =>
@@ -551,7 +532,7 @@ export default function SubscriptionManagement() {
                         : "text-text-primary/80",
                     )}
                   >
-                    {plan.name}
+                    {formatPlanLabel(plan.name)}
                   </span>
                   {plan.badge && (
                     <span className="b5 text-text-secondary truncate mt-0.5">
@@ -577,9 +558,12 @@ export default function SubscriptionManagement() {
                         Plan Name
                       </label>
                       <Input
-                        value={draftPlan.name}
+                        value={formatPlanInput(draftPlan.name)}
                         onChange={(e) =>
-                          setDraftPlan({ ...draftPlan, name: e.target.value })
+                          setDraftPlan({
+                            ...draftPlan,
+                            name: e.target.value.toLowerCase(),
+                          })
                         }
                         className="text-lg !bg-white/80 !py-1.5 !h-10"
                       />
@@ -602,7 +586,7 @@ export default function SubscriptionManagement() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={handleDuplicate}
+                      onClick={() => setConfirmationAction("copy")}
                       title="Duplicate Plan"
                       disabled={saving}
                     >
@@ -611,7 +595,7 @@ export default function SubscriptionManagement() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={handleDelete}
+                      onClick={() => setConfirmationAction("delete")}
                       title="Delete Plan"
                       className="hover:bg-warning-secondary hover:text-warning-primary"
                       disabled={plans.length <= 1 || saving}
@@ -802,7 +786,7 @@ export default function SubscriptionManagement() {
                 )}
                 <Button
                   variant={hasChanges ? "primary" : "ghost"}
-                  onClick={handleSave}
+                  onClick={() => setConfirmationAction("save")}
                   disabled={!hasChanges || saving}
                   loading={saving}
                   className={cn(!hasChanges && "opacity-50")}
@@ -849,7 +833,7 @@ export default function SubscriptionManagement() {
                 start from scratch.
               </p>
               <div className="flex flex-col gap-3 mb-6">
-                {INITIAL_PLANS.map((template) => (
+                {plans.map((template) => (
                   <button
                     key={template.id}
                     onClick={() => handleConfirmCreatePlan(template)}
@@ -863,7 +847,7 @@ export default function SubscriptionManagement() {
                     />
                     <div>
                       <span className="b2 font-bold text-text-primary group-hover:text-brand-primary transition-colors">
-                        {template.name} Plan
+                        {formatPlanLabel(template.name)} Plan
                       </span>
                       <p className="b4 text-text-secondary">
                         Pre-configured with standard{" "}
@@ -872,6 +856,11 @@ export default function SubscriptionManagement() {
                     </div>
                   </button>
                 ))}
+                {plans.length === 0 && (
+                  <p className="b4 text-text-secondary">
+                    No existing plans yet. You can start from scratch below.
+                  </p>
+                )}
               </div>
               <div className="relative flex items-center py-2 mb-4">
                 <div className="flex-grow border-t border-black/[0.05]" />
@@ -891,6 +880,16 @@ export default function SubscriptionManagement() {
           </div>
         </div>
       )}
+
+      <ActionConfirmationModal
+        isOpen={hasConfirmationOpen}
+        action={confirmationAction}
+        draftPlanName={draftPlan?.name}
+        activePlanName={activePlan?.name}
+        saving={saving}
+        onClose={() => setConfirmationAction(null)}
+        onConfirm={runConfirmedAction}
+      />
     </>
   );
 }

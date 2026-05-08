@@ -20,7 +20,9 @@ export const DashboardListsSection = () => {
             <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center">
               <Trophy className="w-5 h-5 text-[#ffc670]" />
             </div>
-            <h2 className="text-[18px] font-bold text-text-primary">Top Selling Products</h2>
+            <h2 className="text-[18px] font-bold text-text-primary">
+              Top Selling Products
+            </h2>
           </div>
           <div className="w-[130px]">
             <Dropdown
@@ -38,34 +40,62 @@ export const DashboardListsSection = () => {
 
         <div className="flex flex-col gap-2">
           <ListCardItem
-            imageSlot={<div className="w-full h-full bg-orange-100 rounded-xl" />} // Replace with image
+            imageSlot={
+              <div className="w-full h-full bg-orange-100 rounded-xl" />
+            } // Replace with image
             title="Chicken McDo"
             subtitle="$187 • 247+ Sales"
-            rightSlot={<div className="text-[#22C55E] border border-[#22C55E] rounded px-2 py-0.5 text-[11px] font-bold flex items-center gap-1">↗ 25%</div>}
+            rightSlot={
+              <div className="text-[#22C55E] border border-[#22C55E] rounded px-2 py-0.5 text-[11px] font-bold flex items-center gap-1">
+                ↗ 25%
+              </div>
+            }
           />
           <ListCardItem
             imageSlot={<div className="w-full h-full bg-red-100 rounded-xl" />}
             title="McFloat"
             subtitle="$145 • 289+ Sales"
-            rightSlot={<div className="text-[#22C55E] border border-[#22C55E] rounded px-2 py-0.5 text-[11px] font-bold flex items-center gap-1">↗ 25%</div>}
+            rightSlot={
+              <div className="text-[#22C55E] border border-[#22C55E] rounded px-2 py-0.5 text-[11px] font-bold flex items-center gap-1">
+                ↗ 25%
+              </div>
+            }
           />
           <ListCardItem
-            imageSlot={<div className="w-full h-full bg-green-100 rounded-xl" />}
+            imageSlot={
+              <div className="w-full h-full bg-green-100 rounded-xl" />
+            }
             title="Ala King"
             subtitle="$458 • 300+ Sales"
-            rightSlot={<div className="text-[#22C55E] border border-[#22C55E] rounded px-2 py-0.5 text-[11px] font-bold flex items-center gap-1">↗ 25%</div>}
+            rightSlot={
+              <div className="text-[#22C55E] border border-[#22C55E] rounded px-2 py-0.5 text-[11px] font-bold flex items-center gap-1">
+                ↗ 25%
+              </div>
+            }
           />
           <ListCardItem
-            imageSlot={<div className="w-full h-full bg-yellow-100 rounded-xl" />}
+            imageSlot={
+              <div className="w-full h-full bg-yellow-100 rounded-xl" />
+            }
             title="Fries"
             subtitle="$139 • 225+ Sales"
-            rightSlot={<div className="text-[#EF4444] border border-[#EF4444] rounded px-2 py-0.5 text-[11px] font-bold flex items-center gap-1">↘ 21%</div>}
+            rightSlot={
+              <div className="text-[#EF4444] border border-[#EF4444] rounded px-2 py-0.5 text-[11px] font-bold flex items-center gap-1">
+                ↘ 21%
+              </div>
+            }
           />
           <ListCardItem
-            imageSlot={<div className="w-full h-full bg-purple-100 rounded-xl" />}
+            imageSlot={
+              <div className="w-full h-full bg-purple-100 rounded-xl" />
+            }
             title="Burger"
             subtitle="$898 • 365+ Sales"
-            rightSlot={<div className="text-[#22C55E] border border-[#22C55E] rounded px-2 py-0.5 text-[11px] font-bold flex items-center gap-1">↗ 25%</div>}
+            rightSlot={
+              <div className="text-[#22C55E] border border-[#22C55E] rounded px-2 py-0.5 text-[11px] font-bold flex items-center gap-1">
+                ↗ 25%
+              </div>
+            }
           />
         </div>
       </div>
@@ -77,7 +107,9 @@ export const DashboardListsSection = () => {
             <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center">
               <AlertTriangle className="w-5 h-5 text-[#EF4444]" />
             </div>
-            <h2 className="text-[18px] font-bold text-text-primary">Low Stock Products</h2>
+            <h2 className="text-[18px] font-bold text-text-primary">
+              Low Stock Products
+            </h2>
           </div>
           <Link
             href="#"
@@ -153,7 +185,9 @@ export const DashboardListsSection = () => {
             <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center">
               <ShoppingBag className="w-5 h-5 text-[#ffc670]" />
             </div>
-            <h2 className="text-[18px] font-bold text-text-primary">Recent Orders</h2>
+            <h2 className="text-[18px] font-bold text-text-primary">
+              Recent Orders
+            </h2>
           </div>
           <div className="w-[130px]">
             <Dropdown
@@ -171,13 +205,21 @@ export const DashboardListsSection = () => {
 
         <div className="flex flex-col gap-2">
           <ListCardItem
-            imageSlot={<div className="w-full h-full bg-green-100 rounded-xl" />}
+            imageSlot={
+              <div className="w-full h-full bg-green-100 rounded-xl" />
+            }
             title="Chicken McDo"
             subtitle="Meal • $640"
             rightSlot={
               <div className="text-right flex flex-col gap-1 items-end">
                 <div className="text-[12px] text-text-secondary">Today</div>
-                <Badge variant="outline" color="warning" className="text-[10px] py-0 px-2 rounded-full h-5">Pending</Badge>
+                <Badge
+                  variant="outline"
+                  color="warning"
+                  className="text-[10px] py-0 px-2 rounded-full h-5"
+                >
+                  Pending
+                </Badge>
               </div>
             }
           />
@@ -188,40 +230,76 @@ export const DashboardListsSection = () => {
             rightSlot={
               <div className="text-right flex flex-col gap-1 items-end">
                 <div className="text-[12px] text-text-secondary">Today</div>
-                <Badge variant="outline" color="error" className="text-[10px] py-0 px-2 rounded-full h-5">Cancelled</Badge>
+                <Badge
+                  variant="outline"
+                  color="error"
+                  className="text-[10px] py-0 px-2 rounded-full h-5"
+                >
+                  Cancelled
+                </Badge>
               </div>
             }
           />
           <ListCardItem
-            imageSlot={<div className="w-full h-full bg-yellow-100 rounded-xl" />}
+            imageSlot={
+              <div className="w-full h-full bg-yellow-100 rounded-xl" />
+            }
             title="Ala King"
             subtitle="Meal • $89"
             rightSlot={
               <div className="text-right flex flex-col gap-1 items-end">
-                <div className="text-[12px] text-text-secondary">15 Jan 2025</div>
-                <Badge variant="outline" color="warning" className="text-[10px] py-0 px-2 rounded-full h-5">Pending</Badge>
+                <div className="text-[12px] text-text-secondary">
+                  15 Jan 2025
+                </div>
+                <Badge
+                  variant="outline"
+                  color="warning"
+                  className="text-[10px] py-0 px-2 rounded-full h-5"
+                >
+                  Pending
+                </Badge>
               </div>
             }
           />
           <ListCardItem
-            imageSlot={<div className="w-full h-full bg-orange-100 rounded-xl" />}
+            imageSlot={
+              <div className="w-full h-full bg-orange-100 rounded-xl" />
+            }
             title="Fries"
             subtitle="Snacks • $65"
             rightSlot={
               <div className="text-right flex flex-col gap-1 items-end">
-                <div className="text-[12px] text-text-secondary">12 Jan 2025</div>
-                <Badge variant="outline" color="success" className="text-[10px] py-0 px-2 rounded-full h-5">Completed</Badge>
+                <div className="text-[12px] text-text-secondary">
+                  12 Jan 2025
+                </div>
+                <Badge
+                  variant="outline"
+                  color="success"
+                  className="text-[10px] py-0 px-2 rounded-full h-5"
+                >
+                  Completed
+                </Badge>
               </div>
             }
           />
           <ListCardItem
-            imageSlot={<div className="w-full h-full bg-purple-100 rounded-xl" />}
+            imageSlot={
+              <div className="w-full h-full bg-purple-100 rounded-xl" />
+            }
             title="Burger"
             subtitle="Snacks • $87.56"
             rightSlot={
               <div className="text-right flex flex-col gap-1 items-end">
-                <div className="text-[12px] text-text-secondary">11 Jan 2025</div>
-                <Badge variant="outline" color="success" className="text-[10px] py-0 px-2 rounded-full h-5">Completed</Badge>
+                <div className="text-[12px] text-text-secondary">
+                  11 Jan 2025
+                </div>
+                <Badge
+                  variant="outline"
+                  color="success"
+                  className="text-[10px] py-0 px-2 rounded-full h-5"
+                >
+                  Completed
+                </Badge>
               </div>
             }
           />

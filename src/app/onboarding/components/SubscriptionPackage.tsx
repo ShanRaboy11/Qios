@@ -32,8 +32,8 @@ interface SubscriptionPlanData {
   name: string;
   color: string;
   badge: string;
-  price_monthly: string;
-  price_annually: string;
+  priceMonthly: string;
+  priceAnnually: string;
   features: Features;
 }
 
@@ -51,12 +51,12 @@ export function SubscriptionPackage({
   onNext,
   onBack,
 }: {
-  data: { packageId: string };
-  setData: React.Dispatch<React.SetStateAction<{ packageId: string }>>;
+  data: { packageName: string };
+  setData: React.Dispatch<React.SetStateAction<{ packageName: string }>>;
   onNext: () => void;
   onBack: () => void;
 }) {
-  const [selectedId, setSelectedId] = useState(data.packageId || "");
+  const [selectedId, setSelectedId] = useState("");
   const [plans, setPlans] = useState<SubscriptionPlanData[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -65,16 +65,29 @@ export function SubscriptionPackage({
   useEffect(() => {
     async function fetchPlans() {
       try {
-        const { data: dbData, error } = await supabase
+        let response = await supabase
           .from("subscription_plans")
           .select("*")
-          // Order alphabetically or by price. Since price_monthly is text like "1,499", we might just not order here or assume the DB is sequential
-          .order("created_at");
+          .order("display_order", { ascending: true, nullsFirst: false })
+          .order("created_at", { ascending: true });
+
+        if (response.error) {
+          response = await supabase
+            .from("subscription_plans")
+            .select("*")
+            .order("created_at", { ascending: true });
+        }
+
+        const { data: dbData, error } = response;
 
         if (error) throw error;
 
         if (dbData && dbData.length > 0) {
           const parsed = dbData.map((d: any) => ({
+            id: d.id,
+            name: d.name,
+            color: d.color,
+            badge: d.badge,
             ...d,
             priceMonthly: d.price_monthly,
             priceAnnually: d.price_annually,
@@ -86,9 +99,9 @@ export function SubscriptionPackage({
           setPlans(parsed);
 
           if (
-            !data.packageId ||
-            data.packageId === "starter" ||
-            data.packageId === "basic"
+            !data.packageName ||
+            data.packageName.toLowerCase() === "starter" ||
+            data.packageName.toLowerCase() === "basic"
           ) {
             const defaultPlan =
               parsed.find(
@@ -97,16 +110,21 @@ export function SubscriptionPackage({
                   p.name.toLowerCase() === "starter",
               ) || parsed[0];
             setSelectedId(defaultPlan.id);
-            setData({ packageId: defaultPlan.id });
-          } else if (
-            parsed.find((p: any) => p.name.toLowerCase() === data.packageId)
-          ) {
-            // handle case where parent has human readable name instead of uuid
-            const matchedPlan = parsed.find(
-              (p: any) => p.name.toLowerCase() === data.packageId,
-            );
+            setData({ packageName: defaultPlan.name });
+          } else {
+            const matchedPlan =
+              parsed.find(
+                (p: any) =>
+                  p.id === data.packageName ||
+                  p.name.toLowerCase() === data.packageName.toLowerCase(),
+              ) || parsed[0];
+
+            if (!matchedPlan) {
+              return;
+            }
+
             setSelectedId(matchedPlan.id);
-            setData({ packageId: matchedPlan.id });
+            setData({ packageName: matchedPlan.name });
           }
         }
       } catch (error) {
@@ -121,10 +139,20 @@ export function SubscriptionPackage({
 
   // Keep local selection in sync when parent updates (user navigates back)
   useEffect(() => {
-    if (data.packageId && data.packageId !== selectedId) {
-      setSelectedId(data.packageId);
+    if (!data.packageName || plans.length === 0) {
+      return;
     }
-  }, [data.packageId, selectedId]);
+
+    const matchedPlan = plans.find(
+      (plan) =>
+        plan.id === data.packageName ||
+        plan.name.toLowerCase() === data.packageName.toLowerCase(),
+    );
+
+    if (matchedPlan && matchedPlan.id !== selectedId) {
+      setSelectedId(matchedPlan.id);
+    }
+  }, [data.packageName, plans, selectedId]);
 
   if (loading) {
     return (
@@ -160,7 +188,7 @@ export function SubscriptionPackage({
             key={pkg.id}
             onClick={() => {
               setSelectedId(pkg.id);
-              setData({ packageId: pkg.id });
+              setData({ packageName: pkg.name });
             }}
             className={cn(
               "px-6 py-2 lg:px-7 lg:py-3 rounded-[40px] b3 transition-all duration-300 whitespace-nowrap font-bold",
@@ -205,7 +233,7 @@ export function SubscriptionPackage({
 
           <div className="flex items-baseline justify-center mt-6">
             <span className="text-4xl lg:text-5xl font-bold text-text-primary">
-              ₱ {activePackage.price_monthly}
+              ₱ {activePackage.priceMonthly}
             </span>
             <span className="text-lg font-medium text-text-secondary ml-1">
               /month
@@ -290,11 +318,10 @@ export function SubscriptionPackage({
           size="lg"
           className="flex-1 h-14 b2 font-bold text-lg shadow-lg text-white transition-all active:scale-[0.98]"
           style={{
-            backgroundColor: activeColorHex,
             boxShadow: `0 10px 15px -3px ${activeColorHex}40`,
           }}
           onClick={() => {
-            setData({ packageId: selectedId });
+            setData({ packageName: activePackage.name });
             onNext();
           }}
         >
