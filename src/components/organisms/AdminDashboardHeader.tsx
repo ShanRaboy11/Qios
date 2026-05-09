@@ -25,7 +25,7 @@ export const AdminDashboardHeader = ({
           </h1>
           <p className="b1 text-text-primary">
             Today,{" "}
-            <span className="text-[#FF5269] font-bold">14 New Companies</span>{" "}
+            <span className="text-[#FF5269] font-bold"> New Companies</span>{" "}
             Subscribed!
           </p>
         </div>
