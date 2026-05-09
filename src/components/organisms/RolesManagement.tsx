@@ -443,8 +443,18 @@ export default function RolesManagement() {
     }
   };
 
+  // helper to handle role creation from templates or scratch
   const handleConfirmCreateRole = async (templateRole?: Role) => {
-    if (!tenantId || !accessToken) return;
+    // check if we have the required context
+    if (!tenantId) {
+      console.error("tenant id is missing from the url params");
+      return;
+    }
+    if (!accessToken) {
+      console.error("access token not found. session might still be loading");
+      return;
+    }
+
     try {
       const payload = {
         name: templateRole ? templateRole.name : "New Role",
@@ -455,6 +465,7 @@ export default function RolesManagement() {
           ? templateRole.permissions
           : DEFAULT_PERMISSIONS,
       };
+
       const res = await fetch(`/api/tenants/${tenantId}/roles`, {
         method: "POST",
         headers: {
@@ -463,33 +474,45 @@ export default function RolesManagement() {
         },
         body: JSON.stringify(payload),
       });
+
       if (res.ok) {
         const newRole = await res.json();
+
+        // format the backend response to match our local role type
         const formattedRole: Role = {
           id: newRole.id,
           name: newRole.name,
           color: newRole.color || "bg-brand-primary",
-          employees: [],
+          employees: [], // new roles start with no employees
           permissions: newRole.permissions || DEFAULT_PERMISSIONS,
         };
-        setRoles([...roles, formattedRole]);
+
+        // update local state and select the new role
+        setRoles((prev) => [...prev, formattedRole]);
         setSelectedRoleId(formattedRole.id);
         setIsCreateRoleModalOpen(false);
+
         if (templateRole) setShowTemplateReminder(true);
+      } else {
+        const err = await res.json();
+        console.error("failed to create role on server:", err);
       }
     } catch (e) {
-      console.error("Failed to create role:", e);
+      console.error("network error while creating role:", e);
     }
   };
 
+  // helper to handle duplication (uses the same post endpoint)
   const handleDuplicate = async () => {
     if (!activeRole || !tenantId || !accessToken) return;
+
     try {
       const payload = {
         name: `${activeRole.name} (Copy)`,
         color: activeRole.color,
         permissions: activeRole.permissions,
       };
+
       const res = await fetch(`/api/tenants/${tenantId}/roles`, {
         method: "POST",
         headers: {
@@ -498,20 +521,22 @@ export default function RolesManagement() {
         },
         body: JSON.stringify(payload),
       });
+
       if (res.ok) {
-        const newRole = await res.json();
+        const newRoleData = await res.json();
         const formattedRole: Role = {
-          id: newRole.id,
-          name: newRole.name,
-          color: newRole.color || "bg-brand-primary",
+          id: newRoleData.id,
+          name: newRoleData.name,
+          color: newRoleData.color || "bg-brand-primary",
           employees: [],
-          permissions: newRole.permissions || DEFAULT_PERMISSIONS,
+          permissions: newRoleData.permissions || DEFAULT_PERMISSIONS,
         };
-        setRoles([...roles, formattedRole]);
+
+        setRoles((prev) => [...prev, formattedRole]);
         setSelectedRoleId(formattedRole.id);
       }
     } catch (e) {
-      console.error("Failed to duplicate role:", e);
+      console.error("failed to duplicate role:", e);
     }
   };
 
@@ -547,9 +572,11 @@ export default function RolesManagement() {
     });
   };
 
+  // helper to handle role deletion
   const handleDelete = async () => {
     if (roles.length <= 1 || !tenantId || !accessToken || !selectedRoleId)
       return;
+
     try {
       const res = await fetch(
         `/api/tenants/${tenantId}/roles/${selectedRoleId}`,
@@ -560,15 +587,17 @@ export default function RolesManagement() {
           },
         },
       );
+
       if (res.ok) {
         const newRoles = roles.filter((r) => r.id !== selectedRoleId);
         setRoles(newRoles);
+        // auto-select the first available role after deletion
         if (newRoles.length > 0) {
           setSelectedRoleId(newRoles[0].id);
         }
       }
     } catch (e) {
-      console.error("Failed to delete role:", e);
+      console.error("failed to delete role:", e);
     }
   };
 
