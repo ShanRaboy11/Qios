@@ -25,9 +25,9 @@ CREATE POLICY "Tenant isolation for roles" ON public.roles
     FOR ALL TO authenticated
     USING (
         tenant_id = (auth.jwt() ->> 'tenant_id')::uuid
-        OR (auth.jwt() ->> 'role') = 'super_admin'
+        OR (auth.jwt() ->> 'user_role') = 'super_admin'
     )
     WITH CHECK (
         tenant_id = (auth.jwt() ->> 'tenant_id')::uuid
-        OR (auth.jwt() ->> 'role') = 'super_admin'
+        OR (auth.jwt() ->> 'user_role') = 'super_admin'
     );

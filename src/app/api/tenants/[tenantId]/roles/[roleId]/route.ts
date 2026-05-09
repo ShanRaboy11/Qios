@@ -21,7 +21,6 @@ async function requireAdminForTenant(
     .from("profiles")
     .select("role, tenant_id")
     .eq("id", userId)
-    .eq("tenant_id", tenantId)
     .single();
 
   if (profileErr || !profile) {
@@ -32,11 +31,15 @@ async function requireAdminForTenant(
     };
   }
 
-  if (!(profile.role === "admin" || profile.role === "super_admin")) {
-    return { ok: false, status: 403, message: "insufficient privileges" };
+  if (profile.role === "super_admin") {
+    return { ok: true, userId };
   }
 
-  return { ok: true, userId };
+  if (profile.role === "admin" && profile.tenant_id === tenantId) {
+    return { ok: true, userId };
+  }
+
+  return { ok: false, status: 403, message: "insufficient privileges" };
 }
 
 /* get single role */
