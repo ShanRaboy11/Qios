@@ -120,7 +120,10 @@ export function ActionConfirmationModal({
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-text-primary/45 backdrop-blur-sm p-4">
       <div
-        className="bg-white rounded-[28px] w-full max-w-sm shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+        className={cn(
+          "bg-white rounded-[28px] w-full shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200",
+          requireReason ? "max-w-md" : "max-w-sm",
+        )}
         style={{
           boxShadow:
             "0 24px 64px rgba(0,0,0,0.14), 0 4px 16px rgba(0,0,0,0.08)",
@@ -216,7 +219,7 @@ export function ActionConfirmationModal({
               Reason {"(Required)"}
             </label>
             <textarea
-              placeholder="Please provide a reason..."
+              placeholder="e.g. The submitted DTI/SEC registration appears to be expired or incomplete. Please resubmit with a valid, up-to-date copy of your business registration certificate."
               value={reasonValue ?? ""}
               onChange={(e) => onReasonChange?.(e.target.value)}
               rows={4}

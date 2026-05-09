@@ -366,6 +366,29 @@ export async function resolveOnboardingAccess({
     );
   }
 
+  if (tenant?.status === "rejected") {
+    return {
+      status: "resume-onboarding",
+      userExists,
+      userVerified,
+      adminEmail: authUser?.email || normalizedEmail,
+      nextStep: 3,
+      userId: authUser?.id,
+      tenantId: tenant.id,
+      businessName: tenant.business_name || undefined,
+      businessEmail: tenant.business_email || normalizedEmail,
+      ownerName: tenant.owner_name || undefined,
+      subscriptionPlan:
+        (tenant.subscription_plan as SubscriptionPlan) || undefined,
+      verificationDocUrls:
+        (tenant.verification_doc_urls as string[]) || undefined,
+      operationalSetup: parseOperationalSetup(
+        (tenant.settings as Record<string, unknown> | null) || null,
+      ),
+      tenant,
+    };
+  }
+
   if (tenant?.status === "onboarding") {
     return {
       status: "resume-onboarding",
@@ -853,4 +876,19 @@ export async function processOnboarding(data: {
     businessEmail: data.businessData.email,
     ownerName: data.businessData.owner,
   };
+}
+
+export async function markTenantResubmission(tenantId: string) {
+  const supabase = createSupabaseAdminClient();
+
+  const { error } = await supabase
+    .from("tenants")
+    .update({ status: "pending" })
+    .eq("id", tenantId);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return { success: true };
 }

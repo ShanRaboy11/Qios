@@ -542,7 +542,7 @@ export const sendBusinessVerificationEmail = async ({
     : `<table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom:24px;">
         <tr>
           <td align="center">
-            <a href="#" style="display:inline-block;padding:14px 32px;
+            <a href="${publicBaseUrl}/onboarding?resubmit=${encodeURIComponent(to)}" style="display:inline-block;padding:14px 32px;
                                background:linear-gradient(135deg,${B.coral} 0%,#ff3355 100%);
                                color:#ffffff;font-size:14px;font-weight:700;
                                border-radius:10px;text-decoration:none;
