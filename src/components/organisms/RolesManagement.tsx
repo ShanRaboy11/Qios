@@ -443,15 +443,33 @@ export default function RolesManagement() {
     }
   };
 
+  // helper to get token immediately if state hasn't populated yet
+  const getfreshToken = async () => {
+    if (accessToken) return accessToken;
+
+    // if state is empty, try to fetch directly from supabase
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "",
+    );
+    const { data } = await supabase.auth.getSession();
+    const token = data?.session?.access_token || null;
+    if (token) setAccessToken(token);
+    return token;
+  };
+
   // helper to handle role creation from templates or scratch
   const handleConfirmCreateRole = async (templateRole?: Role) => {
-    // check if we have the required context
     if (!tenantId) {
-      console.error("tenant id is missing from the url params");
+      console.error("tenant id missing");
       return;
     }
-    if (!accessToken) {
-      console.error("access token not found. session might still be loading");
+
+    // try to get the token again instead of just failing
+    const token = await getfreshToken();
+
+    if (!token) {
+      alert("session not found. please log in again.");
       return;
     }
 
@@ -470,35 +488,30 @@ export default function RolesManagement() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${token}`, // use the fresh token
         },
         body: JSON.stringify(payload),
       });
 
       if (res.ok) {
         const newRole = await res.json();
-
-        // format the backend response to match our local role type
         const formattedRole: Role = {
           id: newRole.id,
           name: newRole.name,
           color: newRole.color || "bg-brand-primary",
-          employees: [], // new roles start with no employees
+          employees: [],
           permissions: newRole.permissions || DEFAULT_PERMISSIONS,
         };
-
-        // update local state and select the new role
         setRoles((prev) => [...prev, formattedRole]);
         setSelectedRoleId(formattedRole.id);
         setIsCreateRoleModalOpen(false);
-
         if (templateRole) setShowTemplateReminder(true);
       } else {
         const err = await res.json();
-        console.error("failed to create role on server:", err);
+        console.error("server error:", err);
       }
     } catch (e) {
-      console.error("network error while creating role:", e);
+      console.error("network error:", e);
     }
   };
 
