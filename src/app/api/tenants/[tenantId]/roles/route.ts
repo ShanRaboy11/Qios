@@ -77,13 +77,36 @@ export async function GET(
     });
   }
 
+  // resolve emails for profile ids via supabase admin auth api
+  const profileIds = data.flatMap((r: any) => (r.profiles || []).map((p: any) => p.id));
+  const uniqueProfileIds = Array.from(new Set(profileIds));
+  const usersById: Record<string, any> = {};
+
+  if (uniqueProfileIds.length > 0) {
+    const userFetches = await Promise.all(
+      uniqueProfileIds.map((id: string) =>
+        // use admin.auth.admin.getUserById to fetch the auth user (contains email)
+        // guard against individual failures so one bad user doesn't break the whole response
+        admin.auth.admin.getUserById(id).then((res: any) => res).catch(() => ({ data: { user: null } })),
+      ),
+    );
+
+    userFetches.forEach((res: any) => {
+      if (res && res.data && res.data.user) {
+        usersById[res.data.user.id] = res.data.user;
+      }
+    });
+  }
+
   const formattedData = data.map((r: any) => ({
     ...r,
-    employees: r.profiles?.map((p: any) => ({
-      id: p.id,
-      email: p.full_name,
-    })) || [],
-    profiles: undefined
+    employees:
+      r.profiles?.map((p: any) => ({
+        id: p.id,
+        name: p.full_name,
+        email: usersById[p.id]?.email ?? "",
+      })) || [],
+    profiles: undefined,
   }));
 
   return new Response(JSON.stringify(formattedData), { status: 200 });

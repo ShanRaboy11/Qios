@@ -296,7 +296,11 @@ export default function RolesManagement() {
           id: d.id,
           name: d.name,
           color: d.color,
-          employees: [], // mock for now
+          employees: (d.employees || []).map((e: any) => ({
+            id: e.id,
+            name: e.name ?? e.full_name ?? "",
+            email: e.email ?? "",
+          })),
           permissions:
             typeof d.permissions === "string"
               ? JSON.parse(d.permissions)
