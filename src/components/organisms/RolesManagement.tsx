@@ -457,9 +457,64 @@ export default function RolesManagement() {
     }
   };
 
-  const handleConfirmCreateRole = (templateRole?: Role) => {
-    const newRole: Role = {
-      id: `r${Date.now()}`,
+  const createRoleInBackend = async (
+    payload: { name: string; color: string; permissions: any; employees: any[] },
+    showReminder: boolean = false
+  ) => {
+    if (!tenantId) return;
+    setSaving(true);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) throw new Error("no access token");
+
+      const res = await fetch(`/api/tenants/${tenantId}/roles`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        let errMessage = "failed to create role";
+        try {
+          const errData = await res.json();
+          if (errData.error) errMessage = errData.error;
+        } catch (_) {}
+        if (res.status === 403) throw new Error(errMessage || "insufficient privileges");
+        throw new Error(errMessage);
+      }
+
+      const data = await res.json();
+
+      const newRole: Role = {
+        id: data.id,
+        name: data.name,
+        color: data.color,
+        employees: payload.employees,
+        permissions:
+          typeof data.permissions === "string"
+            ? JSON.parse(data.permissions)
+            : data.permissions,
+      };
+
+      setRoles((prev) => [...prev, newRole]);
+      setSelectedRoleId(newRole.id);
+      setIsCreateRoleModalOpen(false);
+      if (showReminder) setShowTemplateReminder(true);
+    } catch (err: any) {
+      console.error("error creating role:", err);
+      alert(err.message || "failed to create role");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleConfirmCreateRole = async (templateRole?: Role) => {
+    const payload = {
       name: templateRole ? templateRole.name : "New Role",
       color: templateRole
         ? templateRole.color
@@ -469,22 +524,18 @@ export default function RolesManagement() {
         ? JSON.parse(JSON.stringify(templateRole.permissions))
         : JSON.parse(JSON.stringify(DEFAULT_PERMISSIONS)),
     };
-    setRoles([...roles, newRole]);
-    setSelectedRoleId(newRole.id);
-    setIsCreateRoleModalOpen(false);
-    if (templateRole) setShowTemplateReminder(true);
+    await createRoleInBackend(payload, !!templateRole);
   };
 
-  const handleDuplicate = () => {
+  const handleDuplicate = async () => {
     if (!activeRole) return;
-    const newRole: Role = {
-      ...JSON.parse(JSON.stringify(activeRole)),
-      id: `r${Date.now()}`,
+    const payload = {
       name: `${activeRole.name} (Copy)`,
+      color: activeRole.color,
       employees: [],
+      permissions: JSON.parse(JSON.stringify(activeRole.permissions)),
     };
-    setRoles([...roles, newRole]);
-    setSelectedRoleId(newRole.id);
+    await createRoleInBackend(payload, false);
   };
 
   const handleAddEmployee = () => {
