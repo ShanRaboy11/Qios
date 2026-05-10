@@ -265,6 +265,7 @@ export default function RolesManagement() {
   );
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [creatingEmployee, setCreatingEmployee] = useState(false);
 
   const params = useParams();
   const tenantId = params.id as string;
@@ -580,7 +581,7 @@ export default function RolesManagement() {
       .join("");
   };
 
-  const handleAddEmployee = () => {
+  const handleAddEmployee = async () => {
     if (!draftRole || !newEmployeeName.trim() || !newEmployeeEmail.trim())
       return;
 
@@ -594,32 +595,116 @@ export default function RolesManagement() {
     // generate temporary password
     const temporaryPassword = generateTemporaryPassword();
 
-    const newEmployee: Employee = {
-      id: `e${Date.now()}`,
-      name: newEmployeeName,
-      email: newEmployeeEmail,
-      password: temporaryPassword,
-    };
+    setCreatingEmployee(true);
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) throw new Error("no access token");
 
-    setDraftRole({
-      ...draftRole,
-      employees: [...draftRole.employees, newEmployee],
-    });
-    setNewEmployeeCredentials({
-      name: newEmployeeName,
-      email: newEmployeeEmail,
-      password: temporaryPassword,
-    });
-    setNewEmployeeName("");
-    setNewEmployeeEmail("");
+      const res = await fetch(
+        `/api/tenants/${tenantId}/roles/${draftRole.id}/employees`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            name: newEmployeeName,
+            email: newEmployeeEmail,
+            password: temporaryPassword,
+          }),
+        },
+      );
+
+      if (!res.ok) {
+        let errMessage = "failed to create employee";
+        try {
+          const errData = await res.json();
+          if (errData.error) errMessage = errData.error;
+        } catch (_) {}
+        throw new Error(errMessage);
+      }
+
+      const data = await res.json();
+
+      const newEmployee: Employee = {
+        id: data.id,
+        name: newEmployeeName,
+        email: newEmployeeEmail,
+        password: temporaryPassword,
+      };
+
+      setDraftRole({
+        ...draftRole,
+        employees: [...draftRole.employees, newEmployee],
+      });
+
+      setNewEmployeeCredentials({
+        name: newEmployeeName,
+        email: newEmployeeEmail,
+        password: temporaryPassword,
+      });
+      setNewEmployeeName("");
+      setNewEmployeeEmail("");
+    } catch (err: any) {
+      console.error("error creating employee:", err);
+      alert(err.message || "failed to create employee");
+    } finally {
+      setCreatingEmployee(false);
+    }
   };
 
-  const handleRemoveEmployee = (empId: string) => {
-    if (!draftRole) return;
+  const handleRemoveEmployee = async (empId: string) => {
+    if (!draftRole || !tenantId) return;
+
+    const confirmed = confirm("Are you sure you want to remove this employee?");
+    if (!confirmed) return;
+
+    setSaving(true);
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) throw new Error("no access token");
+
+      // delete the employee from backend
+      // only call API if it's a real ID (UUIDs are longer than temp e{timestamp} format)
+      if (empId.length > 20) {
+        const res = await fetch(
+          `/api/tenants/${tenantId}/roles/${draftRole.id}/employees/${empId}`,
+          {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+
+        if (!res.ok) {
+          let errMessage = "failed to delete employee";
+          try {
+            const errData = await res.json();
+            if (errData.error) errMessage = errData.error;
+          } catch (_) {}
+          throw new Error(errMessage);
+        }
+      }
+    } catch (err: any) {
+      console.error("error removing employee:", err);
+      alert(err.message || "failed to remove employee");
+      setSaving(false);
+      return;
+    }
+
     setDraftRole({
       ...draftRole,
       employees: draftRole.employees.filter((e) => e.id !== empId),
     });
+    setSaving(false);
   };
 
   const handleDelete = async () => {
@@ -1033,12 +1118,10 @@ export default function RolesManagement() {
                                     <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-brand-primary/10 flex items-center justify-center text-brand-primary font-bold b2">
                                       {employee.name.charAt(0).toUpperCase()}
                                     </div>
-                                    <div>
-                                      <p className="b2 font-bold text-text-primary">
-                                        {employee.name}
-                                        <p className="b4 text-text-secondary">
-                                          {employee.email}
-                                        </p>
+                                    <div className="b2 font-bold text-text-primary">
+                                      {employee.name}
+                                      <p className="b4 text-text-secondary text-inherit font-normal">
+                                        {employee.email}
                                       </p>
                                     </div>
                                   </div>
@@ -1261,10 +1344,15 @@ export default function RolesManagement() {
                     className="w-full"
                     onClick={handleAddEmployee}
                     disabled={
-                      !newEmployeeName.trim() || !newEmployeeEmail.trim()
+                      !newEmployeeName.trim() ||
+                      !newEmployeeEmail.trim() ||
+                      creatingEmployee
                     }
+                    loading={creatingEmployee}
                   >
-                    Generate Credentials & Create Employee
+                    {creatingEmployee
+                      ? "Creating..."
+                      : "Generate Credentials & Create Employee"}
                   </Button>
                 </div>
               ) : (
