@@ -979,7 +979,10 @@ export async function updateTenantStatus(
   const trimmedComments = comments?.trim();
 
   const updateData: any = { status };
-  if (trimmedComments !== undefined) {
+  if (status === "approved") {
+    // Automatically resolve any prior rejection comment when the tenant is approved.
+    updateData.admin_comments = "RESOLVED";
+  } else if (trimmedComments !== undefined) {
     updateData.admin_comments = trimmedComments;
   }
 

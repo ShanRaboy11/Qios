@@ -36,6 +36,7 @@ import {
   saveBusinessInformation,
   saveDocumentUploads,
   saveOnboardingProgress,
+  markTenantResubmission,
 } from "./actions";
 import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -92,6 +93,7 @@ export default function OnboardingPage() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [isResubmission, setIsResubmission] = useState(false);
 
   const [businessData, setBusinessData] = useState({
     name: "",
@@ -127,7 +129,19 @@ export default function OnboardingPage() {
   const pendingSaveProgress = useRef<Promise<any> | null>(null);
 
   // Ensure onboarding always starts fresh when page is opened.
+  // Exception: when ?resubmit=<email> is present, resume the rejected tenant at step 3.
   useEffect(() => {
+    const resubmitEmail =
+      typeof window !== "undefined"
+        ? new URL(window.location.href).searchParams.get("resubmit") || ""
+        : "";
+
+    if (resubmitEmail) {
+      setIsResubmission(true);
+      void handleAutoResume(resubmitEmail);
+      return;
+    }
+
     const clearSession = async () => {
       try {
         const supabase = createSupabaseBrowserClient();
@@ -154,6 +168,7 @@ export default function OnboardingPage() {
 
     void clearSession();
     // run only on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const [error, setError] = useState("");
@@ -550,7 +565,7 @@ export default function OnboardingPage() {
         filesData,
         existingDocumentUrls,
       })
-        .then((res) => {
+        .then(async (res) => {
           if (res.success && res.uploadedUrls) {
             // Map urls back to requirement ids
             const next: Record<string, string> = {};
@@ -560,6 +575,10 @@ export default function OnboardingPage() {
             });
             setExistingDocumentUrls((prev) => ({ ...prev, ...next }));
             setSuccess("Documents saved in background.");
+          }
+          // During resubmission, flip status to pending so the admin can re-review.
+          if (isResubmission && tenantId) {
+            await markTenantResubmission(tenantId);
           }
         })
         .catch((err: any) => {
