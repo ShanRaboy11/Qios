@@ -219,10 +219,12 @@ export default function TenantManagement({
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
   const [actionType, setActionType] = useState<ActionType | null>(null);
+  const [rejectionComment, setRejectionComment] = useState("");
 
   const openModal = (tenant: Tenant, action: ActionType) => {
     setSelectedTenant(tenant);
     setActionType(action);
+    setRejectionComment("");
     setModalOpen(true);
   };
 
@@ -247,7 +249,11 @@ export default function TenantManagement({
     }
 
     try {
-      await updateTenantStatus(selectedTenant.id, dbStatus);
+      const comment =
+        actionType === "reject"
+          ? rejectionComment.trim() || undefined
+          : undefined;
+      await updateTenantStatus(selectedTenant.id, dbStatus, comment);
       setTenants((prev) =>
         prev.map((t) =>
           t.id === selectedTenant.id ? { ...t, status: newStatus } : t,
@@ -260,6 +266,7 @@ export default function TenantManagement({
     setModalOpen(false);
     setSelectedTenant(null);
     setActionType(null);
+    setRejectionComment("");
   };
 
   const handleTenantClick = (tenant: Tenant) => {
@@ -458,6 +465,8 @@ export default function TenantManagement({
         <ConfirmationModal
           tenant={selectedTenant}
           actionType={actionType}
+          rejectionComment={rejectionComment}
+          onRejectionCommentChange={setRejectionComment}
           onConfirm={confirmAction}
           onCancel={() => setModalOpen(false)}
         />
@@ -576,11 +585,15 @@ function TenantCard({
 function ConfirmationModal({
   tenant,
   actionType,
+  rejectionComment,
+  onRejectionCommentChange,
   onConfirm,
   onCancel,
 }: {
   tenant: Tenant;
   actionType: ActionType;
+  rejectionComment?: string;
+  onRejectionCommentChange?: (val: string) => void;
   onConfirm: () => void;
   onCancel: () => void;
 }) {
@@ -630,6 +643,9 @@ function ConfirmationModal({
           ? "outline"
           : "primary"
       }
+      requireReason={actionType === "reject"}
+      reasonValue={rejectionComment}
+      onReasonChange={onRejectionCommentChange}
       onClose={onCancel}
       onConfirm={onConfirm}
     />
