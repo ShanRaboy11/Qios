@@ -128,8 +128,8 @@ export default function OnboardingPage() {
   const pendingSaveDocuments = useRef<Promise<any> | null>(null);
   const pendingSaveProgress = useRef<Promise<any> | null>(null);
 
-  // Ensure onboarding always starts fresh when page is opened.
-  // Exception: when ?resubmit=<email> is present, resume the rejected tenant at step 3.
+      // ensure onboarding always starts fresh when page is opened.
+      // exception: when ?resubmit=<email> is present, resume the rejected tenant at step 3.
   useEffect(() => {
     const resubmitEmail =
       typeof window !== "undefined"
@@ -173,6 +173,7 @@ export default function OnboardingPage() {
 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [authEmailError, setAuthEmailError] = useState("");
 
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [registrationData, setRegistrationData] = useState({
@@ -347,12 +348,27 @@ export default function OnboardingPage() {
   const handleAuthContinue = async () => {
     setError("");
     setSuccess("");
+    setAuthEmailError("");
 
     if (!validateEmail(authData.email)) {
-      return setError("A valid admin email is required.");
+      return setAuthEmailError("A valid admin email is required.");
     }
+
+    // validate password strength
     if (authData.password.length < 8) {
       return setError("Password must be at least 8 characters.");
+    }
+    if (!/[A-Z]/.test(authData.password)) {
+      return setError("Password must contain at least one uppercase letter.");
+    }
+    if (!/[a-z]/.test(authData.password)) {
+      return setError("Password must contain at least one lowercase letter.");
+    }
+    if (!/[0-9]/.test(authData.password)) {
+      return setError("Password must contain at least one digit.");
+    }
+    if (!/[^A-Za-z0-9]/.test(authData.password)) {
+      return setError("Password must contain at least one special character.");
     }
     if (authData.password !== authData.confirm) {
       return setError("Passwords do not match.");
@@ -757,6 +773,7 @@ export default function OnboardingPage() {
                   data={authData}
                   setData={setAuthData}
                   onAutoResume={handleAutoResume}
+                  emailError={authEmailError}
                 />
                 <div className="mt-8 flex flex-col items-center w-full">
                   <div className="flex flex-row gap-3 w-full">

@@ -61,7 +61,13 @@ export async function GET(
 
   const { data, error } = await admin
     .from("roles")
-    .select("*")
+    .select(`
+      *,
+      profiles!app_role_id (
+        id,
+        full_name
+      )
+    `)
     .eq("tenant_id", tenantId)
     .order("created_at", { ascending: true });
 
@@ -71,7 +77,16 @@ export async function GET(
     });
   }
 
-  return new Response(JSON.stringify(data), { status: 200 });
+  const formattedData = data.map((r: any) => ({
+    ...r,
+    employees: r.profiles?.map((p: any) => ({
+      id: p.id,
+      email: p.full_name,
+    })) || [],
+    profiles: undefined
+  }));
+
+  return new Response(JSON.stringify(formattedData), { status: 200 });
 }
 
 /* create role */
