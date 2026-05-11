@@ -1,6 +1,5 @@
-"use client";
-
 import React, { useState } from "react";
+import chroma from "chroma-js";
 import {
   Save,
   Upload,
@@ -19,9 +18,21 @@ import { SectionHeader } from "@/components/molecules/SectionHeader";
 import { cn } from "@/lib/utils";
 
 export const TenantBrandingSettings = () => {
-  const [primaryColor, setPrimaryColor] = useState("#FFC670");
+  const [theme, setTheme] = useState({
+    primary: "#FFC670",
+    secondary: "#FFF9F0",
+    accent: "#F97316"
+  });
   const [fontFamily, setFontFamily] = useState("inter");
   const [menuLayout, setMenuLayout] = useState("grid");
+
+  const handlePresetColor = (color: string) => {
+    setTheme({
+      primary: color,
+      secondary: chroma(color).set('hsl.l', 0.95).hex(),
+      accent: chroma(color).set('hsl.h', '+150').saturate(2).hex()
+    });
+  };
 
   const presetColors = [
     "#FFC670", // Qios default
@@ -57,57 +68,97 @@ export const TenantBrandingSettings = () => {
 
       <div className="space-y-8">
         {/* Brand Colors */}
-        <div className="space-y-4">
+        <div className="space-y-6">
           <SectionHeader
-            title="Brand Colors"
+            title="Brand Theme"
             className="mb-0 py-2 border-gray-100"
           />
+          
+          {/* Presets */}
           <div className="pt-2">
             <label className="text-sm font-medium text-text-primary block mb-3">
-              Primary Theme Color
+              Quick Presets
             </label>
             <div className="flex flex-wrap items-center gap-3">
               {presetColors.map((color) => (
                 <button
                   key={color}
-                  onClick={() => setPrimaryColor(color)}
+                  onClick={() => handlePresetColor(color)}
                   className={cn(
                     "w-10 h-10 rounded-full border-2 transition-all duration-200 shadow-sm",
-                    primaryColor === color
-                      ? "border-text-primary scale-110"
+                    theme.primary === color
+                      ? "border-brand-primary scale-110"
                       : "border-transparent hover:scale-105",
                   )}
                   style={{ backgroundColor: color }}
-                  title={`Set primary color to ${color}`}
+                  title={`Apply ${color} theme`}
                 />
               ))}
-              <div className="h-8 w-px bg-gray-200 mx-2" />
-              <div className="relative group">
-                <div
-                  className="w-10 h-10 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50 cursor-pointer overflow-hidden transition-all group-hover:border-brand-accent group-hover:bg-brand-accent/5"
-                  title="Custom Color"
+            </div>
+          </div>
+
+          {/* Custom Theme Colors */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {/* Primary */}
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Primary</label>
+              <div className="relative group border border-gray-200 rounded-xl p-2 flex items-center gap-3 hover:border-brand-primary transition-colors">
+                <div 
+                  className="w-8 h-8 rounded-lg shadow-inner flex items-center justify-center overflow-hidden relative cursor-pointer"
+                  style={{ backgroundColor: theme.primary }}
                 >
-                  <Palette
-                    size={18}
-                    className="text-gray-400 group-hover:text-brand-accent"
-                  />
                   <input
                     type="color"
-                    value={primaryColor}
-                    onChange={(e) => setPrimaryColor(e.target.value)}
+                    value={theme.primary}
+                    onChange={(e) => setTheme(prev => ({ ...prev, primary: e.target.value }))}
                     className="absolute inset-0 opacity-0 cursor-pointer"
                   />
                 </div>
-              </div>
-              <div className="ml-2 text-sm font-medium text-text-secondary py-1.5 px-3 bg-gray-50 rounded-lg border border-gray-100">
-                {primaryColor.toUpperCase()}
+                <span className="text-sm font-medium text-text-primary font-mono">{theme.primary.toUpperCase()}</span>
               </div>
             </div>
-            <p className="text-xs text-text-secondary mt-3">
-              This color will be used for primary buttons, active states, and
-              highlights on your menus.
-            </p>
+
+            {/* Secondary */}
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Secondary</label>
+              <div className="relative group border border-gray-200 rounded-xl p-2 flex items-center gap-3 hover:border-brand-primary transition-colors">
+                <div 
+                  className="w-8 h-8 rounded-lg shadow-inner flex items-center justify-center overflow-hidden relative cursor-pointer"
+                  style={{ backgroundColor: theme.secondary }}
+                >
+                  <input
+                    type="color"
+                    value={theme.secondary}
+                    onChange={(e) => setTheme(prev => ({ ...prev, secondary: e.target.value }))}
+                    className="absolute inset-0 opacity-0 cursor-pointer"
+                  />
+                </div>
+                <span className="text-sm font-medium text-text-primary font-mono">{theme.secondary.toUpperCase()}</span>
+              </div>
+            </div>
+
+            {/* Accent */}
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Accent</label>
+              <div className="relative group border border-gray-200 rounded-xl p-2 flex items-center gap-3 hover:border-brand-primary transition-colors">
+                <div 
+                  className="w-8 h-8 rounded-lg shadow-inner flex items-center justify-center overflow-hidden relative cursor-pointer"
+                  style={{ backgroundColor: theme.accent }}
+                >
+                  <input
+                    type="color"
+                    value={theme.accent}
+                    onChange={(e) => setTheme(prev => ({ ...prev, accent: e.target.value }))}
+                    className="absolute inset-0 opacity-0 cursor-pointer"
+                  />
+                </div>
+                <span className="text-sm font-medium text-text-primary font-mono">{theme.accent.toUpperCase()}</span>
+              </div>
+            </div>
           </div>
+          <p className="text-xs text-text-secondary">
+            Primary color is used for main buttons. Secondary is used for subtle backgrounds and badges. Accent is used for notifications and important actions.
+          </p>
         </div>
 
         {/* Typography */}
