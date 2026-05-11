@@ -21,11 +21,13 @@ export const TenantProfileHeader = ({
   return (
     <div className={cn("flex flex-col gap-6", className)}>
       <Link
-        href="/admin/dashboard?view=tenant"
+        href="/admin/tenant_directory"
         className="flex items-center gap-2 hover:scale-105 transition-all duration-300 w-fit"
       >
         <ArrowLeft className="w-5 h-5" />
-        <span className="b1 text-text-primary font-medium">Back to Tenant Directory</span>
+        <span className="b1 text-text-primary font-medium">
+          Back to Tenant Directory
+        </span>
       </Link>
 
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mt-5">
@@ -91,10 +93,10 @@ export const TenantProfileHeader = ({
             </Button>
           )}
 
-          {/*<Button variant="outline">
-            <Edit className="w-4 h-4 mr-2" />
-            Edit Info
-          </Button>*/}
+          {/*<button variant="outline">
+            <edit className="w-4 h-4 mr-2" />
+            edit info
+          </button>*/}
         </div>
       </div>
     </div>

@@ -129,15 +129,15 @@ export default function StockAudit() {
 
   return (
     <div className="w-full min-h-screen pb-40 bg-bg-primary kds-fade-in">
-      {/* ─── HEADER ─── */}
+      {/* ─── header ─── */}
       <header className="sticky top-0 z-30 bg-brand-primary backdrop-blur-md border-b border-kds-border-warm px-4 py-6 md:px-12 md:py-8">
         <div className="max-w-6xl mx-auto space-y-8 md:space-y-6">
           <div className="flex items-center justify-between gap-4">
             <div className="min-w-0">
-              <h1 className="h1 text-text-primary tracking-tighter truncate">
+              <h2 className="h2 text-text-primary tracking-tighter truncate">
                 Stock Audit
-              </h1>
-              <p className="b3 md:b3 text-text-secondary sm:block">
+              </h2>
+              <p className="b1 text-text-secondary mt-2">
                 Physical verification session
               </p>
             </div>
@@ -162,7 +162,7 @@ export default function StockAudit() {
             </div>
           </div>
 
-          {/* Search & Filter */}
+          {/* search & filter */}
           <div className="flex items-center gap-2 md:gap-4 w-full">
             <div className="flex-1 relative">
               <Search
@@ -190,7 +190,7 @@ export default function StockAudit() {
         </div>
       </header>
 
-      {/* ─── LABELS ─── */}
+      {/* ─── labels ─── */}
       <div className="hidden lg:block max-w-6xl mx-auto px-6 mt-10">
         <div className="flex items-center text-text-primary b4 font-bold uppercase tracking-[0.2em] px-8 pb-4">
           <div className="flex-1">Ingredient Details</div>
