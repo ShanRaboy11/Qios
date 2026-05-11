@@ -1,9 +1,8 @@
 -- =============================================================================
--- CUSTOM ACCESS TOKEN HOOK FOR AUTHENTICATION
+-- FIX: CUSTOM ACCESS TOKEN HOOK FOR AUTHENTICATION
 -- =============================================================================
--- This hook injects the custom claims (role and tenant_id) into the JWT payload.
--- It ensures that role-based access control and tenant routing can be securely 
--- implemented immediately without requiring additional client-side DB hits.
+-- The previous hook failed to correctly COALESCE claims when initializing.
+-- This replaces the function to safely inject custom claims.
 
 CREATE OR REPLACE FUNCTION public.custom_access_token_hook(event jsonb)
 RETURNS jsonb
@@ -21,7 +20,7 @@ BEGIN
     FROM public.profiles
     WHERE id = (event->>'user_id')::uuid;
 
-    -- Initialize or extract existing claims
+    -- Initialize or extract existing claims, defaulting to empty JSON object if null
     claims := COALESCE(event->'claims', '{}'::jsonb);
 
     IF user_role IS NOT NULL THEN
@@ -39,12 +38,3 @@ BEGIN
     RETURN event;
 END;
 $$;
-
--- Note: To fully activate this hook, the Super Admin must grant auth admin rights
--- to execute the function and register the hook in the Supabase Dashboard
--- under Authentication > Hooks > Custom Access Token.
-
-GRANT EXECUTE ON FUNCTION public.custom_access_token_hook(jsonb) TO supabase_auth_admin;
--- Allow the hook to read the profiles table
-REVOKE ALL ON TABLE public.profiles FROM supabase_auth_admin;
-GRANT SELECT ON TABLE public.profiles TO supabase_auth_admin;

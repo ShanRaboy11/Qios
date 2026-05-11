@@ -200,8 +200,8 @@ export default function KitchenPreparationDashboard() {
   );
 
   return (
-    <div className="flex flex-col min-h-screen p-4 md:p-6 lg:p-8 gap-6 md:gap-8 font-inter bg-transparent">
-      {/* Dashboard Header Element */}
+    <div className="flex flex-col w-full p-4 md:p-6 lg:p-8 gap-6 md:gap-8 font-inter bg-transparent">
+      {/* dashboard header element */}
       <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4 bg-white p-6 rounded-2xl shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-100">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-text-primary font-figtree tracking-tight">
@@ -219,7 +219,7 @@ export default function KitchenPreparationDashboard() {
         </div>
       </div>
 
-      {/* Top Stats - Updated to grid-cols-2 for 2x2 mobile layout */}
+      {/* top stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         <div className="bg-white p-3 md:p-5 rounded-[20px] shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-100 flex items-center gap-3 md:gap-4 transition-transform hover:-translate-y-0.5">
           <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center text-text-primary font-bold text-lg md:text-2xl shadow-sm shrink-0">
@@ -278,9 +278,9 @@ export default function KitchenPreparationDashboard() {
         </div>
       </div>
 
-      {/* Main Boards */}
+      {/* main boards */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 items-start">
-        {/* Pending Column */}
+        {/* pending column */}
         <div className="flex flex-col gap-4 bg-white p-4 rounded-2xl border border-gray-100">
           <div className="flex items-center gap-2 mb-1 px-1">
             <div className="w-3 h-3 rounded-full bg-gray-400 shadow-sm"></div>
@@ -301,7 +301,7 @@ export default function KitchenPreparationDashboard() {
           </div>
         </div>
 
-        {/* Preparing Column */}
+        {/* preparing column */}
         <div className="flex flex-col gap-4 bg-white p-4 rounded-2xl border border-gray-100">
           <div className="flex items-center gap-2 mb-1 px-1">
             <div className="w-3 h-3 rounded-full bg-brand-accent shadow-sm shadow-brand-accent/30"></div>
@@ -322,7 +322,7 @@ export default function KitchenPreparationDashboard() {
           </div>
         </div>
 
-        {/* Ready Column */}
+        {/* ready column */}
         <div className="flex flex-col gap-4 bg-white p-4 rounded-2xl border border-gray-100">
           <div className="flex items-center gap-2 mb-1 px-1">
             <div className="w-3 h-3 rounded-full bg-success-primary shadow-sm shadow-success-secondary"></div>
