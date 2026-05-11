@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   User,
   Globe,
@@ -13,6 +13,7 @@ import {
   Key,
   Laptop,
   Smartphone,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/atoms/Button";
@@ -21,6 +22,7 @@ import { Toggle } from "@/components/atoms/Toggle";
 import { SectionHeader } from "@/components/molecules/SectionHeader";
 import { IntegrationCard } from "@/components/molecules/IntegrationCard";
 import { SessionCard } from "@/components/molecules/SessionCard";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type SettingsTab =
   | "account"
@@ -86,6 +88,58 @@ export const AdminSettings = () => {
 };
 
 const AccountSettings = () => {
+  const [firstName, setFirstName] = useState("Admin");
+  const [lastName, setLastName] = useState("User");
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const supabase = createSupabaseBrowserClient();
+
+  useEffect(() => {
+    async function loadProfile() {
+      const { data: userData } = await supabase.auth.getUser();
+      if (userData?.user) {
+        setEmail(userData.user.email || "");
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("full_name")
+          .eq("id", userData.user.id)
+          .single();
+        if (profile) {
+          const parts = profile.full_name.split(" ");
+          setFirstName(parts[0] || "");
+          setLastName(parts.slice(1).join(" ") || "");
+        }
+      }
+      setLoading(false);
+    }
+    loadProfile();
+  }, [supabase]);
+
+  const handleSave = async () => {
+    setSaving(true);
+    const { data: userData } = await supabase.auth.getUser();
+    if (userData?.user) {
+      await supabase
+        .from("profiles")
+        .update({ full_name: `${firstName} ${lastName}`.trim() })
+        .eq("id", userData.user.id);
+      
+      if (email !== userData.user.email) {
+        await supabase.auth.updateUser({ email });
+      }
+    }
+    setSaving(false);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-brand-primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div>
@@ -105,8 +159,8 @@ const AccountSettings = () => {
             className="mb-0 py-2 border-gray-100"
           />
           <div className="flex flex-col sm:flex-row gap-6 pt-2">
-            <div className="w-24 h-24 rounded-full bg-brand-primary flex items-center justify-center text-white text-3xl font-bold flex-shrink-0 border-4 border-white shadow-md">
-              A
+            <div className="w-24 h-24 rounded-full bg-brand-primary flex items-center justify-center text-white text-3xl font-bold flex-shrink-0 border-4 border-white shadow-md uppercase">
+              {firstName.charAt(0)}
             </div>
             <div className="flex-1 space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -114,13 +168,21 @@ const AccountSettings = () => {
                   <label className="text-sm font-medium text-text-primary">
                     First Name
                   </label>
-                  <Input defaultValue="Admin" className="py-2.5 rounded-xl" />
+                  <Input 
+                    value={firstName} 
+                    onChange={(e) => setFirstName(e.target.value)}
+                    className="py-2.5 rounded-xl" 
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium text-text-primary">
                     Last Name
                   </label>
-                  <Input defaultValue="User" className="py-2.5 rounded-xl" />
+                  <Input 
+                    value={lastName} 
+                    onChange={(e) => setLastName(e.target.value)}
+                    className="py-2.5 rounded-xl" 
+                  />
                 </div>
               </div>
               <div className="space-y-1.5">
@@ -128,7 +190,8 @@ const AccountSettings = () => {
                   Email Address
                 </label>
                 <Input
-                  defaultValue="admin@qios.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   type="email"
                   className="py-2.5 rounded-xl"
                 />
@@ -167,9 +230,11 @@ const AccountSettings = () => {
           <Button
             variant="accent"
             shape="rounded"
-            leftIcon={<Save size={18} />}
+            leftIcon={saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+            onClick={handleSave}
+            disabled={saving}
           >
-            Save Changes
+            {saving ? "Saving..." : "Save Changes"}
           </Button>
         </div>
       </div>
@@ -283,29 +348,39 @@ const PlatformSettings = () => {
 };
 
 const TeamSettings = () => {
-  const admins = [
-    {
-      id: 1,
-      name: "Admin User",
-      email: "admin@qios.com",
-      role: "Super Admin",
-      status: "Active",
-    },
-    {
-      id: 2,
-      name: "Support Staff",
-      email: "support@qios.com",
-      role: "Support",
-      status: "Active",
-    },
-    {
-      id: 3,
-      name: "Billing Manager",
-      email: "billing@qios.com",
-      role: "Billing",
-      status: "Inactive",
-    },
-  ];
+  const [admins, setAdmins] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const supabase = createSupabaseBrowserClient();
+
+  useEffect(() => {
+    async function loadAdmins() {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, full_name, role")
+        .in("role", ["super_admin", "admin"]);
+      if (data) {
+        setAdmins(
+          data.map((p) => ({
+            id: p.id,
+            name: p.full_name,
+            email: "Protected",
+            role: p.role === "super_admin" ? "Super Admin" : "Admin",
+            status: "Active",
+          }))
+        );
+      }
+      setLoading(false);
+    }
+    loadAdmins();
+  }, [supabase]);
+
+  if (loading) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-brand-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -346,7 +421,7 @@ const TeamSettings = () => {
                 >
                   <td className="py-4 px-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-brand-primary/20 flex items-center justify-center text-brand-accent font-bold">
+                      <div className="w-10 h-10 rounded-full bg-brand-primary/20 flex items-center justify-center text-brand-accent font-bold uppercase">
                         {admin.name.charAt(0)}
                       </div>
                       <div>
@@ -383,6 +458,13 @@ const TeamSettings = () => {
                   </td>
                 </tr>
               ))}
+              {admins.length === 0 && (
+                <tr>
+                  <td colSpan={4} className="py-8 text-center text-text-secondary">
+                    No admins found.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
