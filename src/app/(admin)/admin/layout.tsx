@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Navbar } from "@/components/organisms/navbar";
 import { Footer } from "@/components/organisms/footer";
 import { motion } from "framer-motion";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 export default function AdminLayout({
   children,
@@ -14,7 +14,7 @@ export default function AdminLayout({
   const pathname = usePathname();
   const router = useRouter();
 
-  // map pathname to nav activeView
+  // map pathname to nav activeview
   const viewMap: Record<string, string> = {
     "/admin/dashboard": "dashboard",
     "/admin/tenant_directory": "tenant_directory",
@@ -78,14 +78,16 @@ export default function AdminLayout({
         />
       </div>
 
-      <Navbar
-        variant="transparent"
-        type="admin"
-        activeView={currentView}
-        onNavigate={handleNavigation}
-      />
+      <div className="relative z-[40]">
+        <Navbar
+          variant="transparent"
+          type="admin"
+          activeView={currentView}
+          onNavigate={handleNavigation}
+        />
+      </div>
 
-      <div className="flex-1 max-w-[1440px] w-full mx-auto flex flex-col p-4 md:p-8 lg:p-12 mt-28 relative z-[90]">
+      <div className="flex-1 max-w-[1440px] w-full mx-auto flex flex-col p-4 md:p-8 lg:p-12 mt-28 relative">
         {children}
       </div>
 
