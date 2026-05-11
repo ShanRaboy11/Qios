@@ -129,21 +129,12 @@ export const TenantSecuritySettings = ({
             action={passwordAction}
             className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2"
           >
-            {(passwordState.error || passwordState.success) && (
+            {passwordState.success && (
               <div className="sm:col-span-2 space-y-3">
-                {passwordState.success && (
-                  <div className="flex items-center gap-2 w-full text-green-700 bg-green-50 border border-green-100 rounded-xl px-4 py-3">
-                    <CheckCircle2 className="h-4 w-4 shrink-0" />
-                    <p className="text-sm font-medium">
-                      {passwordState.success}
-                    </p>
-                  </div>
-                )}
-                {passwordState.error && (
-                  <p className="w-full text-sm text-red-500 bg-red-50 border border-red-100 rounded-xl px-4 py-3 text-center">
-                    {passwordState.error}
-                  </p>
-                )}
+                <div className="flex items-center gap-2 w-full text-green-700 bg-green-50 border border-green-100 rounded-xl px-4 py-3">
+                  <CheckCircle2 className="h-4 w-4 shrink-0" />
+                  <p className="text-sm font-medium">{passwordState.success}</p>
+                </div>
               </div>
             )}
             <div className="space-y-1.5 sm:col-span-2">
@@ -368,8 +359,8 @@ export const TenantSecuritySettings = ({
           <div className="flex justify-end mt-4">
             <Button
               type="button"
-              variant="outline"
-              className="text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600"
+              variant="accent"
+              shape="rounded"
               leftIcon={<LogOut className="w-4 h-4" />}
               onClick={handleLogoutOtherSessions}
             >

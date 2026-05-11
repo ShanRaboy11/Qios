@@ -36,6 +36,7 @@ export const TenantBrandingSettings = ({
     secondary: initialData.secondaryColor,
     accent: initialData.accentColor,
   });
+  const [isEditing, setIsEditing] = useState(false);
   const [fontFamily, setFontFamily] = useState(initialData.fontFamily);
   const [menuLayout, setMenuLayout] = useState(initialData.menuLayout);
   const [state, formAction, isPending] = useActionState(
@@ -103,19 +104,12 @@ export const TenantBrandingSettings = ({
         </p>
       </div>
 
-      {(state.error || state.success) && (
+      {state.success && (
         <div className="space-y-3">
-          {state.success && (
-            <div className="flex items-center gap-2 w-full text-green-700 bg-green-50 border border-green-100 rounded-xl px-4 py-3">
-              <CheckCircle2 className="h-4 w-4 shrink-0" />
-              <p className="text-sm font-medium">{state.success}</p>
-            </div>
-          )}
-          {state.error && (
-            <p className="w-full text-sm text-red-500 bg-red-50 border border-red-100 rounded-xl px-4 py-3 text-center">
-              {state.error}
-            </p>
-          )}
+          <div className="flex items-center gap-2 w-full text-green-700 bg-green-50 border border-green-100 rounded-xl px-4 py-3">
+            <CheckCircle2 className="h-4 w-4 shrink-0" />
+            <p className="text-sm font-medium">{state.success}</p>
+          </div>
         </div>
       )}
 
@@ -137,7 +131,7 @@ export const TenantBrandingSettings = ({
                 <button
                   key={color}
                   type="button"
-                  onClick={() => handlePresetColor(color)}
+                  onClick={() => isEditing && handlePresetColor(color)}
                   className={cn(
                     "w-10 h-10 rounded-full border-2 transition-all duration-200 shadow-sm",
                     theme.primary === color
@@ -167,14 +161,21 @@ export const TenantBrandingSettings = ({
                     type="color"
                     value={theme.primary}
                     onChange={(e) =>
+                      isEditing &&
                       setTheme((prev) => ({ ...prev, primary: e.target.value }))
                     }
                     className="absolute inset-0 opacity-0 cursor-pointer"
+                    disabled={!isEditing}
                   />
                 </div>
                 <span className="text-sm font-medium text-text-primary font-mono">
                   {theme.primary.toUpperCase()}
                 </span>
+                {state.fieldErrors.primaryColor && (
+                  <p className="text-xs text-red-500 pl-1">
+                    {state.fieldErrors.primaryColor}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -192,17 +193,24 @@ export const TenantBrandingSettings = ({
                     type="color"
                     value={theme.secondary}
                     onChange={(e) =>
+                      isEditing &&
                       setTheme((prev) => ({
                         ...prev,
                         secondary: e.target.value,
                       }))
                     }
                     className="absolute inset-0 opacity-0 cursor-pointer"
+                    disabled={!isEditing}
                   />
                 </div>
                 <span className="text-sm font-medium text-text-primary font-mono">
                   {theme.secondary.toUpperCase()}
                 </span>
+                {state.fieldErrors.secondaryColor && (
+                  <p className="text-xs text-red-500 pl-1">
+                    {state.fieldErrors.secondaryColor}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -220,14 +228,21 @@ export const TenantBrandingSettings = ({
                     type="color"
                     value={theme.accent}
                     onChange={(e) =>
+                      isEditing &&
                       setTheme((prev) => ({ ...prev, accent: e.target.value }))
                     }
                     className="absolute inset-0 opacity-0 cursor-pointer"
+                    disabled={!isEditing}
                   />
                 </div>
                 <span className="text-sm font-medium text-text-primary font-mono">
                   {theme.accent.toUpperCase()}
                 </span>
+                {state.fieldErrors.accentColor && (
+                  <p className="text-xs text-red-500 pl-1">
+                    {state.fieldErrors.accentColor}
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -249,13 +264,14 @@ export const TenantBrandingSettings = ({
               <button
                 key={font.id}
                 type="button"
-                onClick={() => setFontFamily(font.id)}
+                onClick={() => isEditing && setFontFamily(font.id)}
                 className={cn(
                   "p-4 rounded-xl border-2 text-left transition-all",
                   fontFamily === font.id
                     ? "border-brand-primary bg-brand-primary/5"
                     : "border-gray-100 hover:border-gray-200 bg-white",
                 )}
+                disabled={!isEditing}
               >
                 <div className="flex items-center gap-2 mb-2">
                   <Type
@@ -273,6 +289,11 @@ export const TenantBrandingSettings = ({
                 <p className="text-xs text-text-secondary">{font.desc}</p>
               </button>
             ))}
+            {state.fieldErrors.fontFamily && (
+              <p className="text-xs text-red-500 pl-1">
+                {state.fieldErrors.fontFamily}
+              </p>
+            )}
           </div>
         </div>
 
@@ -289,13 +310,14 @@ export const TenantBrandingSettings = ({
                 <button
                   key={layout.id}
                   type="button"
-                  onClick={() => setMenuLayout(layout.id)}
+                  onClick={() => isEditing && setMenuLayout(layout.id)}
                   className={cn(
                     "p-4 rounded-xl border-2 text-left transition-all flex items-start gap-4",
                     menuLayout === layout.id
                       ? "border-brand-primary bg-brand-primary/5"
                       : "border-gray-100 hover:border-gray-200 bg-white",
                   )}
+                  disabled={!isEditing}
                 >
                   <div
                     className={cn(
@@ -316,6 +338,11 @@ export const TenantBrandingSettings = ({
                 </button>
               );
             })}
+            {state.fieldErrors.menuLayout && (
+              <p className="text-xs text-red-500 pl-1">
+                {state.fieldErrors.menuLayout}
+              </p>
+            )}
           </div>
         </div>
 
@@ -340,6 +367,14 @@ export const TenantBrandingSettings = ({
                 <span className="text-xs text-text-secondary mt-1">
                   PNG, JPG (Square)
                 </span>
+                {isEditing && (
+                  <input
+                    type="file"
+                    name="dashboardLogo"
+                    accept="image/*"
+                    className="mt-2"
+                  />
+                )}
               </div>
             </div>
 
@@ -357,6 +392,14 @@ export const TenantBrandingSettings = ({
                 <span className="text-xs text-text-secondary mt-1">
                   Portrait 1080x1920
                 </span>
+                {isEditing && (
+                  <input
+                    type="file"
+                    name="kioskSplash"
+                    accept="image/*"
+                    className="mt-2"
+                  />
+                )}
               </div>
             </div>
 
@@ -374,6 +417,14 @@ export const TenantBrandingSettings = ({
                 <span className="text-xs text-text-secondary mt-1">
                   .ICO, .PNG (32x32)
                 </span>
+                {isEditing && (
+                  <input
+                    type="file"
+                    name="favicon"
+                    accept="image/*"
+                    className="mt-2"
+                  />
+                )}
               </div>
             </div>
           </div>
@@ -448,16 +499,27 @@ export const TenantBrandingSettings = ({
           <input type="hidden" name="accentColor" value={theme.accent} />
           <input type="hidden" name="fontFamily" value={fontFamily} />
           <input type="hidden" name="menuLayout" value={menuLayout} />
-          <Button
-            type="submit"
-            variant="accent"
-            shape="rounded"
-            leftIcon={<Save size={18} />}
-            className="mt-4"
-            loading={isPending}
-          >
-            Save Branding
-          </Button>
+          {!isEditing ? (
+            <Button
+              type="button"
+              variant="outline"
+              shape="rounded"
+              onClick={() => setIsEditing(true)}
+            >
+              Edit Branding
+            </Button>
+          ) : (
+            <Button
+              type="submit"
+              variant="accent"
+              shape="rounded"
+              leftIcon={<Save size={18} />}
+              className="mt-4"
+              loading={isPending}
+            >
+              Save Branding
+            </Button>
+          )}
         </form>
       </div>
     </div>

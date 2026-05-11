@@ -21,6 +21,7 @@ export const TenantStoreSettings = ({
   initialData,
 }: TenantStoreSettingsProps) => {
   const [formData, setFormData] = useState(initialData);
+  const [isEditing, setIsEditing] = useState(false);
   const [state, formAction, isPending] = useActionState(
     saveTenantStoreSettings.bind(null, tenantId),
     emptySettingsActionState,
@@ -48,26 +49,19 @@ export const TenantStoreSettings = ({
             className="mb-0 py-2 border-gray-100"
           />
           <form action={formAction} className="pt-2 space-y-6">
-            {(state.error || state.success) && (
+            {state.success && (
               <div className="space-y-3">
-                {state.success && (
-                  <div className="flex items-center gap-2 w-full text-green-700 bg-green-50 border border-green-100 rounded-xl px-4 py-3">
-                    <CheckCircle2 className="h-4 w-4 shrink-0" />
-                    <p className="text-sm font-medium">{state.success}</p>
-                  </div>
-                )}
-                {state.error && (
-                  <p className="w-full text-sm text-red-500 bg-red-50 border border-red-100 rounded-xl px-4 py-3 text-center">
-                    {state.error}
-                  </p>
-                )}
+                <div className="flex items-center gap-2 w-full text-green-700 bg-green-50 border border-green-100 rounded-xl px-4 py-3">
+                  <CheckCircle2 className="h-4 w-4 shrink-0" />
+                  <p className="text-sm font-medium">{state.success}</p>
+                </div>
               </div>
             )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
               <div className="space-y-1.5 sm:col-span-2">
                 <label className="text-sm font-medium text-text-primary">
-                  Store Name (Trading Name)
+                  Store Name
                 </label>
                 <Input
                   name="storeName"
@@ -80,6 +74,7 @@ export const TenantStoreSettings = ({
                   }
                   isError={!!state.fieldErrors.storeName}
                   className="py-2.5 rounded-xl"
+                  disabled={!isEditing}
                 />
                 {state.fieldErrors.storeName && (
                   <p className="text-xs text-red-500 pl-1">
@@ -103,6 +98,7 @@ export const TenantStoreSettings = ({
                   type="email"
                   isError={!!state.fieldErrors.publicContactEmail}
                   className="py-2.5 rounded-xl"
+                  disabled={!isEditing}
                 />
                 {state.fieldErrors.publicContactEmail && (
                   <p className="text-xs text-red-500 pl-1">
@@ -114,18 +110,32 @@ export const TenantStoreSettings = ({
                 <label className="text-sm font-medium text-text-primary">
                   Public Phone Number
                 </label>
-                <Input
-                  name="publicPhoneNumber"
-                  value={formData.publicPhoneNumber}
-                  onChange={(event) =>
-                    setFormData((previous) => ({
-                      ...previous,
-                      publicPhoneNumber: event.target.value,
-                    }))
-                  }
-                  type="tel"
-                  className="py-2.5 rounded-xl"
-                />
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center px-3 py-2.5 rounded-xl border border-[#E5E5E5] bg-gray-50 text-text-primary">
+                    +63
+                  </span>
+                  <Input
+                    name="publicPhoneNumber"
+                    value={formData.publicPhoneNumber}
+                    onChange={(event) =>
+                      setFormData((previous) => ({
+                        ...previous,
+                        publicPhoneNumber: event.target.value
+                          .replace(/[^0-9]/g, "")
+                          .slice(0, 10),
+                      }))
+                    }
+                    type="tel"
+                    inputMode="numeric"
+                    className="py-2.5 rounded-xl flex-1"
+                    disabled={!isEditing}
+                  />
+                </div>
+                {state.fieldErrors.publicPhoneNumber && (
+                  <p className="text-xs text-red-500 pl-1">
+                    {state.fieldErrors.publicPhoneNumber}
+                  </p>
+                )}
               </div>
               <div className="space-y-1.5 sm:col-span-2">
                 <label className="text-sm font-medium text-text-primary">
@@ -141,6 +151,7 @@ export const TenantStoreSettings = ({
                     }))
                   }
                   className="py-2.5 rounded-xl"
+                  disabled={!isEditing}
                 />
               </div>
             </div>
@@ -164,7 +175,8 @@ export const TenantStoreSettings = ({
                         currency: event.target.value,
                       }))
                     }
-                    className="w-full px-4 py-2.5 rounded-xl border-2 border-[#E5E5E5] focus:outline-none focus:ring-2 focus:ring-brand-accent/20 focus:border-brand-accent transition-colors bg-white appearance-none cursor-pointer"
+                    className="w-full px-4 py-2.5 rounded-xl border-2 border-[#E5E5E5] focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-colors bg-white appearance-none cursor-pointer"
+                    disabled={!isEditing}
                   >
                     <option value="PHP">PHP (₱)</option>
                     <option value="USD">USD ($)</option>
@@ -183,7 +195,8 @@ export const TenantStoreSettings = ({
                         timezone: event.target.value,
                       }))
                     }
-                    className="w-full px-4 py-2.5 rounded-xl border-2 border-[#E5E5E5] focus:outline-none focus:ring-2 focus:ring-brand-accent/20 focus:border-brand-accent transition-colors bg-white appearance-none cursor-pointer"
+                    className="w-full px-4 py-2.5 rounded-xl border-2 border-[#E5E5E5] focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-colors bg-white appearance-none cursor-pointer"
+                    disabled={!isEditing}
                   >
                     <option value="Asia/Manila">Asia/Manila (GMT+8)</option>
                     <option value="UTC">UTC</option>
@@ -205,6 +218,7 @@ export const TenantStoreSettings = ({
                     type="number"
                     isError={!!state.fieldErrors.taxRate}
                     className="py-2.5 rounded-xl"
+                    disabled={!isEditing}
                   />
                   {state.fieldErrors.taxRate && (
                     <p className="text-xs text-red-500 pl-1">
@@ -216,15 +230,26 @@ export const TenantStoreSettings = ({
             </div>
 
             <div className="pt-4 flex justify-end">
-              <Button
-                type="submit"
-                variant="accent"
-                shape="rounded"
-                leftIcon={<Save size={18} />}
-                loading={isPending}
-              >
-                Save Store Details
-              </Button>
+              {!isEditing ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  shape="rounded"
+                  onClick={() => setIsEditing(true)}
+                >
+                  Edit Store
+                </Button>
+              ) : (
+                <Button
+                  type="submit"
+                  variant="accent"
+                  shape="rounded"
+                  leftIcon={<Save size={18} />}
+                  loading={isPending}
+                >
+                  Save Store Details
+                </Button>
+              )}
             </div>
           </form>
         </div>

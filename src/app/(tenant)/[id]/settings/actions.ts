@@ -292,10 +292,16 @@ export async function saveTenantProfileSettings(
       fieldErrors.email = "A valid email address is required.";
     }
 
+    // phone number required (10 digits expected from UI without country code)
+    if (!phoneNumber) {
+      fieldErrors.phoneNumber = "Phone number is required.";
+    } else if (!/^[0-9]{10}$/.test(phoneNumber)) {
+      fieldErrors.phoneNumber = "Enter a valid 10-digit mobile number.";
+    }
+
     if (Object.keys(fieldErrors).length > 0) {
       return {
         ...EMPTY_ACTION_STATE,
-        error: "Please correct the highlighted fields.",
         fieldErrors,
       };
     }
@@ -344,6 +350,44 @@ export async function saveTenantProfileSettings(
     }
 
     revalidatePath(`/${tenantId}/settings`);
+
+    // handle avatar upload if provided
+    const avatarFile = formData.get("avatar");
+    if (avatarFile && typeof (avatarFile as any).name === "string") {
+      try {
+        const file = avatarFile as File;
+        const objectPath = `${tenantId}/avatar-${Date.now()}-${file.name}`;
+        const { error: uploadError } = await admin.storage
+          .from("verification-docs")
+          .upload(objectPath, file, { upsert: true });
+
+        if (uploadError) {
+          throw uploadError;
+        }
+
+        const { data: publicUrlData } = admin.storage
+          .from("verification-docs")
+          .getPublicUrl(objectPath);
+
+        const avatarUrl = publicUrlData?.publicUrl ?? null;
+
+        if (avatarUrl) {
+          await admin.auth.admin.updateUserById(user.id, {
+            user_metadata: {
+              ...currentMetadata,
+              avatar_url: avatarUrl,
+            },
+          });
+        }
+      } catch (err) {
+        // Non-fatal: continue but report upload failure as a generic error
+        return {
+          ...EMPTY_ACTION_STATE,
+          error:
+            err instanceof Error ? err.message : "Failed to upload avatar.",
+        };
+      }
+    }
 
     return {
       ...EMPTY_ACTION_STATE,
@@ -396,10 +440,16 @@ export async function saveTenantStoreSettings(
       }
     }
 
+    // Public phone number validation: expect 10 digits (country code handled in UI)
+    if (!publicPhoneNumber) {
+      fieldErrors.publicPhoneNumber = "Public phone number is required.";
+    } else if (!/^[0-9]{10}$/.test(publicPhoneNumber)) {
+      fieldErrors.publicPhoneNumber = "Enter a valid 10-digit mobile number.";
+    }
+
     if (Object.keys(fieldErrors).length > 0) {
       return {
         ...EMPTY_ACTION_STATE,
-        error: "Please correct the highlighted fields.",
         fieldErrors,
       };
     }
@@ -497,7 +547,6 @@ export async function saveTenantBrandingSettings(
     if (Object.keys(fieldErrors).length > 0) {
       return {
         ...EMPTY_ACTION_STATE,
-        error: "Please correct the highlighted fields.",
         fieldErrors,
       };
     }
@@ -535,6 +584,71 @@ export async function saveTenantBrandingSettings(
     }
 
     revalidatePath(`/${tenantId}/settings`);
+
+    // handle branding uploads
+    try {
+      const dashboardLogo = formData.get("dashboardLogo");
+      const kioskSplash = formData.get("kioskSplash");
+      const favicon = formData.get("favicon");
+
+      const uploaded: Record<string, string> = {};
+
+      const uploads = [
+        { file: dashboardLogo, key: "branding_logo_dashboard" },
+        { file: kioskSplash, key: "branding_kiosk_splash" },
+        { file: favicon, key: "branding_favicon" },
+      ];
+
+      for (const item of uploads) {
+        if (item.file && typeof (item.file as any).name === "string") {
+          const file = item.file as File;
+          const objectPath = `${tenantId}/branding-${item.key}-${Date.now()}-${file.name}`;
+          const { error: uploadError } = await admin.storage
+            .from("verification-docs")
+            .upload(objectPath, file, { upsert: true });
+
+          if (uploadError) {
+            throw uploadError;
+          }
+
+          const { data: publicUrlData } = admin.storage
+            .from("verification-docs")
+            .getPublicUrl(objectPath);
+
+          const url = publicUrlData?.publicUrl ?? null;
+          if (url) uploaded[item.key] = url;
+        }
+      }
+
+      if (Object.keys(uploaded).length > 0) {
+        const { data: tenantAfter, error: tenantAfterError } = await admin
+          .from("tenants")
+          .select("settings")
+          .eq("id", tenantId)
+          .maybeSingle();
+
+        if (tenantAfterError) throw tenantAfterError;
+
+        const newSettings = mergeSettings(
+          tenantAfter?.settings && typeof tenantAfter.settings === "object"
+            ? (tenantAfter.settings as Record<string, unknown>)
+            : null,
+          uploaded,
+        );
+
+        const { error: finalUpdateError } = await admin
+          .from("tenants")
+          .update({ settings: newSettings })
+          .eq("id", tenantId);
+
+        if (finalUpdateError) throw finalUpdateError;
+      }
+    } catch (err) {
+      return {
+        ...EMPTY_ACTION_STATE,
+        error: err instanceof Error ? err.message : "Failed to upload assets.",
+      };
+    }
 
     return {
       ...EMPTY_ACTION_STATE,
@@ -648,7 +762,6 @@ export async function updateTenantPassword(
     if (Object.keys(fieldErrors).length > 0) {
       return {
         ...EMPTY_ACTION_STATE,
-        error: "Please correct the highlighted fields.",
         fieldErrors,
       };
     }
