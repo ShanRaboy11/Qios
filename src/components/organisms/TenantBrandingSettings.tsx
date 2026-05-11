@@ -1,9 +1,8 @@
-import React, { useState } from "react";
+import React, { useActionState, useEffect, useState } from "react";
 import chroma from "chroma-js";
 import {
   Save,
   Upload,
-  Palette,
   Image as ImageIcon,
   Type,
   Globe,
@@ -11,26 +10,54 @@ import {
   Link as LinkIcon,
   LayoutGrid,
   List,
+  CheckCircle2,
 } from "lucide-react";
 import { Button } from "@/components/atoms/Button";
 import { FormField } from "@/components/molecules/FormField";
 import { SectionHeader } from "@/components/molecules/SectionHeader";
 import { cn } from "@/lib/utils";
+import { saveTenantBrandingSettings } from "@/app/(tenant)/[id]/settings/actions";
+import {
+  emptySettingsActionState,
+  type TenantBrandingSettingsData,
+} from "@/app/(tenant)/[id]/settings/types";
 
-export const TenantBrandingSettings = () => {
+interface TenantBrandingSettingsProps {
+  tenantId: string;
+  initialData: TenantBrandingSettingsData;
+}
+
+export const TenantBrandingSettings = ({
+  tenantId,
+  initialData,
+}: TenantBrandingSettingsProps) => {
   const [theme, setTheme] = useState({
-    primary: "#FFC670",
-    secondary: "#FFF9F0",
-    accent: "#F97316"
+    primary: initialData.primaryColor,
+    secondary: initialData.secondaryColor,
+    accent: initialData.accentColor,
   });
-  const [fontFamily, setFontFamily] = useState("inter");
-  const [menuLayout, setMenuLayout] = useState("grid");
+  const [fontFamily, setFontFamily] = useState(initialData.fontFamily);
+  const [menuLayout, setMenuLayout] = useState(initialData.menuLayout);
+  const [state, formAction, isPending] = useActionState(
+    saveTenantBrandingSettings.bind(null, tenantId),
+    emptySettingsActionState,
+  );
+
+  useEffect(() => {
+    setTheme({
+      primary: initialData.primaryColor,
+      secondary: initialData.secondaryColor,
+      accent: initialData.accentColor,
+    });
+    setFontFamily(initialData.fontFamily);
+    setMenuLayout(initialData.menuLayout);
+  }, [initialData]);
 
   const handlePresetColor = (color: string) => {
     setTheme({
       primary: color,
-      secondary: chroma(color).set('hsl.l', 0.95).hex(),
-      accent: chroma(color).set('hsl.h', '+150').saturate(2).hex()
+      secondary: chroma(color).set("hsl.l", 0.95).hex(),
+      accent: chroma(color).set("hsl.h", "+150").saturate(2).hex(),
     });
   };
 
@@ -50,8 +77,18 @@ export const TenantBrandingSettings = () => {
   ];
 
   const layouts = [
-    { id: "grid", name: "Grid View", icon: LayoutGrid, desc: "Best for visual menus" },
-    { id: "list", name: "List View", icon: List, desc: "Best for text-heavy menus" },
+    {
+      id: "grid",
+      name: "Grid View",
+      icon: LayoutGrid,
+      desc: "Best for visual menus",
+    },
+    {
+      id: "list",
+      name: "List View",
+      icon: List,
+      desc: "Best for text-heavy menus",
+    },
   ];
 
   return (
@@ -66,6 +103,22 @@ export const TenantBrandingSettings = () => {
         </p>
       </div>
 
+      {(state.error || state.success) && (
+        <div className="space-y-3">
+          {state.success && (
+            <div className="flex items-center gap-2 w-full text-green-700 bg-green-50 border border-green-100 rounded-xl px-4 py-3">
+              <CheckCircle2 className="h-4 w-4 shrink-0" />
+              <p className="text-sm font-medium">{state.success}</p>
+            </div>
+          )}
+          {state.error && (
+            <p className="w-full text-sm text-red-500 bg-red-50 border border-red-100 rounded-xl px-4 py-3 text-center">
+              {state.error}
+            </p>
+          )}
+        </div>
+      )}
+
       <div className="space-y-8">
         {/* Brand Colors */}
         <div className="space-y-6">
@@ -73,7 +126,7 @@ export const TenantBrandingSettings = () => {
             title="Brand Theme"
             className="mb-0 py-2 border-gray-100"
           />
-          
+
           {/* Presets */}
           <div className="pt-2">
             <label className="text-sm font-medium text-text-primary block mb-3">
@@ -83,6 +136,7 @@ export const TenantBrandingSettings = () => {
               {presetColors.map((color) => (
                 <button
                   key={color}
+                  type="button"
                   onClick={() => handlePresetColor(color)}
                   className={cn(
                     "w-10 h-10 rounded-full border-2 transition-all duration-200 shadow-sm",
@@ -101,63 +155,86 @@ export const TenantBrandingSettings = () => {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {/* Primary */}
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Primary</label>
+              <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
+                Primary
+              </label>
               <div className="relative group border border-gray-200 rounded-xl p-2 flex items-center gap-3 hover:border-brand-primary transition-colors">
-                <div 
+                <div
                   className="w-8 h-8 rounded-lg shadow-inner flex items-center justify-center overflow-hidden relative cursor-pointer"
                   style={{ backgroundColor: theme.primary }}
                 >
                   <input
                     type="color"
                     value={theme.primary}
-                    onChange={(e) => setTheme(prev => ({ ...prev, primary: e.target.value }))}
+                    onChange={(e) =>
+                      setTheme((prev) => ({ ...prev, primary: e.target.value }))
+                    }
                     className="absolute inset-0 opacity-0 cursor-pointer"
                   />
                 </div>
-                <span className="text-sm font-medium text-text-primary font-mono">{theme.primary.toUpperCase()}</span>
+                <span className="text-sm font-medium text-text-primary font-mono">
+                  {theme.primary.toUpperCase()}
+                </span>
               </div>
             </div>
 
             {/* Secondary */}
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Secondary</label>
+              <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
+                Secondary
+              </label>
               <div className="relative group border border-gray-200 rounded-xl p-2 flex items-center gap-3 hover:border-brand-primary transition-colors">
-                <div 
+                <div
                   className="w-8 h-8 rounded-lg shadow-inner flex items-center justify-center overflow-hidden relative cursor-pointer"
                   style={{ backgroundColor: theme.secondary }}
                 >
                   <input
                     type="color"
                     value={theme.secondary}
-                    onChange={(e) => setTheme(prev => ({ ...prev, secondary: e.target.value }))}
+                    onChange={(e) =>
+                      setTheme((prev) => ({
+                        ...prev,
+                        secondary: e.target.value,
+                      }))
+                    }
                     className="absolute inset-0 opacity-0 cursor-pointer"
                   />
                 </div>
-                <span className="text-sm font-medium text-text-primary font-mono">{theme.secondary.toUpperCase()}</span>
+                <span className="text-sm font-medium text-text-primary font-mono">
+                  {theme.secondary.toUpperCase()}
+                </span>
               </div>
             </div>
 
             {/* Accent */}
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Accent</label>
+              <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
+                Accent
+              </label>
               <div className="relative group border border-gray-200 rounded-xl p-2 flex items-center gap-3 hover:border-brand-primary transition-colors">
-                <div 
+                <div
                   className="w-8 h-8 rounded-lg shadow-inner flex items-center justify-center overflow-hidden relative cursor-pointer"
                   style={{ backgroundColor: theme.accent }}
                 >
                   <input
                     type="color"
                     value={theme.accent}
-                    onChange={(e) => setTheme(prev => ({ ...prev, accent: e.target.value }))}
+                    onChange={(e) =>
+                      setTheme((prev) => ({ ...prev, accent: e.target.value }))
+                    }
                     className="absolute inset-0 opacity-0 cursor-pointer"
                   />
                 </div>
-                <span className="text-sm font-medium text-text-primary font-mono">{theme.accent.toUpperCase()}</span>
+                <span className="text-sm font-medium text-text-primary font-mono">
+                  {theme.accent.toUpperCase()}
+                </span>
               </div>
             </div>
           </div>
           <p className="text-xs text-text-secondary">
-            Primary color is used for main buttons. Secondary is used for subtle backgrounds and badges. Accent is used for notifications and important actions.
+            Primary color is used for main buttons. Secondary is used for subtle
+            backgrounds and badges. Accent is used for notifications and
+            important actions.
           </p>
         </div>
 
@@ -171,6 +248,7 @@ export const TenantBrandingSettings = () => {
             {fonts.map((font) => (
               <button
                 key={font.id}
+                type="button"
                 onClick={() => setFontFamily(font.id)}
                 className={cn(
                   "p-4 rounded-xl border-2 text-left transition-all",
@@ -180,7 +258,14 @@ export const TenantBrandingSettings = () => {
                 )}
               >
                 <div className="flex items-center gap-2 mb-2">
-                  <Type size={16} className={fontFamily === font.id ? "text-brand-primary" : "text-text-secondary"} />
+                  <Type
+                    size={16}
+                    className={
+                      fontFamily === font.id
+                        ? "text-brand-primary"
+                        : "text-text-secondary"
+                    }
+                  />
                   <span className="font-semibold text-text-primary">
                     {font.name}
                   </span>
@@ -203,6 +288,7 @@ export const TenantBrandingSettings = () => {
               return (
                 <button
                   key={layout.id}
+                  type="button"
                   onClick={() => setMenuLayout(layout.id)}
                   className={cn(
                     "p-4 rounded-xl border-2 text-left transition-all flex items-start gap-4",
@@ -211,10 +297,14 @@ export const TenantBrandingSettings = () => {
                       : "border-gray-100 hover:border-gray-200 bg-white",
                   )}
                 >
-                  <div className={cn(
-                    "p-2 rounded-lg",
-                    menuLayout === layout.id ? "bg-brand-primary text-white" : "bg-gray-100 text-text-secondary"
-                  )}>
+                  <div
+                    className={cn(
+                      "p-2 rounded-lg",
+                      menuLayout === layout.id
+                        ? "bg-brand-primary text-white"
+                        : "bg-gray-100 text-text-secondary",
+                    )}
+                  >
                     <Icon size={20} />
                   </div>
                   <div>
@@ -302,7 +392,9 @@ export const TenantBrandingSettings = () => {
                 placeholder="yourbrand"
                 supportiveText="Your menu will be accessible at yourbrand.qios.com"
                 className="max-w-full"
-                rightIcon={<span className="text-text-secondary text-sm">.qios.com</span>}
+                rightIcon={
+                  <span className="text-text-secondary text-sm">.qios.com</span>
+                }
               />
             </div>
             <div className="max-w-none flex items-end gap-2">
@@ -312,7 +404,9 @@ export const TenantBrandingSettings = () => {
                 supportiveText="Requires DNS configuration"
                 className="max-w-full flex-1"
               />
-              <Button variant="outline" className="mb-[26px]">Connect</Button>
+              <Button variant="outline" className="mb-[26px]">
+                Connect
+              </Button>
             </div>
           </div>
         </div>
@@ -345,18 +439,27 @@ export const TenantBrandingSettings = () => {
           </div>
         </div>
 
-        <div className="pt-4 flex justify-end border-t border-gray-100">
+        <form
+          action={formAction}
+          className="pt-4 flex justify-end border-t border-gray-100"
+        >
+          <input type="hidden" name="primaryColor" value={theme.primary} />
+          <input type="hidden" name="secondaryColor" value={theme.secondary} />
+          <input type="hidden" name="accentColor" value={theme.accent} />
+          <input type="hidden" name="fontFamily" value={fontFamily} />
+          <input type="hidden" name="menuLayout" value={menuLayout} />
           <Button
+            type="submit"
             variant="accent"
             shape="rounded"
             leftIcon={<Save size={18} />}
             className="mt-4"
+            loading={isPending}
           >
             Save Branding
           </Button>
-        </div>
+        </form>
       </div>
     </div>
   );
 };
-

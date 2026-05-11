@@ -1,9 +1,33 @@
-"use client";
-
 import React from "react";
+import { notFound, redirect } from "next/navigation";
 import { TenantSettings } from "@/components/organisms/TenantSettings";
+import { getTenantSettings } from "./actions";
 
-export default function SettingsPage() {
+export default async function SettingsPage({
+  params,
+}: {
+  params: Promise<{ id: string }> | { id: string };
+}) {
+  const resolvedParams = await params;
+
+  let settingsData;
+  try {
+    settingsData = await getTenantSettings(resolvedParams.id);
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "settings:unauthenticated";
+
+    if (message === "settings:not_found") {
+      notFound();
+    }
+
+    if (message === "settings:forbidden") {
+      redirect("/login");
+    }
+
+    redirect("/login");
+  }
+
   return (
     <>
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
@@ -14,9 +38,7 @@ export default function SettingsPage() {
           </p>
         </div>
       </div>
-      <TenantSettings />
+      <TenantSettings tenantId={resolvedParams.id} initialData={settingsData} />
     </>
   );
 }
-
-{/* backend huhu */}

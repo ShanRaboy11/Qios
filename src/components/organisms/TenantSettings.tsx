@@ -24,6 +24,7 @@ import { TenantSecuritySettings } from "./TenantSecuritySettings";
 import { TenantNotificationSettings } from "./TenantNotificationSettings";
 import { TenantBillingSettings } from "./TenantBillingSettings";
 import { TenantDangerZone } from "./TenantDangerZone";
+import type { TenantSettingsPageData } from "@/app/(tenant)/[id]/settings/types";
 
 type SettingsTab =
   | "profile"
@@ -34,7 +35,15 @@ type SettingsTab =
   | "billing"
   | "danger";
 
-export const TenantSettings = () => {
+interface TenantSettingsProps {
+  tenantId: string;
+  initialData: TenantSettingsPageData;
+}
+
+export const TenantSettings = ({
+  tenantId,
+  initialData,
+}: TenantSettingsProps) => {
   const [activeTab, setActiveTab] = useState<SettingsTab>("profile");
 
   const tabs = [
@@ -99,7 +108,10 @@ export const TenantSettings = () => {
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
             >
-              <TenantProfileSettings />
+              <TenantProfileSettings
+                tenantId={tenantId}
+                initialData={initialData.profile}
+              />
             </motion.div>
           )}
           {activeTab === "store" && (
@@ -110,7 +122,10 @@ export const TenantSettings = () => {
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
             >
-              <TenantStoreSettings />
+              <TenantStoreSettings
+                tenantId={tenantId}
+                initialData={initialData.store}
+              />
             </motion.div>
           )}
           {activeTab === "branding" && (
@@ -121,7 +136,10 @@ export const TenantSettings = () => {
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
             >
-              <TenantBrandingSettings />
+              <TenantBrandingSettings
+                tenantId={tenantId}
+                initialData={initialData.branding}
+              />
             </motion.div>
           )}
           {activeTab === "security" && (
@@ -132,7 +150,10 @@ export const TenantSettings = () => {
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
             >
-              <TenantSecuritySettings />
+              <TenantSecuritySettings
+                tenantId={tenantId}
+                initialData={initialData.security}
+              />
             </motion.div>
           )}
           {activeTab === "notifications" && (
