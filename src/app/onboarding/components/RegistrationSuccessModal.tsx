@@ -1,8 +1,9 @@
 "use client";
 
 import React from "react";
-import { CheckCircle2, Mail, Clock } from "lucide-react";
+import { CheckCircle2, Mail, Clock, Palette } from "lucide-react";
 import { Button } from "@/components/atoms/Button";
+import { useRouter } from "next/navigation";
 
 interface RegistrationSuccessModalProps {
   adminName: string;
@@ -15,6 +16,8 @@ export function RegistrationSuccessModal({
   adminEmail,
   onClose,
 }: RegistrationSuccessModalProps) {
+  const router = useRouter();
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg max-w-md w-full p-8 animate-in fade-in zoom-in-95 duration-300">
@@ -76,15 +79,27 @@ export function RegistrationSuccessModal({
           if we need any additional information.
         </p>
 
-        {/* Close Button */}
-        <Button
-          variant="primary"
-          size="lg"
-          className="w-full"
-          onClick={onClose}
-        >
-          Return to Home
-        </Button>
+        {/* Action Buttons */}
+        <div className="flex flex-col gap-3">
+          <Button
+            variant="primary"
+            size="lg"
+            className="w-full flex items-center justify-center gap-2"
+            onClick={() => {
+              onClose(); // Still call onClose to clear state
+              router.push("/setup/branding");
+            }}
+          >
+            <Palette size={18} />
+            Set Up Your Brand
+          </Button>
+          <button
+            onClick={onClose}
+            className="w-full py-2 text-sm text-gray-500 hover:text-gray-800 transition-colors font-medium"
+          >
+            I'll do this later
+          </button>
+        </div>
       </div>
     </div>
   );
