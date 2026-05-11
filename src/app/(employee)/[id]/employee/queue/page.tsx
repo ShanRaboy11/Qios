@@ -5,17 +5,17 @@ import KitchenPreparationDashboard from "@/components/organisms/KitchenPreparati
 
 export default function OrderQueuePage() {
   return (
-    <>
-      <header className="mb-2">
+    <div className="flex flex-col pb-32">
+      <header className="mb-6">
         <h2 className="h2 text-text-primary">Order Queue</h2>
         <p className="b1 text-text-secondary mt-2">
           Active orders being prepared in the kitchen
         </p>
       </header>
 
-      <div className="w-full h-[calc(100vh-80px)]">
+      <div className="w-full">
         <KitchenPreparationDashboard />
       </div>
-    </>
+    </div>
   );
 }
