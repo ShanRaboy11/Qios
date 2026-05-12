@@ -328,7 +328,7 @@ const PlatformSettings = () => {
             <Toggle
               variant="primary"
               defaultIsOn={false}
-              className="ring-red-500 focus:ring-red-500 focus:ring-offset-red-50"
+              className="ring-red-500 focus:ring-red-500 focus:ring-offset-red-50"//
             />
           </div>
         </div>
