@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useActionState, useEffect, useState } from "react";
-import { Upload, Save, CheckCircle2 } from "lucide-react";
+import { Upload, Save, CheckCircle2, Edit2 } from "lucide-react";
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
 import { SectionHeader } from "@/components/molecules/SectionHeader";
@@ -22,6 +22,9 @@ export const TenantProfileSettings = ({
 }: TenantProfileSettingsProps) => {
   const [formData, setFormData] = useState(initialData);
   const [isEditing, setIsEditing] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
   const [state, formAction, isPending] = useActionState(
     saveTenantProfileSettings.bind(null, tenantId),
     emptySettingsActionState,
@@ -30,6 +33,12 @@ export const TenantProfileSettings = ({
   useEffect(() => {
     setFormData(initialData);
   }, [initialData]);
+
+  useEffect(() => {
+    if (state.fieldErrors) {
+      setFieldErrors(state.fieldErrors);
+    }
+  }, [state.fieldErrors]);
 
   const initials =
     `${formData.firstName.trim().charAt(0)}${formData.lastName.trim().charAt(0)}`.toUpperCase();
@@ -63,20 +72,41 @@ export const TenantProfileSettings = ({
 
             <div className="flex flex-col sm:flex-row gap-6">
               <div className="flex flex-col items-center gap-3 flex-shrink-0">
-                <div className="w-24 h-24 rounded-full bg-brand-primary flex items-center justify-center text-white text-3xl font-bold border-4 border-white shadow-md overflow-hidden relative">
-                  {initials}
+                <div className="relative group w-24 h-24 rounded-full bg-brand-primary flex items-center justify-center text-white text-3xl font-bold border-4 border-white shadow-md overflow-hidden">
+                  {avatarPreview ? (
+                    <img
+                      src={avatarPreview}
+                      alt="Avatar"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    initials
+                  )}
+                  {isEditing && (
+                    <label className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 text-white opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity duration-200">
+                      <Upload size={20} className="mb-0.5" />
+                      <span className="text-[10px] font-medium leading-tight">
+                        Upload
+                      </span>
+                      <input
+                        type="file"
+                        name="avatar"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            setAvatarPreview(URL.createObjectURL(file));
+                          }
+                        }}
+                      />
+                    </label>
+                  )}
                 </div>
-                <span className="text-xs text-text-secondary">
-                  Allowed: JPG, PNG
-                </span>
-                {isEditing && (
-                  <input
-                    type="file"
-                    name="avatar"
-                    accept="image/*"
-                    className="mt-2 text-xs text-text-secondary"
-                  />
-                )}
+                <div className="text-xs text-text-secondary text-center">
+                  <p>Allowed: JPG, PNG</p>
+                  <p>(Max 5MB)</p>
+                </div>
               </div>
 
               <div className="flex-1 space-y-4">
@@ -88,19 +118,24 @@ export const TenantProfileSettings = ({
                     <Input
                       name="firstName"
                       value={formData.firstName}
-                      onChange={(event) =>
+                      onChange={(event) => {
                         setFormData((previous) => ({
                           ...previous,
                           firstName: event.target.value,
-                        }))
-                      }
-                      isError={!!state.fieldErrors.firstName}
-                      className="py-2.5 rounded-xl"
+                        }));
+                        setFieldErrors((prev) => ({ ...prev, firstName: "" }));
+                      }}
+                      isError={!!fieldErrors.firstName}
+                      className={`py-2.5 rounded-xl focus:outline-none disabled:cursor-not-allowed ${
+                        !fieldErrors.firstName
+                          ? "focus:border-brand-primary focus:ring-brand-primary"
+                          : ""
+                      }`}
                       disabled={!isEditing}
                     />
-                    {state.fieldErrors.firstName && (
-                      <p className="text-xs text-red-500 pl-1">
-                        {state.fieldErrors.firstName}
+                    {fieldErrors.firstName && (
+                      <p className="text-xs text-red-500 pl-1 mt-1">
+                        {fieldErrors.firstName}
                       </p>
                     )}
                   </div>
@@ -111,19 +146,24 @@ export const TenantProfileSettings = ({
                     <Input
                       name="lastName"
                       value={formData.lastName}
-                      onChange={(event) =>
+                      onChange={(event) => {
                         setFormData((previous) => ({
                           ...previous,
                           lastName: event.target.value,
-                        }))
-                      }
-                      isError={!!state.fieldErrors.lastName}
-                      className="py-2.5 rounded-xl"
+                        }));
+                        setFieldErrors((prev) => ({ ...prev, lastName: "" }));
+                      }}
+                      isError={!!fieldErrors.lastName}
+                      className={`py-2.5 rounded-xl focus:outline-none disabled:cursor-not-allowed ${
+                        !fieldErrors.lastName
+                          ? "focus:border-brand-primary focus:ring-brand-primary"
+                          : ""
+                      }`}
                       disabled={!isEditing}
                     />
-                    {state.fieldErrors.lastName && (
-                      <p className="text-xs text-red-500 pl-1">
-                        {state.fieldErrors.lastName}
+                    {fieldErrors.lastName && (
+                      <p className="text-xs text-red-500 pl-1 mt-1">
+                        {fieldErrors.lastName}
                       </p>
                     )}
                   </div>
@@ -132,23 +172,17 @@ export const TenantProfileSettings = ({
                   <label className="text-sm font-medium text-text-primary">
                     Email Address
                   </label>
+                  <input type="hidden" name="email" value={formData.email} />
                   <Input
-                    name="email"
                     value={formData.email}
-                    onChange={(event) =>
-                      setFormData((previous) => ({
-                        ...previous,
-                        email: event.target.value,
-                      }))
-                    }
                     type="email"
-                    isError={!!state.fieldErrors.email}
-                    className="py-2.5 rounded-xl"
+                    isError={!!fieldErrors.email}
+                    className="py-2.5 rounded-xl focus:outline-none disabled:cursor-not-allowed"
                     disabled
                   />
-                  {state.fieldErrors.email && (
-                    <p className="text-xs text-red-500 pl-1">
-                      {state.fieldErrors.email}
+                  {fieldErrors.email && (
+                    <p className="text-xs text-red-500 pl-1 mt-1">
+                      {fieldErrors.email}
                     </p>
                   )}
                 </div>
@@ -157,28 +191,43 @@ export const TenantProfileSettings = ({
                     Phone Number
                   </label>
                   <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center px-3 py-2.5 rounded-xl border border-[#E5E5E5] bg-gray-50 text-text-primary">
+                    <span
+                      className={`inline-flex items-center px-3 py-2.5 rounded-xl border bg-gray-50 text-text-primary transition-colors ${
+                        fieldErrors.phoneNumber
+                          ? "border-red-500"
+                          : "border-[#E5E5E5]"
+                      } ${!isEditing ? "opacity-70 cursor-not-allowed" : ""}`}
+                    >
                       +63
                     </span>
                     <Input
                       name="phoneNumber"
                       value={formData.phoneNumber}
-                      onChange={(event) =>
+                      onChange={(event) => {
                         setFormData((previous) => ({
                           ...previous,
                           phoneNumber: event.target.value,
-                        }))
-                      }
+                        }));
+                        setFieldErrors((prev) => ({
+                          ...prev,
+                          phoneNumber: "",
+                        }));
+                      }}
                       type="tel"
-                      className="py-2.5 rounded-xl flex-1"
+                      isError={!!fieldErrors.phoneNumber}
+                      className={`py-2.5 rounded-xl flex-1 focus:outline-none disabled:cursor-not-allowed ${
+                        !fieldErrors.phoneNumber
+                          ? "focus:border-brand-primary focus:ring-brand-primary"
+                          : ""
+                      }`}
                       disabled={!isEditing}
                     />
-                    {state.fieldErrors.phoneNumber && (
-                      <p className="text-xs text-red-500 pl-1">
-                        {state.fieldErrors.phoneNumber}
-                      </p>
-                    )}
                   </div>
+                  {fieldErrors.phoneNumber && (
+                    <p className="text-xs text-red-500 pl-1 mt-1">
+                      {fieldErrors.phoneNumber}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -190,8 +239,9 @@ export const TenantProfileSettings = ({
                   variant="outline"
                   shape="rounded"
                   onClick={() => setIsEditing(true)}
+                  leftIcon={<Edit2 size={18} />}
                 >
-                  Edit Profile
+                  Edit
                 </Button>
               ) : (
                 <Button
@@ -201,7 +251,7 @@ export const TenantProfileSettings = ({
                   leftIcon={<Save size={18} />}
                   loading={isPending}
                 >
-                  Save Profile
+                  Save
                 </Button>
               )}
             </div>
