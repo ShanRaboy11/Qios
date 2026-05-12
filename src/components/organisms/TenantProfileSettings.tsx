@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useActionState, useEffect, useState } from "react";
+import React, { useActionState, useEffect, useState, useRef } from "react";
 import { Upload, Save, CheckCircle2, Edit2 } from "lucide-react";
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
@@ -22,8 +22,10 @@ export const TenantProfileSettings = ({
 }: TenantProfileSettingsProps) => {
   const [formData, setFormData] = useState(initialData);
   const [isEditing, setIsEditing] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const wasPending = useRef(false);
 
   const [state, formAction, isPending] = useActionState(
     saveTenantProfileSettings.bind(null, tenantId),
@@ -40,8 +42,32 @@ export const TenantProfileSettings = ({
     }
   }, [state.fieldErrors]);
 
+  useEffect(() => {
+    if (wasPending.current && !isPending) {
+      if (state.success) {
+        setIsEditing(false);
+        setShowSuccess(true);
+      }
+    }
+    wasPending.current = isPending;
+  }, [isPending, state.success]);
+
+  useEffect(() => {
+    if (showSuccess) {
+      const timer = setTimeout(() => {
+        setShowSuccess(false);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showSuccess]);
+
+  const nameParts = formData.name.trim().split(/\s+/);
   const initials =
-    `${formData.firstName.trim().charAt(0)}${formData.lastName.trim().charAt(0)}`.toUpperCase();
+    nameParts.length > 1
+      ? `${nameParts[0].charAt(0)}${nameParts[nameParts.length - 1].charAt(0)}`.toUpperCase()
+      : (formData.name.trim().charAt(0) || "U").toUpperCase();
+
+  const currentAvatar = avatarPreview || formData.avatarUrl;
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 w-full">
@@ -54,15 +80,15 @@ export const TenantProfileSettings = ({
         </p>
       </div>
 
-      <div className="space-y-6">
-        <div className="space-y-4">
+      <div className="space-y-6 w-full">
+        <div className="space-y-4 w-full">
           <SectionHeader
             title="Personal Information"
             className="mb-0 py-2 border-gray-100"
           />
-          <form action={formAction} className="pt-2">
-            {state.success && (
-              <div className="mb-4">
+          <form action={formAction} className="pt-2 w-full">
+            {showSuccess && state.success && (
+              <div className="mb-6 w-full">
                 <div className="flex items-center gap-2 w-full text-green-700 bg-green-50 border border-green-100 rounded-xl px-4 py-3">
                   <CheckCircle2 className="h-4 w-4 shrink-0" />
                   <p className="text-sm font-medium">{state.success}</p>
@@ -70,12 +96,12 @@ export const TenantProfileSettings = ({
               </div>
             )}
 
-            <div className="flex flex-col sm:flex-row gap-6">
-              <div className="flex flex-col items-center gap-3 flex-shrink-0">
-                <div className="relative group w-24 h-24 rounded-full bg-brand-primary flex items-center justify-center text-white text-3xl font-bold border-4 border-white shadow-md overflow-hidden">
-                  {avatarPreview ? (
+            <div className="flex flex-col sm:flex-row gap-8 lg:gap-12 items-start w-full">
+              <div className="flex flex-col items-center gap-4 flex-shrink-0 sm:w-52">
+                <div className="relative group w-40 h-40 sm:w-52 sm:h-52 rounded-full bg-brand-primary flex items-center justify-center text-white text-5xl font-bold border-4 border-white shadow-md overflow-hidden">
+                  {currentAvatar ? (
                     <img
-                      src={avatarPreview}
+                      src={currentAvatar}
                       alt="Avatar"
                       className="w-full h-full object-cover"
                     />
@@ -84,8 +110,8 @@ export const TenantProfileSettings = ({
                   )}
                   {isEditing && (
                     <label className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 text-white opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity duration-200">
-                      <Upload size={20} className="mb-0.5" />
-                      <span className="text-[10px] font-medium leading-tight">
+                      <Upload size={28} className="mb-1" />
+                      <span className="text-sm font-medium leading-tight">
                         Upload
                       </span>
                       <input
@@ -103,72 +129,43 @@ export const TenantProfileSettings = ({
                     </label>
                   )}
                 </div>
-                <div className="text-xs text-text-secondary text-center">
+                <div className="text-sm text-text-secondary text-center">
                   <p>Allowed: JPG, PNG</p>
                   <p>(Max 5MB)</p>
                 </div>
               </div>
 
-              <div className="flex-1 space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-text-primary">
-                      First Name
-                    </label>
-                    <Input
-                      name="firstName"
-                      value={formData.firstName}
-                      onChange={(event) => {
-                        setFormData((previous) => ({
-                          ...previous,
-                          firstName: event.target.value,
-                        }));
-                        setFieldErrors((prev) => ({ ...prev, firstName: "" }));
-                      }}
-                      isError={!!fieldErrors.firstName}
-                      className={`py-2.5 rounded-xl focus:outline-none disabled:cursor-not-allowed ${
-                        !fieldErrors.firstName
-                          ? "focus:border-brand-primary focus:ring-brand-primary"
-                          : ""
-                      }`}
-                      disabled={!isEditing}
-                    />
-                    {fieldErrors.firstName && (
-                      <p className="text-xs text-red-500 pl-1 mt-1">
-                        {fieldErrors.firstName}
-                      </p>
-                    )}
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-text-primary">
-                      Last Name
-                    </label>
-                    <Input
-                      name="lastName"
-                      value={formData.lastName}
-                      onChange={(event) => {
-                        setFormData((previous) => ({
-                          ...previous,
-                          lastName: event.target.value,
-                        }));
-                        setFieldErrors((prev) => ({ ...prev, lastName: "" }));
-                      }}
-                      isError={!!fieldErrors.lastName}
-                      className={`py-2.5 rounded-xl focus:outline-none disabled:cursor-not-allowed ${
-                        !fieldErrors.lastName
-                          ? "focus:border-brand-primary focus:ring-brand-primary"
-                          : ""
-                      }`}
-                      disabled={!isEditing}
-                    />
-                    {fieldErrors.lastName && (
-                      <p className="text-xs text-red-500 pl-1 mt-1">
-                        {fieldErrors.lastName}
-                      </p>
-                    )}
-                  </div>
+              <div className="flex-1 w-full space-y-5">
+                <div className="space-y-1.5 w-full">
+                  <label className="text-sm font-medium text-text-primary">
+                    Full Name
+                  </label>
+                  <Input
+                    name="name"
+                    value={formData.name}
+                    onChange={(event) => {
+                      setFormData((previous) => ({
+                        ...previous,
+                        name: event.target.value,
+                      }));
+                      setFieldErrors((prev) => ({ ...prev, name: "" }));
+                    }}
+                    isError={!!fieldErrors.name}
+                    className={`py-2.5 w-full rounded-xl focus:outline-none disabled:cursor-not-allowed ${
+                      !fieldErrors.name
+                        ? "focus:border-brand-primary focus:ring-brand-primary"
+                        : ""
+                    }`}
+                    disabled={!isEditing}
+                  />
+                  {fieldErrors.name && (
+                    <p className="text-xs text-red-500 pl-1 mt-1">
+                      {fieldErrors.name}
+                    </p>
+                  )}
                 </div>
-                <div className="space-y-1.5">
+
+                <div className="space-y-1.5 w-full">
                   <label className="text-sm font-medium text-text-primary">
                     Email Address
                   </label>
@@ -177,7 +174,7 @@ export const TenantProfileSettings = ({
                     value={formData.email}
                     type="email"
                     isError={!!fieldErrors.email}
-                    className="py-2.5 rounded-xl focus:outline-none disabled:cursor-not-allowed"
+                    className="py-2.5 w-full rounded-xl focus:outline-none disabled:cursor-not-allowed"
                     disabled
                   />
                   {fieldErrors.email && (
@@ -186,11 +183,12 @@ export const TenantProfileSettings = ({
                     </p>
                   )}
                 </div>
-                <div className="space-y-1.5">
+
+                <div className="space-y-1.5 w-full">
                   <label className="text-sm font-medium text-text-primary">
                     Phone Number
                   </label>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 w-full">
                     <span
                       className={`inline-flex items-center px-3 py-2.5 rounded-xl border bg-gray-50 text-text-primary transition-colors ${
                         fieldErrors.phoneNumber
@@ -215,7 +213,7 @@ export const TenantProfileSettings = ({
                       }}
                       type="tel"
                       isError={!!fieldErrors.phoneNumber}
-                      className={`py-2.5 rounded-xl flex-1 focus:outline-none disabled:cursor-not-allowed ${
+                      className={`py-2.5 w-full rounded-xl flex-1 focus:outline-none disabled:cursor-not-allowed ${
                         !fieldErrors.phoneNumber
                           ? "focus:border-brand-primary focus:ring-brand-primary"
                           : ""
@@ -229,31 +227,50 @@ export const TenantProfileSettings = ({
                     </p>
                   )}
                 </div>
-              </div>
-            </div>
 
-            <div className="pt-4 flex justify-end">
-              {!isEditing ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  shape="rounded"
-                  onClick={() => setIsEditing(true)}
-                  leftIcon={<Edit2 size={18} />}
-                >
-                  Edit
-                </Button>
-              ) : (
-                <Button
-                  type="submit"
-                  variant="accent"
-                  shape="rounded"
-                  leftIcon={<Save size={18} />}
-                  loading={isPending}
-                >
-                  Save
-                </Button>
-              )}
+                <div className="pt-4 flex justify-end w-full">
+                  {!isEditing ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      shape="rounded"
+                      onClick={() => {
+                        setIsEditing(true);
+                        setShowSuccess(false);
+                      }}
+                      leftIcon={<Edit2 size={18} />}
+                    >
+                      Edit Profile
+                    </Button>
+                  ) : (
+                    <div className="flex items-center gap-3">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        shape="rounded"
+                        onClick={() => {
+                          setIsEditing(false);
+                          setFormData(initialData);
+                          setAvatarPreview(null);
+                          setFieldErrors({});
+                        }}
+                        disabled={isPending}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type="submit"
+                        variant="accent"
+                        shape="rounded"
+                        leftIcon={<Save size={18} />}
+                        loading={isPending}
+                      >
+                        Save Changes
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </form>
         </div>

@@ -76,19 +76,6 @@ function mergeSettings(
   };
 }
 
-function splitFullName(fullName: string) {
-  const trimmed = fullName.trim();
-  if (!trimmed) {
-    return { firstName: "", lastName: "" };
-  }
-
-  const parts = trimmed.split(/\s+/);
-  const firstName = parts.shift() || "";
-  const lastName = parts.join(" ");
-
-  return { firstName, lastName };
-}
-
 async function getAuthenticatedTenantContext(tenantId: string) {
   if (!tenantId) {
     throw new Error("settings:forbidden");
@@ -162,10 +149,10 @@ export async function getTenantSettings(
   const fullName = toText(
     authMetadata.full_name ?? authMetadata.display_name ?? tenant.owner_name,
   );
-  const { firstName, lastName } = splitFullName(fullName);
   const phoneNumber = toText(
     authMetadata.phone_number ?? authMetadata.contact_number ?? "",
   );
+  const avatarUrl = toText(authMetadata.avatar_url ?? "");
 
   const settings =
     tenant.settings && typeof tenant.settings === "object"
@@ -240,10 +227,10 @@ export async function getTenantSettings(
 
   return {
     profile: {
-      firstName,
-      lastName,
+      name: fullName,
       email: toText(authUser?.user?.email ?? ""),
       phoneNumber,
+      avatarUrl: avatarUrl || undefined,
     },
     store,
     branding,
@@ -277,22 +264,19 @@ export async function saveTenantProfileSettings(
   try {
     const { admin, user } = await requireTenantContext(tenantId);
 
-    const firstName = toText(formData.get("firstName"));
-    const lastName = toText(formData.get("lastName"));
+    const name = toText(formData.get("name"));
     const email = toText(formData.get("email"));
     const phoneNumber = toText(formData.get("phoneNumber"));
 
     const fieldErrors: Record<string, string> = {};
 
-    if (!firstName) fieldErrors.firstName = "First name is required.";
-    if (!lastName) fieldErrors.lastName = "Last name is required.";
+    if (!name) fieldErrors.name = "Name is required.";
     if (!email) {
       fieldErrors.email = "Email address is required.";
     } else if (!validateEmail(email)) {
       fieldErrors.email = "A valid email address is required.";
     }
 
-    // phone number required (10 digits expected from UI without country code)
     if (!phoneNumber) {
       fieldErrors.phoneNumber = "Phone number is required.";
     } else if (!/^[0-9]{10}$/.test(phoneNumber)) {
@@ -305,8 +289,6 @@ export async function saveTenantProfileSettings(
         fieldErrors,
       };
     }
-
-    const fullName = `${firstName} ${lastName}`.trim();
 
     const { data: authUser, error: authUserError } =
       await admin.auth.admin.getUserById(user.id);
@@ -325,8 +307,8 @@ export async function saveTenantProfileSettings(
         email,
         user_metadata: {
           ...currentMetadata,
-          full_name: fullName,
-          display_name: fullName,
+          full_name: name,
+          display_name: name,
           phone_number: phoneNumber || null,
         },
       },
@@ -339,7 +321,7 @@ export async function saveTenantProfileSettings(
     const { error: profileUpdateError } = await admin
       .from("profiles")
       .update({
-        full_name: fullName,
+        full_name: name,
         phone_number: phoneNumber || null,
       })
       .eq("id", user.id)
@@ -349,11 +331,12 @@ export async function saveTenantProfileSettings(
       throw new Error(profileUpdateError.message);
     }
 
-    revalidatePath(`/${tenantId}/settings`);
-
-    // handle avatar upload if provided
     const avatarFile = formData.get("avatar");
-    if (avatarFile && typeof (avatarFile as any).name === "string") {
+    if (
+      avatarFile &&
+      typeof (avatarFile as any).name === "string" &&
+      (avatarFile as File).size > 0
+    ) {
       try {
         const file = avatarFile as File;
         const objectPath = `${tenantId}/avatar-${Date.now()}-${file.name}`;
@@ -375,12 +358,14 @@ export async function saveTenantProfileSettings(
           await admin.auth.admin.updateUserById(user.id, {
             user_metadata: {
               ...currentMetadata,
+              full_name: name,
+              display_name: name,
+              phone_number: phoneNumber || null,
               avatar_url: avatarUrl,
             },
           });
         }
       } catch (err) {
-        // Non-fatal: continue but report upload failure as a generic error
         return {
           ...EMPTY_ACTION_STATE,
           error:
@@ -388,6 +373,8 @@ export async function saveTenantProfileSettings(
         };
       }
     }
+
+    revalidatePath(`/${tenantId}/settings`);
 
     return {
       ...EMPTY_ACTION_STATE,
@@ -440,7 +427,6 @@ export async function saveTenantStoreSettings(
       }
     }
 
-    // Public phone number validation: expect 10 digits (country code handled in UI)
     if (!publicPhoneNumber) {
       fieldErrors.publicPhoneNumber = "Public phone number is required.";
     } else if (!/^[0-9]{10}$/.test(publicPhoneNumber)) {
@@ -583,9 +569,6 @@ export async function saveTenantBrandingSettings(
       throw new Error(updateError.message);
     }
 
-    revalidatePath(`/${tenantId}/settings`);
-
-    // handle branding uploads
     try {
       const dashboardLogo = formData.get("dashboardLogo");
       const kioskSplash = formData.get("kioskSplash");
@@ -600,7 +583,11 @@ export async function saveTenantBrandingSettings(
       ];
 
       for (const item of uploads) {
-        if (item.file && typeof (item.file as any).name === "string") {
+        if (
+          item.file &&
+          typeof (item.file as any).name === "string" &&
+          (item.file as File).size > 0
+        ) {
           const file = item.file as File;
           const objectPath = `${tenantId}/branding-${item.key}-${Date.now()}-${file.name}`;
           const { error: uploadError } = await admin.storage
@@ -649,6 +636,8 @@ export async function saveTenantBrandingSettings(
         error: err instanceof Error ? err.message : "Failed to upload assets.",
       };
     }
+
+    revalidatePath(`/${tenantId}/settings`);
 
     return {
       ...EMPTY_ACTION_STATE,

@@ -1,8 +1,8 @@
 export interface TenantProfileSettingsData {
-  firstName: string;
-  lastName: string;
+  name: string;
   email: string;
   phoneNumber: string;
+  avatarUrl?: string;
 }
 
 export interface TenantStoreSettingsData {
