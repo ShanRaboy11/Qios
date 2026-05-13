@@ -138,7 +138,7 @@ export const TenantProfileSettings = ({
               <div className="flex-1 w-full space-y-5">
                 <div className="space-y-1.5 w-full">
                   <label className="text-sm font-medium text-text-primary">
-                    Full Name
+                    Full Name <span className="text-brand-accent">*</span>
                   </label>
                   <Input
                     name="name"
@@ -167,7 +167,7 @@ export const TenantProfileSettings = ({
 
                 <div className="space-y-1.5 w-full">
                   <label className="text-sm font-medium text-text-primary">
-                    Email Address
+                    Email Address <span className="text-brand-accent">*</span>
                   </label>
                   <input type="hidden" name="email" value={formData.email} />
                   <Input
@@ -200,7 +200,7 @@ export const TenantProfileSettings = ({
                     </span>
                     <Input
                       name="phoneNumber"
-                      value={formData.phoneNumber}
+                      value={formData.phoneNumber || ""}
                       onChange={(event) => {
                         setFormData((previous) => ({
                           ...previous,

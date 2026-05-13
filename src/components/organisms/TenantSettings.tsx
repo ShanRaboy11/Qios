@@ -58,7 +58,7 @@ export const TenantSettings = ({
 
   return (
     <div className="flex flex-col md:flex-row gap-6 md:gap-8 min-h-[600px] w-full">
-      {/* Sidebar */}
+      {/* sidebar */}
       <div className="w-full md:w-64 flex-shrink-0 flex flex-col gap-2">
         {tabs.map((tab) => {
           const Icon = tab.icon;
@@ -97,8 +97,8 @@ export const TenantSettings = ({
         })}
       </div>
 
-      {/* Content Area */}
-      <div className="flex-1 bg-white rounded-[24px] shadow-sm border border-gray-100 p-6 md:p-8 overflow-hidden w-full">
+      {/* content area */}
+      <div className="flex-1 bg-white rounded-[24px] shadow-sm border border-gray-100 p-6 md:p-8 w-full">
         <AnimatePresence mode="wait">
           {activeTab === "profile" && (
             <motion.div

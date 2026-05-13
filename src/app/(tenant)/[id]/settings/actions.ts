@@ -277,9 +277,7 @@ export async function saveTenantProfileSettings(
       fieldErrors.email = "A valid email address is required.";
     }
 
-    if (!phoneNumber) {
-      fieldErrors.phoneNumber = "Phone number is required.";
-    } else if (!/^[0-9]{10}$/.test(phoneNumber)) {
+    if (phoneNumber && !/^[0-9]{10}$/.test(phoneNumber)) {
       fieldErrors.phoneNumber = "Enter a valid 10-digit mobile number.";
     }
 
@@ -427,9 +425,7 @@ export async function saveTenantStoreSettings(
       }
     }
 
-    if (!publicPhoneNumber) {
-      fieldErrors.publicPhoneNumber = "Public phone number is required.";
-    } else if (!/^[0-9]{10}$/.test(publicPhoneNumber)) {
+    if (publicPhoneNumber && !/^[0-9]{10}$/.test(publicPhoneNumber)) {
       fieldErrors.publicPhoneNumber = "Enter a valid 10-digit mobile number.";
     }
 
