@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { UserItem, AvatarVariant } from "@/components/molecules/UserItem";
 import { Badge, BadgeColor, BadgeVariant } from "@/components/atoms/Badge";
 import { SearchFilterbarv2 } from "@/components/molecules/SearchFilterbarv2";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
-// --- Mock Data ---
+// --- Types ---
 
 type ActivityData = {
   id: string;
@@ -29,44 +30,86 @@ type ActivityData = {
   timestamp: string;
 };
 
-const MOCK_ACTIVITIES: ActivityData[] = [
-  {
-    id: "act-1",
-    user: { name: "Juan dela Cruz", id: "USR-10001", variant: "accent" },
-    role: { label: "Tenant Admin", color: "secondary", variant: "solid" },
-    action: { label: "CREATE", color: "success" },
-    description: "Approved new Tenant Account: 'Cebu Grill'",
-    targetEstablishment: "Global System",
-    timestamp: "Oct 25, 2024 • 02:45 PM",
-  },
-  {
-    id: "act-2",
-    user: { name: "Maria Santos", id: "USR-20045", variant: "accent" },
-    role: { label: "Super Admin", color: "accent", variant: "solid" },
-    action: { label: "UPDATE", color: "info" },
-    description: "Enabled 'Measurement-based' Inventory Mode",
-    targetEstablishment: "Cebu Grill",
-    timestamp: "Oct 28, 2024 • 01:22 PM",
-  },
-  {
-    id: "act-3",
-    user: { name: "Cashier_01", id: "EMP-30012", variant: "accent" },
-    role: { label: "Employee", color: "info", variant: "solid" },
-    action: { label: "DELETE", color: "error" },
-    description: "Voided Transaction #8821 (Suspicious pattern detected)",
-    targetEstablishment: "Cebu Grill",
-    timestamp: "Oct 31, 2024 • 12:18 PM",
-  },
-  {
-    id: "act-4",
-    user: { name: "Guest_551", id: "CUST-40551", variant: "accent" },
-    role: { label: "Customer", color: "success", variant: "solid" },
-    action: { label: "CREATE", color: "success" },
-    description: "Generated QR Order via Gemini AI Concierge",
-    targetEstablishment: "Cebu Grill",
-    timestamp: "Oct 31, 2024 • 11:45 AM",
-  },
-];
+interface ActivityLogRow {
+  id: string;
+  actor_id: string | null;
+  actor_name: string;
+  actor_role: string;
+  action_type: string;
+  description: string;
+  target_tenant_id: string | null;
+  target_tenant_name: string | null;
+  metadata: Record<string, unknown> | null;
+  created_at: string;
+}
+
+// --- Helpers ---
+
+function roleColor(role: string): BadgeColor {
+  const r = role.toLowerCase().replace(/[\s_]/g, "");
+  if (r.includes("superadmin")) return "accent";
+  if (r.includes("admin")) return "secondary";
+  if (r.includes("employee")) return "info";
+  if (r.includes("customer")) return "success";
+  return "secondary";
+}
+
+function actionColor(actionType: string): BadgeColor {
+  switch (actionType) {
+    case "CREATE":
+      return "success";
+    case "UPDATE":
+      return "info";
+    case "DELETE":
+    case "REFUND":
+      return "error";
+    case "LOGIN":
+    case "LOGOUT":
+      return "secondary";
+    case "SYSTEM":
+      return "warning";
+    default:
+      return "secondary";
+  }
+}
+
+function formatTimestamp(iso: string): string {
+  const d = new Date(iso);
+  const date = d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "2-digit",
+    year: "numeric",
+  });
+  const time = d.toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
+  return `${date} • ${time}`;
+}
+
+function mapRow(row: ActivityLogRow): ActivityData {
+  return {
+    id: row.id,
+    user: {
+      name: row.actor_name,
+      id: row.actor_id ? row.actor_id.slice(0, 8).toUpperCase() : "SYSTEM",
+      variant: "accent" as AvatarVariant,
+    },
+    role: {
+      label: row.actor_role,
+      color: roleColor(row.actor_role),
+      variant: "solid",
+    },
+    action: {
+      label: row.action_type,
+      color: actionColor(row.action_type),
+    },
+    description: row.description,
+    targetEstablishment: row.target_tenant_name ?? "Global System",
+    timestamp: formatTimestamp(row.created_at),
+  };
+}
 
 // --- Activity Card (Mobile) ---
 
@@ -236,26 +279,46 @@ export const SystemActivity = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRole, setSelectedRole] = useState("All Roles");
   const [selectedDate, setSelectedDate] = useState<number | null>(null);
+  const [activities, setActivities] = useState<ActivityData[]>([]);
 
-  const filteredActivities = MOCK_ACTIVITIES.filter((a) => {
-    const matchesSearch =
-      searchTerm === "" ||
-      a.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      a.user.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      a.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      a.targetEstablishment.toLowerCase().includes(searchTerm.toLowerCase());
+  const fetchActivities = useCallback(async () => {
+    try {
+      const supabase = createSupabaseBrowserClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
 
-    const matchesRole =
-      selectedRole === "All Roles" || a.role.label === selectedRole;
+      const params = new URLSearchParams();
+      if (searchTerm) params.set("search", searchTerm);
+      if (selectedRole && selectedRole !== "All Roles")
+        params.set("role", selectedRole);
+      if (selectedDate !== null) {
+        const day = selectedDate.toString().padStart(2, "0");
+        params.set("date", `2024-10-${day}`);
+      }
 
-    let matchesDate = true;
-    if (selectedDate !== null) {
-      const dateStr = `Oct ${selectedDate.toString().padStart(2, "0")}, 2024`;
-      matchesDate = a.timestamp.includes(dateStr);
+      const res = await fetch(
+        `/api/admin/system-activity?${params.toString()}`,
+        {
+          headers: { Authorization: `Bearer ${session?.access_token ?? ""}` },
+        },
+      );
+
+      if (!res.ok) {
+        const json = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(json.error ?? `Request failed (${res.status})`);
+      }
+
+      const json = (await res.json()) as { data: ActivityLogRow[] };
+      setActivities((json.data ?? []).map(mapRow));
+    } catch (err) {
+      console.error("[SystemActivity] Failed to load:", err);
     }
+  }, [searchTerm, selectedRole, selectedDate]);
 
-    return matchesSearch && matchesRole && matchesDate;
-  });
+  useEffect(() => {
+    fetchActivities();
+  }, [fetchActivities]);
 
   return (
     <div className="w-full flex flex-col gap-8">
@@ -270,10 +333,8 @@ export const SystemActivity = () => {
 
       {/* 2a. Mobile: Collapsible Cards */}
       <div className="flex md:hidden flex-col gap-3">
-        {filteredActivities.length > 0 ? (
-          filteredActivities.map((act) => (
-            <ActivityCard key={act.id} act={act} />
-          ))
+        {activities.length > 0 ? (
+          activities.map((act) => <ActivityCard key={act.id} act={act} />)
         ) : (
           <div
             className="rounded-2xl border-2 border-[#E5E5E5] py-10 text-center b4"
@@ -314,8 +375,8 @@ export const SystemActivity = () => {
               </tr>
             </thead>
             <tbody className="divide-y-2 divide-[#E5E5E5] bg-white">
-              {filteredActivities.length > 0 ? (
-                filteredActivities.map((act) => (
+              {activities.length > 0 ? (
+                activities.map((act) => (
                   <tr
                     key={act.id}
                     className="hover:bg-slate-50 transition-colors"

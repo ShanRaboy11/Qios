@@ -2,6 +2,7 @@
 
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
+import { logActivity } from "@/lib/activityLogger";
 
 interface TenantDirectoryDocument {
   id: string;
@@ -1095,6 +1096,37 @@ export async function updateTenantStatus(
       "[updateTenantStatus] No recipient email resolved — skipping email notification.",
     );
   }
+
+  // --- Log to System Activity ---
+  const { data: tenantNameRow } = await supabase
+    .from("tenants")
+    .select("business_name")
+    .eq("id", tenantId)
+    .maybeSingle();
+
+  const tenantName = tenantNameRow?.business_name ?? tenantId;
+
+  const actionLabel =
+    status === "approved"
+      ? "Approved tenant"
+      : status === "rejected"
+        ? "Rejected tenant"
+        : "Set tenant status to pending";
+
+  await logActivity({
+    actorName: "Super Admin",
+    actorRole: "Super Admin",
+    actionType:
+      status === "approved"
+        ? "UPDATE"
+        : status === "rejected"
+          ? "DELETE"
+          : "UPDATE",
+    description: `${actionLabel}: '${tenantName}'${trimmedComments ? ` — ${trimmedComments}` : ""}`,
+    targetTenantId: tenantId,
+    targetTenantName: tenantName,
+    metadata: { status, comments: trimmedComments ?? null },
+  });
 
   revalidatePath("/admin/tenants");
   revalidatePath("/admin/dashboard");
