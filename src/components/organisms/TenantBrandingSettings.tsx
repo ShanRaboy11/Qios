@@ -19,7 +19,7 @@ import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
 import { SectionHeader } from "@/components/molecules/SectionHeader";
 import { cn } from "@/lib/utils";
-import { saveTenantBrandingSettings } from "@/app/(tenant)/[id]/settings/actions";
+import { saveTenantBrandingSettings, saveTenantCustomThemes } from "@/app/(tenant)/[id]/settings/actions";
 import {
   emptySettingsActionState,
   type TenantBrandingSettingsData,
@@ -51,16 +51,22 @@ export const TenantBrandingSettings = ({
     t1.accent.toLowerCase() === t2.accent.toLowerCase();
 
   const [customThemes, setCustomThemes] = useState<{ id: string; primary: string; secondary: string; accent: string }[]>(() => {
+    // Start with any themes from the database
+    let themes = initialData.customThemes ? [...initialData.customThemes] : [];
+    
+    // If the currently saved theme in the DB doesn't match any preset and isn't already in customThemes,
+    // we inject it as a "draft" custom theme
     const initTheme = {
       primary: initialData.primaryColor || "#FFC670",
       secondary: initialData.secondaryColor || "#FFF9F0",
       accent: initialData.accentColor || "#00FFFF",
     };
     const isPreset = presetThemes.some((p) => isMatch(p, initTheme));
-    if (!isPreset) {
-      return [{ id: "custom-0", ...initTheme }];
+    const isAlreadyCustom = themes.some((t) => isMatch(t, initTheme));
+    if (!isPreset && !isAlreadyCustom) {
+      themes.push({ id: `custom-${Date.now()}`, ...initTheme });
     }
-    return [];
+    return themes;
   });
 
   const [activeThemeId, setActiveThemeId] = useState<string>(() => {
@@ -71,7 +77,12 @@ export const TenantBrandingSettings = ({
     };
     const presetIndex = presetThemes.findIndex((p) => isMatch(p, initTheme));
     if (presetIndex !== -1) return `preset-${presetIndex}`;
-    return "custom-0";
+    
+    // Check if it matches any custom theme
+    const customMatch = customThemes.find(t => isMatch(t, initTheme));
+    if (customMatch) return customMatch.id;
+    
+    return customThemes.length > 0 ? customThemes[customThemes.length - 1].id : "custom-0";
   });
 
   const [theme, setTheme] = useState({
@@ -109,6 +120,8 @@ export const TenantBrandingSettings = ({
   );
 
   useEffect(() => {
+    if (isEditing) return; // Prevent resetting while editing (e.g. after saving custom themes)
+    
     const initTheme = {
       primary: initialData.primaryColor || "#FFC670",
       secondary: initialData.secondaryColor || "#FFF9F0",
@@ -118,10 +131,22 @@ export const TenantBrandingSettings = ({
 
     if (presetIndex !== -1) {
       setActiveThemeId(`preset-${presetIndex}`);
-      setCustomThemes([]);
     } else {
-      setActiveThemeId("custom-0");
-      setCustomThemes([{ id: "custom-0", ...initTheme }]);
+      let activeCustomId = "custom-0";
+      const customMatch = (initialData.customThemes || []).find(t => isMatch(t, initTheme));
+      if (customMatch) {
+        activeCustomId = customMatch.id;
+      } else {
+        const fallbackId = `custom-${Date.now()}`;
+        setCustomThemes(prev => {
+          if (!prev.some(t => isMatch(t, initTheme))) {
+             return [...prev, { id: fallbackId, ...initTheme }];
+          }
+          return prev;
+        });
+        activeCustomId = fallbackId;
+      }
+      setActiveThemeId(activeCustomId);
     }
     setTheme(initTheme);
 
@@ -137,7 +162,7 @@ export const TenantBrandingSettings = ({
     setKioskSplashPreview(initialData.kioskSplashUrl || null);
     setFaviconPreview(initialData.faviconUrl || null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialData]);
+  }, [initialData, isEditing]);
 
   useEffect(() => {
     if (state.fieldErrors) {
@@ -264,18 +289,23 @@ export const TenantBrandingSettings = ({
                       }
                     }}
                     className={cn(
-                      "w-10 h-10 rounded-full border-2 transition-all duration-200 shadow-sm relative",
+                      "w-10 h-10 rounded-xl transition-all duration-200 shadow-sm relative overflow-hidden flex",
                       isActive
-                        ? "scale-110"
-                        : "border-transparent hover:scale-105"
+                        ? "scale-110 border-transparent"
+                        : "border-2 border-gray-200 hover:scale-105"
                     )}
-                    style={{ 
-                      backgroundColor: preset.primary,
-                      borderColor: isActive ? preset.accent : "transparent"
+                    style={{
+                      boxShadow: isActive ? `0 0 0 2px white, 0 0 0 4px ${safeHex(preset.accent)}` : undefined
                     }}
                     title="Apply preset theme"
                     disabled={!isEditing}
-                  />
+                  >
+                    <div className="w-1/2 h-full" style={{ backgroundColor: safeHex(preset.primary) }} />
+                    <div className="w-1/2 h-full flex flex-col">
+                      <div className="w-full h-1/2" style={{ backgroundColor: safeHex(preset.secondary) }} />
+                      <div className="w-full h-1/2" style={{ backgroundColor: safeHex(preset.accent) }} />
+                    </div>
+                  </button>
                 );
               })}
               {customThemes.map((custom) => {
@@ -293,18 +323,23 @@ export const TenantBrandingSettings = ({
                       }
                     }}
                     className={cn(
-                      "w-10 h-10 rounded-full border-2 transition-all duration-200 shadow-sm relative",
+                      "w-10 h-10 rounded-xl transition-all duration-200 shadow-sm relative overflow-hidden flex",
                       isActive
-                        ? "scale-110"
-                        : "border-transparent hover:scale-105"
+                        ? "scale-110 border-transparent"
+                        : "border-2 border-gray-200 hover:scale-105"
                     )}
-                    style={{ 
-                      backgroundColor: safeHex(displayTheme.primary),
-                      borderColor: isActive ? safeHex(displayTheme.accent) : "transparent"
+                    style={{
+                      boxShadow: isActive ? `0 0 0 2px white, 0 0 0 4px ${safeHex(displayTheme.accent)}` : undefined
                     }}
                     title="Custom theme"
                     disabled={!isEditing}
-                  />
+                  >
+                    <div className="w-1/2 h-full" style={{ backgroundColor: safeHex(displayTheme.primary) }} />
+                    <div className="w-1/2 h-full flex flex-col">
+                      <div className="w-full h-1/2" style={{ backgroundColor: safeHex(displayTheme.secondary) }} />
+                      <div className="w-full h-1/2" style={{ backgroundColor: safeHex(displayTheme.accent) }} />
+                    </div>
+                  </button>
                 );
               })}
               {/* custom theme plus button */}
@@ -321,7 +356,7 @@ export const TenantBrandingSettings = ({
                   }
                 }}
                 className={cn(
-                  "w-10 h-10 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center transition-all duration-200",
+                  "w-10 h-10 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center transition-all duration-200",
                   "hover:border-brand-primary hover:text-brand-primary text-gray-400 bg-gray-50",
                   !isEditing && "opacity-70 cursor-not-allowed"
                 )}
@@ -345,7 +380,7 @@ export const TenantBrandingSettings = ({
                 fieldErrors.primaryColor ? "border-warning-primary" : "border-gray-200"
               )}>
                 <div
-                  className="w-8 h-8 rounded-lg shadow-inner flex items-center justify-center overflow-hidden relative"
+                  className="w-8 h-8 shrink-0 rounded-md shadow-inner flex items-center justify-center overflow-hidden relative"
                   style={{ backgroundColor: safeHex(theme.primary) }}
                 >
                   <input
@@ -404,7 +439,7 @@ export const TenantBrandingSettings = ({
                 fieldErrors.secondaryColor ? "border-warning-primary" : "border-gray-200"
               )}>
                 <div
-                  className="w-8 h-8 rounded-lg shadow-inner flex items-center justify-center overflow-hidden relative"
+                  className="w-8 h-8 shrink-0 rounded-md shadow-inner flex items-center justify-center overflow-hidden relative"
                   style={{ backgroundColor: safeHex(theme.secondary) }}
                 >
                   <input
@@ -463,7 +498,7 @@ export const TenantBrandingSettings = ({
                 fieldErrors.accentColor ? "border-warning-primary" : "border-gray-200"
               )}>
                 <div
-                  className="w-8 h-8 rounded-lg shadow-inner flex items-center justify-center overflow-hidden relative"
+                  className="w-8 h-8 shrink-0 rounded-md shadow-inner flex items-center justify-center overflow-hidden relative"
                   style={{ backgroundColor: safeHex(theme.accent) }}
                 >
                   <input
@@ -521,11 +556,16 @@ export const TenantBrandingSettings = ({
               <div className="flex gap-2">
                 <button
                   type="button"
-                  onClick={() => {
+                  onClick={async () => {
                     const btn = document.getElementById('save-custom-btn');
                     if (btn) {
                       btn.classList.add('text-green-600', 'bg-green-50', 'border-green-200');
                       setTimeout(() => btn.classList.remove('text-green-600', 'bg-green-50', 'border-green-200'), 1000);
+                    }
+                    try {
+                      await saveTenantCustomThemes(tenantId, customThemes);
+                    } catch (err) {
+                      console.error("Failed to save custom themes", err);
                     }
                   }}
                   id="save-custom-btn"
@@ -536,7 +576,7 @@ export const TenantBrandingSettings = ({
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
+                  onClick={async () => {
                     const newThemes = customThemes.filter(t => t.id !== activeThemeId);
                     setCustomThemes(newThemes);
                     const fallbackId = newThemes.length > 0 ? newThemes[newThemes.length - 1].id : "preset-0";
@@ -547,6 +587,12 @@ export const TenantBrandingSettings = ({
                     } else {
                       const t = newThemes.find(th => th.id === fallbackId);
                       if (t) setTheme(t);
+                    }
+                    // Persist delete
+                    try {
+                      await saveTenantCustomThemes(tenantId, newThemes);
+                    } catch (err) {
+                      console.error("Failed to delete custom theme", err);
                     }
                   }}
                   className="w-10 h-10 rounded-full border-2 border-gray-200 bg-white shadow-sm flex items-center justify-center text-text-secondary hover:text-warning-primary hover:border-warning-primary hover:bg-red-50 transition-all duration-200"

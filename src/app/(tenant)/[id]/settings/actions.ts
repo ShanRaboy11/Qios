@@ -254,6 +254,9 @@ export async function getTenantSettings(
     dashboardLogoUrl: readSettingValue(settings, ["branding_logo_dashboard"]) || undefined,
     kioskSplashUrl: readSettingValue(settings, ["branding_kiosk_splash"]) || undefined,
     faviconUrl: readSettingValue(settings, ["branding_favicon"]) || undefined,
+    customThemes: Array.isArray(settings?.branding_custom_themes) 
+      ? (settings.branding_custom_themes as any[])
+      : [],
   };
 
   const security: TenantSecuritySettingsData = {
@@ -700,6 +703,40 @@ export async function saveTenantBrandingSettings(
           : "Unable to save branding settings.",
     };
   }
+}
+
+export async function saveTenantCustomThemes(
+  tenantId: string,
+  customThemes: any[]
+) {
+  const { admin } = await requireTenantContext(tenantId);
+
+  const { data: tenant, error: tenantError } = await admin
+    .from("tenants")
+    .select("settings")
+    .eq("id", tenantId)
+    .maybeSingle();
+
+  if (tenantError) throw new Error(tenantError.message);
+
+  const settings = mergeSettings(
+    tenant?.settings && typeof tenant.settings === "object"
+      ? (tenant.settings as Record<string, unknown>)
+      : null,
+    {
+      branding_custom_themes: customThemes,
+    }
+  );
+
+  const { error: updateError } = await admin
+    .from("tenants")
+    .update({ settings })
+    .eq("id", tenantId);
+
+  if (updateError) throw new Error(updateError.message);
+
+  revalidatePath(`/${tenantId}/settings`);
+  return { success: true };
 }
 
 export async function updateTenantTwoFactorPreference(

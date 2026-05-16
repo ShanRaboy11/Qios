@@ -15,6 +15,13 @@ export interface TenantStoreSettingsData {
   taxRate: string;
 }
 
+export interface CustomTheme {
+  id: string;
+  primary: string;
+  secondary: string;
+  accent: string;
+}
+
 export interface TenantBrandingSettingsData {
   primaryColor: string;
   secondaryColor: string;
@@ -30,6 +37,7 @@ export interface TenantBrandingSettingsData {
   dashboardLogoUrl?: string;
   kioskSplashUrl?: string;
   faviconUrl?: string;
+  customThemes?: CustomTheme[];
 }
 
 export interface TenantSecuritySettingsData {
