@@ -12,6 +12,8 @@ import {
   List,
   CheckCircle2,
   Edit2,
+  Plus,
+  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
@@ -28,15 +30,58 @@ interface TenantBrandingSettingsProps {
   initialData: TenantBrandingSettingsData;
 }
 
+const safeHex = (val: string) => (/^#[0-9A-Fa-f]{6}$/.test(val) ? val : "#000000");
+
 export const TenantBrandingSettings = ({
   tenantId,
   initialData,
 }: TenantBrandingSettingsProps) => {
+  const presetThemes = [
+    { primary: "#FFC670", secondary: "#FFF9F0", accent: "#00FFFF" },
+    { primary: "#3B82F6", secondary: "#EFF6FF", accent: "#F59E0B" },
+    { primary: "#10B981", secondary: "#ECFDF5", accent: "#F43F5E" },
+    { primary: "#EF4444", secondary: "#FEF2F2", accent: "#3B82F6" },
+    { primary: "#8B5CF6", secondary: "#F5F3FF", accent: "#10B981" },
+    { primary: "#F97316", secondary: "#FFF7ED", accent: "#06B6D4" },
+  ];
+
+  const isMatch = (t1: any, t2: any) =>
+    t1.primary.toLowerCase() === t2.primary.toLowerCase() &&
+    t1.secondary.toLowerCase() === t2.secondary.toLowerCase() &&
+    t1.accent.toLowerCase() === t2.accent.toLowerCase();
+
+  const [customThemes, setCustomThemes] = useState<{ id: string; primary: string; secondary: string; accent: string }[]>(() => {
+    const initTheme = {
+      primary: initialData.primaryColor || "#FFC670",
+      secondary: initialData.secondaryColor || "#FFF9F0",
+      accent: initialData.accentColor || "#00FFFF",
+    };
+    const isPreset = presetThemes.some((p) => isMatch(p, initTheme));
+    if (!isPreset) {
+      return [{ id: "custom-0", ...initTheme }];
+    }
+    return [];
+  });
+
+  const [activeThemeId, setActiveThemeId] = useState<string>(() => {
+    const initTheme = {
+      primary: initialData.primaryColor || "#FFC670",
+      secondary: initialData.secondaryColor || "#FFF9F0",
+      accent: initialData.accentColor || "#00FFFF",
+    };
+    const presetIndex = presetThemes.findIndex((p) => isMatch(p, initTheme));
+    if (presetIndex !== -1) return `preset-${presetIndex}`;
+    return "custom-0";
+  });
+
   const [theme, setTheme] = useState({
     primary: initialData.primaryColor || "#FFC670",
     secondary: initialData.secondaryColor || "#FFF9F0",
     accent: initialData.accentColor || "#00FFFF",
   });
+
+  const isCustomSelected = activeThemeId.startsWith("custom-");
+
   const [fontFamily, setFontFamily] = useState(initialData.fontFamily || "inter");
   const [secondaryFont, setSecondaryFont] = useState(initialData.secondaryFont || "inter");
   const [menuLayout, setMenuLayout] = useState(initialData.menuLayout || "grid");
@@ -64,11 +109,22 @@ export const TenantBrandingSettings = ({
   );
 
   useEffect(() => {
-    setTheme({
+    const initTheme = {
       primary: initialData.primaryColor || "#FFC670",
       secondary: initialData.secondaryColor || "#FFF9F0",
       accent: initialData.accentColor || "#00FFFF",
-    });
+    };
+    const presetIndex = presetThemes.findIndex((p) => isMatch(p, initTheme));
+
+    if (presetIndex !== -1) {
+      setActiveThemeId(`preset-${presetIndex}`);
+      setCustomThemes([]);
+    } else {
+      setActiveThemeId("custom-0");
+      setCustomThemes([{ id: "custom-0", ...initTheme }]);
+    }
+    setTheme(initTheme);
+
     setFontFamily(initialData.fontFamily || "inter");
     setSecondaryFont(initialData.secondaryFont || "inter");
     setMenuLayout(initialData.menuLayout || "grid");
@@ -80,6 +136,7 @@ export const TenantBrandingSettings = ({
     setDashboardLogoPreview(initialData.dashboardLogoUrl || null);
     setKioskSplashPreview(initialData.kioskSplashUrl || null);
     setFaviconPreview(initialData.faviconUrl || null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialData]);
 
   useEffect(() => {
@@ -107,14 +164,7 @@ export const TenantBrandingSettings = ({
     }
   }, [showSuccess]);
 
-  const presetThemes = [
-    { primary: "#FFC670", secondary: "#FFF9F0", accent: "#00FFFF" },
-    { primary: "#3B82F6", secondary: "#EFF6FF", accent: "#F59E0B" },
-    { primary: "#10B981", secondary: "#ECFDF5", accent: "#F43F5E" },
-    { primary: "#EF4444", secondary: "#FEF2F2", accent: "#3B82F6" },
-    { primary: "#8B5CF6", secondary: "#F5F3FF", accent: "#10B981" },
-    { primary: "#F97316", secondary: "#FFF7ED", accent: "#06B6D4" },
-  ];
+
 
   const fonts = [
     { id: "inter", name: "Inter", desc: "Modern & Clean" },
@@ -200,13 +250,15 @@ export const TenantBrandingSettings = ({
             </label>
             <div className="flex flex-wrap items-center gap-3">
               {presetThemes.map((preset, index) => {
-                const isActive = theme.primary === preset.primary && theme.accent === preset.accent;
+                const id = `preset-${index}`;
+                const isActive = activeThemeId === id;
                 return (
                   <button
-                    key={index}
+                    key={id}
                     type="button"
                     onClick={() => {
                       if (isEditing) {
+                        setActiveThemeId(id);
                         setTheme(preset);
                         setFieldErrors((prev) => ({ ...prev, primaryColor: "", secondaryColor: "", accentColor: "" }));
                       }
@@ -226,21 +278,57 @@ export const TenantBrandingSettings = ({
                   />
                 );
               })}
+              {customThemes.map((custom) => {
+                const isActive = activeThemeId === custom.id;
+                const displayTheme = isActive ? theme : custom;
+                return (
+                  <button
+                    key={custom.id}
+                    type="button"
+                    onClick={() => {
+                      if (isEditing) {
+                        setActiveThemeId(custom.id);
+                        setTheme(custom);
+                        setFieldErrors((prev) => ({ ...prev, primaryColor: "", secondaryColor: "", accentColor: "" }));
+                      }
+                    }}
+                    className={cn(
+                      "w-10 h-10 rounded-full border-2 transition-all duration-200 shadow-sm relative",
+                      isActive
+                        ? "scale-110"
+                        : "border-transparent hover:scale-105"
+                    )}
+                    style={{ 
+                      backgroundColor: safeHex(displayTheme.primary),
+                      borderColor: isActive ? safeHex(displayTheme.accent) : "transparent"
+                    }}
+                    title="Custom theme"
+                    disabled={!isEditing}
+                  />
+                );
+              })}
               {/* custom theme plus button */}
               <button
                 type="button"
+                onClick={() => {
+                  if (isEditing) {
+                    const newId = `custom-${Date.now()}`;
+                    const newTheme = { primary: "#000000", secondary: "#000000", accent: "#000000" };
+                    setCustomThemes([...customThemes, { id: newId, ...newTheme }]);
+                    setActiveThemeId(newId);
+                    setTheme(newTheme);
+                    setFieldErrors(prev => ({ ...prev, primaryColor: "", secondaryColor: "", accentColor: "" }));
+                  }
+                }}
                 className={cn(
                   "w-10 h-10 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center transition-all duration-200",
                   "hover:border-brand-primary hover:text-brand-primary text-gray-400 bg-gray-50",
-                  !presetThemes.some(p => p.primary === theme.primary && p.accent === theme.accent)
-                    ? "border-brand-primary text-brand-primary scale-110"
-                    : "",
                   !isEditing && "opacity-70 cursor-not-allowed"
                 )}
                 disabled={!isEditing}
-                title="Custom theme"
+                title="Add custom theme"
               >
-                <span className="text-xl leading-none font-light">+</span>
+                <Plus size={20} strokeWidth={2} />
               </button>
             </div>
           </div>
@@ -252,31 +340,51 @@ export const TenantBrandingSettings = ({
               </label>
               <div className={cn(
                 "relative border rounded-xl p-2 flex items-center gap-3 transition-colors",
-                !isEditing && "opacity-70",
-                isEditing && "hover:border-brand-primary",
+                (!isEditing || !isCustomSelected) && "opacity-70",
+                (isEditing && isCustomSelected) && "hover:border-brand-primary",
                 fieldErrors.primaryColor ? "border-warning-primary" : "border-gray-200"
               )}>
                 <div
-                  className="w-8 h-8 rounded-lg shadow-inner flex items-center justify-center overflow-hidden relative cursor-pointer"
-                  style={{ backgroundColor: theme.primary }}
+                  className="w-8 h-8 rounded-lg shadow-inner flex items-center justify-center overflow-hidden relative"
+                  style={{ backgroundColor: safeHex(theme.primary) }}
                 >
                   <input
                     type="color"
-                    name="primaryColor"
-                    value={theme.primary}
+                    value={safeHex(theme.primary)}
                     onChange={(e) => {
-                      if (isEditing) {
-                        setTheme((prev) => ({ ...prev, primary: e.target.value }));
+                      if (isEditing && isCustomSelected) {
+                        const val = e.target.value.toUpperCase();
+                        const newTheme = { ...theme, primary: val };
+                        setTheme(newTheme);
+                        setCustomThemes(themes => themes.map(t => t.id === activeThemeId ? { ...t, primary: val } : t));
                         setFieldErrors((prev) => ({ ...prev, primaryColor: "" }));
                       }
                     }}
-                    className="absolute inset-0 opacity-0 cursor-pointer"
-                    disabled={!isEditing}
+                    className={cn(
+                      "absolute inset-0 opacity-0",
+                      (isEditing && isCustomSelected) ? "cursor-pointer" : "cursor-not-allowed"
+                    )}
+                    disabled={!isEditing || !isCustomSelected}
                   />
                 </div>
-                <span className="text-sm font-medium text-text-primary font-mono">
-                  {theme.primary.toUpperCase()}
-                </span>
+                <input
+                  type="text"
+                  name="primaryColor"
+                  value={theme.primary}
+                  onChange={(e) => {
+                    if (isEditing && isCustomSelected) {
+                      const val = e.target.value.toUpperCase();
+                      const newTheme = { ...theme, primary: val };
+                      setTheme(newTheme);
+                      setCustomThemes(themes => themes.map(t => t.id === activeThemeId ? { ...t, primary: val } : t));
+                      setFieldErrors((prev) => ({ ...prev, primaryColor: "" }));
+                    }
+                  }}
+                  className="text-sm font-medium text-text-primary font-mono bg-transparent w-full outline-none"
+                  disabled={!isEditing || !isCustomSelected}
+                  placeholder="#000000"
+                  maxLength={7}
+                />
               </div>
               {fieldErrors.primaryColor && (
                 <p className="text-xs text-warning-primary pl-1 mt-1">
@@ -291,31 +399,51 @@ export const TenantBrandingSettings = ({
               </label>
               <div className={cn(
                 "relative border rounded-xl p-2 flex items-center gap-3 transition-colors",
-                !isEditing && "opacity-70",
-                isEditing && "hover:border-brand-primary",
+                (!isEditing || !isCustomSelected) && "opacity-70",
+                (isEditing && isCustomSelected) && "hover:border-brand-primary",
                 fieldErrors.secondaryColor ? "border-warning-primary" : "border-gray-200"
               )}>
                 <div
-                  className="w-8 h-8 rounded-lg shadow-inner flex items-center justify-center overflow-hidden relative cursor-pointer"
-                  style={{ backgroundColor: theme.secondary }}
+                  className="w-8 h-8 rounded-lg shadow-inner flex items-center justify-center overflow-hidden relative"
+                  style={{ backgroundColor: safeHex(theme.secondary) }}
                 >
                   <input
                     type="color"
-                    name="secondaryColor"
-                    value={theme.secondary}
+                    value={safeHex(theme.secondary)}
                     onChange={(e) => {
-                      if (isEditing) {
-                        setTheme((prev) => ({ ...prev, secondary: e.target.value }));
+                      if (isEditing && isCustomSelected) {
+                        const val = e.target.value.toUpperCase();
+                        const newTheme = { ...theme, secondary: val };
+                        setTheme(newTheme);
+                        setCustomThemes(themes => themes.map(t => t.id === activeThemeId ? { ...t, secondary: val } : t));
                         setFieldErrors((prev) => ({ ...prev, secondaryColor: "" }));
                       }
                     }}
-                    className="absolute inset-0 opacity-0 cursor-pointer"
-                    disabled={!isEditing}
+                    className={cn(
+                      "absolute inset-0 opacity-0",
+                      (isEditing && isCustomSelected) ? "cursor-pointer" : "cursor-not-allowed"
+                    )}
+                    disabled={!isEditing || !isCustomSelected}
                   />
                 </div>
-                <span className="text-sm font-medium text-text-primary font-mono">
-                  {theme.secondary.toUpperCase()}
-                </span>
+                <input
+                  type="text"
+                  name="secondaryColor"
+                  value={theme.secondary}
+                  onChange={(e) => {
+                    if (isEditing && isCustomSelected) {
+                      const val = e.target.value.toUpperCase();
+                      const newTheme = { ...theme, secondary: val };
+                      setTheme(newTheme);
+                      setCustomThemes(themes => themes.map(t => t.id === activeThemeId ? { ...t, secondary: val } : t));
+                      setFieldErrors((prev) => ({ ...prev, secondaryColor: "" }));
+                    }
+                  }}
+                  className="text-sm font-medium text-text-primary font-mono bg-transparent w-full outline-none"
+                  disabled={!isEditing || !isCustomSelected}
+                  placeholder="#000000"
+                  maxLength={7}
+                />
               </div>
               {fieldErrors.secondaryColor && (
                 <p className="text-xs text-warning-primary pl-1 mt-1">
@@ -330,31 +458,51 @@ export const TenantBrandingSettings = ({
               </label>
               <div className={cn(
                 "relative border rounded-xl p-2 flex items-center gap-3 transition-colors",
-                !isEditing && "opacity-70",
-                isEditing && "hover:border-brand-primary",
+                (!isEditing || !isCustomSelected) && "opacity-70",
+                (isEditing && isCustomSelected) && "hover:border-brand-primary",
                 fieldErrors.accentColor ? "border-warning-primary" : "border-gray-200"
               )}>
                 <div
-                  className="w-8 h-8 rounded-lg shadow-inner flex items-center justify-center overflow-hidden relative cursor-pointer"
-                  style={{ backgroundColor: theme.accent }}
+                  className="w-8 h-8 rounded-lg shadow-inner flex items-center justify-center overflow-hidden relative"
+                  style={{ backgroundColor: safeHex(theme.accent) }}
                 >
                   <input
                     type="color"
-                    name="accentColor"
-                    value={theme.accent}
+                    value={safeHex(theme.accent)}
                     onChange={(e) => {
-                      if (isEditing) {
-                        setTheme((prev) => ({ ...prev, accent: e.target.value }));
+                      if (isEditing && isCustomSelected) {
+                        const val = e.target.value.toUpperCase();
+                        const newTheme = { ...theme, accent: val };
+                        setTheme(newTheme);
+                        setCustomThemes(themes => themes.map(t => t.id === activeThemeId ? { ...t, accent: val } : t));
                         setFieldErrors((prev) => ({ ...prev, accentColor: "" }));
                       }
                     }}
-                    className="absolute inset-0 opacity-0 cursor-pointer"
-                    disabled={!isEditing}
+                    className={cn(
+                      "absolute inset-0 opacity-0",
+                      (isEditing && isCustomSelected) ? "cursor-pointer" : "cursor-not-allowed"
+                    )}
+                    disabled={!isEditing || !isCustomSelected}
                   />
                 </div>
-                <span className="text-sm font-medium text-text-primary font-mono">
-                  {theme.accent.toUpperCase()}
-                </span>
+                <input
+                  type="text"
+                  name="accentColor"
+                  value={theme.accent}
+                  onChange={(e) => {
+                    if (isEditing && isCustomSelected) {
+                      const val = e.target.value.toUpperCase();
+                      const newTheme = { ...theme, accent: val };
+                      setTheme(newTheme);
+                      setCustomThemes(themes => themes.map(t => t.id === activeThemeId ? { ...t, accent: val } : t));
+                      setFieldErrors((prev) => ({ ...prev, accentColor: "" }));
+                    }
+                  }}
+                  className="text-sm font-medium text-text-primary font-mono bg-transparent w-full outline-none"
+                  disabled={!isEditing || !isCustomSelected}
+                  placeholder="#000000"
+                  maxLength={7}
+                />
               </div>
               {fieldErrors.accentColor && (
                 <p className="text-xs text-warning-primary pl-1 mt-1">
@@ -363,11 +511,52 @@ export const TenantBrandingSettings = ({
               )}
             </div>
           </div>
-          <p className="text-xs text-text-secondary">
-            Primary color is used for main buttons. Secondary is used for subtle
-            backgrounds and badges. Accent is used for notifications and
-            important actions.
-          </p>
+          <div className="flex justify-between items-end mt-2">
+            <p className="text-xs text-text-secondary max-w-xl">
+              Primary color is used for main buttons. Secondary is used for subtle
+              backgrounds and badges. Accent is used for notifications and
+              important actions.
+            </p>
+            {isCustomSelected && isEditing && (
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const btn = document.getElementById('save-custom-btn');
+                    if (btn) {
+                      btn.classList.add('text-green-600', 'bg-green-50', 'border-green-200');
+                      setTimeout(() => btn.classList.remove('text-green-600', 'bg-green-50', 'border-green-200'), 1000);
+                    }
+                  }}
+                  id="save-custom-btn"
+                  className="w-10 h-10 rounded-full border-2 border-gray-200 bg-white shadow-sm flex items-center justify-center text-text-secondary hover:text-success-primary hover:border-success-primary hover:bg-green-50 transition-all duration-200"
+                  title="Save Custom Theme"
+                >
+                  <Save size={18} strokeWidth={2} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const newThemes = customThemes.filter(t => t.id !== activeThemeId);
+                    setCustomThemes(newThemes);
+                    const fallbackId = newThemes.length > 0 ? newThemes[newThemes.length - 1].id : "preset-0";
+                    setActiveThemeId(fallbackId);
+                    if (fallbackId.startsWith("preset-")) {
+                      const presetIdx = parseInt(fallbackId.split("-")[1], 10);
+                      setTheme(presetThemes[presetIdx]);
+                    } else {
+                      const t = newThemes.find(th => th.id === fallbackId);
+                      if (t) setTheme(t);
+                    }
+                  }}
+                  className="w-10 h-10 rounded-full border-2 border-gray-200 bg-white shadow-sm flex items-center justify-center text-text-secondary hover:text-warning-primary hover:border-warning-primary hover:bg-red-50 transition-all duration-200"
+                  title="Delete Custom Theme"
+                >
+                  <Trash2 size={18} strokeWidth={2} />
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* typography */}
@@ -847,11 +1036,21 @@ export const TenantBrandingSettings = ({
                 shape="rounded"
                 onClick={() => {
                   setIsEditing(false);
-                  setTheme({
+                  const initTheme = {
                     primary: initialData.primaryColor || "#FFC670",
                     secondary: initialData.secondaryColor || "#FFF9F0",
                     accent: initialData.accentColor || "#00FFFF",
-                  });
+                  };
+                  const presetIndex = presetThemes.findIndex((p) => isMatch(p, initTheme));
+              
+                  if (presetIndex !== -1) {
+                    setActiveThemeId(`preset-${presetIndex}`);
+                    setCustomThemes([]);
+                  } else {
+                    setActiveThemeId("custom-0");
+                    setCustomThemes([{ id: "custom-0", ...initTheme }]);
+                  }
+                  setTheme(initTheme);
                   setFontFamily(initialData.fontFamily || "inter");
                   setSecondaryFont(initialData.secondaryFont || "inter");
                   setMenuLayout(initialData.menuLayout || "grid");
