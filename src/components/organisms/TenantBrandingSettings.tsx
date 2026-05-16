@@ -1,6 +1,6 @@
-{/* fix */}
+// fix
 
-import React, { useActionState, useEffect, useState } from "react";
+import React, { useActionState, useEffect, useState, useRef } from "react";
 import chroma from "chroma-js";
 import {
   Save,
@@ -13,9 +13,10 @@ import {
   LayoutGrid,
   List,
   CheckCircle2,
+  Edit2,
 } from "lucide-react";
 import { Button } from "@/components/atoms/Button";
-import { FormField } from "@/components/molecules/FormField";
+import { Input } from "@/components/atoms/Input";
 import { SectionHeader } from "@/components/molecules/SectionHeader";
 import { cn } from "@/lib/utils";
 import { saveTenantBrandingSettings } from "@/app/(tenant)/[id]/settings/actions";
@@ -34,13 +35,24 @@ export const TenantBrandingSettings = ({
   initialData,
 }: TenantBrandingSettingsProps) => {
   const [theme, setTheme] = useState({
-    primary: initialData.primaryColor,
-    secondary: initialData.secondaryColor,
-    accent: initialData.accentColor,
+    primary: initialData.primaryColor || "#FFC670",
+    secondary: initialData.secondaryColor || "#FFF9F0",
+    accent: initialData.accentColor || "#F97316",
   });
+  const [fontFamily, setFontFamily] = useState(initialData.fontFamily || "inter");
+  const [menuLayout, setMenuLayout] = useState(initialData.menuLayout || "grid");
+  
+  const [qiosSubdomain, setQiosSubdomain] = useState("");
+  const [customDomain, setCustomDomain] = useState("");
+  const [instagramUrl, setInstagramUrl] = useState("");
+  const [facebookUrl, setFacebookUrl] = useState("");
+  const [tiktokUrl, setTiktokUrl] = useState("");
+
   const [isEditing, setIsEditing] = useState(false);
-  const [fontFamily, setFontFamily] = useState(initialData.fontFamily);
-  const [menuLayout, setMenuLayout] = useState(initialData.menuLayout);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const wasPending = useRef(false);
+
   const [state, formAction, isPending] = useActionState(
     saveTenantBrandingSettings.bind(null, tenantId),
     emptySettingsActionState,
@@ -48,13 +60,38 @@ export const TenantBrandingSettings = ({
 
   useEffect(() => {
     setTheme({
-      primary: initialData.primaryColor,
-      secondary: initialData.secondaryColor,
-      accent: initialData.accentColor,
+      primary: initialData.primaryColor || "#FFC670",
+      secondary: initialData.secondaryColor || "#FFF9F0",
+      accent: initialData.accentColor || "#F97316",
     });
-    setFontFamily(initialData.fontFamily);
-    setMenuLayout(initialData.menuLayout);
+    setFontFamily(initialData.fontFamily || "inter");
+    setMenuLayout(initialData.menuLayout || "grid");
   }, [initialData]);
+
+  useEffect(() => {
+    if (state.fieldErrors) {
+      setFieldErrors(state.fieldErrors);
+    }
+  }, [state.fieldErrors]);
+
+  useEffect(() => {
+    if (wasPending.current && !isPending) {
+      if (state.success) {
+        setIsEditing(false);
+        setShowSuccess(true);
+      }
+    }
+    wasPending.current = isPending;
+  }, [isPending, state.success]);
+
+  useEffect(() => {
+    if (showSuccess) {
+      const timer = setTimeout(() => {
+        setShowSuccess(false);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showSuccess]);
 
   const handlePresetColor = (color: string) => {
     setTheme({
@@ -62,15 +99,16 @@ export const TenantBrandingSettings = ({
       secondary: chroma(color).set("hsl.l", 0.95).hex(),
       accent: chroma(color).set("hsl.h", "+150").saturate(2).hex(),
     });
+    setFieldErrors((prev) => ({ ...prev, primaryColor: "", secondaryColor: "", accentColor: "" }));
   };
 
   const presetColors = [
-    "#FFC670", // Qios default
-    "#3B82F6", // Blue
-    "#10B981", // Green
-    "#EF4444", // Red
-    "#8B5CF6", // Purple
-    "#F97316", // Orange
+    "#FFC670", // default
+    "#3B82F6", // blue
+    "#10B981", // green
+    "#EF4444", // red
+    "#8B5CF6", // purple
+    "#F97316", // orange
   ];
 
   const fonts = [
@@ -94,6 +132,22 @@ export const TenantBrandingSettings = ({
     },
   ];
 
+  // handle frontend validation for domain
+  const handleClientSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    let hasError = false;
+    const newErrors: Record<string, string> = {};
+
+    if (!qiosSubdomain.trim()) {
+      newErrors.qiosSubdomain = "Qios Subdomain is required.";
+      hasError = true;
+    }
+
+    if (hasError) {
+      e.preventDefault();
+      setFieldErrors((prev) => ({ ...prev, ...newErrors }));
+    }
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 w-full">
       <div>
@@ -106,66 +160,81 @@ export const TenantBrandingSettings = ({
         </p>
       </div>
 
-      {state.success && (
-        <div className="space-y-3">
-          <div className="flex items-center gap-2 w-full text-green-700 bg-green-50 border border-green-100 rounded-xl px-4 py-3">
-            <CheckCircle2 className="h-4 w-4 shrink-0" />
-            <p className="text-sm font-medium">{state.success}</p>
+      <form action={formAction} onSubmit={handleClientSubmit} className="space-y-8 w-full">
+        {showSuccess && state.success && (
+          <div className="mb-6 w-full">
+            <div className="flex items-center gap-2 w-full text-green-700 bg-green-50 border border-green-100 rounded-xl px-4 py-3">
+              <CheckCircle2 className="h-4 w-4 shrink-0" />
+              <p className="text-sm font-medium">{state.success}</p>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      <div className="space-y-8">
-        {/* Brand Colors */}
-        <div className="space-y-6">
+        {/* brand colors */}
+        <div className="space-y-6 w-full">
           <SectionHeader
             title="Brand Theme"
             className="mb-0 py-2 border-gray-100"
           />
 
-          {/* Presets */}
+          {/* presets */}
           <div className="pt-2">
             <label className="text-sm font-medium text-text-primary block mb-3">
               Quick Presets
             </label>
             <div className="flex flex-wrap items-center gap-3">
-              {presetColors.map((color) => (
-                <button
-                  key={color}
-                  type="button"
-                  onClick={() => isEditing && handlePresetColor(color)}
-                  className={cn(
-                    "w-10 h-10 rounded-full border-2 transition-all duration-200 shadow-sm",
-                    theme.primary === color
-                      ? "border-brand-primary scale-110"
-                      : "border-transparent hover:scale-105",
-                  )}
-                  style={{ backgroundColor: color }}
-                  title={`Apply ${color} theme`}
-                />
-              ))}
+              {presetColors.map((color) => {
+                const accentColor = chroma(color).set("hsl.h", "+150").saturate(2).hex();
+                return (
+                  <button
+                    key={color}
+                    type="button"
+                    onClick={() => isEditing && handlePresetColor(color)}
+                    className={cn(
+                      "w-10 h-10 rounded-full border-2 transition-all duration-200 shadow-sm relative",
+                      theme.primary === color
+                        ? "scale-110"
+                        : "border-transparent hover:scale-105"
+                    )}
+                    style={{ 
+                      backgroundColor: color,
+                      borderColor: theme.primary === color ? accentColor : "transparent"
+                    }}
+                    title={`Apply ${color} theme`}
+                    disabled={!isEditing}
+                  />
+                );
+              })}
             </div>
           </div>
 
-          {/* Custom Theme Colors */}
+          {/* custom theme colors */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {/* Primary */}
+            {/* primary */}
             <div className="space-y-2">
               <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
-                Primary
+                Primary <span className="text-brand-accent">*</span>
               </label>
-              <div className="relative group border border-gray-200 rounded-xl p-2 flex items-center gap-3 hover:border-brand-primary transition-colors">
+              <div className={cn(
+                "relative border rounded-xl p-2 flex items-center gap-3 transition-colors",
+                !isEditing && "opacity-70",
+                isEditing && "hover:border-brand-primary",
+                fieldErrors.primaryColor ? "border-warning-primary" : "border-gray-200"
+              )}>
                 <div
                   className="w-8 h-8 rounded-lg shadow-inner flex items-center justify-center overflow-hidden relative cursor-pointer"
                   style={{ backgroundColor: theme.primary }}
                 >
                   <input
                     type="color"
+                    name="primaryColor"
                     value={theme.primary}
-                    onChange={(e) =>
-                      isEditing &&
-                      setTheme((prev) => ({ ...prev, primary: e.target.value }))
-                    }
+                    onChange={(e) => {
+                      if (isEditing) {
+                        setTheme((prev) => ({ ...prev, primary: e.target.value }));
+                        setFieldErrors((prev) => ({ ...prev, primaryColor: "" }));
+                      }
+                    }}
                     className="absolute inset-0 opacity-0 cursor-pointer"
                     disabled={!isEditing}
                   />
@@ -173,34 +242,39 @@ export const TenantBrandingSettings = ({
                 <span className="text-sm font-medium text-text-primary font-mono">
                   {theme.primary.toUpperCase()}
                 </span>
-                {state.fieldErrors.primaryColor && (
-                  <p className="text-xs text-red-500 pl-1">
-                    {state.fieldErrors.primaryColor}
-                  </p>
-                )}
               </div>
+              {fieldErrors.primaryColor && (
+                <p className="text-xs text-warning-primary pl-1 mt-1">
+                  {fieldErrors.primaryColor}
+                </p>
+              )}
             </div>
 
-            {/* Secondary */}
+            {/* secondary */}
             <div className="space-y-2">
               <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
-                Secondary
+                Secondary <span className="text-brand-accent">*</span>
               </label>
-              <div className="relative group border border-gray-200 rounded-xl p-2 flex items-center gap-3 hover:border-brand-primary transition-colors">
+              <div className={cn(
+                "relative border rounded-xl p-2 flex items-center gap-3 transition-colors",
+                !isEditing && "opacity-70",
+                isEditing && "hover:border-brand-primary",
+                fieldErrors.secondaryColor ? "border-warning-primary" : "border-gray-200"
+              )}>
                 <div
                   className="w-8 h-8 rounded-lg shadow-inner flex items-center justify-center overflow-hidden relative cursor-pointer"
                   style={{ backgroundColor: theme.secondary }}
                 >
                   <input
                     type="color"
+                    name="secondaryColor"
                     value={theme.secondary}
-                    onChange={(e) =>
-                      isEditing &&
-                      setTheme((prev) => ({
-                        ...prev,
-                        secondary: e.target.value,
-                      }))
-                    }
+                    onChange={(e) => {
+                      if (isEditing) {
+                        setTheme((prev) => ({ ...prev, secondary: e.target.value }));
+                        setFieldErrors((prev) => ({ ...prev, secondaryColor: "" }));
+                      }
+                    }}
                     className="absolute inset-0 opacity-0 cursor-pointer"
                     disabled={!isEditing}
                   />
@@ -208,31 +282,39 @@ export const TenantBrandingSettings = ({
                 <span className="text-sm font-medium text-text-primary font-mono">
                   {theme.secondary.toUpperCase()}
                 </span>
-                {state.fieldErrors.secondaryColor && (
-                  <p className="text-xs text-red-500 pl-1">
-                    {state.fieldErrors.secondaryColor}
-                  </p>
-                )}
               </div>
+              {fieldErrors.secondaryColor && (
+                <p className="text-xs text-warning-primary pl-1 mt-1">
+                  {fieldErrors.secondaryColor}
+                </p>
+              )}
             </div>
 
-            {/* Accent */}
+            {/* accent */}
             <div className="space-y-2">
               <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
-                Accent
+                Accent <span className="text-brand-accent">*</span>
               </label>
-              <div className="relative group border border-gray-200 rounded-xl p-2 flex items-center gap-3 hover:border-brand-primary transition-colors">
+              <div className={cn(
+                "relative border rounded-xl p-2 flex items-center gap-3 transition-colors",
+                !isEditing && "opacity-70",
+                isEditing && "hover:border-brand-primary",
+                fieldErrors.accentColor ? "border-warning-primary" : "border-gray-200"
+              )}>
                 <div
                   className="w-8 h-8 rounded-lg shadow-inner flex items-center justify-center overflow-hidden relative cursor-pointer"
                   style={{ backgroundColor: theme.accent }}
                 >
                   <input
                     type="color"
+                    name="accentColor"
                     value={theme.accent}
-                    onChange={(e) =>
-                      isEditing &&
-                      setTheme((prev) => ({ ...prev, accent: e.target.value }))
-                    }
+                    onChange={(e) => {
+                      if (isEditing) {
+                        setTheme((prev) => ({ ...prev, accent: e.target.value }));
+                        setFieldErrors((prev) => ({ ...prev, accentColor: "" }));
+                      }
+                    }}
                     className="absolute inset-0 opacity-0 cursor-pointer"
                     disabled={!isEditing}
                   />
@@ -240,12 +322,12 @@ export const TenantBrandingSettings = ({
                 <span className="text-sm font-medium text-text-primary font-mono">
                   {theme.accent.toUpperCase()}
                 </span>
-                {state.fieldErrors.accentColor && (
-                  <p className="text-xs text-red-500 pl-1">
-                    {state.fieldErrors.accentColor}
-                  </p>
-                )}
               </div>
+              {fieldErrors.accentColor && (
+                <p className="text-xs text-warning-primary pl-1 mt-1">
+                  {fieldErrors.accentColor}
+                </p>
+              )}
             </div>
           </div>
           <p className="text-xs text-text-secondary">
@@ -255,23 +337,31 @@ export const TenantBrandingSettings = ({
           </p>
         </div>
 
-        {/* Typography */}
-        <div className="space-y-4">
+        {/* typography */}
+        <div className="space-y-4 w-full">
           <SectionHeader
             title="Typography"
             className="mb-0 py-2 border-gray-100"
           />
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+            <input type="hidden" name="fontFamily" value={fontFamily} />
             {fonts.map((font) => (
               <button
                 key={font.id}
                 type="button"
-                onClick={() => isEditing && setFontFamily(font.id)}
+                onClick={() => {
+                  if (isEditing) {
+                    setFontFamily(font.id);
+                    setFieldErrors((prev) => ({ ...prev, fontFamily: "" }));
+                  }
+                }}
                 className={cn(
                   "p-4 rounded-xl border-2 text-left transition-all",
+                  !isEditing && "opacity-70 cursor-not-allowed",
                   fontFamily === font.id
                     ? "border-brand-primary bg-brand-primary/5"
                     : "border-gray-100 hover:border-gray-200 bg-white",
+                  fieldErrors.fontFamily ? "border-warning-primary" : ""
                 )}
                 disabled={!isEditing}
               >
@@ -291,33 +381,41 @@ export const TenantBrandingSettings = ({
                 <p className="text-xs text-text-secondary">{font.desc}</p>
               </button>
             ))}
-            {state.fieldErrors.fontFamily && (
-              <p className="text-xs text-red-500 pl-1">
-                {state.fieldErrors.fontFamily}
-              </p>
-            )}
           </div>
+          {fieldErrors.fontFamily && (
+            <p className="text-xs text-warning-primary pl-1 mt-1">
+              {fieldErrors.fontFamily}
+            </p>
+          )}
         </div>
 
-        {/* Layout Preferences */}
-        <div className="space-y-4">
+        {/* layout preferences */}
+        <div className="space-y-4 w-full">
           <SectionHeader
             title="Menu Layout"
             className="mb-0 py-2 border-gray-100"
           />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+            <input type="hidden" name="menuLayout" value={menuLayout} />
             {layouts.map((layout) => {
               const Icon = layout.icon;
               return (
                 <button
                   key={layout.id}
                   type="button"
-                  onClick={() => isEditing && setMenuLayout(layout.id)}
+                  onClick={() => {
+                    if (isEditing) {
+                      setMenuLayout(layout.id);
+                      setFieldErrors((prev) => ({ ...prev, menuLayout: "" }));
+                    }
+                  }}
                   className={cn(
                     "p-4 rounded-xl border-2 text-left transition-all flex items-start gap-4",
+                    !isEditing && "opacity-70 cursor-not-allowed",
                     menuLayout === layout.id
                       ? "border-brand-primary bg-brand-primary/5"
                       : "border-gray-100 hover:border-gray-200 bg-white",
+                    fieldErrors.menuLayout ? "border-warning-primary" : ""
                   )}
                   disabled={!isEditing}
                 >
@@ -340,16 +438,16 @@ export const TenantBrandingSettings = ({
                 </button>
               );
             })}
-            {state.fieldErrors.menuLayout && (
-              <p className="text-xs text-red-500 pl-1">
-                {state.fieldErrors.menuLayout}
-              </p>
-            )}
           </div>
+          {fieldErrors.menuLayout && (
+            <p className="text-xs text-warning-primary pl-1 mt-1">
+              {fieldErrors.menuLayout}
+            </p>
+          )}
         </div>
 
-        {/* Logos & Media */}
-        <div className="space-y-4">
+        {/* logos & media */}
+        <div className="space-y-4 w-full">
           <SectionHeader
             title="Logos & Media"
             className="mb-0 py-2 border-gray-100"
@@ -357,10 +455,16 @@ export const TenantBrandingSettings = ({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
             <div className="space-y-3">
               <label className="text-sm font-medium text-text-primary block">
-                Dashboard & Receipt Logo
+                Dashboard & Receipt Logo <span className="text-brand-accent">*</span>
               </label>
-              <div className="border-2 border-dashed border-gray-200 rounded-xl p-6 flex flex-col items-center justify-center bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer group h-40">
-                <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm mb-3 group-hover:scale-110 transition-transform">
+              <div className={cn(
+                "relative border-2 border-dashed border-gray-200 rounded-xl p-6 flex flex-col items-center justify-center bg-gray-50 transition-colors h-40 overflow-hidden",
+                isEditing ? "hover:bg-gray-100 cursor-pointer group" : "opacity-70"
+              )}>
+                <div className={cn(
+                  "w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm mb-3 transition-transform",
+                  isEditing && "group-hover:scale-110"
+                )}>
                   <Upload size={20} className="text-brand-accent" />
                 </div>
                 <span className="text-sm font-medium text-text-primary">
@@ -370,22 +474,30 @@ export const TenantBrandingSettings = ({
                   PNG, JPG (Square)
                 </span>
                 {isEditing && (
-                  <input
-                    type="file"
-                    name="dashboardLogo"
-                    accept="image/*"
-                    className="mt-2"
-                  />
+                  <label className="absolute inset-0 cursor-pointer w-full h-full">
+                    <input
+                      type="file"
+                      name="dashboardLogo"
+                      accept="image/*"
+                      className="hidden"
+                    />
+                  </label>
                 )}
               </div>
             </div>
 
             <div className="space-y-3">
               <label className="text-sm font-medium text-text-primary block">
-                Kiosk Splash Screen
+                Kiosk Splash Screen <span className="text-brand-accent">*</span>
               </label>
-              <div className="border-2 border-dashed border-gray-200 rounded-xl p-6 flex flex-col items-center justify-center bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer group h-40">
-                <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm mb-3 group-hover:scale-110 transition-transform">
+              <div className={cn(
+                "relative border-2 border-dashed border-gray-200 rounded-xl p-6 flex flex-col items-center justify-center bg-gray-50 transition-colors h-40 overflow-hidden",
+                isEditing ? "hover:bg-gray-100 cursor-pointer group" : "opacity-70"
+              )}>
+                <div className={cn(
+                  "w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm mb-3 transition-transform",
+                  isEditing && "group-hover:scale-110"
+                )}>
                   <ImageIcon size={20} className="text-brand-accent" />
                 </div>
                 <span className="text-sm font-medium text-text-primary">
@@ -395,22 +507,30 @@ export const TenantBrandingSettings = ({
                   Portrait 1080x1920
                 </span>
                 {isEditing && (
-                  <input
-                    type="file"
-                    name="kioskSplash"
-                    accept="image/*"
-                    className="mt-2"
-                  />
+                  <label className="absolute inset-0 cursor-pointer w-full h-full">
+                    <input
+                      type="file"
+                      name="kioskSplash"
+                      accept="image/*"
+                      className="hidden"
+                    />
+                  </label>
                 )}
               </div>
             </div>
 
             <div className="space-y-3">
               <label className="text-sm font-medium text-text-primary block">
-                Favicon
+                Favicon <span className="text-brand-accent">*</span>
               </label>
-              <div className="border-2 border-dashed border-gray-200 rounded-xl p-6 flex flex-col items-center justify-center bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer group h-40">
-                <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm mb-3 group-hover:scale-110 transition-transform">
+              <div className={cn(
+                "relative border-2 border-dashed border-gray-200 rounded-xl p-6 flex flex-col items-center justify-center bg-gray-50 transition-colors h-40 overflow-hidden",
+                isEditing ? "hover:bg-gray-100 cursor-pointer group" : "opacity-70"
+              )}>
+                <div className={cn(
+                  "w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm mb-3 transition-transform",
+                  isEditing && "group-hover:scale-110"
+                )}>
                   <Globe size={20} className="text-brand-accent" />
                 </div>
                 <span className="text-sm font-medium text-text-primary">
@@ -420,110 +540,211 @@ export const TenantBrandingSettings = ({
                   .ICO, .PNG (32x32)
                 </span>
                 {isEditing && (
-                  <input
-                    type="file"
-                    name="favicon"
-                    accept="image/*"
-                    className="mt-2"
-                  />
+                  <label className="absolute inset-0 cursor-pointer w-full h-full">
+                    <input
+                      type="file"
+                      name="favicon"
+                      accept="image/*"
+                      className="hidden"
+                    />
+                  </label>
                 )}
               </div>
             </div>
           </div>
         </div>
 
-        {/* Web Presence (Domains) */}
-        <div className="space-y-4">
+        {/* web presence (domains) */}
+        <div className="space-y-4 w-full">
           <SectionHeader
             title="Web Presence"
             className="mb-0 py-2 border-gray-100"
           />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
-            <div className="max-w-none">
-              <FormField
-                label="Qios Subdomain"
-                placeholder="yourbrand"
-                supportiveText="Your menu will be accessible at yourbrand.qios.com"
-                className="max-w-full"
-                rightIcon={
-                  <span className="text-text-secondary text-sm">.qios.com</span>
-                }
-              />
+            <div className="space-y-1.5 w-full">
+              <label className="text-sm font-medium text-text-primary">
+                Qios Subdomain <span className="text-brand-accent">*</span>
+              </label>
+              <div className="relative flex items-center w-full">
+                <Input
+                  name="qiosSubdomain"
+                  value={qiosSubdomain}
+                  onChange={(e) => {
+                    setQiosSubdomain(e.target.value);
+                    setFieldErrors(prev => ({ ...prev, qiosSubdomain: "" }));
+                  }}
+                  placeholder="yourbrand"
+                  isError={!!fieldErrors.qiosSubdomain}
+                  className={cn(
+                    "py-2.5 w-full rounded-xl focus:outline-none disabled:cursor-not-allowed pr-24",
+                    !fieldErrors.qiosSubdomain
+                      ? "focus:border-brand-primary focus:ring-brand-primary"
+                      : ""
+                  )}
+                  disabled={!isEditing}
+                />
+                <span className={cn(
+                  "absolute right-3 text-sm",
+                  fieldErrors.qiosSubdomain ? "text-warning-primary" : "text-text-secondary"
+                )}>
+                  .qios.com
+                </span>
+              </div>
+              {fieldErrors.qiosSubdomain && (
+                <p className="text-xs text-warning-primary pl-1 mt-1">
+                  {fieldErrors.qiosSubdomain}
+                </p>
+              )}
+              <p className="text-xs text-text-secondary mt-1 ml-1">
+                Your menu will be accessible at yourbrand.qios.com
+              </p>
             </div>
-            <div className="max-w-none flex items-end gap-2">
-              <FormField
-                label="Custom Domain"
-                placeholder="e.g. order.yourbrand.com"
-                supportiveText="Requires DNS configuration"
-                className="max-w-full flex-1"
-              />
-              <Button variant="outline" className="mb-[26px]">
-                Connect
-              </Button>
+            
+            <div className="w-full flex items-start gap-2">
+              <div className="space-y-1.5 flex-1">
+                <label className="text-sm font-medium text-text-primary">
+                  Custom Domain
+                </label>
+                <Input
+                  name="customDomain"
+                  value={customDomain}
+                  onChange={(e) => setCustomDomain(e.target.value)}
+                  placeholder="e.g. order.yourbrand.com"
+                  className="py-2.5 w-full rounded-xl focus:outline-none disabled:cursor-not-allowed focus:border-brand-primary focus:ring-brand-primary"
+                  disabled={!isEditing}
+                />
+                <p className="text-xs text-text-secondary mt-1 ml-1">
+                  Requires DNS configuration
+                </p>
+              </div>
+              <div className="pt-7">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  shape="rounded"
+                  disabled={!isEditing || !customDomain}
+                >
+                  Connect
+                </Button>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Social Media Links */}
-        <div className="space-y-4">
+        {/* social media links */}
+        <div className="space-y-4 w-full">
           <SectionHeader
             title="Social Media Links"
             className="mb-0 py-2 border-gray-100"
           />
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
-            <FormField
-              label="Instagram URL"
-              placeholder="https://instagram.com/..."
-              leftIcon={<AtSign size={18} />}
-              className="max-w-full"
-            />
-            <FormField
-              label="Facebook URL"
-              placeholder="https://facebook.com/..."
-              leftIcon={<LinkIcon size={18} />}
-              className="max-w-full"
-            />
-            <FormField
-              label="TikTok URL"
-              placeholder="https://tiktok.com/@..."
-              leftIcon={<LinkIcon size={18} />}
-              className="max-w-full"
-            />
+            <div className="space-y-1.5 w-full">
+              <label className="text-sm font-medium text-text-primary">
+                Instagram URL
+              </label>
+              <div className="relative flex items-center w-full">
+                <div className="absolute left-3 text-text-secondary">
+                  <AtSign size={18} />
+                </div>
+                <Input
+                  name="instagramUrl"
+                  value={instagramUrl}
+                  onChange={(e) => setInstagramUrl(e.target.value)}
+                  placeholder="https://instagram.com/..."
+                  className="py-2.5 w-full rounded-xl focus:outline-none disabled:cursor-not-allowed pl-10 focus:border-brand-primary focus:ring-brand-primary"
+                  disabled={!isEditing}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5 w-full">
+              <label className="text-sm font-medium text-text-primary">
+                Facebook URL
+              </label>
+              <div className="relative flex items-center w-full">
+                <div className="absolute left-3 text-text-secondary">
+                  <LinkIcon size={18} />
+                </div>
+                <Input
+                  name="facebookUrl"
+                  value={facebookUrl}
+                  onChange={(e) => setFacebookUrl(e.target.value)}
+                  placeholder="https://facebook.com/..."
+                  className="py-2.5 w-full rounded-xl focus:outline-none disabled:cursor-not-allowed pl-10 focus:border-brand-primary focus:ring-brand-primary"
+                  disabled={!isEditing}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5 w-full">
+              <label className="text-sm font-medium text-text-primary">
+                TikTok URL
+              </label>
+              <div className="relative flex items-center w-full">
+                <div className="absolute left-3 text-text-secondary">
+                  <LinkIcon size={18} />
+                </div>
+                <Input
+                  name="tiktokUrl"
+                  value={tiktokUrl}
+                  onChange={(e) => setTiktokUrl(e.target.value)}
+                  placeholder="https://tiktok.com/@..."
+                  className="py-2.5 w-full rounded-xl focus:outline-none disabled:cursor-not-allowed pl-10 focus:border-brand-primary focus:ring-brand-primary"
+                  disabled={!isEditing}
+                />
+              </div>
+            </div>
           </div>
         </div>
 
-        <form
-          action={formAction}
-          className="pt-4 flex justify-end border-t border-gray-100"
-        >
-          <input type="hidden" name="primaryColor" value={theme.primary} />
-          <input type="hidden" name="secondaryColor" value={theme.secondary} />
-          <input type="hidden" name="accentColor" value={theme.accent} />
-          <input type="hidden" name="fontFamily" value={fontFamily} />
-          <input type="hidden" name="menuLayout" value={menuLayout} />
+        <div className="pt-4 flex justify-end w-full border-t border-gray-100">
           {!isEditing ? (
             <Button
               type="button"
               variant="outline"
               shape="rounded"
-              onClick={() => setIsEditing(true)}
+              onClick={() => {
+                setIsEditing(true);
+                setShowSuccess(false);
+              }}
+              leftIcon={<Edit2 size={18} />}
             >
-              Edit Branding
+              Edit Branding & Appearance
             </Button>
           ) : (
-            <Button
-              type="submit"
-              variant="accent"
-              shape="rounded"
-              leftIcon={<Save size={18} />}
-              className="mt-4"
-              loading={isPending}
-            >
-              Save Branding
-            </Button>
+            <div className="flex items-center gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                shape="rounded"
+                onClick={() => {
+                  setIsEditing(false);
+                  setTheme({
+                    primary: initialData.primaryColor || "#FFC670",
+                    secondary: initialData.secondaryColor || "#FFF9F0",
+                    accent: initialData.accentColor || "#F97316",
+                  });
+                  setFontFamily(initialData.fontFamily || "inter");
+                  setMenuLayout(initialData.menuLayout || "grid");
+                  setFieldErrors({});
+                }}
+                disabled={isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                variant="accent"
+                shape="rounded"
+                leftIcon={<Save size={18} />}
+                loading={isPending}
+              >
+                Save Changes
+              </Button>
+            </div>
           )}
-        </form>
-      </div>
+        </div>
+      </form>
     </div>
   );
 };
