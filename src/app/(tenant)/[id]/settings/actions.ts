@@ -692,7 +692,7 @@ export async function saveTenantBrandingSettings(
 
     return {
       ...EMPTY_ACTION_STATE,
-      success: "Branding settings saved successfully.",
+      success: "Branding and appearance settings saved successfully.",
     };
   } catch (error) {
     return {

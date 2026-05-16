@@ -51,10 +51,10 @@ export const TenantBrandingSettings = ({
     t1.accent.toLowerCase() === t2.accent.toLowerCase();
 
   const [customThemes, setCustomThemes] = useState<{ id: string; primary: string; secondary: string; accent: string }[]>(() => {
-    // Start with any themes from the database
+    // start with any themes from the database
     let themes = initialData.customThemes ? [...initialData.customThemes] : [];
     
-    // If the currently saved theme in the DB doesn't match any preset and isn't already in customThemes,
+    // if the currently saved theme in the db doesn't match any preset and isn't already in customthemes,
     // we inject it as a "draft" custom theme
     const initTheme = {
       primary: initialData.primaryColor || "#FFC670",
@@ -78,7 +78,7 @@ export const TenantBrandingSettings = ({
     const presetIndex = presetThemes.findIndex((p) => isMatch(p, initTheme));
     if (presetIndex !== -1) return `preset-${presetIndex}`;
     
-    // Check if it matches any custom theme
+    // check if it matches any custom theme
     const customMatch = customThemes.find(t => isMatch(t, initTheme));
     if (customMatch) return customMatch.id;
     
@@ -120,7 +120,7 @@ export const TenantBrandingSettings = ({
   );
 
   useEffect(() => {
-    if (isEditing) return; // Prevent resetting while editing (e.g. after saving custom themes)
+    if (isEditing) return; // prevent resetting while editing (e.g. after saving custom themes)
     
     const initTheme = {
       primary: initialData.primaryColor || "#FFC670",
@@ -416,7 +416,7 @@ export const TenantBrandingSettings = ({
                     }
                   }}
                   className="text-sm font-medium text-text-primary font-mono bg-transparent w-full outline-none"
-                  disabled={!isEditing || !isCustomSelected}
+                  readOnly={!isEditing || !isCustomSelected}
                   placeholder="#000000"
                   maxLength={7}
                 />
@@ -475,7 +475,7 @@ export const TenantBrandingSettings = ({
                     }
                   }}
                   className="text-sm font-medium text-text-primary font-mono bg-transparent w-full outline-none"
-                  disabled={!isEditing || !isCustomSelected}
+                  readOnly={!isEditing || !isCustomSelected}
                   placeholder="#000000"
                   maxLength={7}
                 />
@@ -534,7 +534,7 @@ export const TenantBrandingSettings = ({
                     }
                   }}
                   className="text-sm font-medium text-text-primary font-mono bg-transparent w-full outline-none"
-                  disabled={!isEditing || !isCustomSelected}
+                  readOnly={!isEditing || !isCustomSelected}
                   placeholder="#000000"
                   maxLength={7}
                 />
@@ -588,7 +588,7 @@ export const TenantBrandingSettings = ({
                       const t = newThemes.find(th => th.id === fallbackId);
                       if (t) setTheme(t);
                     }
-                    // Persist delete
+                    // persist delete
                     try {
                       await saveTenantCustomThemes(tenantId, newThemes);
                     } catch (err) {
