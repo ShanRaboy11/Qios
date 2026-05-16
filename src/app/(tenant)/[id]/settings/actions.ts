@@ -21,9 +21,15 @@ const EMPTY_ACTION_STATE: SettingsActionState = {
 const BRANDING_DEFAULTS: TenantBrandingSettingsData = {
   primaryColor: "#FFC670",
   secondaryColor: "#FFF9F0",
-  accentColor: "#F97316",
+  accentColor: "#00FFFF",
   fontFamily: "inter",
+  secondaryFont: "inter",
   menuLayout: "grid",
+  qiosSubdomain: "",
+  customDomain: "",
+  instagramUrl: "",
+  facebookUrl: "",
+  tiktokUrl: "",
 };
 
 const STORE_DEFAULTS: TenantStoreSettingsData = {
@@ -214,6 +220,40 @@ export async function getTenantSettings(
         "menu_layout",
         "menuLayout",
       ]) || BRANDING_DEFAULTS.menuLayout,
+    secondaryFont:
+      readSettingValue(settings, [
+        "branding_secondary_font",
+        "secondary_font",
+        "secondaryFont",
+      ]) || BRANDING_DEFAULTS.secondaryFont,
+    qiosSubdomain:
+      readSettingValue(settings, [
+        "qios_subdomain",
+        "qiosSubdomain",
+      ]) || BRANDING_DEFAULTS.qiosSubdomain,
+    customDomain:
+      readSettingValue(settings, [
+        "custom_domain",
+        "customDomain",
+      ]) || BRANDING_DEFAULTS.customDomain,
+    instagramUrl:
+      readSettingValue(settings, [
+        "instagram_url",
+        "instagramUrl",
+      ]) || BRANDING_DEFAULTS.instagramUrl,
+    facebookUrl:
+      readSettingValue(settings, [
+        "facebook_url",
+        "facebookUrl",
+      ]) || BRANDING_DEFAULTS.facebookUrl,
+    tiktokUrl:
+      readSettingValue(settings, [
+        "tiktok_url",
+        "tiktokUrl",
+      ]) || BRANDING_DEFAULTS.tiktokUrl,
+    dashboardLogoUrl: readSettingValue(settings, ["branding_logo_dashboard"]) || undefined,
+    kioskSplashUrl: readSettingValue(settings, ["branding_kiosk_splash"]) || undefined,
+    faviconUrl: readSettingValue(settings, ["branding_favicon"]) || undefined,
   };
 
   const security: TenantSecuritySettingsData = {
@@ -501,7 +541,13 @@ export async function saveTenantBrandingSettings(
     const secondaryColor = toText(formData.get("secondaryColor"));
     const accentColor = toText(formData.get("accentColor"));
     const fontFamily = toText(formData.get("fontFamily"));
+    const secondaryFont = toText(formData.get("secondaryFont"));
     const menuLayout = toText(formData.get("menuLayout"));
+    const qiosSubdomain = toText(formData.get("qiosSubdomain"));
+    const customDomain = toText(formData.get("customDomain"));
+    const instagramUrl = toText(formData.get("instagramUrl"));
+    const facebookUrl = toText(formData.get("facebookUrl"));
+    const tiktokUrl = toText(formData.get("tiktokUrl"));
 
     const fieldErrors: Record<string, string> = {};
     const colorPattern = /^#[0-9a-fA-F]{6}$/;
@@ -552,7 +598,13 @@ export async function saveTenantBrandingSettings(
         branding_secondary_color: secondaryColor,
         branding_accent_color: accentColor,
         branding_font_family: fontFamily,
+        branding_secondary_font: secondaryFont,
         branding_menu_layout: menuLayout,
+        qios_subdomain: qiosSubdomain,
+        custom_domain: customDomain,
+        instagram_url: instagramUrl,
+        facebook_url: facebookUrl,
+        tiktok_url: tiktokUrl,
       },
     );
 

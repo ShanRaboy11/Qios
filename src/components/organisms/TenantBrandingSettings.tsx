@@ -1,5 +1,3 @@
-// fix
-
 import React, { useActionState, useEffect, useState, useRef } from "react";
 import chroma from "chroma-js";
 import {
@@ -37,21 +35,28 @@ export const TenantBrandingSettings = ({
   const [theme, setTheme] = useState({
     primary: initialData.primaryColor || "#FFC670",
     secondary: initialData.secondaryColor || "#FFF9F0",
-    accent: initialData.accentColor || "#F97316",
+    accent: initialData.accentColor || "#00FFFF",
   });
   const [fontFamily, setFontFamily] = useState(initialData.fontFamily || "inter");
+  const [secondaryFont, setSecondaryFont] = useState(initialData.secondaryFont || "inter");
   const [menuLayout, setMenuLayout] = useState(initialData.menuLayout || "grid");
   
-  const [qiosSubdomain, setQiosSubdomain] = useState("");
-  const [customDomain, setCustomDomain] = useState("");
-  const [instagramUrl, setInstagramUrl] = useState("");
-  const [facebookUrl, setFacebookUrl] = useState("");
-  const [tiktokUrl, setTiktokUrl] = useState("");
+  const [qiosSubdomain, setQiosSubdomain] = useState(initialData.qiosSubdomain || "");
+  const [customDomain, setCustomDomain] = useState(initialData.customDomain || "");
+  const [instagramUrl, setInstagramUrl] = useState(initialData.instagramUrl || "");
+  const [facebookUrl, setFacebookUrl] = useState(initialData.facebookUrl || "");
+  const [tiktokUrl, setTiktokUrl] = useState(initialData.tiktokUrl || "");
+
+  const [dashboardLogoPreview, setDashboardLogoPreview] = useState<string | null>(initialData.dashboardLogoUrl || null);
+  const [kioskSplashPreview, setKioskSplashPreview] = useState<string | null>(initialData.kioskSplashUrl || null);
+  const [faviconPreview, setFaviconPreview] = useState<string | null>(initialData.faviconUrl || null);
 
   const [isEditing, setIsEditing] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const wasPending = useRef(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  const [isConnecting, setIsConnecting] = useState(false);
 
   const [state, formAction, isPending] = useActionState(
     saveTenantBrandingSettings.bind(null, tenantId),
@@ -62,10 +67,19 @@ export const TenantBrandingSettings = ({
     setTheme({
       primary: initialData.primaryColor || "#FFC670",
       secondary: initialData.secondaryColor || "#FFF9F0",
-      accent: initialData.accentColor || "#F97316",
+      accent: initialData.accentColor || "#00FFFF",
     });
     setFontFamily(initialData.fontFamily || "inter");
+    setSecondaryFont(initialData.secondaryFont || "inter");
     setMenuLayout(initialData.menuLayout || "grid");
+    setQiosSubdomain(initialData.qiosSubdomain || "");
+    setCustomDomain(initialData.customDomain || "");
+    setInstagramUrl(initialData.instagramUrl || "");
+    setFacebookUrl(initialData.facebookUrl || "");
+    setTiktokUrl(initialData.tiktokUrl || "");
+    setDashboardLogoPreview(initialData.dashboardLogoUrl || null);
+    setKioskSplashPreview(initialData.kioskSplashUrl || null);
+    setFaviconPreview(initialData.faviconUrl || null);
   }, [initialData]);
 
   useEffect(() => {
@@ -93,22 +107,13 @@ export const TenantBrandingSettings = ({
     }
   }, [showSuccess]);
 
-  const handlePresetColor = (color: string) => {
-    setTheme({
-      primary: color,
-      secondary: chroma(color).set("hsl.l", 0.95).hex(),
-      accent: chroma(color).set("hsl.h", "+150").saturate(2).hex(),
-    });
-    setFieldErrors((prev) => ({ ...prev, primaryColor: "", secondaryColor: "", accentColor: "" }));
-  };
-
-  const presetColors = [
-    "#FFC670", // default
-    "#3B82F6", // blue
-    "#10B981", // green
-    "#EF4444", // red
-    "#8B5CF6", // purple
-    "#F97316", // orange
+  const presetThemes = [
+    { primary: "#FFC670", secondary: "#FFF9F0", accent: "#00FFFF" },
+    { primary: "#3B82F6", secondary: "#EFF6FF", accent: "#F59E0B" },
+    { primary: "#10B981", secondary: "#ECFDF5", accent: "#F43F5E" },
+    { primary: "#EF4444", secondary: "#FEF2F2", accent: "#3B82F6" },
+    { primary: "#8B5CF6", secondary: "#F5F3FF", accent: "#10B981" },
+    { primary: "#F97316", secondary: "#FFF7ED", accent: "#06B6D4" },
   ];
 
   const fonts = [
@@ -132,7 +137,6 @@ export const TenantBrandingSettings = ({
     },
   ];
 
-  // handle frontend validation for domain
   const handleClientSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     let hasError = false;
     const newErrors: Record<string, string> = {};
@@ -148,6 +152,19 @@ export const TenantBrandingSettings = ({
     }
   };
 
+  const handleConnect = async () => {
+    if (!customDomain) return;
+    setIsConnecting(true);
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    setIsConnecting(false);
+    
+    if (formRef.current) {
+      formRef.current.requestSubmit();
+    }
+    
+    window.open(`https://${customDomain}`, "_blank");
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 w-full">
       <div>
@@ -160,7 +177,7 @@ export const TenantBrandingSettings = ({
         </p>
       </div>
 
-      <form action={formAction} onSubmit={handleClientSubmit} className="space-y-8 w-full">
+      <form ref={formRef} action={formAction} onSubmit={handleClientSubmit} className="space-y-8 w-full">
         {showSuccess && state.success && (
           <div className="mb-6 w-full">
             <div className="flex items-center gap-2 w-full text-green-700 bg-green-50 border border-green-100 rounded-xl px-4 py-3">
@@ -177,43 +194,61 @@ export const TenantBrandingSettings = ({
             className="mb-0 py-2 border-gray-100"
           />
 
-          {/* presets */}
           <div className="pt-2">
             <label className="text-sm font-medium text-text-primary block mb-3">
               Quick Presets
             </label>
             <div className="flex flex-wrap items-center gap-3">
-              {presetColors.map((color) => {
-                const accentColor = chroma(color).set("hsl.h", "+150").saturate(2).hex();
+              {presetThemes.map((preset, index) => {
+                const isActive = theme.primary === preset.primary && theme.accent === preset.accent;
                 return (
                   <button
-                    key={color}
+                    key={index}
                     type="button"
-                    onClick={() => isEditing && handlePresetColor(color)}
+                    onClick={() => {
+                      if (isEditing) {
+                        setTheme(preset);
+                        setFieldErrors((prev) => ({ ...prev, primaryColor: "", secondaryColor: "", accentColor: "" }));
+                      }
+                    }}
                     className={cn(
                       "w-10 h-10 rounded-full border-2 transition-all duration-200 shadow-sm relative",
-                      theme.primary === color
+                      isActive
                         ? "scale-110"
                         : "border-transparent hover:scale-105"
                     )}
                     style={{ 
-                      backgroundColor: color,
-                      borderColor: theme.primary === color ? accentColor : "transparent"
+                      backgroundColor: preset.primary,
+                      borderColor: isActive ? preset.accent : "transparent"
                     }}
-                    title={`Apply ${color} theme`}
+                    title="Apply preset theme"
                     disabled={!isEditing}
                   />
                 );
               })}
+              {/* custom theme plus button */}
+              <button
+                type="button"
+                className={cn(
+                  "w-10 h-10 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center transition-all duration-200",
+                  "hover:border-brand-primary hover:text-brand-primary text-gray-400 bg-gray-50",
+                  !presetThemes.some(p => p.primary === theme.primary && p.accent === theme.accent)
+                    ? "border-brand-primary text-brand-primary scale-110"
+                    : "",
+                  !isEditing && "opacity-70 cursor-not-allowed"
+                )}
+                disabled={!isEditing}
+                title="Custom theme"
+              >
+                <span className="text-xl leading-none font-light">+</span>
+              </button>
             </div>
           </div>
 
-          {/* custom theme colors */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {/* primary */}
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
-                Primary <span className="text-brand-accent">*</span>
+              <label className="text-sm font-medium text-text-primary block mb-1">
+                Primary Color <span className="text-brand-accent">*</span>
               </label>
               <div className={cn(
                 "relative border rounded-xl p-2 flex items-center gap-3 transition-colors",
@@ -250,10 +285,9 @@ export const TenantBrandingSettings = ({
               )}
             </div>
 
-            {/* secondary */}
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
-                Secondary <span className="text-brand-accent">*</span>
+              <label className="text-sm font-medium text-text-primary block mb-1">
+                Secondary Color <span className="text-brand-accent">*</span>
               </label>
               <div className={cn(
                 "relative border rounded-xl p-2 flex items-center gap-3 transition-colors",
@@ -290,10 +324,9 @@ export const TenantBrandingSettings = ({
               )}
             </div>
 
-            {/* accent */}
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
-                Accent <span className="text-brand-accent">*</span>
+              <label className="text-sm font-medium text-text-primary block mb-1">
+                Accent Color <span className="text-brand-accent">*</span>
               </label>
               <div className={cn(
                 "relative border rounded-xl p-2 flex items-center gap-3 transition-colors",
@@ -338,55 +371,105 @@ export const TenantBrandingSettings = ({
         </div>
 
         {/* typography */}
-        <div className="space-y-4 w-full">
+        <div className="space-y-6 w-full">
           <SectionHeader
             title="Typography"
             className="mb-0 py-2 border-gray-100"
           />
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
-            <input type="hidden" name="fontFamily" value={fontFamily} />
-            {fonts.map((font) => (
-              <button
-                key={font.id}
-                type="button"
-                onClick={() => {
-                  if (isEditing) {
-                    setFontFamily(font.id);
-                    setFieldErrors((prev) => ({ ...prev, fontFamily: "" }));
-                  }
-                }}
-                className={cn(
-                  "p-4 rounded-xl border-2 text-left transition-all",
-                  !isEditing && "opacity-70 cursor-not-allowed",
-                  fontFamily === font.id
-                    ? "border-brand-primary bg-brand-primary/5"
-                    : "border-gray-100 hover:border-gray-200 bg-white",
-                  fieldErrors.fontFamily ? "border-warning-primary" : ""
-                )}
-                disabled={!isEditing}
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <Type
-                    size={16}
-                    className={
+          <div className="space-y-6 pt-2">
+            <div>
+              <label className="text-sm font-medium text-text-primary block mb-3">
+                Primary Font <span className="text-brand-accent">*</span>
+              </label>
+              <input type="hidden" name="fontFamily" value={fontFamily} />
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {fonts.map((font) => (
+                  <button
+                    key={font.id}
+                    type="button"
+                    onClick={() => {
+                      if (isEditing) {
+                        setFontFamily(font.id);
+                        setFieldErrors((prev) => ({ ...prev, fontFamily: "" }));
+                      }
+                    }}
+                    className={cn(
+                      "p-4 rounded-xl border-2 text-left transition-all",
+                      !isEditing && "opacity-70 cursor-not-allowed",
                       fontFamily === font.id
-                        ? "text-brand-primary"
-                        : "text-text-secondary"
-                    }
-                  />
-                  <span className="font-semibold text-text-primary">
-                    {font.name}
-                  </span>
-                </div>
-                <p className="text-xs text-text-secondary">{font.desc}</p>
-              </button>
-            ))}
+                        ? "border-brand-primary bg-brand-primary/5"
+                        : "border-gray-100 hover:border-gray-200 bg-white",
+                      fieldErrors.fontFamily ? "border-warning-primary" : ""
+                    )}
+                    disabled={!isEditing}
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <Type
+                        size={16}
+                        className={
+                          fontFamily === font.id
+                            ? "text-brand-primary"
+                            : "text-text-secondary"
+                        }
+                      />
+                      <span className="font-semibold text-text-primary">
+                        {font.name}
+                      </span>
+                    </div>
+                    <p className="text-xs text-text-secondary">{font.desc}</p>
+                  </button>
+                ))}
+              </div>
+              {fieldErrors.fontFamily && (
+                <p className="text-xs text-warning-primary pl-1 mt-1">
+                  {fieldErrors.fontFamily}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-text-primary block mb-3">
+                Secondary Font <span className="text-brand-accent">*</span>
+              </label>
+              <input type="hidden" name="secondaryFont" value={secondaryFont} />
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {fonts.map((font) => (
+                  <button
+                    key={font.id}
+                    type="button"
+                    onClick={() => {
+                      if (isEditing) {
+                        setSecondaryFont(font.id);
+                      }
+                    }}
+                    className={cn(
+                      "p-4 rounded-xl border-2 text-left transition-all",
+                      !isEditing && "opacity-70 cursor-not-allowed",
+                      secondaryFont === font.id
+                        ? "border-brand-primary bg-brand-primary/5"
+                        : "border-gray-100 hover:border-gray-200 bg-white"
+                    )}
+                    disabled={!isEditing}
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <Type
+                        size={16}
+                        className={
+                          secondaryFont === font.id
+                            ? "text-brand-primary"
+                            : "text-text-secondary"
+                        }
+                      />
+                      <span className="font-semibold text-text-primary">
+                        {font.name}
+                      </span>
+                    </div>
+                    <p className="text-xs text-text-secondary">{font.desc}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
-          {fieldErrors.fontFamily && (
-            <p className="text-xs text-warning-primary pl-1 mt-1">
-              {fieldErrors.fontFamily}
-            </p>
-          )}
         </div>
 
         {/* layout preferences */}
@@ -395,55 +478,60 @@ export const TenantBrandingSettings = ({
             title="Menu Layout"
             className="mb-0 py-2 border-gray-100"
           />
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+          <div className="pt-2">
+            <label className="text-sm font-medium text-text-primary block mb-3">
+              Layout Style <span className="text-brand-accent">*</span>
+            </label>
             <input type="hidden" name="menuLayout" value={menuLayout} />
-            {layouts.map((layout) => {
-              const Icon = layout.icon;
-              return (
-                <button
-                  key={layout.id}
-                  type="button"
-                  onClick={() => {
-                    if (isEditing) {
-                      setMenuLayout(layout.id);
-                      setFieldErrors((prev) => ({ ...prev, menuLayout: "" }));
-                    }
-                  }}
-                  className={cn(
-                    "p-4 rounded-xl border-2 text-left transition-all flex items-start gap-4",
-                    !isEditing && "opacity-70 cursor-not-allowed",
-                    menuLayout === layout.id
-                      ? "border-brand-primary bg-brand-primary/5"
-                      : "border-gray-100 hover:border-gray-200 bg-white",
-                    fieldErrors.menuLayout ? "border-warning-primary" : ""
-                  )}
-                  disabled={!isEditing}
-                >
-                  <div
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {layouts.map((layout) => {
+                const Icon = layout.icon;
+                return (
+                  <button
+                    key={layout.id}
+                    type="button"
+                    onClick={() => {
+                      if (isEditing) {
+                        setMenuLayout(layout.id);
+                        setFieldErrors((prev) => ({ ...prev, menuLayout: "" }));
+                      }
+                    }}
                     className={cn(
-                      "p-2 rounded-lg",
+                      "p-4 rounded-xl border-2 text-left transition-all flex items-start gap-4",
+                      !isEditing && "opacity-70 cursor-not-allowed",
                       menuLayout === layout.id
-                        ? "bg-brand-primary text-white"
-                        : "bg-gray-100 text-text-secondary",
+                        ? "border-brand-primary bg-brand-primary/5"
+                        : "border-gray-100 hover:border-gray-200 bg-white",
+                      fieldErrors.menuLayout ? "border-warning-primary" : ""
                     )}
+                    disabled={!isEditing}
                   >
-                    <Icon size={20} />
-                  </div>
-                  <div>
-                    <span className="font-semibold text-text-primary block mb-1">
-                      {layout.name}
-                    </span>
-                    <p className="text-xs text-text-secondary">{layout.desc}</p>
-                  </div>
-                </button>
-              );
-            })}
+                    <div
+                      className={cn(
+                        "p-2 rounded-lg",
+                        menuLayout === layout.id
+                          ? "bg-brand-primary text-white"
+                          : "bg-gray-100 text-text-secondary",
+                      )}
+                    >
+                      <Icon size={20} />
+                    </div>
+                    <div>
+                      <span className="font-semibold text-text-primary block mb-1">
+                        {layout.name}
+                      </span>
+                      <p className="text-xs text-text-secondary">{layout.desc}</p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+            {fieldErrors.menuLayout && (
+              <p className="text-xs text-warning-primary pl-1 mt-1">
+                {fieldErrors.menuLayout}
+              </p>
+            )}
           </div>
-          {fieldErrors.menuLayout && (
-            <p className="text-xs text-warning-primary pl-1 mt-1">
-              {fieldErrors.menuLayout}
-            </p>
-          )}
         </div>
 
         {/* logos & media */}
@@ -458,28 +546,41 @@ export const TenantBrandingSettings = ({
                 Dashboard & Receipt Logo <span className="text-brand-accent">*</span>
               </label>
               <div className={cn(
-                "relative border-2 border-dashed border-gray-200 rounded-xl p-6 flex flex-col items-center justify-center bg-gray-50 transition-colors h-40 overflow-hidden",
+                "relative border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center bg-gray-50 transition-colors h-40 overflow-hidden",
                 isEditing ? "hover:bg-gray-100 cursor-pointer group" : "opacity-70"
               )}>
-                <div className={cn(
-                  "w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm mb-3 transition-transform",
-                  isEditing && "group-hover:scale-110"
-                )}>
-                  <Upload size={20} className="text-brand-accent" />
-                </div>
-                <span className="text-sm font-medium text-text-primary">
-                  Click to upload
-                </span>
-                <span className="text-xs text-text-secondary mt-1">
-                  PNG, JPG (Square)
-                </span>
+                {dashboardLogoPreview ? (
+                  <img src={dashboardLogoPreview} alt="Dashboard Logo" className="w-full h-full object-contain p-2" />
+                ) : (
+                  <>
+                    <div className={cn(
+                      "w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm mb-3 transition-transform",
+                      isEditing && "group-hover:scale-110"
+                    )}>
+                      <Upload size={20} className="text-brand-accent" />
+                    </div>
+                    <span className="text-sm font-medium text-text-primary">
+                      Click to upload
+                    </span>
+                    <span className="text-xs text-text-secondary mt-1">
+                      PNG, JPG (Square)
+                    </span>
+                  </>
+                )}
                 {isEditing && (
-                  <label className="absolute inset-0 cursor-pointer w-full h-full">
+                  <label className={cn(
+                    "absolute inset-0 cursor-pointer w-full h-full transition-colors",
+                    dashboardLogoPreview ? "bg-black/0 hover:bg-black/10" : ""
+                  )}>
                     <input
                       type="file"
                       name="dashboardLogo"
                       accept="image/*"
                       className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) setDashboardLogoPreview(URL.createObjectURL(file));
+                      }}
                     />
                   </label>
                 )}
@@ -491,28 +592,41 @@ export const TenantBrandingSettings = ({
                 Kiosk Splash Screen <span className="text-brand-accent">*</span>
               </label>
               <div className={cn(
-                "relative border-2 border-dashed border-gray-200 rounded-xl p-6 flex flex-col items-center justify-center bg-gray-50 transition-colors h-40 overflow-hidden",
+                "relative border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center bg-gray-50 transition-colors h-40 overflow-hidden",
                 isEditing ? "hover:bg-gray-100 cursor-pointer group" : "opacity-70"
               )}>
-                <div className={cn(
-                  "w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm mb-3 transition-transform",
-                  isEditing && "group-hover:scale-110"
-                )}>
-                  <ImageIcon size={20} className="text-brand-accent" />
-                </div>
-                <span className="text-sm font-medium text-text-primary">
-                  Click to upload
-                </span>
-                <span className="text-xs text-text-secondary mt-1">
-                  Portrait 1080x1920
-                </span>
+                {kioskSplashPreview ? (
+                  <img src={kioskSplashPreview} alt="Kiosk Splash" className="w-full h-full object-cover" />
+                ) : (
+                  <>
+                    <div className={cn(
+                      "w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm mb-3 transition-transform",
+                      isEditing && "group-hover:scale-110"
+                    )}>
+                      <ImageIcon size={20} className="text-brand-accent" />
+                    </div>
+                    <span className="text-sm font-medium text-text-primary">
+                      Click to upload
+                    </span>
+                    <span className="text-xs text-text-secondary mt-1">
+                      Portrait 1080x1920
+                    </span>
+                  </>
+                )}
                 {isEditing && (
-                  <label className="absolute inset-0 cursor-pointer w-full h-full">
+                  <label className={cn(
+                    "absolute inset-0 cursor-pointer w-full h-full transition-colors",
+                    kioskSplashPreview ? "bg-black/0 hover:bg-black/10" : ""
+                  )}>
                     <input
                       type="file"
                       name="kioskSplash"
                       accept="image/*"
                       className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) setKioskSplashPreview(URL.createObjectURL(file));
+                      }}
                     />
                   </label>
                 )}
@@ -524,28 +638,41 @@ export const TenantBrandingSettings = ({
                 Favicon <span className="text-brand-accent">*</span>
               </label>
               <div className={cn(
-                "relative border-2 border-dashed border-gray-200 rounded-xl p-6 flex flex-col items-center justify-center bg-gray-50 transition-colors h-40 overflow-hidden",
+                "relative border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center bg-gray-50 transition-colors h-40 overflow-hidden",
                 isEditing ? "hover:bg-gray-100 cursor-pointer group" : "opacity-70"
               )}>
-                <div className={cn(
-                  "w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm mb-3 transition-transform",
-                  isEditing && "group-hover:scale-110"
-                )}>
-                  <Globe size={20} className="text-brand-accent" />
-                </div>
-                <span className="text-sm font-medium text-text-primary">
-                  Click to upload
-                </span>
-                <span className="text-xs text-text-secondary mt-1">
-                  .ICO, .PNG (32x32)
-                </span>
+                {faviconPreview ? (
+                  <img src={faviconPreview} alt="Favicon" className="w-12 h-12 object-contain" />
+                ) : (
+                  <>
+                    <div className={cn(
+                      "w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm mb-3 transition-transform",
+                      isEditing && "group-hover:scale-110"
+                    )}>
+                      <Globe size={20} className="text-brand-accent" />
+                    </div>
+                    <span className="text-sm font-medium text-text-primary">
+                      Click to upload
+                    </span>
+                    <span className="text-xs text-text-secondary mt-1">
+                      .ICO, .PNG (32x32)
+                    </span>
+                  </>
+                )}
                 {isEditing && (
-                  <label className="absolute inset-0 cursor-pointer w-full h-full">
+                  <label className={cn(
+                    "absolute inset-0 cursor-pointer w-full h-full transition-colors",
+                    faviconPreview ? "bg-black/0 hover:bg-black/10" : ""
+                  )}>
                     <input
                       type="file"
                       name="favicon"
                       accept="image/*"
                       className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) setFaviconPreview(URL.createObjectURL(file));
+                      }}
                     />
                   </label>
                 )}
@@ -562,7 +689,7 @@ export const TenantBrandingSettings = ({
           />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
             <div className="space-y-1.5 w-full">
-              <label className="text-sm font-medium text-text-primary">
+              <label className="text-sm font-medium text-text-primary block">
                 Qios Subdomain <span className="text-brand-accent">*</span>
               </label>
               <div className="relative flex items-center w-full">
@@ -602,7 +729,7 @@ export const TenantBrandingSettings = ({
             
             <div className="w-full flex items-start gap-2">
               <div className="space-y-1.5 flex-1">
-                <label className="text-sm font-medium text-text-primary">
+                <label className="text-sm font-medium text-text-primary block">
                   Custom Domain
                 </label>
                 <Input
@@ -622,9 +749,10 @@ export const TenantBrandingSettings = ({
                   type="button" 
                   variant="outline" 
                   shape="rounded"
-                  disabled={!isEditing || !customDomain}
+                  disabled={!isEditing || !customDomain || isConnecting}
+                  onClick={handleConnect}
                 >
-                  Connect
+                  {isConnecting ? "Connecting..." : "Connect"}
                 </Button>
               </div>
             </div>
@@ -639,7 +767,7 @@ export const TenantBrandingSettings = ({
           />
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
             <div className="space-y-1.5 w-full">
-              <label className="text-sm font-medium text-text-primary">
+              <label className="text-sm font-medium text-text-primary block">
                 Instagram URL
               </label>
               <div className="relative flex items-center w-full">
@@ -658,7 +786,7 @@ export const TenantBrandingSettings = ({
             </div>
 
             <div className="space-y-1.5 w-full">
-              <label className="text-sm font-medium text-text-primary">
+              <label className="text-sm font-medium text-text-primary block">
                 Facebook URL
               </label>
               <div className="relative flex items-center w-full">
@@ -677,7 +805,7 @@ export const TenantBrandingSettings = ({
             </div>
 
             <div className="space-y-1.5 w-full">
-              <label className="text-sm font-medium text-text-primary">
+              <label className="text-sm font-medium text-text-primary block">
                 TikTok URL
               </label>
               <div className="relative flex items-center w-full">
@@ -722,13 +850,22 @@ export const TenantBrandingSettings = ({
                   setTheme({
                     primary: initialData.primaryColor || "#FFC670",
                     secondary: initialData.secondaryColor || "#FFF9F0",
-                    accent: initialData.accentColor || "#F97316",
+                    accent: initialData.accentColor || "#00FFFF",
                   });
                   setFontFamily(initialData.fontFamily || "inter");
+                  setSecondaryFont(initialData.secondaryFont || "inter");
                   setMenuLayout(initialData.menuLayout || "grid");
+                  setQiosSubdomain(initialData.qiosSubdomain || "");
+                  setCustomDomain(initialData.customDomain || "");
+                  setInstagramUrl(initialData.instagramUrl || "");
+                  setFacebookUrl(initialData.facebookUrl || "");
+                  setTiktokUrl(initialData.tiktokUrl || "");
+                  setDashboardLogoPreview(initialData.dashboardLogoUrl || null);
+                  setKioskSplashPreview(initialData.kioskSplashUrl || null);
+                  setFaviconPreview(initialData.faviconUrl || null);
                   setFieldErrors({});
                 }}
-                disabled={isPending}
+                disabled={isPending || isConnecting}
               >
                 Cancel
               </Button>
@@ -738,6 +875,7 @@ export const TenantBrandingSettings = ({
                 shape="rounded"
                 leftIcon={<Save size={18} />}
                 loading={isPending}
+                disabled={isConnecting}
               >
                 Save Changes
               </Button>

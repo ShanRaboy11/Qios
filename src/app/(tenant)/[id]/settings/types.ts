@@ -20,7 +20,16 @@ export interface TenantBrandingSettingsData {
   secondaryColor: string;
   accentColor: string;
   fontFamily: string;
+  secondaryFont: string;
   menuLayout: string;
+  qiosSubdomain: string;
+  customDomain: string;
+  instagramUrl: string;
+  facebookUrl: string;
+  tiktokUrl: string;
+  dashboardLogoUrl?: string;
+  kioskSplashUrl?: string;
+  faviconUrl?: string;
 }
 
 export interface TenantSecuritySettingsData {
