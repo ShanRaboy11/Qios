@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
 import { Toggle } from "@/components/atoms/Toggle";
+import { Dropdown } from "@/components/molecules/Dropdown";
 import { SectionHeader } from "@/components/molecules/SectionHeader";
 import { IntegrationCard } from "@/components/molecules/IntegrationCard";
 import { SessionCard } from "@/components/molecules/SessionCard";
@@ -653,34 +654,28 @@ const SecuritySettings = () => {
             className="mb-0 py-2 border-gray-100"
           />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-text-primary">
-                Minimum Password Length
-              </label>
-              <select
-                value={passwordMinLength}
-                onChange={(e) => setPasswordMinLength(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border-2 border-[#E5E5E5] focus:outline-none focus:ring-2 focus:ring-brand-accent/20 focus:border-brand-accent transition-colors bg-white appearance-none cursor-pointer"
-              >
-                <option value="8">8 Characters</option>
-                <option value="10">10 Characters</option>
-                <option value="12">12 Characters</option>
-              </select>
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-text-primary">
-                Session Timeout
-              </label>
-              <select
-                value={sessionTimeoutHours}
-                onChange={(e) => setSessionTimeoutHours(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border-2 border-[#E5E5E5] focus:outline-none focus:ring-2 focus:ring-brand-accent/20 focus:border-brand-accent transition-colors bg-white appearance-none cursor-pointer"
-              >
-                <option value="2">2 Hours</option>
-                <option value="12">12 Hours</option>
-                <option value="24">24 Hours</option>
-              </select>
-            </div>
+            <Dropdown
+              label="Minimum Password Length"
+              value={passwordMinLength}
+              onSelect={(opt) => setPasswordMinLength(opt.value)}
+              options={[
+                { label: "8 Characters", value: "8" },
+                { label: "10 Characters", value: "10" },
+                { label: "12 Characters", value: "12" },
+              ]}
+              className="max-w-full"
+            />
+            <Dropdown
+              label="Session Timeout"
+              value={sessionTimeoutHours}
+              onSelect={(opt) => setSessionTimeoutHours(opt.value)}
+              options={[
+                { label: "2 Hours", value: "2" },
+                { label: "12 Hours", value: "12" },
+                { label: "24 Hours", value: "24" },
+              ]}
+              className="max-w-full"
+            />
           </div>
         </div>
 
