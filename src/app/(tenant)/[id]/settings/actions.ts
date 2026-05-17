@@ -980,11 +980,11 @@ export async function setupEmailTwoFactor(tenantId: string) {
 
   const { data: tenant } = await admin
     .from("tenants")
-    .select("business_email, business_name, settings")
+    .select("business_name, settings")
     .eq("id", tenantId)
     .single();
 
-  const emailToUse = tenant?.business_email || user.email;
+  const emailToUse = user.email;
   const businessName = tenant?.business_name || "Qios";
 
   if (!emailToUse) throw new Error("No valid email found to send verification code to.");

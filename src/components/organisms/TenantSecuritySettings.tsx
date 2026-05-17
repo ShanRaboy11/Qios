@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useActionState, useEffect, useState } from "react";
+import React, { useActionState, useEffect, useState, useRef } from "react";
 import {
   CheckCircle2,
   Shield,
@@ -23,11 +23,13 @@ import {
   KeyRound,
   Loader2,
   X,
+  Check,
 } from "lucide-react";
 import QRCode from "react-qr-code";
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
 import { Toggle } from "@/components/atoms/Toggle";
+import { Badge } from "@/components/atoms/Badge";
 import { ActionConfirmationModal } from "@/components/molecules/ConfirmationModal";
 import { SectionHeader } from "@/components/molecules/SectionHeader";
 import { SessionCard } from "@/components/molecules/SessionCard";
@@ -84,6 +86,72 @@ const PasswordRequirement = ({
   </div>
 );
 
+const getTimeAgo = (dateString?: string) => {
+  if (!dateString) return "recently";
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInMs = now.getTime() - date.getTime();
+  const diffInHours = diffInMs / (1000 * 60 * 60);
+  const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
+  
+  if (diffInDays >= 1) return `${Math.floor(diffInDays)} days ago`;
+  if (diffInHours >= 1) return `${Math.floor(diffInHours)} hrs ago`;
+  const diffInMins = diffInMs / (1000 * 60);
+  return `${Math.floor(diffInMins)} mins ago`;
+};
+
+const SixDigitInput = ({ value, onChange, disabled }: { value: string, onChange: (val: string) => void, disabled?: boolean }) => {
+  const inputs = useRef<(HTMLInputElement | null)[]>([]);
+
+  const handleChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value.replace(/[^0-9]/g, "");
+    const newCode = [...value.padEnd(6, " ").split("")];
+    if (!val) {
+      newCode[index] = " ";
+      onChange(newCode.join("").trimEnd());
+      return;
+    }
+    newCode[index] = val[val.length - 1];
+    onChange(newCode.join("").trimEnd());
+    if (index < 5) inputs.current[index + 1]?.focus();
+  };
+
+  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Backspace" && (!value[index] || value[index] === " ") && index > 0) {
+      inputs.current[index - 1]?.focus();
+    }
+  };
+
+  const handlePaste = (e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData("text").replace(/[^0-9]/g, "").slice(0, 6);
+    if (pasted) {
+      onChange(pasted);
+      inputs.current[Math.min(pasted.length, 5)]?.focus();
+    }
+  };
+
+  return (
+    <div className="flex gap-2 justify-center" onPaste={handlePaste}>
+      {Array.from({ length: 6 }).map((_, i) => (
+        <input
+          key={i}
+          ref={(el) => { inputs.current[i] = el; }}
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          maxLength={2}
+          value={value[i] && value[i] !== " " ? value[i] : ""}
+          disabled={disabled}
+          onChange={(e) => handleChange(i, e)}
+          onKeyDown={(e) => handleKeyDown(i, e)}
+          className="w-10 h-12 sm:w-12 sm:h-14 text-center text-xl font-bold rounded-xl border border-black/[0.08] focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 outline-none transition-all disabled:opacity-50"
+        />
+      ))}
+    </div>
+  );
+};
+
 export const TenantSecuritySettings = ({
   tenantId,
   initialData,
@@ -110,9 +178,10 @@ export const TenantSecuritySettings = ({
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(initialData.twoFactorEnabled || false);
   const [twoFactorMethod, setTwoFactorMethod] = useState<"authenticator" | "email" | undefined>(initialData.twoFactorMethod);
   const [recoveryCodesGeneratedAt, setRecoveryCodesGeneratedAt] = useState(initialData.recoveryCodesGeneratedAt);
+  const [showSetupOptions, setShowSetupOptions] = useState(initialData.twoFactorEnabled || false);
 
   const [isSetupModalOpen, setIsSetupModalOpen] = useState(false);
-  const [setupStep, setSetupStep] = useState<"select" | "authenticator" | "email" | "recovery">("select");
+  const [setupStep, setSetupStep] = useState<"authenticator" | "email" | "recovery">("authenticator");
   const [setupSecret, setSetupSecret] = useState("");
   const [setupQrUrl, setSetupQrUrl] = useState("");
   const [setupVerificationCode, setSetupVerificationCode] = useState("");
@@ -147,6 +216,7 @@ export const TenantSecuritySettings = ({
     setTwoFactorEnabled(initialData.twoFactorEnabled || false);
     setTwoFactorMethod(initialData.twoFactorMethod);
     setRecoveryCodesGeneratedAt(initialData.recoveryCodesGeneratedAt);
+    if (initialData.twoFactorEnabled) setShowSetupOptions(true);
   }, [initialData]);
 
   const isPasswordDirty = currentPassword.length > 0 || newPassword.length > 0 || confirmPassword.length > 0;
@@ -179,26 +249,28 @@ export const TenantSecuritySettings = ({
     }
   };
 
-  // 2FA Handlers
-  const handleStartSetup = () => {
-    setSetupStep("select");
-    setSetupError("");
-    setSetupVerificationCode("");
-    setIsSetupModalOpen(true);
+  const handleMasterToggle = (val: boolean) => {
+    if (val) {
+      setShowSetupOptions(true);
+    } else {
+      setIsDisableModalOpen(true);
+    }
   };
 
-  const handleSelectMethod = async (method: "authenticator" | "email") => {
-    setSetupLoading(true);
+  const handleStartSetup = async (method: "authenticator" | "email") => {
+    setSetupStep(method);
     setSetupError("");
+    setSetupVerificationCode("");
+    setSetupLoading(true);
+    setIsSetupModalOpen(true);
+    
     try {
       if (method === "authenticator") {
         const res = await setupAuthenticatorTwoFactor(tenantId);
         setSetupSecret(res.secret);
         setSetupQrUrl(res.otpauthUrl);
-        setSetupStep("authenticator");
       } else {
         await setupEmailTwoFactor(tenantId);
-        setSetupStep("email");
       }
     } catch (err: any) {
       setSetupError(err.message || "Failed to initiate setup");
@@ -208,8 +280,8 @@ export const TenantSecuritySettings = ({
   };
 
   const handleVerifySetup = async () => {
-    if (!setupVerificationCode) {
-      setSetupError("Please enter the verification code.");
+    if (setupVerificationCode.length < 6) {
+      setSetupError("Please enter the complete 6-digit verification code.");
       return;
     }
     setSetupLoading(true);
@@ -225,6 +297,7 @@ export const TenantSecuritySettings = ({
       setTwoFactorEnabled(true);
       setTwoFactorMethod(setupStep === "authenticator" ? "authenticator" : "email");
       setRecoveryCodesGeneratedAt(new Date().toISOString());
+      setShowSetupOptions(true);
       setSetupStep("recovery");
     } catch (err: any) {
       setSetupError(err.message || "Invalid verification code");
@@ -243,6 +316,7 @@ export const TenantSecuritySettings = ({
     try {
       await disableTwoFactorAuth(tenantId, disablePassword);
       setTwoFactorEnabled(false);
+      setShowSetupOptions(false);
       setTwoFactorMethod(undefined);
       setRecoveryCodesGeneratedAt(undefined);
       setIsDisableModalOpen(false);
@@ -469,58 +543,108 @@ export const TenantSecuritySettings = ({
               title="Two-Factor Authentication"
               className="mb-0 py-2 border-gray-100"
             />
-            {!twoFactorEnabled ? (
-              <div className="flex flex-col sm:flex-row items-center justify-between p-6 mt-2 rounded-xl border border-gray-100 bg-white shadow-sm gap-4">
+            <div className="flex flex-col gap-4 mt-2">
+              <div className="flex items-center justify-between p-6 rounded-2xl border border-black/[0.05] bg-white">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-full bg-brand-primary/10 flex items-center justify-center text-brand-primary shrink-0">
                     <Shield className="w-6 h-6 text-brand-accent" />
                   </div>
                   <div>
-                    <h4 className="font-medium text-text-primary text-base">
-                      Enable Two-Factor Authentication
+                    <h4 className="font-bold text-text-primary text-base">
+                      Require 2FA for Login
                     </h4>
                     <p className="text-sm text-text-secondary mt-1">
-                      Add an extra layer of security to your account using an Authenticator App or Email Verification.
+                      Add an extra layer of security to your account.
                     </p>
+                    {twoFactorEnabled && recoveryCodesGeneratedAt && (
+                      <Badge color="success" variant="subtle" shape="rounded" className="mt-2 text-xs">
+                        Active since {new Date(recoveryCodesGeneratedAt).toLocaleDateString()}
+                      </Badge>
+                    )}
                   </div>
                 </div>
-                <Button onClick={handleStartSetup} variant="primary" shape="rounded" className="shrink-0 w-full sm:w-auto">
-                  Set Up 2FA
-                </Button>
+                <Toggle 
+                  isOn={twoFactorEnabled || showSetupOptions} 
+                  onChange={handleMasterToggle} 
+                  variant="accent"
+                />
               </div>
-            ) : (
-              <div className="space-y-3 mt-2">
-                <div className="flex flex-col sm:flex-row items-center justify-between p-5 rounded-xl border border-brand-primary/30 bg-brand-primary/5 gap-4">
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full bg-success-primary/20 flex items-center justify-center text-success-primary shrink-0">
-                      <CheckCircle2 className="w-5 h-5" />
-                    </div>
+
+              {(twoFactorEnabled || showSetupOptions) && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div 
+                    className="flex flex-col justify-between p-5 rounded-2xl border border-black/[0.05] bg-white hover:border-brand-primary transition-colors group cursor-pointer" 
+                    onClick={() => handleStartSetup("authenticator")}
+                  >
                     <div>
-                      <h4 className="font-medium text-text-primary">
-                        2FA is Active ({twoFactorMethod === "authenticator" ? "Authenticator App" : "Email"})
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="w-10 h-10 rounded-full bg-brand-primary/10 flex items-center justify-center text-brand-primary">
+                          <SmartphoneNfc className="w-5 h-5" />
+                        </div>
+                        <Badge color="accent" variant="subtle" shape="pill" className="text-[10px] uppercase font-bold tracking-wider">
+                          Recommended
+                        </Badge>
+                      </div>
+                      <h4 className="font-bold text-text-primary text-base flex justify-between items-center">
+                        Authenticator App
+                        {twoFactorMethod !== "authenticator" && <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-brand-primary transition-colors" />}
                       </h4>
-                      <p className="text-sm text-text-secondary">
-                        Your account is secured with two-factor authentication.
+                      <p className="text-sm text-text-secondary mt-1 mb-4">
+                        Get codes from an app like Google Authenticator or Authy. Works offline.
                       </p>
                     </div>
+                    {twoFactorMethod === "authenticator" && (
+                      <div className="flex flex-col items-start gap-3 pt-4 border-t border-black/[0.05]">
+                        <Badge color="success" variant="subtle" shape="rounded" className="text-xs">
+                          Added {getTimeAgo(recoveryCodesGeneratedAt)}
+                        </Badge>
+                        <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); handleStartSetup("authenticator"); }}>
+                          Change Authenticator App
+                        </Button>
+                      </div>
+                    )}
                   </div>
-                  <div className="flex gap-2 w-full sm:w-auto">
-                    <Button onClick={() => setIsDisableModalOpen(true)} variant="outline" shape="rounded" className="flex-1 sm:flex-none">
-                      Disable
-                    </Button>
-                    <Button onClick={handleStartSetup} variant="primary" shape="rounded" className="flex-1 sm:flex-none">
-                      Change Method
-                    </Button>
+
+                  <div 
+                    className="flex flex-col justify-between p-5 rounded-2xl border border-black/[0.05] bg-white hover:border-brand-primary transition-colors group cursor-pointer" 
+                    onClick={() => handleStartSetup("email")}
+                  >
+                    <div>
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">
+                          <Mail className="w-5 h-5" />
+                        </div>
+                      </div>
+                      <h4 className="font-bold text-text-primary text-base flex justify-between items-center">
+                        Email Verification
+                        {twoFactorMethod !== "email" && <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-brand-primary transition-colors" />}
+                      </h4>
+                      <p className="text-sm text-text-secondary mt-1 mb-4">
+                        Receive a 6-digit code to your email inbox.
+                      </p>
+                    </div>
+                    {twoFactorMethod === "email" && (
+                      <div className="flex flex-col items-start gap-3 pt-4 border-t border-black/[0.05]">
+                        <Badge color="success" variant="subtle" shape="rounded" className="text-xs">
+                          Added {getTimeAgo(recoveryCodesGeneratedAt)}
+                        </Badge>
+                        <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); handleStartSetup("email"); }}>
+                          Change Email Method
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </div>
+              )}
 
-                <div className="flex flex-col sm:flex-row items-center justify-between p-5 rounded-xl border border-gray-100 bg-white gap-4">
+              {twoFactorEnabled && (
+                <div className="flex flex-col sm:flex-row items-center justify-between p-5 rounded-2xl border border-black/[0.05] bg-white gap-4">
                   <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 shrink-0">
                       <KeyRound className="w-5 h-5" />
                     </div>
                     <div>
-                      <h4 className="font-medium text-text-primary">
+                      <h4 className="font-bold text-text-primary text-base">
                         Backup Recovery Codes
                       </h4>
                       <p className="text-sm text-text-secondary">
@@ -534,8 +658,8 @@ export const TenantSecuritySettings = ({
                     Regenerate Codes
                   </Button>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
           <div className="space-y-4 pt-2">
@@ -574,9 +698,6 @@ export const TenantSecuritySettings = ({
         </div>
       </div>
 
-      {/* MODALS OUTSIDE ANIMATE-IN */}
-      
-      {/* Logout Modal */}
       <ActionConfirmationModal
         isOpen={isLogoutModalOpen}
         action="delete"
@@ -588,34 +709,26 @@ export const TenantSecuritySettings = ({
         onConfirm={handleLogoutOtherSessions}
       />
 
-      {/* 2FA Setup Modal */}
       {isSetupModalOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-text-primary/45 backdrop-blur-sm p-4">
-          <div
-            className="bg-white rounded-[28px] w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col"
-            style={{
-              boxShadow: "0 24px 64px rgba(0,0,0,0.14), 0 4px 16px rgba(0,0,0,0.08)",
-              maxHeight: "90vh"
-            }}
-          >
-            <div className="flex justify-between items-center p-6 border-b border-gray-100 shrink-0">
-              <h3 className="font-bold text-lg text-text-primary">
-                {setupStep === "select" && "Two-Factor Authentication"}
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-text-primary/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl md:rounded-[32px] w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+            <div className="px-6 md:px-8 py-4 md:py-6 flex items-center justify-between border-b border-black/[0.05] flex-shrink-0">
+              <h2 className="b2 font-bold text-text-primary">
                 {setupStep === "authenticator" && "Authenticator Setup"}
                 {setupStep === "email" && "Email Verification"}
                 {setupStep === "recovery" && "Recovery Codes"}
-              </h3>
+              </h2>
               {setupStep !== "recovery" && (
                 <button
                   onClick={() => setIsSetupModalOpen(false)}
-                  className="text-gray-400 hover:text-text-primary transition-colors p-1"
+                  className="text-text-secondary hover:text-text-primary transition-colors p-1"
                 >
                   <X size={20} />
                 </button>
               )}
             </div>
 
-            <div className="p-6 overflow-y-auto">
+            <div className="p-6 md:p-8 overflow-y-auto">
               {setupError && (
                 <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-100 flex gap-2 text-sm text-red-600 items-start">
                   <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
@@ -623,111 +736,72 @@ export const TenantSecuritySettings = ({
                 </div>
               )}
 
-              {setupStep === "select" && (
-                <div className="space-y-4">
-                  <p className="text-sm text-text-secondary mb-2">
-                    Choose how you want to receive your security codes. You can change this later.
-                  </p>
-                  
-                  <button
-                    onClick={() => handleSelectMethod("authenticator")}
-                    disabled={setupLoading}
-                    className="w-full text-left p-4 rounded-xl border border-gray-200 hover:border-brand-primary hover:bg-brand-primary/5 transition-all flex items-start gap-4 disabled:opacity-50 group"
-                  >
-                    <div className="w-10 h-10 rounded-full bg-brand-primary/10 flex items-center justify-center text-brand-primary shrink-0 group-hover:scale-110 transition-transform">
-                      <SmartphoneNfc className="w-5 h-5" />
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-text-primary flex items-center gap-2">
-                        Authenticator App
-                        <span className="text-[10px] uppercase font-bold bg-brand-accent/10 text-brand-accent px-2 py-0.5 rounded-full">Recommended</span>
-                      </h4>
-                      <p className="text-xs text-text-secondary mt-1">Get codes from an app like Google Authenticator or Authy. Works offline.</p>
-                    </div>
-                    <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-brand-primary shrink-0 mt-2" />
-                  </button>
-
-                  <button
-                    onClick={() => handleSelectMethod("email")}
-                    disabled={setupLoading}
-                    className="w-full text-left p-4 rounded-xl border border-gray-200 hover:border-brand-primary hover:bg-brand-primary/5 transition-all flex items-start gap-4 disabled:opacity-50 group"
-                  >
-                    <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 shrink-0 group-hover:bg-brand-primary/10 group-hover:text-brand-primary transition-colors">
-                      <Mail className="w-5 h-5" />
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-text-primary">
-                        Email Verification
-                      </h4>
-                      <p className="text-xs text-text-secondary mt-1">Receive a 6-digit code to your business email inbox.</p>
-                    </div>
-                    <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-brand-primary shrink-0 mt-2" />
-                  </button>
-
-                  {setupLoading && (
-                    <div className="flex justify-center py-2">
-                      <Loader2 className="w-6 h-6 animate-spin text-brand-primary" />
-                    </div>
-                  )}
-                </div>
-              )}
-
               {setupStep === "authenticator" && (
                 <div className="space-y-6">
-                  <div className="text-center space-y-2">
-                    <p className="text-sm text-text-secondary">
-                      1. Open your authenticator app and scan this QR code.
-                    </p>
-                    <div className="bg-white p-4 rounded-xl border border-gray-200 inline-block mt-2">
-                      <QRCode value={setupQrUrl} size={160} />
+                  {setupLoading && !setupQrUrl ? (
+                    <div className="flex flex-col items-center justify-center py-10 space-y-4">
+                      <Loader2 className="w-8 h-8 animate-spin text-brand-primary" />
+                      <p className="text-sm text-text-secondary">Generating secure keys...</p>
                     </div>
-                    <p className="text-xs text-text-secondary mt-2">
-                      Unable to scan? Enter this key manually:<br/>
-                      <span className="font-mono font-medium text-text-primary bg-gray-100 px-2 py-1 rounded inline-block mt-1">{setupSecret}</span>
-                    </p>
-                  </div>
+                  ) : (
+                    <>
+                      <div className="text-center space-y-2">
+                        <p className="text-sm text-text-secondary">
+                          1. Open your authenticator app and scan this QR code.
+                        </p>
+                        <div className="bg-white p-4 rounded-xl border border-gray-200 inline-block mt-2">
+                          <QRCode value={setupQrUrl} size={160} />
+                        </div>
+                        <p className="text-xs text-text-secondary mt-2">
+                          Unable to scan? Enter this key manually:<br/>
+                          <span className="font-mono font-medium text-text-primary bg-gray-100 px-2 py-1 rounded inline-block mt-1">{setupSecret}</span>
+                        </p>
+                      </div>
 
-                  <div className="space-y-3 pt-4 border-t border-gray-100">
-                    <p className="text-sm text-text-secondary">
-                      2. Enter the 6-digit code generated by your app.
-                    </p>
-                    <Input
-                      value={setupVerificationCode}
-                      onChange={(e) => setSetupVerificationCode(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
-                      placeholder="000000"
-                      className="text-center tracking-[0.5em] font-mono text-lg py-3"
-                      maxLength={6}
-                    />
-                  </div>
+                      <div className="space-y-3 pt-4 border-t border-black/[0.05]">
+                        <p className="text-sm text-text-secondary mb-3">
+                          2. Enter the 6-digit code generated by your app.
+                        </p>
+                        <SixDigitInput 
+                          value={setupVerificationCode} 
+                          onChange={setSetupVerificationCode} 
+                          disabled={setupLoading}
+                        />
+                      </div>
 
-                  <div className="flex gap-3">
-                    <Button onClick={() => setSetupStep("select")} variant="outline" className="flex-1">Back</Button>
-                    <Button onClick={handleVerifySetup} variant="primary" className="flex-1" loading={setupLoading} disabled={setupVerificationCode.length < 6}>
-                      Verify & Enable
-                    </Button>
-                  </div>
+                      <div className="flex gap-3 mt-6">
+                        <Button onClick={() => setIsSetupModalOpen(false)} variant="outline" className="flex-1">Cancel</Button>
+                        <Button onClick={handleVerifySetup} variant="primary" className="flex-1" loading={setupLoading} disabled={setupVerificationCode.length < 6}>
+                          Verify & Enable
+                        </Button>
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
 
               {setupStep === "email" && (
                 <div className="space-y-6 text-center">
-                  <div className="w-16 h-16 rounded-full bg-brand-primary/10 flex items-center justify-center text-brand-primary mx-auto mb-2">
-                    <Mail className="w-8 h-8" />
+                  <div className="relative w-16 h-16 mx-auto mb-4">
+                    <div className="absolute inset-0 rounded-full bg-brand-primary/20 animate-ping" style={{ animationDuration: "1.8s" }} />
+                    <div className="relative w-16 h-16 bg-brand-primary/10 text-brand-primary rounded-full flex items-center justify-center shadow-lg shadow-brand-primary/20">
+                      <Mail size={32} strokeWidth={3} />
+                    </div>
                   </div>
                   <p className="text-sm text-text-secondary">
                     We've sent a 6-digit verification code to your email. Please enter it below to confirm.
                   </p>
                   
-                  <Input
-                    value={setupVerificationCode}
-                    onChange={(e) => setSetupVerificationCode(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
-                    placeholder="000000"
-                    className="text-center tracking-[0.5em] font-mono text-lg py-3 max-w-[200px] mx-auto"
-                    maxLength={6}
-                  />
+                  <div className="py-4">
+                    <SixDigitInput 
+                      value={setupVerificationCode} 
+                      onChange={setSetupVerificationCode} 
+                      disabled={setupLoading}
+                    />
+                  </div>
 
-                  <div className="flex gap-3 pt-4">
-                    <Button onClick={() => setSetupStep("select")} variant="outline" className="flex-1">Back</Button>
+                  <div className="flex gap-3 pt-2">
+                    <Button onClick={() => setIsSetupModalOpen(false)} variant="outline" className="flex-1">Cancel</Button>
                     <Button onClick={handleVerifySetup} variant="primary" className="flex-1" loading={setupLoading} disabled={setupVerificationCode.length < 6}>
                       Verify Code
                     </Button>
@@ -737,25 +811,30 @@ export const TenantSecuritySettings = ({
 
               {setupStep === "recovery" && (
                 <div className="space-y-6 text-center">
-                  <div className="w-16 h-16 rounded-full bg-success-primary/20 flex items-center justify-center text-success-primary mx-auto">
-                    <CheckCircle2 className="w-8 h-8" />
+                  <div className="relative w-16 h-16 mx-auto mb-2">
+                    <div className="absolute inset-0 rounded-full bg-success-secondary/60 animate-ping" style={{ animationDuration: "1.8s" }} />
+                    <div className="relative w-16 h-16 bg-success-secondary text-success-primary rounded-full flex items-center justify-center shadow-lg shadow-success-primary/20">
+                      <Check size={32} strokeWidth={3} />
+                    </div>
                   </div>
                   <div>
-                    <h4 className="font-bold text-text-primary text-lg">2FA is now active!</h4>
-                    <p className="text-sm text-text-secondary mt-1">
+                    <h3 className="b2 font-bold text-text-primary mb-1">
+                      2FA is now active!
+                    </h3>
+                    <p className="b4 text-text-secondary">
                       Save these backup recovery codes in a secure place. They will only be shown once.
                     </p>
                   </div>
 
                   <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 grid grid-cols-2 gap-3 text-left">
                     {setupRecoveryCodes.map((code, idx) => (
-                      <div key={idx} className="font-mono text-sm font-medium text-text-primary tracking-wider">
+                      <div key={idx} className="font-mono text-sm font-medium text-text-primary tracking-wider text-center">
                         {code.slice(0,4)}-{code.slice(4)}
                       </div>
                     ))}
                   </div>
 
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 pt-2">
                     <Button onClick={handleCopyCodes} variant="outline" shape="rounded" leftIcon={<Copy className="w-4 h-4"/>} className="flex-1">
                       Copy
                     </Button>
@@ -764,7 +843,7 @@ export const TenantSecuritySettings = ({
                     </Button>
                   </div>
 
-                  <Button onClick={() => setIsSetupModalOpen(false)} variant="primary" className="w-full">
+                  <Button onClick={() => setIsSetupModalOpen(false)} variant="primary" className="w-full mt-2">
                     Done
                   </Button>
                 </div>
@@ -774,15 +853,9 @@ export const TenantSecuritySettings = ({
         </div>
       )}
 
-      {/* Disable 2FA Modal */}
       {isDisableModalOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-text-primary/45 backdrop-blur-sm p-4">
-          <div
-            className="bg-white rounded-[28px] w-full max-w-sm shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
-            style={{
-              boxShadow: "0 24px 64px rgba(0,0,0,0.14), 0 4px 16px rgba(0,0,0,0.08)",
-            }}
-          >
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-text-primary/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl md:rounded-[32px] w-full max-w-sm shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             <div className="flex flex-col items-center text-center px-8 pt-8 pb-6">
               <div className="flex items-center justify-center mb-5 w-14 h-14 rounded-2xl bg-[#fff0f0] shadow-sm">
                 <Trash2 className="w-6 h-6 text-[#ec1313]" />
@@ -828,7 +901,6 @@ export const TenantSecuritySettings = ({
         </div>
       )}
 
-      {/* Regenerate Codes Modal */}
       <ActionConfirmationModal
         isOpen={isRegenerateModalOpen}
         action="save"
