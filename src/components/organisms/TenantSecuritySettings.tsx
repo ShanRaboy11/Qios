@@ -9,12 +9,16 @@ import {
   Eye,
   EyeOff,
   LogOut,
+  Save,
 } from "lucide-react";
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
 import { Toggle } from "@/components/atoms/Toggle";
+import { FeatureToggle } from "@/components/molecules/FeatureToggle";
+import { ActionConfirmationModal } from "@/components/molecules/ConfirmationModal";
 import { SectionHeader } from "@/components/molecules/SectionHeader";
 import { SessionCard } from "@/components/molecules/SessionCard";
+import { cn } from "@/lib/utils";
 import {
   revokeOtherTenantSessions,
   updateTenantPassword,
@@ -54,6 +58,8 @@ export const TenantSecuritySettings = ({
   const [saving2fa, setSaving2fa] = useState(false);
   const [sessionNotice, setSessionNotice] = useState("");
   const [sessionError, setSessionError] = useState("");
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const [loggingOutSessions, setLoggingOutSessions] = useState(false);
   const [passwordState, passwordAction, passwordPending] = useActionState(
     updateTenantPassword.bind(null, tenantId),
     emptySettingsActionState,
@@ -95,16 +101,20 @@ export const TenantSecuritySettings = ({
   const handleLogoutOtherSessions = async () => {
     setSessionError("");
     setSessionNotice("");
+    setLoggingOutSessions(true);
 
     try {
       await revokeOtherTenantSessions(tenantId);
       setSessionNotice("Other sessions were logged out successfully.");
+      setIsLogoutModalOpen(false);
     } catch (error) {
       setSessionError(
         error instanceof Error
           ? error.message
           : "Unable to log out other sessions.",
       );
+    } finally {
+      setLoggingOutSessions(false);
     }
   };
 
@@ -147,9 +157,12 @@ export const TenantSecuritySettings = ({
                   value={currentPassword}
                   onChange={(event) => setCurrentPassword(event.target.value)}
                   type={showCurrentPassword ? "text" : "password"}
-                  placeholder="••••••••"
+                  placeholder="Current Password"
                   isError={!!passwordState.fieldErrors.currentPassword}
-                  className="py-2.5 rounded-xl pr-10"
+                  className={cn(
+                    "py-2.5 rounded-xl pr-10 focus:outline-none",
+                    !passwordState.fieldErrors.currentPassword && "focus:border-brand-primary focus:ring-brand-primary"
+                  )}
                 />
                 <button
                   type="button"
@@ -187,7 +200,10 @@ export const TenantSecuritySettings = ({
                     !!passwordState.fieldErrors.newPassword ||
                     (newPassword.length > 0 && !isPasswordStrong)
                   }
-                  className="py-2.5 rounded-xl pr-10"
+                  className={cn(
+                    "py-2.5 rounded-xl pr-10 focus:outline-none",
+                    !(!!passwordState.fieldErrors.newPassword || (newPassword.length > 0 && !isPasswordStrong)) && "focus:border-brand-primary focus:ring-brand-primary"
+                  )}
                 />
                 <button
                   type="button"
@@ -257,7 +273,10 @@ export const TenantSecuritySettings = ({
                   type={showConfirmPassword ? "text" : "password"}
                   placeholder="Confirm Password"
                   isError={!!passwordState.fieldErrors.confirmPassword}
-                  className="py-2.5 rounded-xl pr-10"
+                  className={cn(
+                    "py-2.5 rounded-xl pr-10 focus:outline-none",
+                    !passwordState.fieldErrors.confirmPassword && "focus:border-brand-primary focus:ring-brand-primary"
+                  )}
                 />
                 <button
                   type="button"
@@ -283,11 +302,12 @@ export const TenantSecuritySettings = ({
             <div className="sm:col-span-2 flex justify-end mt-2">
               <Button
                 type="submit"
-                variant="outline"
+                variant="accent"
                 shape="rounded"
+                leftIcon={<Save size={18} />}
                 loading={passwordPending}
               >
-                Update Password
+                Save Changes
               </Button>
             </div>
           </form>
@@ -298,27 +318,15 @@ export const TenantSecuritySettings = ({
             title="Two-Factor Authentication"
             className="mb-0 py-2 border-gray-100"
           />
-          <div className="flex items-center justify-between p-4 mt-2 rounded-xl border border-gray-100">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-full bg-brand-primary/10 flex items-center justify-center">
-                <Shield className="w-5 h-5 text-brand-accent" />
-              </div>
-              <div>
-                <h4 className="font-medium text-text-primary">
-                  Require 2FA for Login
-                </h4>
-                <p className="text-sm text-text-secondary hidden sm:block">
-                  Add an extra layer of security using an authenticator app.
-                </p>
-              </div>
-            </div>
-            <Toggle
-              variant="accent"
-              isOn={requireTwoFactorAuth}
-              onChange={handleTwoFactorChange}
-              disabled={saving2fa}
-            />
-          </div>
+          <FeatureToggle
+            label="Require 2FA for Login"
+            description="Add an extra layer of security using an authenticator app."
+            checked={requireTwoFactorAuth}
+            onChange={handleTwoFactorChange}
+            disabled={saving2fa}
+            variant="accent"
+            className="p-4 mt-2 border-gray-100 bg-white"
+          />
           {(sessionNotice || sessionError) && (
             <div className="space-y-3 pt-2">
               {sessionNotice && (
@@ -362,13 +370,24 @@ export const TenantSecuritySettings = ({
               variant="accent"
               shape="rounded"
               leftIcon={<LogOut className="w-4 h-4" />}
-              onClick={handleLogoutOtherSessions}
+              onClick={() => setIsLogoutModalOpen(true)}
             >
               Log Out All Other Sessions
             </Button>
           </div>
         </div>
       </div>
+
+      <ActionConfirmationModal
+        isOpen={isLogoutModalOpen}
+        action="delete"
+        title="Log Out Other Sessions?"
+        message="Are you sure you want to log out all other active sessions? This action cannot be undone."
+        confirmLabel="Log Out Sessions"
+        saving={loggingOutSessions}
+        onClose={() => setIsLogoutModalOpen(false)}
+        onConfirm={handleLogoutOtherSessions}
+      />
     </div>
   );
 };
