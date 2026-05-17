@@ -42,6 +42,9 @@ export interface TenantBrandingSettingsData {
 
 export interface TenantSecuritySettingsData {
   requireTwoFactorAuth: boolean;
+  twoFactorEnabled?: boolean;
+  twoFactorMethod?: "authenticator" | "email";
+  recoveryCodesGeneratedAt?: string;
 }
 
 export interface TenantSettingsPageData {

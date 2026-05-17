@@ -4,6 +4,10 @@ import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { generateSecret, generateURI, verifySync } from "otplib";
+import { encrypt, hashValue } from "@/lib/encryption";
+import { sendContactVerificationEmail } from "@/lib/email";
+import crypto from "crypto";
 import type {
   SettingsActionState,
   TenantBrandingSettingsData,
@@ -266,6 +270,9 @@ export async function getTenantSettings(
         "requireTwoFactorAuth",
       ]),
     ),
+    twoFactorEnabled: toBoolean(readSettingValue(settings, ["two_factor_enabled"])),
+    twoFactorMethod: (readSettingValue(settings, ["two_factor_method"]) as "authenticator" | "email") || undefined,
+    recoveryCodesGeneratedAt: readSettingValue(settings, ["recovery_codes_generated_at"]) || undefined,
   };
 
   return {
@@ -906,3 +913,224 @@ export async function updateTenantPassword(
     };
   }
 }
+
+// ─── 2FA Management ─────────────────────────────────────────────────────────
+
+export async function setupAuthenticatorTwoFactor(tenantId: string) {
+  const { admin } = await getAuthenticatedTenantContext(tenantId);
+  const { data: tenant } = await admin
+    .from("tenants")
+    .select("business_name")
+    .eq("id", tenantId)
+    .single();
+  const businessName = tenant?.business_name || "Qios Tenant";
+
+  const secret = generateSecret();
+  const otpauthUrl = generateURI({
+    issuer: "Qios",
+    label: businessName,
+    secret
+  });
+
+  return { secret, otpauthUrl };
+}
+
+export async function verifyAndEnableAuthenticatorTwoFactor(
+  tenantId: string,
+  secret: string,
+  token: string
+) {
+  const isValid = verifySync({ token, secret });
+  if (!isValid) throw new Error("Invalid verification code.");
+
+  const { admin } = await getAuthenticatedTenantContext(tenantId);
+
+  const recoveryCodes = Array.from({ length: 10 }, () =>
+    crypto.randomBytes(4).toString("hex")
+  );
+  const recoveryCodesHashed = recoveryCodes.map((c) => hashValue(c));
+
+  const { data: tenant } = await admin
+    .from("tenants")
+    .select("settings")
+    .eq("id", tenantId)
+    .single();
+
+  const settings = mergeSettings(
+    (tenant?.settings as Record<string, unknown>) || null,
+    {
+      two_factor_enabled: true,
+      two_factor_method: "authenticator",
+      totp_secret_encrypted: encrypt(secret),
+      recovery_codes_hashed: recoveryCodesHashed,
+      recovery_codes_generated_at: new Date().toISOString(),
+    }
+  );
+
+  const { error } = await admin.from("tenants").update({ settings }).eq("id", tenantId);
+  if (error) throw new Error(error.message);
+  
+  revalidatePath(`/${tenantId}/settings`);
+
+  return { success: true, recoveryCodes };
+}
+
+export async function setupEmailTwoFactor(tenantId: string) {
+  const { admin, user } = await getAuthenticatedTenantContext(tenantId);
+
+  const { data: tenant } = await admin
+    .from("tenants")
+    .select("business_email, business_name, settings")
+    .eq("id", tenantId)
+    .single();
+
+  const emailToUse = tenant?.business_email || user.email;
+  const businessName = tenant?.business_name || "Qios";
+
+  if (!emailToUse) throw new Error("No valid email found to send verification code to.");
+
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+  const codeHashed = hashValue(code);
+  const expiresAt = new Date(Date.now() + 10 * 60000).toISOString(); // 10 mins
+
+  const settings = mergeSettings(
+    (tenant?.settings as Record<string, unknown>) || null,
+    {
+      email_verification_code_hashed: codeHashed,
+      email_verification_code_expires_at: expiresAt,
+    }
+  );
+
+  await admin.from("tenants").update({ settings }).eq("id", tenantId);
+
+  const res = await sendContactVerificationEmail({
+    to: emailToUse,
+    businessName,
+    code,
+  });
+  
+  if (!res.success) {
+    throw new Error("Unable to send verification email. Please try again.");
+  }
+
+  return { success: true };
+}
+
+export async function verifyAndEnableEmailTwoFactor(
+  tenantId: string,
+  code: string
+) {
+  const { admin } = await getAuthenticatedTenantContext(tenantId);
+  const { data: tenant } = await admin
+    .from("tenants")
+    .select("settings")
+    .eq("id", tenantId)
+    .single();
+  const currentSettings = (tenant?.settings as Record<string, any>) || {};
+
+  if (
+    !currentSettings.email_verification_code_hashed ||
+    !currentSettings.email_verification_code_expires_at
+  ) {
+    throw new Error("No pending verification code.");
+  }
+
+  if (new Date(currentSettings.email_verification_code_expires_at) < new Date()) {
+    throw new Error("Verification code has expired. Please request a new one.");
+  }
+
+  if (currentSettings.email_verification_code_hashed !== hashValue(code)) {
+    throw new Error("Invalid verification code.");
+  }
+
+  const recoveryCodes = Array.from({ length: 10 }, () =>
+    crypto.randomBytes(4).toString("hex")
+  );
+  const recoveryCodesHashed = recoveryCodes.map((c) => hashValue(c));
+
+  const newSettings = mergeSettings(currentSettings, {
+    two_factor_enabled: true,
+    two_factor_method: "email",
+    recovery_codes_hashed: recoveryCodesHashed,
+    recovery_codes_generated_at: new Date().toISOString(),
+    email_verification_code_hashed: null, // clear it
+    email_verification_code_expires_at: null,
+  });
+
+  const { error } = await admin.from("tenants").update({ settings: newSettings }).eq("id", tenantId);
+  if (error) throw new Error(error.message);
+  
+  revalidatePath(`/${tenantId}/settings`);
+
+  return { success: true, recoveryCodes };
+}
+
+export async function disableTwoFactorAuth(
+  tenantId: string,
+  passwordConfirm: string
+) {
+  const { admin, supabase } = await getAuthenticatedTenantContext(tenantId);
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user?.email) throw new Error("Not authenticated");
+
+  const { error: signInError } = await supabase.auth.signInWithPassword({
+    email: user.email,
+    password: passwordConfirm,
+  });
+
+  if (signInError) throw new Error("Incorrect password.");
+
+  const { data: tenant } = await admin
+    .from("tenants")
+    .select("settings")
+    .eq("id", tenantId)
+    .single();
+  const currentSettings = (tenant?.settings as Record<string, any>) || {};
+
+  const newSettings = { ...currentSettings };
+  delete newSettings.two_factor_enabled;
+  delete newSettings.two_factor_method;
+  delete newSettings.totp_secret_encrypted;
+  delete newSettings.recovery_codes_hashed;
+  delete newSettings.recovery_codes_generated_at;
+  delete newSettings.require_two_factor_auth;
+
+  const { error } = await admin.from("tenants").update({ settings: newSettings }).eq("id", tenantId);
+  if (error) throw new Error(error.message);
+  
+  revalidatePath(`/${tenantId}/settings`);
+
+  return { success: true };
+}
+
+export async function generateRecoveryCodes(tenantId: string) {
+  const { admin } = await getAuthenticatedTenantContext(tenantId);
+
+  const recoveryCodes = Array.from({ length: 10 }, () =>
+    crypto.randomBytes(4).toString("hex")
+  );
+  const recoveryCodesHashed = recoveryCodes.map((c) => hashValue(c));
+
+  const { data: tenant } = await admin
+    .from("tenants")
+    .select("settings")
+    .eq("id", tenantId)
+    .single();
+
+  const settings = mergeSettings(
+    (tenant?.settings as Record<string, unknown>) || null,
+    {
+      recovery_codes_hashed: recoveryCodesHashed,
+      recovery_codes_generated_at: new Date().toISOString(),
+    }
+  );
+
+  const { error } = await admin.from("tenants").update({ settings }).eq("id", tenantId);
+  if (error) throw new Error(error.message);
+  
+  revalidatePath(`/${tenantId}/settings`);
+
+  return { success: true, recoveryCodes };
+}
+
