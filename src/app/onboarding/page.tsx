@@ -36,6 +36,7 @@ import {
   saveBusinessInformation,
   saveDocumentUploads,
   saveOnboardingProgress,
+  markTenantResubmission,
 } from "./actions";
 import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -92,6 +93,7 @@ export default function OnboardingPage() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [isResubmission, setIsResubmission] = useState(false);
 
   const [businessData, setBusinessData] = useState({
     name: "",
@@ -126,8 +128,20 @@ export default function OnboardingPage() {
   const pendingSaveDocuments = useRef<Promise<any> | null>(null);
   const pendingSaveProgress = useRef<Promise<any> | null>(null);
 
-  // Ensure onboarding always starts fresh when page is opened.
+      // ensure onboarding always starts fresh when page is opened.
+      // exception: when ?resubmit=<email> is present, resume the rejected tenant at step 3.
   useEffect(() => {
+    const resubmitEmail =
+      typeof window !== "undefined"
+        ? new URL(window.location.href).searchParams.get("resubmit") || ""
+        : "";
+
+    if (resubmitEmail) {
+      setIsResubmission(true);
+      void handleAutoResume(resubmitEmail);
+      return;
+    }
+
     const clearSession = async () => {
       try {
         const supabase = createSupabaseBrowserClient();
@@ -154,10 +168,12 @@ export default function OnboardingPage() {
 
     void clearSession();
     // run only on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [authEmailError, setAuthEmailError] = useState("");
 
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [registrationData, setRegistrationData] = useState({
@@ -332,12 +348,27 @@ export default function OnboardingPage() {
   const handleAuthContinue = async () => {
     setError("");
     setSuccess("");
+    setAuthEmailError("");
 
     if (!validateEmail(authData.email)) {
-      return setError("A valid admin email is required.");
+      return setAuthEmailError("A valid admin email is required.");
     }
+
+    // validate password strength
     if (authData.password.length < 8) {
       return setError("Password must be at least 8 characters.");
+    }
+    if (!/[A-Z]/.test(authData.password)) {
+      return setError("Password must contain at least one uppercase letter.");
+    }
+    if (!/[a-z]/.test(authData.password)) {
+      return setError("Password must contain at least one lowercase letter.");
+    }
+    if (!/[0-9]/.test(authData.password)) {
+      return setError("Password must contain at least one digit.");
+    }
+    if (!/[^A-Za-z0-9]/.test(authData.password)) {
+      return setError("Password must contain at least one special character.");
     }
     if (authData.password !== authData.confirm) {
       return setError("Passwords do not match.");
@@ -550,7 +581,7 @@ export default function OnboardingPage() {
         filesData,
         existingDocumentUrls,
       })
-        .then((res) => {
+        .then(async (res) => {
           if (res.success && res.uploadedUrls) {
             // Map urls back to requirement ids
             const next: Record<string, string> = {};
@@ -560,6 +591,10 @@ export default function OnboardingPage() {
             });
             setExistingDocumentUrls((prev) => ({ ...prev, ...next }));
             setSuccess("Documents saved in background.");
+          }
+          // During resubmission, flip status to pending so the admin can re-review.
+          if (isResubmission && tenantId) {
+            await markTenantResubmission(tenantId);
           }
         })
         .catch((err: any) => {
@@ -738,6 +773,7 @@ export default function OnboardingPage() {
                   data={authData}
                   setData={setAuthData}
                   onAutoResume={handleAutoResume}
+                  emailError={authEmailError}
                 />
                 <div className="mt-8 flex flex-col items-center w-full">
                   <div className="flex flex-row gap-3 w-full">

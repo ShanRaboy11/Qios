@@ -6,7 +6,7 @@ import { Footer } from "@/components/organisms/footer";
 import { motion } from "framer-motion";
 import { usePathname, useRouter, useParams } from "next/navigation";
 
-export default function TenantLayout({
+export default function EmployeeLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -16,25 +16,22 @@ export default function TenantLayout({
   const params = useParams();
   const tenantId = params.id as string;
 
-  // determine active view from pathname
   let currentView = "dashboard";
-  if (pathname.includes("/menu")) currentView = "menu";
-  if (pathname.includes("/inventory")) currentView = "inventory";
-  if (pathname.includes("/staff")) currentView = "staff";
-  if (pathname.includes("/roles")) currentView = "roles";
-  if (pathname.includes("/sales")) currentView = "sales";
-  if (pathname.includes("/audit_logs")) currentView = "audit_logs";
+  if (pathname.includes("/queue")) currentView = "queue";
+  if (pathname.includes("/scanner")) currentView = "scanner";
+  if (pathname.includes("/inventory_audit")) currentView = "inventory_audit";
+  if (pathname.includes("/stock_audit")) currentView = "stock_audit";
+  if (pathname.includes("/transactions")) currentView = "transactions";
+  if (pathname.includes("/kitchen")) currentView = "kitchen";
 
   const handleNavigation = (view: string) => {
     if (view === currentView) return;
-    const url =
-      view === "dashboard" ? `/${tenantId}/dashboard` : `/${tenantId}/${view}`;
+    const url = `/${tenantId}/employee/${view}`;
     router.push(url);
   };
 
   return (
     <div className="min-h-screen bg-bg-primary overflow-x-hidden relative flex flex-col">
-      {/* background moving blobs */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
         <motion.div
           animate={{
@@ -83,7 +80,7 @@ export default function TenantLayout({
       <div className="relative z-[40]">
         <Navbar
           variant="transparent"
-          type="tenant"
+          type="employee"
           activeView={currentView}
           onNavigate={handleNavigation}
         />

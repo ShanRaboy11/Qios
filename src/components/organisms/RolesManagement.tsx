@@ -19,9 +19,12 @@ import {
   QrCode,
   Users,
   X,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ActionConfirmationModal } from "@/components/molecules/ConfirmationModal";
+import { useParams } from "next/navigation";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 // types
 type PermissionGroup = {
@@ -39,7 +42,7 @@ type Permissions = {
 type Employee = {
   id: string;
   name: string;
-  username: string;
+  email: string;
   password?: string;
 };
 
@@ -116,20 +119,20 @@ const INITIAL_ROLES: Role[] = [
       {
         id: "e1",
         name: "Alice Johnson",
-        username: "alice.j",
-        password: "password123",
+        email: "alice@company.com",
+        password: "TempPass123!",
       },
       {
         id: "e2",
         name: "Bob Smith",
-        username: "bob.s",
-        password: "password123",
+        email: "bob@company.com",
+        password: "TempPass123!",
       },
       {
         id: "e3",
-        name: "Charlie Davis",
-        username: "charlie.d",
-        password: "password123",
+        name: "Charlie Brown",
+        email: "charlie@company.com",
+        password: "TempPass123!",
       },
     ],
     permissions: {
@@ -169,9 +172,9 @@ const INITIAL_ROLES: Role[] = [
     employees: [
       {
         id: "e4",
-        name: "David Wilson",
-        username: "david.w",
-        password: "password123",
+        name: "David Lee",
+        email: "david@company.com",
+        password: "TempPass123!",
       },
     ],
     permissions: {
@@ -253,19 +256,77 @@ const PRESET_COLORS = [
 ];
 
 export default function RolesManagement() {
-  const [roles, setRoles] = useState<Role[]>(INITIAL_ROLES);
-  const [selectedRoleId, setSelectedRoleId] = useState<string>(roles[0].id);
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [selectedRoleId, setSelectedRoleId] = useState<string>("");
   const [draftRole, setDraftRole] = useState<Role | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState<"permissions" | "employees">(
     "permissions",
   );
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [creatingEmployee, setCreatingEmployee] = useState(false);
+
+  const params = useParams();
+  const tenantId = params.id as string;
+  const supabase = createSupabaseBrowserClient();
+
+  useEffect(() => {
+    async function fetchRoles() {
+      if (!tenantId) return;
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        const token = session?.access_token;
+        if (!token) throw new Error("no access token");
+
+        const res = await fetch(`/api/tenants/${tenantId}/roles`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!res.ok) {
+          throw new Error("failed to fetch roles");
+        }
+
+        const data = await res.json();
+        const parsed: Role[] = data.map((d: any) => ({
+          id: d.id,
+          name: d.name,
+          color: d.color,
+          employees: (d.employees || []).map((e: any) => ({
+            id: e.id,
+            name: e.name ?? e.full_name ?? "",
+            email: e.email ?? "",
+          })),
+          permissions:
+            typeof d.permissions === "string"
+              ? JSON.parse(d.permissions)
+              : d.permissions,
+        }));
+
+        setRoles(parsed);
+        if (parsed.length > 0) {
+          setSelectedRoleId(parsed[0].id);
+        }
+      } catch (err) {
+        console.error("error fetching roles:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchRoles();
+  }, [tenantId, supabase]);
 
   // modal & employee states
   const [isAddEmployeeModalOpen, setIsAddEmployeeModalOpen] = useState(false);
   const [newEmployeeName, setNewEmployeeName] = useState("");
+  const [newEmployeeEmail, setNewEmployeeEmail] = useState("");
   const [newEmployeeCredentials, setNewEmployeeCredentials] = useState<{
-    username: string;
+    name: string;
+    email: string;
     password: string;
   } | null>(null);
   const [employeeSearchQuery, setEmployeeSearchQuery] = useState("");
@@ -310,9 +371,74 @@ export default function RolesManagement() {
     });
   };
 
-  const handleSave = () => {
-    if (!draftRole) return;
-    setRoles(roles.map((r) => (r.id === draftRole.id ? draftRole : r)));
+  const handleSave = async () => {
+    if (!draftRole || !tenantId) return;
+    setSaving(true);
+
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) throw new Error("no access token");
+
+      const isNew = draftRole.id.startsWith("r") && !draftRole.id.includes("-");
+      const url = isNew
+        ? `/api/tenants/${tenantId}/roles`
+        : `/api/tenants/${tenantId}/roles/${draftRole.id}`;
+      const method = isNew ? "POST" : "PATCH";
+
+      const payload = {
+        name: draftRole.name,
+        color: draftRole.color,
+        permissions: draftRole.permissions,
+      };
+
+      const res = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        let errMessage = "failed to save role";
+        try {
+          const errData = await res.json();
+          if (errData.error) errMessage = errData.error;
+        } catch (_) {}
+        if (res.status === 403)
+          throw new Error(errMessage || "insufficient privileges");
+        throw new Error(errMessage);
+      }
+
+      const data = await res.json();
+
+      const newRole: Role = {
+        ...draftRole,
+        id: data.id,
+        name: data.name,
+        color: data.color,
+        permissions:
+          typeof data.permissions === "string"
+            ? JSON.parse(data.permissions)
+            : data.permissions,
+      };
+
+      setRoles((prev) => {
+        if (isNew)
+          return [...prev.filter((r) => r.id !== draftRole.id), newRole];
+        return prev.map((r) => (r.id === draftRole.id ? newRole : r));
+      });
+      setSelectedRoleId(newRole.id);
+    } catch (err: any) {
+      console.error("error saving role:", err);
+      alert(err.message || "failed to save role");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleDragStart = (e: React.DragEvent, id: string) => {
@@ -346,9 +472,72 @@ export default function RolesManagement() {
     }
   };
 
-  const handleConfirmCreateRole = (templateRole?: Role) => {
-    const newRole: Role = {
-      id: `r${Date.now()}`,
+  const createRoleInBackend = async (
+    payload: {
+      name: string;
+      color: string;
+      permissions: any;
+      employees: any[];
+    },
+    showReminder: boolean = false,
+  ) => {
+    if (!tenantId) return;
+    setSaving(true);
+
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) throw new Error("no access token");
+
+      const res = await fetch(`/api/tenants/${tenantId}/roles`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        let errMessage = "failed to create role";
+        try {
+          const errData = await res.json();
+          if (errData.error) errMessage = errData.error;
+        } catch (_) {}
+        if (res.status === 403)
+          throw new Error(errMessage || "insufficient privileges");
+        throw new Error(errMessage);
+      }
+
+      const data = await res.json();
+
+      const newRole: Role = {
+        id: data.id,
+        name: data.name,
+        color: data.color,
+        employees: payload.employees,
+        permissions:
+          typeof data.permissions === "string"
+            ? JSON.parse(data.permissions)
+            : data.permissions,
+      };
+
+      setRoles((prev) => [...prev, newRole]);
+      setSelectedRoleId(newRole.id);
+      setIsCreateRoleModalOpen(false);
+      if (showReminder) setShowTemplateReminder(true);
+    } catch (err: any) {
+      console.error("error creating role:", err);
+      alert(err.message || "failed to create role");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleConfirmCreateRole = async (templateRole?: Role) => {
+    const payload = {
       name: templateRole ? templateRole.name : "New Role",
       color: templateRole
         ? templateRole.color
@@ -358,72 +547,228 @@ export default function RolesManagement() {
         ? JSON.parse(JSON.stringify(templateRole.permissions))
         : JSON.parse(JSON.stringify(DEFAULT_PERMISSIONS)),
     };
-    setRoles([...roles, newRole]);
-    setSelectedRoleId(newRole.id);
-    setIsCreateRoleModalOpen(false);
-    if (templateRole) setShowTemplateReminder(true);
+    await createRoleInBackend(payload, !!templateRole);
   };
 
-  const handleDuplicate = () => {
+  const handleDuplicate = async () => {
     if (!activeRole) return;
-    const newRole: Role = {
-      ...JSON.parse(JSON.stringify(activeRole)),
-      id: `r${Date.now()}`,
+    const payload = {
       name: `${activeRole.name} (Copy)`,
+      color: activeRole.color,
       employees: [],
+      permissions: JSON.parse(JSON.stringify(activeRole.permissions)),
     };
-    setRoles([...roles, newRole]);
-    setSelectedRoleId(newRole.id);
+    await createRoleInBackend(payload, false);
   };
 
-  const handleAddEmployee = () => {
-    if (!draftRole || !newEmployeeName.trim()) return;
+  // generate temporary password following complexity rules
+  const generateTemporaryPassword = (): string => {
+    const uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const lowercase = "abcdefghijklmnopqrstuvwxyz";
+    const digits = "0123456789";
+    const special = "!@#$%^&*";
 
-    // generate credentials
-    const firstName = newEmployeeName.split(" ")[0].toLowerCase();
-    const randomSuffix = Math.floor(1000 + Math.random() * 9000);
-    const username = `${firstName}.${randomSuffix}`;
-    const password = `pass${randomSuffix}!`;
+    let chars =
+      uppercase[Math.floor(Math.random() * uppercase.length)] +
+      lowercase[Math.floor(Math.random() * lowercase.length)] +
+      digits[Math.floor(Math.random() * digits.length)] +
+      special[Math.floor(Math.random() * special.length)];
 
-    const newEmployee: Employee = {
-      id: `e${Date.now()}`,
-      name: newEmployeeName,
-      username,
-      password,
-    };
+    const allChars = uppercase + lowercase + digits + special;
+    for (let i = chars.length; i < 8; i++) {
+      chars += allChars[Math.floor(Math.random() * allChars.length)];
+    }
 
-    setDraftRole({
-      ...draftRole,
-      employees: [...draftRole.employees, newEmployee],
-    });
-    setNewEmployeeCredentials({ username, password });
-    setNewEmployeeName("");
+    return chars
+      .split("")
+      .sort(() => Math.random() - 0.5)
+      .join("");
   };
 
-  const handleRemoveEmployee = (empId: string) => {
-    if (!draftRole) return;
+  const handleAddEmployee = async () => {
+    if (!draftRole || !newEmployeeName.trim() || !newEmployeeEmail.trim())
+      return;
+
+    // validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newEmployeeEmail)) {
+      alert("please enter a valid email address");
+      return;
+    }
+
+    // generate temporary password
+    const temporaryPassword = generateTemporaryPassword();
+
+    setCreatingEmployee(true);
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) throw new Error("no access token");
+
+      const res = await fetch(
+        `/api/tenants/${tenantId}/roles/${draftRole.id}/employees`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            name: newEmployeeName,
+            email: newEmployeeEmail,
+            password: temporaryPassword,
+          }),
+        },
+      );
+
+      if (!res.ok) {
+        let errMessage = "failed to create employee";
+        try {
+          const errData = await res.json();
+          if (errData.error) errMessage = errData.error;
+        } catch (_) {}
+        throw new Error(errMessage);
+      }
+
+      const data = await res.json();
+
+      const newEmployee: Employee = {
+        id: data.id,
+        name: newEmployeeName,
+        email: newEmployeeEmail,
+        password: temporaryPassword,
+      };
+
+      setDraftRole({
+        ...draftRole,
+        employees: [...draftRole.employees, newEmployee],
+      });
+
+      setNewEmployeeCredentials({
+        name: newEmployeeName,
+        email: newEmployeeEmail,
+        password: temporaryPassword,
+      });
+      setNewEmployeeName("");
+      setNewEmployeeEmail("");
+    } catch (err: any) {
+      console.error("error creating employee:", err);
+      alert(err.message || "failed to create employee");
+    } finally {
+      setCreatingEmployee(false);
+    }
+  };
+
+  const handleRemoveEmployee = async (empId: string) => {
+    if (!draftRole || !tenantId) return;
+
+    const confirmed = confirm("Are you sure you want to remove this employee?");
+    if (!confirmed) return;
+
+    setSaving(true);
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) throw new Error("no access token");
+
+      // delete the employee from backend
+      // only call API if it's a real ID (UUIDs are longer than temp e{timestamp} format)
+      if (empId.length > 20) {
+        const res = await fetch(
+          `/api/tenants/${tenantId}/roles/${draftRole.id}/employees/${empId}`,
+          {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+
+        if (!res.ok) {
+          let errMessage = "failed to delete employee";
+          try {
+            const errData = await res.json();
+            if (errData.error) errMessage = errData.error;
+          } catch (_) {}
+          throw new Error(errMessage);
+        }
+      }
+    } catch (err: any) {
+      console.error("error removing employee:", err);
+      alert(err.message || "failed to remove employee");
+      setSaving(false);
+      return;
+    }
+
     setDraftRole({
       ...draftRole,
       employees: draftRole.employees.filter((e) => e.id !== empId),
     });
+    setSaving(false);
   };
 
-  const handleDelete = () => {
-    if (roles.length <= 1) return; // don't delete last role
+  const handleDelete = async () => {
+    if (roles.length <= 1 || !tenantId) return;
+
+    const isNew =
+      selectedRoleId.startsWith("r") && !selectedRoleId.includes("-");
+
+    if (!isNew) {
+      setSaving(true);
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        const token = session?.access_token;
+        if (!token) throw new Error("no access token");
+
+        const res = await fetch(
+          `/api/tenants/${tenantId}/roles/${selectedRoleId}`,
+          {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+
+        if (!res.ok) {
+          let errMessage = "failed to delete role";
+          try {
+            const errData = await res.json();
+            if (errData.error) errMessage = errData.error;
+          } catch (_) {}
+          if (res.status === 403)
+            throw new Error(errMessage || "insufficient privileges");
+          throw new Error(errMessage);
+        }
+      } catch (err: any) {
+        console.error("error deleting role:", err);
+        alert(err.message || "failed to delete role");
+        setSaving(false);
+        return;
+      }
+    }
+
     const newRoles = roles.filter((r) => r.id !== selectedRoleId);
     setRoles(newRoles);
     setSelectedRoleId(newRoles[0].id);
+    setSaving(false);
   };
 
-  const runConfirmedAction = () => {
+  const runConfirmedAction = async () => {
     if (!confirmationAction) return;
 
     if (confirmationAction === "save") {
-      handleSave();
+      await handleSave();
     } else if (confirmationAction === "copy") {
       handleDuplicate();
     } else if (confirmationAction === "delete") {
-      handleDelete();
+      await handleDelete();
     }
 
     setConfirmationAction(null);
@@ -432,6 +777,14 @@ export default function RolesManagement() {
   const filteredRoles = roles.filter((r) =>
     r.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[500px]">
+        <Loader2 className="w-8 h-8 animate-spin text-[var(--color-brand-primary)]" />
+      </div>
+    );
+  }
 
   return (
     <>
@@ -560,6 +913,7 @@ export default function RolesManagement() {
                     size="icon"
                     onClick={() => setConfirmationAction("copy")}
                     title="Duplicate Role"
+                    disabled={saving}
                   >
                     <Copy size={18} />
                   </Button>
@@ -569,7 +923,7 @@ export default function RolesManagement() {
                     onClick={() => setConfirmationAction("delete")}
                     title="Delete Role"
                     className="hover:bg-warning-secondary hover:text-warning-primary"
-                    disabled={roles.length <= 1}
+                    disabled={roles.length <= 1 || saving}
                   >
                     <Trash2 size={18} />
                   </Button>
@@ -755,7 +1109,7 @@ export default function RolesManagement() {
                           {draftRole.employees.length > 0 ? (
                             draftRole.employees
                               .filter((e) =>
-                                e.name
+                                e.email
                                   .toLowerCase()
                                   .includes(employeeSearchQuery.toLowerCase()),
                               )
@@ -768,12 +1122,10 @@ export default function RolesManagement() {
                                     <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-brand-primary/10 flex items-center justify-center text-brand-primary font-bold b2">
                                       {employee.name.charAt(0).toUpperCase()}
                                     </div>
-                                    <div>
-                                      <p className="b2 font-bold text-text-primary">
-                                        {employee.name}
-                                      </p>
-                                      <p className="b4 text-text-secondary truncate max-w-[120px] sm:max-w-none">
-                                        @{employee.username}
+                                    <div className="b2 font-bold text-text-primary">
+                                      {employee.name}
+                                      <p className="b4 text-text-secondary text-inherit font-normal">
+                                        {employee.email}
                                       </p>
                                     </div>
                                   </div>
@@ -798,7 +1150,7 @@ export default function RolesManagement() {
                           )}
                           {draftRole.employees.length > 0 &&
                             draftRole.employees.filter((e) =>
-                              e.name
+                              e.email
                                 .toLowerCase()
                                 .includes(employeeSearchQuery.toLowerCase()),
                             ).length === 0 && (
@@ -837,7 +1189,8 @@ export default function RolesManagement() {
                 <Button
                   variant={hasChanges ? "primary" : "ghost"}
                   onClick={() => setConfirmationAction("save")}
-                  disabled={!hasChanges}
+                  disabled={!hasChanges || saving}
+                  loading={saving}
                   className={cn(!hasChanges && "opacity-50")}
                 >
                   Save Changes
@@ -955,6 +1308,8 @@ export default function RolesManagement() {
                 onClick={() => {
                   setIsAddEmployeeModalOpen(false);
                   setNewEmployeeCredentials(null);
+                  setNewEmployeeName("");
+                  setNewEmployeeEmail("");
                 }}
                 className="text-text-secondary hover:text-text-primary transition-colors p-1"
               >
@@ -976,13 +1331,32 @@ export default function RolesManagement() {
                       autoFocus
                     />
                   </div>
+
+                  <div>
+                    <label className="b4 font-bold text-text-secondary mb-2 block uppercase tracking-wider">
+                      Employee Email
+                    </label>
+                    <Input
+                      placeholder="e.g. jane@company.com"
+                      type="email"
+                      value={newEmployeeEmail}
+                      onChange={(e) => setNewEmployeeEmail(e.target.value)}
+                    />
+                  </div>
                   <Button
                     variant="primary"
                     className="w-full"
                     onClick={handleAddEmployee}
-                    disabled={!newEmployeeName.trim()}
+                    disabled={
+                      !newEmployeeName.trim() ||
+                      !newEmployeeEmail.trim() ||
+                      creatingEmployee
+                    }
+                    loading={creatingEmployee}
                   >
-                    Generate Credentials & Assign
+                    {creatingEmployee
+                      ? "Creating..."
+                      : "Generate Credentials & Create Employee"}
                   </Button>
                 </div>
               ) : (
@@ -1011,10 +1385,18 @@ export default function RolesManagement() {
                   <div className="bg-bg-primary rounded-2xl p-4 text-left flex flex-col gap-3">
                     <div className="flex justify-between items-center">
                       <span className="b4 text-text-secondary font-bold">
-                        USERNAME
+                        NAME
                       </span>
                       <span className="b3 text-text-primary font-mono bg-white px-2 py-1 rounded-md border border-black/[0.05]">
-                        {newEmployeeCredentials.username}
+                        {newEmployeeCredentials.name}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="b4 text-text-secondary font-bold">
+                        EMAIL
+                      </span>
+                      <span className="b3 text-text-primary font-mono bg-white px-2 py-1 rounded-md border border-black/[0.05]">
+                        {newEmployeeCredentials.email}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
@@ -1033,10 +1415,12 @@ export default function RolesManagement() {
                     leftIcon={<Copy size={16} />}
                     onClick={() => {
                       navigator.clipboard.writeText(
-                        `Username: ${newEmployeeCredentials.username}\nPassword: ${newEmployeeCredentials.password}`,
+                        `Name: ${newEmployeeCredentials.name}\nEmail: ${newEmployeeCredentials.email}\nPassword: ${newEmployeeCredentials.password}`,
                       );
                       setIsAddEmployeeModalOpen(false);
                       setNewEmployeeCredentials(null);
+                      setNewEmployeeName("");
+                      setNewEmployeeEmail("");
                     }}
                   >
                     Copy & Close
