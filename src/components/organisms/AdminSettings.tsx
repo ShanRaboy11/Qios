@@ -124,7 +124,7 @@ const AccountSettings = () => {
         .from("profiles")
         .update({ full_name: `${firstName} ${lastName}`.trim() })
         .eq("id", userData.user.id);
-      
+
       if (email !== userData.user.email) {
         await supabase.auth.updateUser({ email });
       }
@@ -168,20 +168,20 @@ const AccountSettings = () => {
                   <label className="text-sm font-medium text-text-primary">
                     First Name
                   </label>
-                  <Input 
-                    value={firstName} 
+                  <Input
+                    value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
-                    className="py-2.5 rounded-xl" 
+                    className="py-2.5 rounded-xl"
                   />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium text-text-primary">
                     Last Name
                   </label>
-                  <Input 
-                    value={lastName} 
+                  <Input
+                    value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
-                    className="py-2.5 rounded-xl" 
+                    className="py-2.5 rounded-xl"
                   />
                 </div>
               </div>
@@ -230,7 +230,13 @@ const AccountSettings = () => {
           <Button
             variant="accent"
             shape="rounded"
-            leftIcon={saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+            leftIcon={
+              saving ? (
+                <Loader2 size={18} className="animate-spin" />
+              ) : (
+                <Save size={18} />
+              )
+            }
             onClick={handleSave}
             disabled={saving}
           >
@@ -243,6 +249,57 @@ const AccountSettings = () => {
 };
 
 const PlatformSettings = () => {
+  const [platformName, setPlatformName] = useState("Qios");
+  const [supportEmail, setSupportEmail] = useState("support@qios.com");
+  const [currency, setCurrency] = useState("PHP");
+  const [timezone, setTimezone] = useState("Asia/Manila");
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const supabase = createSupabaseBrowserClient();
+
+  useEffect(() => {
+    async function loadSettings() {
+      const { data } = await supabase
+        .from("platform_settings")
+        .select("*")
+        .eq("id", 1)
+        .single();
+      if (data) {
+        setPlatformName(data.platform_name || "Qios");
+        setSupportEmail(data.support_email || "support@qios.com");
+        setCurrency(data.default_currency || "PHP");
+        setTimezone(data.default_timezone || "Asia/Manila");
+        setMaintenanceMode(data.maintenance_mode || false);
+      }
+      setLoading(false);
+    }
+    loadSettings();
+  }, [supabase]);
+
+  const handleSave = async () => {
+    setSaving(true);
+    await supabase
+      .from("platform_settings")
+      .update({
+        platform_name: platformName,
+        support_email: supportEmail,
+        default_currency: currency,
+        default_timezone: timezone,
+        maintenance_mode: maintenanceMode,
+      })
+      .eq("id", 1);
+    setSaving(false);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-brand-primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div>
@@ -266,14 +323,19 @@ const PlatformSettings = () => {
               <label className="text-sm font-medium text-text-primary">
                 Platform Name
               </label>
-              <Input defaultValue="Qios" className="py-2.5 rounded-xl" />
+              <Input
+                value={platformName}
+                onChange={(e) => setPlatformName(e.target.value)}
+                className="py-2.5 rounded-xl"
+              />
             </div>
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-text-primary">
                 Support Email
               </label>
               <Input
-                defaultValue="support@qios.com"
+                value={supportEmail}
+                onChange={(e) => setSupportEmail(e.target.value)}
                 type="email"
                 className="py-2.5 rounded-xl"
               />
@@ -292,7 +354,11 @@ const PlatformSettings = () => {
               <label className="text-sm font-medium text-text-primary">
                 Default Currency
               </label>
-              <select className="w-full px-4 py-2.5 rounded-xl border-2 border-[#E5E5E5] focus:outline-none focus:ring-2 focus:ring-brand-accent/20 focus:border-brand-accent transition-colors bg-white appearance-none cursor-pointer">
+              <select
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value)}
+                className="w-full px-4 py-2.5 rounded-xl border-2 border-[#E5E5E5] focus:outline-none focus:ring-2 focus:ring-brand-accent/20 focus:border-brand-accent transition-colors bg-white appearance-none cursor-pointer"
+              >
                 <option value="PHP">PHP (₱)</option>
                 <option value="USD">USD ($)</option>
                 <option value="EUR">EUR (€)</option>
@@ -302,7 +368,11 @@ const PlatformSettings = () => {
               <label className="text-sm font-medium text-text-primary">
                 Default Timezone
               </label>
-              <select className="w-full px-4 py-2.5 rounded-xl border-2 border-[#E5E5E5] focus:outline-none focus:ring-2 focus:ring-brand-accent/20 focus:border-brand-accent transition-colors bg-white appearance-none cursor-pointer">
+              <select
+                value={timezone}
+                onChange={(e) => setTimezone(e.target.value)}
+                className="w-full px-4 py-2.5 rounded-xl border-2 border-[#E5E5E5] focus:outline-none focus:ring-2 focus:ring-brand-accent/20 focus:border-brand-accent transition-colors bg-white appearance-none cursor-pointer"
+              >
                 <option value="Asia/Manila">Asia/Manila (GMT+8)</option>
                 <option value="UTC">UTC</option>
                 <option value="America/New_York">America/New_York (EST)</option>
@@ -327,8 +397,9 @@ const PlatformSettings = () => {
             </div>
             <Toggle
               variant="primary"
-              defaultIsOn={false}
-              className="ring-red-500 focus:ring-red-500 focus:ring-offset-red-50"//
+              isOn={maintenanceMode}
+              onChange={(val) => setMaintenanceMode(val)}
+              className="ring-red-500 focus:ring-red-500 focus:ring-offset-red-50"
             />
           </div>
         </div>
@@ -337,9 +408,17 @@ const PlatformSettings = () => {
           <Button
             variant="accent"
             shape="rounded"
-            leftIcon={<Save size={18} />}
+            leftIcon={
+              saving ? (
+                <Loader2 size={18} className="animate-spin" />
+              ) : (
+                <Save size={18} />
+              )
+            }
+            onClick={handleSave}
+            disabled={saving}
           >
-            Save Configuration
+            {saving ? "Saving..." : "Save Configuration"}
           </Button>
         </div>
       </div>
@@ -357,44 +436,18 @@ const TeamSettings = () => {
       const { data } = await supabase
         .from("profiles")
         .select("id, full_name, role")
-        .in("role", ["super_admin", "admin"]);
-        
-      const fallbackAdmins = [
-        {
-          id: 1,
-          name: "Admin User",
-          email: "admin@qios.com",
-          role: "Super Admin",
-          status: "Active",
-        },
-        {
-          id: 2,
-          name: "Support Staff",
-          email: "support@qios.com",
-          role: "Support",
-          status: "Active",
-        },
-        {
-          id: 3,
-          name: "Billing Manager",
-          email: "billing@qios.com",
-          role: "Billing",
-          status: "Inactive",
-        },
-      ];
+        .in("role", ["super_admin"]);
 
-      if (data && data.length > 3) {
+      if (data) {
         setAdmins(
           data.map((p) => ({
             id: p.id,
             name: p.full_name,
             email: "Protected",
-            role: p.role === "super_admin" ? "Super Admin" : "Admin",
+            role: "Super Admin",
             status: "Active",
-          }))
+          })),
         );
-      } else {
-        setAdmins(fallbackAdmins);
       }
       setLoading(false);
     }
@@ -487,7 +540,10 @@ const TeamSettings = () => {
               ))}
               {admins.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="py-8 text-center text-text-secondary">
+                  <td
+                    colSpan={4}
+                    className="py-8 text-center text-text-secondary"
+                  >
                     No admins found.
                   </td>
                 </tr>
@@ -536,6 +592,48 @@ const IntegrationSettings = () => {
 };
 
 const SecuritySettings = () => {
+  const [passwordMinLength, setPasswordMinLength] = useState("8");
+  const [sessionTimeoutHours, setSessionTimeoutHours] = useState("24");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const supabase = createSupabaseBrowserClient();
+
+  useEffect(() => {
+    async function loadSettings() {
+      const { data } = await supabase
+        .from("platform_settings")
+        .select("password_min_length, session_timeout_hours")
+        .eq("id", 1)
+        .single();
+      if (data) {
+        setPasswordMinLength(data.password_min_length?.toString() || "8");
+        setSessionTimeoutHours(data.session_timeout_hours?.toString() || "24");
+      }
+      setLoading(false);
+    }
+    loadSettings();
+  }, [supabase]);
+
+  const handleSave = async () => {
+    setSaving(true);
+    await supabase
+      .from("platform_settings")
+      .update({
+        password_min_length: parseInt(passwordMinLength),
+        session_timeout_hours: parseInt(sessionTimeoutHours),
+      })
+      .eq("id", 1);
+    setSaving(false);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-brand-primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div>
@@ -559,7 +657,11 @@ const SecuritySettings = () => {
               <label className="text-sm font-medium text-text-primary">
                 Minimum Password Length
               </label>
-              <select className="w-full px-4 py-2.5 rounded-xl border-2 border-[#E5E5E5] focus:outline-none focus:ring-2 focus:ring-brand-accent/20 focus:border-brand-accent transition-colors bg-white appearance-none cursor-pointer">
+              <select
+                value={passwordMinLength}
+                onChange={(e) => setPasswordMinLength(e.target.value)}
+                className="w-full px-4 py-2.5 rounded-xl border-2 border-[#E5E5E5] focus:outline-none focus:ring-2 focus:ring-brand-accent/20 focus:border-brand-accent transition-colors bg-white appearance-none cursor-pointer"
+              >
                 <option value="8">8 Characters</option>
                 <option value="10">10 Characters</option>
                 <option value="12">12 Characters</option>
@@ -569,7 +671,11 @@ const SecuritySettings = () => {
               <label className="text-sm font-medium text-text-primary">
                 Session Timeout
               </label>
-              <select className="w-full px-4 py-2.5 rounded-xl border-2 border-[#E5E5E5] focus:outline-none focus:ring-2 focus:ring-brand-accent/20 focus:border-brand-accent transition-colors bg-white appearance-none cursor-pointer">
+              <select
+                value={sessionTimeoutHours}
+                onChange={(e) => setSessionTimeoutHours(e.target.value)}
+                className="w-full px-4 py-2.5 rounded-xl border-2 border-[#E5E5E5] focus:outline-none focus:ring-2 focus:ring-brand-accent/20 focus:border-brand-accent transition-colors bg-white appearance-none cursor-pointer"
+              >
                 <option value="2">2 Hours</option>
                 <option value="12">12 Hours</option>
                 <option value="24">24 Hours</option>
@@ -607,9 +713,17 @@ const SecuritySettings = () => {
           <Button
             variant="accent"
             shape="rounded"
-            leftIcon={<Save size={18} />}
+            leftIcon={
+              saving ? (
+                <Loader2 size={18} className="animate-spin" />
+              ) : (
+                <Save size={18} />
+              )
+            }
+            onClick={handleSave}
+            disabled={saving}
           >
-            Save Policies
+            {saving ? "Saving..." : "Save Policies"}
           </Button>
         </div>
       </div>
