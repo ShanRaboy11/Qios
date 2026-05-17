@@ -10,11 +10,12 @@ import {
   EyeOff,
   LogOut,
   Save,
+  Edit2,
+  Circle,
 } from "lucide-react";
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
 import { Toggle } from "@/components/atoms/Toggle";
-import { FeatureToggle } from "@/components/molecules/FeatureToggle";
 import { ActionConfirmationModal } from "@/components/molecules/ConfirmationModal";
 import { SectionHeader } from "@/components/molecules/SectionHeader";
 import { SessionCard } from "@/components/molecules/SessionCard";
@@ -42,6 +43,30 @@ const passwordRequirements = (password: string) => ({
   hasSpecial: /[^A-Za-z0-9]/.test(password),
 });
 
+const PasswordRequirement = ({
+  met,
+  text,
+}: {
+  met: boolean;
+  text: string;
+}) => (
+  <div className="flex items-center gap-2">
+    {met ? (
+      <CheckCircle2 size={16} className="text-success-primary flex-shrink-0" />
+    ) : (
+      <Circle size={16} className="text-text-secondary/30 flex-shrink-0" />
+    )}
+    <span
+      className={cn(
+        "b4 transition-colors",
+        met ? "text-text-primary font-medium" : "text-text-secondary/60"
+      )}
+    >
+      {text}
+    </span>
+  </div>
+);
+
 export const TenantSecuritySettings = ({
   tenantId,
   initialData,
@@ -65,9 +90,28 @@ export const TenantSecuritySettings = ({
     emptySettingsActionState,
   );
 
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (passwordState.fieldErrors) {
+      setFieldErrors(passwordState.fieldErrors);
+    }
+  }, [passwordState.fieldErrors]);
+
+  useEffect(() => {
+    if (passwordState.success) {
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setFieldErrors({});
+    }
+  }, [passwordState.success]);
+
   useEffect(() => {
     setRequireTwoFactorAuth(initialData.requireTwoFactorAuth);
   }, [initialData]);
+
+  const isPasswordDirty = currentPassword.length > 0 || newPassword.length > 0 || confirmPassword.length > 0;
 
   const requirements = passwordRequirements(newPassword);
   const isPasswordStrong =
@@ -149,19 +193,22 @@ export const TenantSecuritySettings = ({
             )}
             <div className="space-y-1.5 sm:col-span-2">
               <label className="text-sm font-medium text-text-primary">
-                Current Password
+                Current Password {isPasswordDirty && <span className="text-brand-accent">*</span>}
               </label>
               <div className="relative">
                 <Input
                   name="currentPassword"
                   value={currentPassword}
-                  onChange={(event) => setCurrentPassword(event.target.value)}
+                  onChange={(event) => {
+                    setCurrentPassword(event.target.value);
+                    setFieldErrors(prev => ({ ...prev, currentPassword: "" }));
+                  }}
                   type={showCurrentPassword ? "text" : "password"}
                   placeholder="Current Password"
-                  isError={!!passwordState.fieldErrors.currentPassword}
+                  isError={!!fieldErrors.currentPassword}
                   className={cn(
                     "py-2.5 rounded-xl pr-10 focus:outline-none",
-                    !passwordState.fieldErrors.currentPassword && "focus:border-brand-primary focus:ring-brand-primary"
+                    !fieldErrors.currentPassword && "focus:border-brand-primary focus:ring-brand-primary"
                   )}
                 />
                 <button
@@ -179,30 +226,33 @@ export const TenantSecuritySettings = ({
                   )}
                 </button>
               </div>
-              {passwordState.fieldErrors.currentPassword && (
+              {fieldErrors.currentPassword && (
                 <p className="text-xs text-red-500 pl-1">
-                  {passwordState.fieldErrors.currentPassword}
+                  {fieldErrors.currentPassword}
                 </p>
               )}
             </div>
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-text-primary">
-                New Password
+                New Password {isPasswordDirty && <span className="text-brand-accent">*</span>}
               </label>
               <div className="relative">
                 <Input
                   name="newPassword"
                   value={newPassword}
-                  onChange={(event) => setNewPassword(event.target.value)}
+                  onChange={(event) => {
+                    setNewPassword(event.target.value);
+                    setFieldErrors(prev => ({ ...prev, newPassword: "" }));
+                  }}
                   type={showNewPassword ? "text" : "password"}
                   placeholder="New Password"
                   isError={
-                    !!passwordState.fieldErrors.newPassword ||
+                    !!fieldErrors.newPassword ||
                     (newPassword.length > 0 && !isPasswordStrong)
                   }
                   className={cn(
                     "py-2.5 rounded-xl pr-10 focus:outline-none",
-                    !(!!passwordState.fieldErrors.newPassword || (newPassword.length > 0 && !isPasswordStrong)) && "focus:border-brand-primary focus:ring-brand-primary"
+                    !(!!fieldErrors.newPassword || (newPassword.length > 0 && !isPasswordStrong)) && "focus:border-brand-primary focus:ring-brand-primary"
                   )}
                 />
                 <button
@@ -216,9 +266,9 @@ export const TenantSecuritySettings = ({
                   {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
-              {passwordState.fieldErrors.newPassword && (
+              {fieldErrors.newPassword && (
                 <p className="text-xs text-red-500 pl-1">
-                  {passwordState.fieldErrors.newPassword}
+                  {fieldErrors.newPassword}
                 </p>
               )}
               {newPassword && (
@@ -227,55 +277,33 @@ export const TenantSecuritySettings = ({
                     password requirements
                   </p>
                   <div className="space-y-2">
-                    <p
-                      className={`b4 transition-colors ${requirements.hasMinLength ? "text-text-primary font-medium" : "text-text-secondary/60"}`}
-                    >
-                      {requirements.hasMinLength ? "✓ " : ""}At least 8
-                      characters
-                    </p>
-                    <p
-                      className={`b4 transition-colors ${requirements.hasUppercase ? "text-text-primary font-medium" : "text-text-secondary/60"}`}
-                    >
-                      {requirements.hasUppercase ? "✓ " : ""}At least one
-                      uppercase letter
-                    </p>
-                    <p
-                      className={`b4 transition-colors ${requirements.hasLowercase ? "text-text-primary font-medium" : "text-text-secondary/60"}`}
-                    >
-                      {requirements.hasLowercase ? "✓ " : ""}At least one
-                      lowercase letter
-                    </p>
-                    <p
-                      className={`b4 transition-colors ${requirements.hasDigit ? "text-text-primary font-medium" : "text-text-secondary/60"}`}
-                    >
-                      {requirements.hasDigit ? "✓ " : ""}At least one digit
-                      (0-9)
-                    </p>
-                    <p
-                      className={`b4 transition-colors ${requirements.hasSpecial ? "text-text-primary font-medium" : "text-text-secondary/60"}`}
-                    >
-                      {requirements.hasSpecial ? "✓ " : ""}At least one special
-                      character (!@#$%^&*)
-                    </p>
+                    <PasswordRequirement met={requirements.hasMinLength} text="At least 8 characters" />
+                    <PasswordRequirement met={requirements.hasUppercase} text="At least one uppercase letter" />
+                    <PasswordRequirement met={requirements.hasLowercase} text="At least one lowercase letter" />
+                    <PasswordRequirement met={requirements.hasDigit} text="At least one digit (0-9)" />
+                    <PasswordRequirement met={requirements.hasSpecial} text="At least one special character (!@#$%^&*)" />
                   </div>
                 </div>
               )}
             </div>
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-text-primary">
-                Confirm New Password
+                Confirm New Password {isPasswordDirty && <span className="text-brand-accent">*</span>}
               </label>
               <div className="relative">
                 <Input
                   name="confirmPassword"
                   value={confirmPassword}
-                  onChange={(event) => setConfirmPassword(event.target.value)}
+                  onChange={(event) => {
+                    setConfirmPassword(event.target.value);
+                    setFieldErrors(prev => ({ ...prev, confirmPassword: "" }));
+                  }}
                   type={showConfirmPassword ? "text" : "password"}
                   placeholder="Confirm Password"
-                  isError={!!passwordState.fieldErrors.confirmPassword}
+                  isError={!!fieldErrors.confirmPassword}
                   className={cn(
                     "py-2.5 rounded-xl pr-10 focus:outline-none",
-                    !passwordState.fieldErrors.confirmPassword && "focus:border-brand-primary focus:ring-brand-primary"
+                    !fieldErrors.confirmPassword && "focus:border-brand-primary focus:ring-brand-primary"
                   )}
                 />
                 <button
@@ -293,21 +321,21 @@ export const TenantSecuritySettings = ({
                   )}
                 </button>
               </div>
-              {passwordState.fieldErrors.confirmPassword && (
+              {fieldErrors.confirmPassword && (
                 <p className="text-xs text-red-500 pl-1">
-                  {passwordState.fieldErrors.confirmPassword}
+                  {fieldErrors.confirmPassword}
                 </p>
               )}
             </div>
             <div className="sm:col-span-2 flex justify-end mt-2">
               <Button
                 type="submit"
-                variant="accent"
+                variant="outline"
                 shape="rounded"
-                leftIcon={<Save size={18} />}
+                leftIcon={<Edit2 size={18} />}
                 loading={passwordPending}
               >
-                Save Changes
+                Update Password
               </Button>
             </div>
           </form>
@@ -318,15 +346,27 @@ export const TenantSecuritySettings = ({
             title="Two-Factor Authentication"
             className="mb-0 py-2 border-gray-100"
           />
-          <FeatureToggle
-            label="Require 2FA for Login"
-            description="Add an extra layer of security using an authenticator app."
-            checked={requireTwoFactorAuth}
-            onChange={handleTwoFactorChange}
-            disabled={saving2fa}
-            variant="accent"
-            className="p-4 mt-2 border-gray-100 bg-white"
-          />
+          <div className="flex items-center justify-between p-4 mt-2 rounded-xl border border-gray-100 bg-white">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-full bg-brand-primary/10 flex items-center justify-center text-brand-primary">
+                <Shield className="w-5 h-5 text-brand-accent" />
+              </div>
+              <div>
+                <h4 className="font-medium text-text-primary">
+                  Require 2FA for Login
+                </h4>
+                <p className="text-sm text-text-secondary hidden sm:block">
+                  Add an extra layer of security using an authenticator app.
+                </p>
+              </div>
+            </div>
+            <Toggle
+              variant="accent"
+              isOn={requireTwoFactorAuth}
+              onChange={handleTwoFactorChange}
+              disabled={saving2fa}
+            />
+          </div>
           {(sessionNotice || sessionError) && (
             <div className="space-y-3 pt-2">
               {sessionNotice && (
