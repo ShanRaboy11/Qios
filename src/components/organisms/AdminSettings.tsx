@@ -441,7 +441,7 @@ const TeamSettings = () => {
 
       if (data) {
         setAdmins(
-          data.map((p) => ({
+          data.map((p: any) => ({
             id: p.id,
             name: p.full_name,
             email: "Protected",
@@ -595,12 +595,15 @@ const IntegrationSettings = () => {
 const SecuritySettings = () => {
   const [passwordMinLength, setPasswordMinLength] = useState("8");
   const [sessionTimeoutHours, setSessionTimeoutHours] = useState("24");
+  const [sessions, setSessions] = useState<any[]>([]);
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const supabase = createSupabaseBrowserClient();
 
   useEffect(() => {
     async function loadSettings() {
+      // Load platform settings
       const { data } = await supabase
         .from("platform_settings")
         .select("password_min_length, session_timeout_hours")
@@ -610,6 +613,26 @@ const SecuritySettings = () => {
         setPasswordMinLength(data.password_min_length?.toString() || "8");
         setSessionTimeoutHours(data.session_timeout_hours?.toString() || "24");
       }
+
+      // Load active sessions
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (sessionData?.session) {
+        setCurrentSessionId(sessionData.session.id);
+      }
+
+      const { data: mySessions, error: sessionFetchError } = await supabase.rpc("get_my_sessions");
+      console.log("Sessions fetch result:", { mySessions, sessionFetchError });
+      
+      if (mySessions) {
+        // Sort current session first
+        const sortedSessions = [...mySessions].sort((a, b) => {
+          if (a.id === sessionData?.session?.id) return -1;
+          if (b.id === sessionData?.session?.id) return 1;
+          return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+        });
+        setSessions(sortedSessions);
+      }
+
       setLoading(false);
     }
     loadSettings();
@@ -625,6 +648,34 @@ const SecuritySettings = () => {
       })
       .eq("id", 1);
     setSaving(false);
+  };
+
+  const handleRevokeSession = async (sessionId: string) => {
+    const { error } = await supabase.rpc("revoke_session", { session_id: sessionId });
+    if (!error) {
+      setSessions((prev) => prev.filter((s) => s.id !== sessionId));
+    }
+  };
+
+  const parseUserAgent = (ua: string | undefined | null) => {
+    let device = "Unknown Device";
+    let icon = <Laptop className="w-8 h-8" strokeWidth={1.5} />;
+    
+    if (!ua) return { deviceText: `${device} • Unknown Browser`, icon };
+
+    if (/Windows/i.test(ua)) device = "Windows";
+    else if (/Mac/i.test(ua) && !/iPhone|iPad|iPod/i.test(ua)) device = "macOS";
+    else if (/iPhone|iPad|iPod/i.test(ua)) { device = "iOS"; icon = <Smartphone className="w-8 h-8" strokeWidth={1.5} />; }
+    else if (/Android/i.test(ua)) { device = "Android"; icon = <Smartphone className="w-8 h-8" strokeWidth={1.5} />; }
+    else if (/Linux/i.test(ua)) device = "Linux";
+
+    let browser = "Unknown Browser";
+    if (/Edg/i.test(ua)) browser = "Edge";
+    else if (/Firefox/i.test(ua)) browser = "Firefox";
+    else if (/Chrome/i.test(ua)) browser = "Chrome";
+    else if (/Safari/i.test(ua) && !/Chrome/i.test(ua)) browser = "Safari";
+
+    return { deviceText: `${device} • ${browser}`, icon };
   };
 
   if (loading) {
@@ -686,21 +737,32 @@ const SecuritySettings = () => {
             className="mb-0 py-2 border-gray-100"
           />
           <div className="space-y-3 pt-2">
-            <SessionCard
-              device="Windows 11 • Chrome"
-              location="Manila, PH"
-              status="Current Session"
-              icon={<Laptop className="w-8 h-8" strokeWidth={1.5} />}
-              isActive={true}
-            />
+            {sessions.length > 0 ? (
+              sessions.map((session) => {
+                const isActive = session.id === currentSessionId;
+                const { deviceText, icon } = parseUserAgent(session.user_agent);
+                
+                // Keep time relatively simple for this display
+                const lastUpdated = new Date(session.updated_at);
+                const timeStr = isActive 
+                  ? "Current Session" 
+                  : `Last active: ${lastUpdated.toLocaleDateString()} ${lastUpdated.toLocaleTimeString()}`;
 
-            <SessionCard
-              device="iOS 17 • Safari"
-              location="Manila, PH"
-              status="Last active 2 hours ago"
-              icon={<Smartphone className="w-8 h-8" strokeWidth={1.5} />}
-              isActive={false}
-            />
+                return (
+                  <SessionCard
+                    key={session.id}
+                    device={deviceText}
+                    location={session.ip || "Unknown Location"}
+                    status={timeStr}
+                    icon={icon}
+                    isActive={isActive}
+                    onRevoke={() => handleRevokeSession(session.id)}
+                  />
+                );
+              })
+            ) : (
+              <p className="text-sm text-text-secondary">No sessions found.</p>
+            )}
           </div>
         </div>
 
