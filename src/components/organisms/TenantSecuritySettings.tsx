@@ -423,7 +423,7 @@ export const TenantSecuritySettings = ({
         action="delete"
         title="Log Out Other Sessions?"
         message="Are you sure you want to log out all other active sessions? This action cannot be undone."
-        confirmLabel="Log Out Sessions"
+        confirmLabel="Log Out"
         saving={loggingOutSessions}
         onClose={() => setIsLogoutModalOpen(false)}
         onConfirm={handleLogoutOtherSessions}
