@@ -28,13 +28,14 @@ import { SectionHeader } from "@/components/molecules/SectionHeader";
 import { IntegrationCard } from "@/components/molecules/IntegrationCard";
 import { SessionCard } from "@/components/molecules/SessionCard";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { logActivity } from "@/lib/utils/logging";
 
 type SettingsTab =
   | "account"
   | "platform"
   | "team"
   | "integrations"
-  | "security"
+  | "security";
 
 export const AdminSettings = () => {
   const [activeTab, setActiveTab] = useState<SettingsTab>("account");
@@ -123,29 +124,33 @@ const AccountSettings = () => {
     loadProfile();
   }, [supabase]);
 
-  const handleSave = async () => {
-    setShowConfirmModal(false);
-    setSaving(true);
-    const { data: userData } = await supabase.auth.getUser();
-    if (userData?.user) {
-      await supabase
-        .from("profiles")
-        .update({ full_name: `${firstName} ${lastName}`.trim() })
-        .eq("id", userData.user.id);
+const handleSave = async () => {
+  setShowConfirmModal(false);
+  setSaving(true);
+  const { data: userData } = await supabase.auth.getUser();
+  
+  if (userData?.user) {
+    const fullName = `${firstName} ${lastName}`.trim();
+    
+    // 1. Update Profile
+    await supabase
+      .from("profiles")
+      .update({ full_name: fullName })
+      .eq("id", userData.user.id);
 
-      if (email !== userData.user.email) {
-        await supabase.auth.updateUser({ email });
-      }
-
-      await supabase.from("system_activity_logs").insert({
-        user_id: userData.user.id,
-        action: "Update Account Settings",
-        details: { email, first_name: firstName, last_name: lastName }
-      });
-    }
-    setSaving(false);
-    setShowSuccessModal(true);
-  };
+    // 2. Log the activity using our new schema
+    await logActivity({
+      supabase,
+      actorId: userData.user.id,
+      actorName: fullName,
+      actionType: "UPDATE",
+      description: "Updated personal account profile settings",
+      metadata: { email, first_name: firstName, last_name: lastName }
+    });
+  }
+  setSaving(false);
+  setShowSuccessModal(true);
+};
 
   if (loading) {
     return (
@@ -313,31 +318,46 @@ const PlatformSettings = () => {
     loadSettings();
   }, [supabase]);
 
-  const handleSave = async () => {
-    setShowConfirmModal(false);
-    setSaving(true);
-    const { data: userData } = await supabase.auth.getUser();
-    await supabase
-      .from("platform_settings")
-      .update({
-        platform_name: platformName,
-        support_email: supportEmail,
-        default_currency: currency,
-        default_timezone: timezone,
-        maintenance_mode: maintenanceMode,
-      })
-      .eq("id", 1);
+  // Inside PlatformSettings -> handleSave
+const handleSave = async () => {
+  setShowConfirmModal(false);
+  setSaving(true);
+  const { data: userData } = await supabase.auth.getUser();
+  
+  // Get current user profile for their name
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("full_name")
+    .eq("id", userData?.user?.id)
+    .single();
 
-    if (userData?.user) {
-      await supabase.from("system_activity_logs").insert({
-        user_id: userData.user.id,
-        action: "Update Platform Settings",
-        details: { platform_name: platformName, support_email: supportEmail, default_currency: currency, default_timezone: timezone, maintenance_mode: maintenanceMode }
-      });
-    }
-    setSaving(false);
-    setShowSuccessModal(true);
-  };
+  // 1. Update Platform Settings
+  await supabase
+    .from("platform_settings")
+    .update({
+      platform_name: platformName,
+      support_email: supportEmail,
+      default_currency: currency,
+      default_timezone: timezone,
+      maintenance_mode: maintenanceMode,
+    })
+    .eq("id", 1);
+
+  // 2. Log the change
+  if (userData?.user) {
+    await logActivity({
+      supabase,
+      actorId: userData.user.id,
+      actorName: profile?.full_name || "Admin",
+      actionType: "UPDATE",
+      description: `Updated platform configuration: ${platformName}`,
+      metadata: { currency, timezone, maintenanceMode }
+    });
+  }
+  
+  setSaving(false);
+  setShowSuccessModal(true);
+};
 
   if (loading) {
     return (
@@ -719,12 +739,15 @@ const SecuritySettings = () => {
         session_timeout_hours: parseInt(sessionTimeoutHours),
       })
       .eq("id", 1);
-      
+
     if (userData?.user) {
       await supabase.from("system_activity_logs").insert({
         user_id: userData.user.id,
         action: "Update Security Settings",
-        details: { password_min_length: passwordMinLength, session_timeout_hours: sessionTimeoutHours }
+        details: {
+          password_min_length: passwordMinLength,
+          session_timeout_hours: sessionTimeoutHours,
+        },
       });
     }
     setSaving(false);
@@ -732,13 +755,21 @@ const SecuritySettings = () => {
   };
 
   const handleRevokeSession = async (sessionId: string) => {
-    const { error } = await supabase.rpc("revoke_session", {
-      session_id: sessionId,
+  const { error } = await supabase.rpc("revoke_session", { session_id: sessionId });
+  
+  if (!error) {
+    const { data: userData } = await supabase.auth.getUser();
+    setSessions((prev) => prev.filter((s) => s.id !== sessionId));
+
+    await logActivity({
+      supabase,
+      actorId: userData.user?.id || "",
+      actorName: "Admin",
+      actionType: "REVOKE",
+      description: `Manually revoked active session: ${sessionId}`,
     });
-    if (!error) {
-      setSessions((prev) => prev.filter((s) => s.id !== sessionId));
-    }
-  };
+  }
+};
 
   const parseUserAgent = (ua: string | undefined | null) => {
     let device = "Unknown Device";
