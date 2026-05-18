@@ -14,12 +14,15 @@ import {
   Laptop,
   Smartphone,
   Loader2,
+  AlertCircle,
+  CheckCircle2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
 import { Toggle } from "@/components/atoms/Toggle";
 import { Modal } from "@/components/molecules/Modal";
+import { ActionConfirmationModal } from "@/components/molecules/ConfirmationModal";
 import { Dropdown } from "@/components/molecules/Dropdown";
 import { SectionHeader } from "@/components/molecules/SectionHeader";
 import { IntegrationCard } from "@/components/molecules/IntegrationCard";
@@ -96,6 +99,7 @@ const AccountSettings = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const supabase = createSupabaseBrowserClient();
 
   useEffect(() => {
@@ -134,6 +138,7 @@ const AccountSettings = () => {
       }
     }
     setSaving(false);
+    setShowSuccessModal(true);
   };
 
   if (loading) {
@@ -249,29 +254,24 @@ const AccountSettings = () => {
         </div>
       </div>
 
-      <Modal
+      <ActionConfirmationModal
         isOpen={showConfirmModal}
+        action="save"
+        title="Confirm Updates"
+        message="Are you sure you want to apply these changes to your account settings?"
         onClose={() => setShowConfirmModal(false)}
-        title="Confirm Changes"
-      >
-        <div className="p-6">
-          <p className="text-text-secondary mb-6">
-            Are you sure you want to save these changes to your account
-            settings?
-          </p>
-          <div className="flex justify-end gap-3">
-            <Button
-              variant="outline"
-              onClick={() => setShowConfirmModal(false)}
-            >
-              Cancel
-            </Button>
-            <Button variant="accent" onClick={handleSave} disabled={saving}>
-              {saving ? "Saving..." : "Confirm"}
-            </Button>
-          </div>
-        </div>
-      </Modal>
+        onConfirm={handleSave}
+        saving={saving}
+      />
+
+      <ActionConfirmationModal
+        isOpen={showSuccessModal}
+        action="success"
+        title="Success"
+        message="Your account settings have been successfully updated."
+        onClose={() => setShowSuccessModal(false)}
+        onConfirm={() => setShowSuccessModal(false)}
+      />
     </div>
   );
 };
@@ -285,6 +285,7 @@ const PlatformSettings = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const supabase = createSupabaseBrowserClient();
 
   useEffect(() => {
@@ -320,6 +321,7 @@ const PlatformSettings = () => {
       })
       .eq("id", 1);
     setSaving(false);
+    setShowSuccessModal(true);
   };
 
   if (loading) {
@@ -453,28 +455,24 @@ const PlatformSettings = () => {
         </div>
       </div>
 
-      <Modal
+      <ActionConfirmationModal
         isOpen={showConfirmModal}
+        action="save"
+        title="Save Platform Configurations?"
+        message="Are you sure you want to apply these global platform configurations?"
         onClose={() => setShowConfirmModal(false)}
-        title="Confirm Changes"
-      >
-        <div className="p-6">
-          <p className="text-text-secondary mb-6">
-            Are you sure you want to save these global platform configurations?
-          </p>
-          <div className="flex justify-end gap-3">
-            <Button
-              variant="outline"
-              onClick={() => setShowConfirmModal(false)}
-            >
-              Cancel
-            </Button>
-            <Button variant="accent" onClick={handleSave} disabled={saving}>
-              {saving ? "Saving..." : "Confirm"}
-            </Button>
-          </div>
-        </div>
-      </Modal>
+        onConfirm={handleSave}
+        saving={saving}
+      />
+
+      <ActionConfirmationModal
+        isOpen={showSuccessModal}
+        action="success"
+        title="Configurations Saved!"
+        message="Global platform configurations have been successfully updated."
+        onClose={() => setShowSuccessModal(false)}
+        onConfirm={() => setShowSuccessModal(false)}
+      />
     </div>
   );
 };
@@ -652,6 +650,7 @@ const SecuritySettings = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const supabase = createSupabaseBrowserClient();
 
   useEffect(() => {
@@ -705,6 +704,7 @@ const SecuritySettings = () => {
       })
       .eq("id", 1);
     setSaving(false);
+    setShowSuccessModal(true);
   };
 
   const handleRevokeSession = async (sessionId: string) => {
@@ -848,28 +848,24 @@ const SecuritySettings = () => {
         </div>
       </div>
 
-      <Modal
+      <ActionConfirmationModal
         isOpen={showConfirmModal}
+        action="save"
+        title="Save Security Policies?"
+        message="Are you sure you want to apply these security policy changes?"
         onClose={() => setShowConfirmModal(false)}
-        title="Confirm Changes"
-      >
-        <div className="p-6">
-          <p className="text-text-secondary mb-6">
-            Are you sure you want to save these security policy changes?
-          </p>
-          <div className="flex justify-end gap-3">
-            <Button
-              variant="outline"
-              onClick={() => setShowConfirmModal(false)}
-            >
-              Cancel
-            </Button>
-            <Button variant="accent" onClick={handleSave} disabled={saving}>
-              {saving ? "Saving..." : "Confirm"}
-            </Button>
-          </div>
-        </div>
-      </Modal>
+        onConfirm={handleSave}
+        saving={saving}
+      />
+
+      <ActionConfirmationModal
+        isOpen={showSuccessModal}
+        action="success"
+        title="Policies Saved!"
+        message="Security policies have been successfully updated."
+        onClose={() => setShowSuccessModal(false)}
+        onConfirm={() => setShowSuccessModal(false)}
+      />
     </div>
   );
 };

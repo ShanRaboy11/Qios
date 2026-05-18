@@ -4,7 +4,7 @@ import React from "react";
 import { cn } from "@/lib/utils";
 import { Button, type ButtonVariant } from "@/components/atoms/Button";
 
-type ConfirmationAction = "save" | "copy" | "delete" | "approve" | "reject";
+type ConfirmationAction = "save" | "copy" | "delete" | "approve" | "reject" | "success";
 
 type ActionConfirmationModalProps = {
   isOpen: boolean;
@@ -113,7 +113,9 @@ export function ActionConfirmationModal({
           ? "Approve"
           : action === "reject"
             ? "Reject"
-            : "Yes, Delete");
+            : action === "success"
+              ? "Close"
+              : "Yes, Delete");
   const resolvedConfirmVariant: ButtonVariant =
     confirmVariant ?? (isDeleteLike ? "outline" : "primary");
 
@@ -138,6 +140,7 @@ export function ActionConfirmationModal({
                 : "w-14 h-14 rounded-2xl",
               action === "copy" && "bg-[#fff3da]",
               action === "save" && "bg-[#e0fad6]",
+              action === "success" && "bg-[#e0fad6]",
               action === "approve" && "bg-[#e0fad6]",
               action === "reject" && "bg-[#fff0f0]",
             )}
@@ -165,6 +168,16 @@ export function ActionConfirmationModal({
                   strokeLinecap="round"
                 />
                 <circle cx="12" cy="17" r="1" fill="#ec1313" />
+              </svg>
+            ) : action === "success" ? (
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M20 6L9 17l-5-5"
+                  stroke="#1fad66"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             ) : action === "copy" ? (
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -231,14 +244,16 @@ export function ActionConfirmationModal({
         <div className="h-px bg-black/[0.05] mx-6" />
 
         <div className="px-6 py-5 flex items-center gap-3">
-          <Button
-            variant="ghost"
-            onClick={onClose}
-            disabled={saving}
-            className="flex-1 rounded-xl h-11 text-[13.5px] font-medium text-text-secondary hover:bg-black/[0.04] hover:text-text-primary transition-all duration-150 border border-black/[0.07]"
-          >
-            {cancelLabel}
-          </Button>
+          {action !== "success" && (
+            <Button
+              variant="ghost"
+              onClick={onClose}
+              disabled={saving}
+              className="flex-1 rounded-xl h-11 text-[13.5px] font-medium text-text-secondary hover:bg-black/[0.04] hover:text-text-primary transition-all duration-150 border border-black/[0.07]"
+            >
+              {cancelLabel}
+            </Button>
+          )}
           <Button
             variant={resolvedConfirmVariant}
             onClick={onConfirm}
