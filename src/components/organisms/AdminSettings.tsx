@@ -34,7 +34,7 @@ type SettingsTab =
   | "platform"
   | "team"
   | "integrations"
-  | "security";
+  | "security"
 
 export const AdminSettings = () => {
   const [activeTab, setActiveTab] = useState<SettingsTab>("account");
@@ -136,6 +136,12 @@ const AccountSettings = () => {
       if (email !== userData.user.email) {
         await supabase.auth.updateUser({ email });
       }
+
+      await supabase.from("system_activity_logs").insert({
+        user_id: userData.user.id,
+        action: "Update Account Settings",
+        details: { email, first_name: firstName, last_name: lastName }
+      });
     }
     setSaving(false);
     setShowSuccessModal(true);
@@ -310,6 +316,7 @@ const PlatformSettings = () => {
   const handleSave = async () => {
     setShowConfirmModal(false);
     setSaving(true);
+    const { data: userData } = await supabase.auth.getUser();
     await supabase
       .from("platform_settings")
       .update({
@@ -320,6 +327,14 @@ const PlatformSettings = () => {
         maintenance_mode: maintenanceMode,
       })
       .eq("id", 1);
+
+    if (userData?.user) {
+      await supabase.from("system_activity_logs").insert({
+        user_id: userData.user.id,
+        action: "Update Platform Settings",
+        details: { platform_name: platformName, support_email: supportEmail, default_currency: currency, default_timezone: timezone, maintenance_mode: maintenanceMode }
+      });
+    }
     setSaving(false);
     setShowSuccessModal(true);
   };
@@ -696,6 +711,7 @@ const SecuritySettings = () => {
   const handleSave = async () => {
     setShowConfirmModal(false);
     setSaving(true);
+    const { data: userData } = await supabase.auth.getUser();
     await supabase
       .from("platform_settings")
       .update({
@@ -703,6 +719,14 @@ const SecuritySettings = () => {
         session_timeout_hours: parseInt(sessionTimeoutHours),
       })
       .eq("id", 1);
+      
+    if (userData?.user) {
+      await supabase.from("system_activity_logs").insert({
+        user_id: userData.user.id,
+        action: "Update Security Settings",
+        details: { password_min_length: passwordMinLength, session_timeout_hours: sessionTimeoutHours }
+      });
+    }
     setSaving(false);
     setShowSuccessModal(true);
   };
