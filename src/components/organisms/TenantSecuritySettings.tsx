@@ -17,7 +17,6 @@ import {
   Copy,
   Download,
   AlertTriangle,
-  RefreshCw,
   Trash2,
   KeyRound,
   Loader2,
@@ -627,7 +626,7 @@ export const TenantSecuritySettings = ({
                           <Button variant="outline" size="sm" onClick={() => handleStartSetup("authenticator")}>
                             Change App
                           </Button>
-                          <Button variant="outline" size="icon" onClick={() => handleDisableSpecificMethod("authenticator")} className="border-brand-accent text-brand-accent hover:bg-brand-accent hover:text-white focus:ring-brand-accent">
+                          <Button variant="outline" size="icon" onClick={() => handleDisableSpecificMethod("authenticator")} className="border-brand-accent text-brand-accent hover:bg-brand-accent hover:text-white hover:border-brand-accent focus:ring-brand-accent">
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
@@ -663,7 +662,7 @@ export const TenantSecuritySettings = ({
                           Added {getTimeAgo(emailUpdatedAt || recoveryCodesGeneratedAt)}
                         </Badge>
                         <div className="flex items-center gap-2">
-                          <Button variant="outline" size="icon" onClick={() => handleDisableSpecificMethod("email")} className="border-brand-accent text-brand-accent hover:bg-brand-accent hover:text-white focus:ring-brand-accent">
+                          <Button variant="outline" size="icon" onClick={() => handleDisableSpecificMethod("email")} className="border-brand-accent text-brand-accent hover:bg-brand-accent hover:text-white hover:border-brand-accent focus:ring-brand-accent">
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>

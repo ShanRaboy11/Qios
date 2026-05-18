@@ -1,6 +1,5 @@
 "use server";
 
-import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createClient } from "@supabase/supabase-js";
 import { decrypt, hashValue } from "@/lib/encryption";
 import { verifySync } from "otplib";
