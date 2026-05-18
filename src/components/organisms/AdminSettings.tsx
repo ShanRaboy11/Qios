@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
 import { Toggle } from "@/components/atoms/Toggle";
+import { Modal } from "@/components/molecules/Modal";
 import { Dropdown } from "@/components/molecules/Dropdown";
 import { SectionHeader } from "@/components/molecules/SectionHeader";
 import { IntegrationCard } from "@/components/molecules/IntegrationCard";
@@ -94,6 +95,7 @@ const AccountSettings = () => {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const supabase = createSupabaseBrowserClient();
 
   useEffect(() => {
@@ -118,6 +120,7 @@ const AccountSettings = () => {
   }, [supabase]);
 
   const handleSave = async () => {
+    setShowConfirmModal(false);
     setSaving(true);
     const { data: userData } = await supabase.auth.getUser();
     if (userData?.user) {
@@ -238,13 +241,37 @@ const AccountSettings = () => {
                 <Save size={18} />
               )
             }
-            onClick={handleSave}
+            onClick={() => setShowConfirmModal(true)}
             disabled={saving}
           >
             {saving ? "Saving..." : "Save Changes"}
           </Button>
         </div>
       </div>
+
+      <Modal
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        title="Confirm Changes"
+      >
+        <div className="p-6">
+          <p className="text-text-secondary mb-6">
+            Are you sure you want to save these changes to your account
+            settings?
+          </p>
+          <div className="flex justify-end gap-3">
+            <Button
+              variant="outline"
+              onClick={() => setShowConfirmModal(false)}
+            >
+              Cancel
+            </Button>
+            <Button variant="accent" onClick={handleSave} disabled={saving}>
+              {saving ? "Saving..." : "Confirm"}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };
@@ -257,6 +284,7 @@ const PlatformSettings = () => {
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const supabase = createSupabaseBrowserClient();
 
   useEffect(() => {
@@ -279,6 +307,7 @@ const PlatformSettings = () => {
   }, [supabase]);
 
   const handleSave = async () => {
+    setShowConfirmModal(false);
     setSaving(true);
     await supabase
       .from("platform_settings")
@@ -416,13 +445,36 @@ const PlatformSettings = () => {
                 <Save size={18} />
               )
             }
-            onClick={handleSave}
+            onClick={() => setShowConfirmModal(true)}
             disabled={saving}
           >
             {saving ? "Saving..." : "Save Configuration"}
           </Button>
         </div>
       </div>
+
+      <Modal
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        title="Confirm Changes"
+      >
+        <div className="p-6">
+          <p className="text-text-secondary mb-6">
+            Are you sure you want to save these global platform configurations?
+          </p>
+          <div className="flex justify-end gap-3">
+            <Button
+              variant="outline"
+              onClick={() => setShowConfirmModal(false)}
+            >
+              Cancel
+            </Button>
+            <Button variant="accent" onClick={handleSave} disabled={saving}>
+              {saving ? "Saving..." : "Confirm"}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };
@@ -599,6 +651,7 @@ const SecuritySettings = () => {
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const supabase = createSupabaseBrowserClient();
 
   useEffect(() => {
@@ -620,15 +673,18 @@ const SecuritySettings = () => {
         setCurrentSessionId(sessionData.session.id);
       }
 
-      const { data: mySessions, error: sessionFetchError } = await supabase.rpc("get_my_sessions");
+      const { data: mySessions, error: sessionFetchError } =
+        await supabase.rpc("get_my_sessions");
       console.log("Sessions fetch result:", { mySessions, sessionFetchError });
-      
+
       if (mySessions) {
         // Sort current session first
         const sortedSessions = [...mySessions].sort((a, b) => {
           if (a.id === sessionData?.session?.id) return -1;
           if (b.id === sessionData?.session?.id) return 1;
-          return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+          return (
+            new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+          );
         });
         setSessions(sortedSessions);
       }
@@ -639,6 +695,7 @@ const SecuritySettings = () => {
   }, [supabase]);
 
   const handleSave = async () => {
+    setShowConfirmModal(false);
     setSaving(true);
     await supabase
       .from("platform_settings")
@@ -651,7 +708,9 @@ const SecuritySettings = () => {
   };
 
   const handleRevokeSession = async (sessionId: string) => {
-    const { error } = await supabase.rpc("revoke_session", { session_id: sessionId });
+    const { error } = await supabase.rpc("revoke_session", {
+      session_id: sessionId,
+    });
     if (!error) {
       setSessions((prev) => prev.filter((s) => s.id !== sessionId));
     }
@@ -660,14 +719,18 @@ const SecuritySettings = () => {
   const parseUserAgent = (ua: string | undefined | null) => {
     let device = "Unknown Device";
     let icon = <Laptop className="w-8 h-8" strokeWidth={1.5} />;
-    
+
     if (!ua) return { deviceText: `${device} • Unknown Browser`, icon };
 
     if (/Windows/i.test(ua)) device = "Windows";
     else if (/Mac/i.test(ua) && !/iPhone|iPad|iPod/i.test(ua)) device = "macOS";
-    else if (/iPhone|iPad|iPod/i.test(ua)) { device = "iOS"; icon = <Smartphone className="w-8 h-8" strokeWidth={1.5} />; }
-    else if (/Android/i.test(ua)) { device = "Android"; icon = <Smartphone className="w-8 h-8" strokeWidth={1.5} />; }
-    else if (/Linux/i.test(ua)) device = "Linux";
+    else if (/iPhone|iPad|iPod/i.test(ua)) {
+      device = "iOS";
+      icon = <Smartphone className="w-8 h-8" strokeWidth={1.5} />;
+    } else if (/Android/i.test(ua)) {
+      device = "Android";
+      icon = <Smartphone className="w-8 h-8" strokeWidth={1.5} />;
+    } else if (/Linux/i.test(ua)) device = "Linux";
 
     let browser = "Unknown Browser";
     if (/Edg/i.test(ua)) browser = "Edge";
@@ -741,11 +804,11 @@ const SecuritySettings = () => {
               sessions.map((session) => {
                 const isActive = session.id === currentSessionId;
                 const { deviceText, icon } = parseUserAgent(session.user_agent);
-                
+
                 // Keep time relatively simple for this display
                 const lastUpdated = new Date(session.updated_at);
-                const timeStr = isActive 
-                  ? "Current Session" 
+                const timeStr = isActive
+                  ? "Current Session"
                   : `Last active: ${lastUpdated.toLocaleDateString()} ${lastUpdated.toLocaleTimeString()}`;
 
                 return (
@@ -777,13 +840,36 @@ const SecuritySettings = () => {
                 <Save size={18} />
               )
             }
-            onClick={handleSave}
+            onClick={() => setShowConfirmModal(true)}
             disabled={saving}
           >
             {saving ? "Saving..." : "Save Policies"}
           </Button>
         </div>
       </div>
+
+      <Modal
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        title="Confirm Changes"
+      >
+        <div className="p-6">
+          <p className="text-text-secondary mb-6">
+            Are you sure you want to save these security policy changes?
+          </p>
+          <div className="flex justify-end gap-3">
+            <Button
+              variant="outline"
+              onClick={() => setShowConfirmModal(false)}
+            >
+              Cancel
+            </Button>
+            <Button variant="accent" onClick={handleSave} disabled={saving}>
+              {saving ? "Saving..." : "Confirm"}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };
