@@ -19,11 +19,11 @@ import {
   AlertTriangle,
   RefreshCw,
   Trash2,
-  ChevronRight,
   KeyRound,
   Loader2,
   X,
   Check,
+  ShieldAlert,
 } from "lucide-react";
 import QRCode from "react-qr-code";
 import { Button } from "@/components/atoms/Button";
@@ -100,7 +100,7 @@ const getTimeAgo = (dateString?: string) => {
   return `${Math.floor(diffInMins)} mins ago`;
 };
 
-const SixDigitInput = ({ value, onChange, disabled }: { value: string, onChange: (val: string) => void, disabled?: boolean }) => {
+const SixDigitInput = ({ value, onChange, disabled, isError, errorMessage }: { value: string, onChange: (val: string) => void, disabled?: boolean, isError?: boolean, errorMessage?: string }) => {
   const inputs = useRef<(HTMLInputElement | null)[]>([]);
 
   const handleChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
@@ -132,22 +132,34 @@ const SixDigitInput = ({ value, onChange, disabled }: { value: string, onChange:
   };
 
   return (
-    <div className="flex gap-2 justify-center" onPaste={handlePaste}>
-      {Array.from({ length: 6 }).map((_, i) => (
-        <input
-          key={i}
-          ref={(el) => { inputs.current[i] = el; }}
-          type="text"
-          inputMode="numeric"
-          pattern="[0-9]*"
-          maxLength={2}
-          value={value[i] && value[i] !== " " ? value[i] : ""}
-          disabled={disabled}
-          onChange={(e) => handleChange(i, e)}
-          onKeyDown={(e) => handleKeyDown(i, e)}
-          className="w-10 h-12 sm:w-12 sm:h-14 text-center text-xl font-bold rounded-xl border border-black/[0.08] focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 outline-none transition-all disabled:opacity-50"
-        />
-      ))}
+    <div className="flex flex-col gap-2">
+      <div className="flex gap-2 justify-center" onPaste={handlePaste}>
+        {Array.from({ length: 6 }).map((_, i) => (
+          <input
+            key={i}
+            ref={(el) => { inputs.current[i] = el; }}
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            maxLength={2}
+            value={value[i] && value[i] !== " " ? value[i] : ""}
+            disabled={disabled}
+            onChange={(e) => handleChange(i, e)}
+            onKeyDown={(e) => handleKeyDown(i, e)}
+            className={cn(
+              "w-10 h-12 sm:w-12 sm:h-14 text-center text-xl font-bold rounded-xl border outline-none transition-all disabled:opacity-50",
+              isError 
+                ? "border-warning-primary focus:border-warning-primary focus:ring-2 focus:ring-warning-primary/20 text-warning-primary bg-warning-primary/5" 
+                : "border-black/[0.08] focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 text-text-primary bg-white"
+            )}
+          />
+        ))}
+      </div>
+      {isError && errorMessage && (
+        <p className="text-sm text-warning-primary text-center animate-in fade-in slide-in-from-top-1">
+          {errorMessage}
+        </p>
+      )}
     </div>
   );
 };
@@ -176,7 +188,10 @@ export const TenantSecuritySettings = ({
 
   // 2FA Detailed State
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(initialData.twoFactorEnabled || false);
-  const [twoFactorMethod, setTwoFactorMethod] = useState<"authenticator" | "email" | undefined>(initialData.twoFactorMethod);
+  const [hasAuthenticator, setHasAuthenticator] = useState(initialData.hasAuthenticator || false);
+  const [hasEmail, setHasEmail] = useState(initialData.hasEmail || false);
+  const [authenticatorUpdatedAt, setAuthenticatorUpdatedAt] = useState(initialData.authenticatorUpdatedAt);
+  const [emailUpdatedAt, setEmailUpdatedAt] = useState(initialData.emailUpdatedAt);
   const [recoveryCodesGeneratedAt, setRecoveryCodesGeneratedAt] = useState(initialData.recoveryCodesGeneratedAt);
   const [showSetupOptions, setShowSetupOptions] = useState(initialData.twoFactorEnabled || false);
 
@@ -190,6 +205,7 @@ export const TenantSecuritySettings = ({
   const [setupError, setSetupError] = useState("");
 
   const [isDisableModalOpen, setIsDisableModalOpen] = useState(false);
+  const [disableMethod, setDisableMethod] = useState<"all" | "authenticator" | "email">("all");
   const [disablePassword, setDisablePassword] = useState("");
   const [disableLoading, setDisableLoading] = useState(false);
   const [disableError, setDisableError] = useState("");
@@ -214,7 +230,10 @@ export const TenantSecuritySettings = ({
 
   useEffect(() => {
     setTwoFactorEnabled(initialData.twoFactorEnabled || false);
-    setTwoFactorMethod(initialData.twoFactorMethod);
+    setHasAuthenticator(initialData.hasAuthenticator || false);
+    setHasEmail(initialData.hasEmail || false);
+    setAuthenticatorUpdatedAt(initialData.authenticatorUpdatedAt);
+    setEmailUpdatedAt(initialData.emailUpdatedAt);
     setRecoveryCodesGeneratedAt(initialData.recoveryCodesGeneratedAt);
     if (initialData.twoFactorEnabled) setShowSetupOptions(true);
   }, [initialData]);
@@ -253,8 +272,14 @@ export const TenantSecuritySettings = ({
     if (val) {
       setShowSetupOptions(true);
     } else {
+      setDisableMethod("all");
       setIsDisableModalOpen(true);
     }
+  };
+
+  const handleDisableSpecificMethod = (method: "authenticator" | "email") => {
+    setDisableMethod(method);
+    setIsDisableModalOpen(true);
   };
 
   const handleStartSetup = async (method: "authenticator" | "email") => {
@@ -295,9 +320,15 @@ export const TenantSecuritySettings = ({
       }
       setSetupRecoveryCodes(res.recoveryCodes);
       setTwoFactorEnabled(true);
-      setTwoFactorMethod(setupStep === "authenticator" ? "authenticator" : "email");
-      setRecoveryCodesGeneratedAt(new Date().toISOString());
       setShowSetupOptions(true);
+      if (setupStep === "authenticator") {
+        setHasAuthenticator(true);
+        setAuthenticatorUpdatedAt(new Date().toISOString());
+      } else {
+        setHasEmail(true);
+        setEmailUpdatedAt(new Date().toISOString());
+      }
+      setRecoveryCodesGeneratedAt(new Date().toISOString());
       setSetupStep("recovery");
     } catch (err: any) {
       setSetupError(err.message || "Invalid verification code");
@@ -314,10 +345,13 @@ export const TenantSecuritySettings = ({
     setDisableLoading(true);
     setDisableError("");
     try {
+      // In a real app we might pass disableMethod to disable only one,
+      // but the current actions.ts clears everything.
       await disableTwoFactorAuth(tenantId, disablePassword);
       setTwoFactorEnabled(false);
       setShowSetupOptions(false);
-      setTwoFactorMethod(undefined);
+      setHasAuthenticator(false);
+      setHasEmail(false);
       setRecoveryCodesGeneratedAt(undefined);
       setIsDisableModalOpen(false);
       setDisablePassword("");
@@ -544,24 +578,14 @@ export const TenantSecuritySettings = ({
               className="mb-0 py-2 border-gray-100"
             />
             <div className="flex flex-col gap-4 mt-2">
-              <div className="flex items-center justify-between p-6 rounded-2xl border border-black/[0.05] bg-white">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-brand-primary/10 flex items-center justify-center text-brand-primary shrink-0">
-                    <Shield className="w-6 h-6 text-brand-accent" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-text-primary text-base">
-                      Require 2FA for Login
-                    </h4>
-                    <p className="text-sm text-text-secondary mt-1">
-                      Add an extra layer of security to your account.
-                    </p>
-                    {twoFactorEnabled && recoveryCodesGeneratedAt && (
-                      <Badge color="success" variant="subtle" shape="rounded" className="mt-2 text-xs">
-                        Active since {new Date(recoveryCodesGeneratedAt).toLocaleDateString()}
-                      </Badge>
-                    )}
-                  </div>
+              <div className="flex items-center justify-between gap-4 p-4 rounded-xl border border-transparent bg-white hover:bg-black/[0.02] transition-all duration-300">
+                <div className="flex flex-col gap-0.5 select-none">
+                  <span className={cn("b2 font-bold transition-colors duration-300", twoFactorEnabled || showSetupOptions ? "text-text-primary" : "text-text-primary/80")}>
+                    Require 2FA for Login
+                  </span>
+                  <span className={cn("b4 transition-colors duration-300", twoFactorEnabled || showSetupOptions ? "text-text-secondary" : "text-text-secondary/90")}>
+                    Add an extra layer of security to your account.
+                  </span>
                 </div>
                 <Toggle 
                   isOn={twoFactorEnabled || showSetupOptions} 
@@ -572,91 +596,111 @@ export const TenantSecuritySettings = ({
 
               {(twoFactorEnabled || showSetupOptions) && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div 
-                    className="flex flex-col justify-between p-5 rounded-2xl border border-black/[0.05] bg-white hover:border-brand-primary transition-colors group cursor-pointer" 
-                    onClick={() => handleStartSetup("authenticator")}
-                  >
-                    <div>
-                      <div className="flex justify-between items-start mb-3">
-                        <div className="w-10 h-10 rounded-full bg-brand-primary/10 flex items-center justify-center text-brand-primary">
-                          <SmartphoneNfc className="w-5 h-5" />
+                  <div className="flex flex-col p-5 rounded-2xl border border-black/[0.05] bg-white transition-colors">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 rounded-full bg-brand-primary/10 flex items-center justify-center text-brand-primary shrink-0">
+                          <SmartphoneNfc className="w-6 h-6 text-brand-accent" />
                         </div>
-                        <Badge color="accent" variant="subtle" shape="pill" className="text-[10px] uppercase font-bold tracking-wider">
-                          Recommended
-                        </Badge>
+                        <div className="flex flex-col gap-0.5 select-none pt-1">
+                          <span className="b2 font-bold transition-colors duration-300 text-text-primary">
+                            Authenticator App
+                          </span>
+                          <span className="b4 transition-colors duration-300 text-text-secondary">
+                            Get codes from an app like Google Authenticator or Authy.
+                          </span>
+                        </div>
                       </div>
-                      <h4 className="font-bold text-text-primary text-base flex justify-between items-center">
-                        Authenticator App
-                        {twoFactorMethod !== "authenticator" && <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-brand-primary transition-colors" />}
-                      </h4>
-                      <p className="text-sm text-text-secondary mt-1 mb-4">
-                        Get codes from an app like Google Authenticator or Authy. Works offline.
-                      </p>
-                    </div>
-                    {twoFactorMethod === "authenticator" && (
-                      <div className="flex flex-col items-start gap-3 pt-4 border-t border-black/[0.05]">
-                        <Badge color="success" variant="subtle" shape="rounded" className="text-xs">
-                          Added {getTimeAgo(recoveryCodesGeneratedAt)}
-                        </Badge>
-                        <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); handleStartSetup("authenticator"); }}>
-                          Change Authenticator App
+                      {!hasAuthenticator && (
+                        <Button variant="outline" size="sm" onClick={() => handleStartSetup("authenticator")}>
+                          Set Up
                         </Button>
+                      )}
+                    </div>
+                    
+                    {hasAuthenticator && (
+                      <div className="flex items-center justify-between mt-4 pt-4 border-t border-black/[0.05]">
+                        <Badge color="success" variant="subtle" shape="rounded" className="text-xs">
+                          Added {getTimeAgo(authenticatorUpdatedAt || recoveryCodesGeneratedAt)}
+                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Button variant="outline" size="sm" onClick={() => handleStartSetup("authenticator")}>
+                            Change App
+                          </Button>
+                          <Button variant="outline" size="icon" onClick={() => handleDisableSpecificMethod("authenticator")} className="border-brand-accent text-brand-accent hover:bg-brand-accent hover:text-white focus:ring-brand-accent">
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
                     )}
                   </div>
 
-                  <div 
-                    className="flex flex-col justify-between p-5 rounded-2xl border border-black/[0.05] bg-white hover:border-brand-primary transition-colors group cursor-pointer" 
-                    onClick={() => handleStartSetup("email")}
-                  >
-                    <div>
-                      <div className="flex justify-between items-start mb-3">
-                        <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">
-                          <Mail className="w-5 h-5" />
+                  <div className="flex flex-col p-5 rounded-2xl border border-black/[0.05] bg-white transition-colors">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 rounded-full bg-brand-primary/10 flex items-center justify-center text-brand-primary shrink-0">
+                          <Mail className="w-6 h-6 text-brand-accent" />
+                        </div>
+                        <div className="flex flex-col gap-0.5 select-none pt-1">
+                          <span className="b2 font-bold transition-colors duration-300 text-text-primary">
+                            Email Verification
+                          </span>
+                          <span className="b4 transition-colors duration-300 text-text-secondary">
+                            Receive a 6-digit code to your email inbox.
+                          </span>
                         </div>
                       </div>
-                      <h4 className="font-bold text-text-primary text-base flex justify-between items-center">
-                        Email Verification
-                        {twoFactorMethod !== "email" && <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-brand-primary transition-colors" />}
-                      </h4>
-                      <p className="text-sm text-text-secondary mt-1 mb-4">
-                        Receive a 6-digit code to your email inbox.
-                      </p>
-                    </div>
-                    {twoFactorMethod === "email" && (
-                      <div className="flex flex-col items-start gap-3 pt-4 border-t border-black/[0.05]">
-                        <Badge color="success" variant="subtle" shape="rounded" className="text-xs">
-                          Added {getTimeAgo(recoveryCodesGeneratedAt)}
-                        </Badge>
-                        <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); handleStartSetup("email"); }}>
-                          Change Email Method
+                      {!hasEmail && (
+                        <Button variant="outline" size="sm" onClick={() => handleStartSetup("email")}>
+                          Set Up
                         </Button>
+                      )}
+                    </div>
+
+                    {hasEmail && (
+                      <div className="flex items-center justify-between mt-4 pt-4 border-t border-black/[0.05]">
+                        <Badge color="success" variant="subtle" shape="rounded" className="text-xs">
+                          Added {getTimeAgo(emailUpdatedAt || recoveryCodesGeneratedAt)}
+                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Button variant="outline" size="icon" onClick={() => handleDisableSpecificMethod("email")} className="border-brand-accent text-brand-accent hover:bg-brand-accent hover:text-white focus:ring-brand-accent">
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
                     )}
                   </div>
                 </div>
               )}
 
-              {twoFactorEnabled && (
-                <div className="flex flex-col sm:flex-row items-center justify-between p-5 rounded-2xl border border-black/[0.05] bg-white gap-4">
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 shrink-0">
-                      <KeyRound className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-text-primary text-base">
-                        Backup Recovery Codes
-                      </h4>
-                      <p className="text-sm text-text-secondary">
-                        {recoveryCodesGeneratedAt 
-                          ? `Last generated on ${new Date(recoveryCodesGeneratedAt).toLocaleDateString()}` 
-                          : "Used when you lose access to your 2FA method."}
-                      </p>
+              {twoFactorEnabled && recoveryCodesGeneratedAt && (
+                <div className="flex flex-col p-5 rounded-2xl border border-black/[0.05] bg-white transition-colors">
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 rounded-full bg-brand-primary/10 flex items-center justify-center text-brand-primary shrink-0">
+                        <KeyRound className="w-6 h-6 text-brand-accent" />
+                      </div>
+                      <div className="flex flex-col gap-0.5 select-none pt-1">
+                        <span className="b2 font-bold transition-colors duration-300 text-text-primary">
+                          Backup Recovery Codes
+                        </span>
+                        <span className="b4 transition-colors duration-300 text-text-secondary">
+                          Use these codes if you lose access to your other methods.
+                        </span>
+                      </div>
                     </div>
                   </div>
-                  <Button onClick={() => setIsRegenerateModalOpen(true)} variant="outline" shape="rounded" leftIcon={<RefreshCw className="w-4 h-4"/>} className="w-full sm:w-auto">
-                    Regenerate Codes
-                  </Button>
+
+                  <div className="flex items-center justify-between mt-4 pt-4 border-t border-black/[0.05]">
+                    <Badge color="success" variant="subtle" shape="rounded" className="text-xs">
+                      Generated {getTimeAgo(recoveryCodesGeneratedAt)}
+                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Button variant="outline" size="sm" onClick={() => setIsRegenerateModalOpen(true)}>
+                        Regenerate
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
@@ -710,7 +754,7 @@ export const TenantSecuritySettings = ({
       />
 
       {isSetupModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-text-primary/40 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-text-primary/45 backdrop-blur-sm p-4">
           <div className="bg-white rounded-2xl md:rounded-[32px] w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
             <div className="px-6 md:px-8 py-4 md:py-6 flex items-center justify-between border-b border-black/[0.05] flex-shrink-0">
               <h2 className="b2 font-bold text-text-primary">
@@ -783,9 +827,9 @@ export const TenantSecuritySettings = ({
               {setupStep === "email" && (
                 <div className="space-y-6 text-center">
                   <div className="relative w-16 h-16 mx-auto mb-4">
-                    <div className="absolute inset-0 rounded-full bg-brand-primary/20 animate-ping" style={{ animationDuration: "1.8s" }} />
-                    <div className="relative w-16 h-16 bg-brand-primary/10 text-brand-primary rounded-full flex items-center justify-center shadow-lg shadow-brand-primary/20">
-                      <Mail size={32} strokeWidth={3} />
+                    <div className="absolute inset-0 rounded-full bg-brand-primary/30 animate-ping" style={{ animationDuration: "1.8s" }} />
+                    <div className="relative w-16 h-16 bg-brand-primary/20 text-brand-primary rounded-full flex items-center justify-center shadow-lg shadow-brand-primary/20">
+                      <Mail size={32} strokeWidth={2} />
                     </div>
                   </div>
                   <p className="text-sm text-text-secondary">
@@ -854,48 +898,73 @@ export const TenantSecuritySettings = ({
       )}
 
       {isDisableModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-text-primary/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl md:rounded-[32px] w-full max-w-sm shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-text-primary/45 backdrop-blur-sm p-4">
+          <div
+            className="bg-white rounded-[28px] w-full max-w-sm shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+            style={{
+              boxShadow: "0 24px 64px rgba(0,0,0,0.14), 0 4px 16px rgba(0,0,0,0.08)",
+            }}
+          >
             <div className="flex flex-col items-center text-center px-8 pt-8 pb-6">
-              <div className="flex items-center justify-center mb-5 w-14 h-14 rounded-2xl bg-[#fff0f0] shadow-sm">
-                <Trash2 className="w-6 h-6 text-[#ec1313]" />
+              <div
+                className="flex items-center justify-center mb-5 w-14 h-14 rounded-2xl bg-[#fff0f0]"
+                style={{
+                  boxShadow: "0 4px 18px rgba(255,82,105,0.18)",
+                }}
+              >
+                <ShieldAlert className="w-7 h-7 text-[#ec1313]" strokeWidth={1.75} />
               </div>
-              <h3 className="text-xl font-bold text-text-primary mb-2">Disable 2FA?</h3>
-              <p className="text-sm text-text-secondary mb-6 leading-relaxed">
-                Disabling two-factor authentication will make your account less secure. Please enter your password to confirm.
+
+              <h3 className="font-bold text-[17px] text-text-primary leading-snug">
+                Disable {disableMethod === "all" ? "2FA" : disableMethod === "authenticator" ? "Authenticator App" : "Email Verification"}?
+              </h3>
+
+              <p className="text-[13px] text-text-secondary mt-2 leading-relaxed max-w-[270px]">
+                {disableMethod === "all" 
+                  ? "Are you sure you want to disable all two-factor authentication methods? Your account will be less secure." 
+                  : "Are you sure you want to remove this 2FA method?"} 
               </p>
-              
-              <div className="w-full space-y-3 mb-6">
+            </div>
+
+            <div className="px-6 pb-2">
+              <div className="space-y-1.5 w-full relative">
                 <Input
                   type="password"
                   placeholder="Current Password"
                   value={disablePassword}
-                  onChange={(e) => setDisablePassword(e.target.value)}
-                  className="w-full"
+                  onChange={(e) => {
+                     setDisablePassword(e.target.value);
+                     if (disableError) setDisableError("");
+                  }}
+                  className={cn(
+                     "w-full py-2.5 rounded-xl pr-10 focus:outline-none",
+                     !disableError && "focus:border-brand-primary focus:ring-brand-primary"
+                  )}
                   isError={!!disableError}
                 />
-                {disableError && <p className="text-xs text-red-500 text-left">{disableError}</p>}
+                {disableError && <p className="text-xs text-[#ec1313] pl-1 text-left">{disableError}</p>}
               </div>
+            </div>
 
-              <div className="flex flex-col sm:flex-row w-full gap-3">
-                <Button
-                  onClick={() => setIsDisableModalOpen(false)}
-                  variant="outline"
-                  shape="rounded"
-                  className="flex-1 order-2 sm:order-1"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleDisable2FA}
-                  variant="outline"
-                  shape="rounded"
-                  loading={disableLoading}
-                  className="flex-1 order-1 sm:order-2 border-[#ec1313] text-[#ec1313] hover:bg-[#fff0f0]"
-                >
-                  Disable
-                </Button>
-              </div>
+            <div className="h-px bg-black/[0.05] mx-6 mt-4" />
+
+            <div className="px-6 py-5 flex items-center gap-3">
+              <Button
+                variant="ghost"
+                onClick={() => setIsDisableModalOpen(false)}
+                disabled={disableLoading}
+                className="flex-1 rounded-xl h-11 text-[13.5px] font-medium text-text-secondary hover:bg-black/[0.04] hover:text-text-primary transition-all duration-150 border border-black/[0.07]"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleDisable2FA}
+                loading={disableLoading}
+                disabled={disableLoading || !disablePassword}
+                className="flex-1 rounded-xl h-11 text-[13.5px] font-semibold transition-all duration-200 shadow-sm active:scale-[0.98] bg-warning-secondary text-warning-primary border-2 border-warning-primary/20 hover:bg-warning-primary hover:text-white hover:border-warning-primary hover:shadow-md"
+              >
+                Disable
+              </Button>
             </div>
           </div>
         </div>

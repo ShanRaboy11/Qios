@@ -6,7 +6,10 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { generateSecret, generateURI, verifySync } from "otplib";
 import { encrypt, hashValue } from "@/lib/encryption";
-import { sendContactVerificationEmail } from "@/lib/email";
+import {
+  sendContactVerificationEmail,
+  sendSecurityVerificationEmail,
+} from "@/lib/email";
 import crypto from "crypto";
 import type {
   SettingsActionState,
@@ -264,15 +267,13 @@ export async function getTenantSettings(
   };
 
   const security: TenantSecuritySettingsData = {
-    requireTwoFactorAuth: toBoolean(
-      readSettingValue(settings, [
-        "require_two_factor_auth",
-        "requireTwoFactorAuth",
-      ]),
-    ),
-    twoFactorEnabled: toBoolean(readSettingValue(settings, ["two_factor_enabled"])),
-    twoFactorMethod: (readSettingValue(settings, ["two_factor_method"]) as "authenticator" | "email") || undefined,
-    recoveryCodesGeneratedAt: readSettingValue(settings, ["recovery_codes_generated_at"]) || undefined,
+    requireTwoFactorAuth: (settings?.require_two_factor_auth === true),
+    twoFactorEnabled: (settings?.two_factor_enabled === true),
+    hasAuthenticator: (settings?.has_authenticator === true),
+    hasEmail: (settings?.has_email === true),
+    authenticatorUpdatedAt: settings?.authenticator_updated_at as string | undefined,
+    emailUpdatedAt: settings?.email_updated_at as string | undefined,
+    recoveryCodesGeneratedAt: settings?.recovery_codes_generated_at as string | undefined,
   };
 
   return {
@@ -940,15 +941,10 @@ export async function verifyAndEnableAuthenticatorTwoFactor(
   secret: string,
   token: string
 ) {
-  const isValid = verifySync({ token, secret });
-  if (!isValid) throw new Error("Invalid verification code.");
+  const result = verifySync({ token, secret });
+  if (!result.valid) throw new Error("Invalid verification code.");
 
   const { admin } = await getAuthenticatedTenantContext(tenantId);
-
-  const recoveryCodes = Array.from({ length: 10 }, () =>
-    crypto.randomBytes(4).toString("hex")
-  );
-  const recoveryCodesHashed = recoveryCodes.map((c) => hashValue(c));
 
   const { data: tenant } = await admin
     .from("tenants")
@@ -956,11 +952,24 @@ export async function verifyAndEnableAuthenticatorTwoFactor(
     .eq("id", tenantId)
     .single();
 
+  const currentSettings = (tenant?.settings as Record<string, any>) || {};
+
+  let recoveryCodes: string[] = [];
+  let recoveryCodesHashed: string[] = currentSettings.recovery_codes_hashed || [];
+  
+  if (!recoveryCodesHashed.length) {
+    recoveryCodes = Array.from({ length: 10 }, () =>
+      crypto.randomBytes(4).toString("hex")
+    );
+    recoveryCodesHashed = recoveryCodes.map((c) => hashValue(c));
+  }
+
   const settings = mergeSettings(
     (tenant?.settings as Record<string, unknown>) || null,
     {
       two_factor_enabled: true,
-      two_factor_method: "authenticator",
+      has_authenticator: true,
+      authenticator_updated_at: new Date().toISOString(),
       totp_secret_encrypted: encrypt(secret),
       recovery_codes_hashed: recoveryCodesHashed,
       recovery_codes_generated_at: new Date().toISOString(),
@@ -1003,7 +1012,7 @@ export async function setupEmailTwoFactor(tenantId: string) {
 
   await admin.from("tenants").update({ settings }).eq("id", tenantId);
 
-  const res = await sendContactVerificationEmail({
+  const res = await sendSecurityVerificationEmail({
     to: emailToUse,
     businessName,
     code,
@@ -1043,16 +1052,24 @@ export async function verifyAndEnableEmailTwoFactor(
     throw new Error("Invalid verification code.");
   }
 
-  const recoveryCodes = Array.from({ length: 10 }, () =>
-    crypto.randomBytes(4).toString("hex")
-  );
-  const recoveryCodesHashed = recoveryCodes.map((c) => hashValue(c));
+  let recoveryCodes: string[] = [];
+  let recoveryCodesHashed: string[] = currentSettings.recovery_codes_hashed || [];
+  let recoveryCodesGeneratedAt = currentSettings.recovery_codes_generated_at || null;
+  
+  if (!recoveryCodesHashed.length) {
+    recoveryCodes = Array.from({ length: 10 }, () =>
+      crypto.randomBytes(4).toString("hex")
+    );
+    recoveryCodesHashed = recoveryCodes.map((c) => hashValue(c));
+    recoveryCodesGeneratedAt = new Date().toISOString();
+  }
 
   const newSettings = mergeSettings(currentSettings, {
     two_factor_enabled: true,
-    two_factor_method: "email",
+    has_email: true,
+    email_updated_at: new Date().toISOString(),
     recovery_codes_hashed: recoveryCodesHashed,
-    recovery_codes_generated_at: new Date().toISOString(),
+    recovery_codes_generated_at: recoveryCodesGeneratedAt,
     email_verification_code_hashed: null, // clear it
     email_verification_code_expires_at: null,
   });
@@ -1090,7 +1107,10 @@ export async function disableTwoFactorAuth(
 
   const newSettings = { ...currentSettings };
   delete newSettings.two_factor_enabled;
-  delete newSettings.two_factor_method;
+  delete newSettings.has_authenticator;
+  delete newSettings.has_email;
+  delete newSettings.authenticator_updated_at;
+  delete newSettings.email_updated_at;
   delete newSettings.totp_secret_encrypted;
   delete newSettings.recovery_codes_hashed;
   delete newSettings.recovery_codes_generated_at;

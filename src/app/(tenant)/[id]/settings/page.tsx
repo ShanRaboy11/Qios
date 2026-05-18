@@ -6,7 +6,7 @@ import { getTenantSettings } from "./actions";
 export default async function SettingsPage({
   params,
 }: {
-  params: Promise<{ id: string }> | { id: string };
+  params: Promise<{ id: string }>;
 }) {
   const resolvedParams = await params;
 
