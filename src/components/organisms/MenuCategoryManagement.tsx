@@ -285,6 +285,7 @@ const MenuCategoryManagement = () => {
     categories,
     items,
     isLoading,
+    actionError,
     saveCategory,
     deleteCategory,
     saveItem,
@@ -297,6 +298,7 @@ const MenuCategoryManagement = () => {
   const [activeCatId, setActiveCatId] = useState<string>("");
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [isLocalLoading, setIsLocalLoading] = useState(false);
+  const [localError, setLocalError] = useState<string | null>(null);
 
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchQuery, setSearchQuery] = useState("");
@@ -365,10 +367,11 @@ const MenuCategoryManagement = () => {
   ).length;
 
   const hasChanges = JSON.stringify(originalItem) !== JSON.stringify(draftItem);
+  const requiresImage = !!draftItem?.id?.startsWith("item_");
   const isValidDraft =
     draftItem?.name?.trim() !== "" &&
     draftItem?.price?.trim() !== "" &&
-    !!draftItem?.image &&
+    (!requiresImage || !!draftItem?.image) &&
     draftItem?.sizes.every(
       (s) => s.name.trim() !== "" && s.price.trim() !== "",
     ) &&
@@ -429,27 +432,45 @@ const MenuCategoryManagement = () => {
   };
 
   const openNewCatModal = () => {
+    setLocalError(null);
     setCatDraft({ name: "", icon: "flame" });
     setCatModal("new");
   };
   const openEditCatModal = (cat: Category) => {
+    setLocalError(null);
     setCatDraft({ ...cat });
     setCatModal("edit");
   };
 
   const handleSaveCategory = async () => {
     if (!catDraft.name?.trim()) return;
+    setLocalError(null);
+    setIsLocalLoading(true);
     const isNew = catModal === "new";
     const saved = await saveCategory(catDraft, isNew);
-    if (saved && isNew) setActiveCatId(saved.id);
-    setCatModal(null);
+    if (saved) {
+      if (isNew) setActiveCatId(saved.id);
+      setCatModal(null);
+    } else {
+      setLocalError(
+        "Unable to save category. Please check your tenant access.",
+      );
+    }
+    setIsLocalLoading(false);
   };
 
   const handleDeleteCategory = async (id: string) => {
-    await deleteCategory(id);
-    const remaining = categories.filter((c) => c.id !== id);
-    setActiveCatId(remaining.length ? remaining[0].id : "");
-    setCatModal(null);
+    setLocalError(null);
+    setIsLocalLoading(true);
+    const ok = await deleteCategory(id);
+    if (ok) {
+      const remaining = categories.filter((c) => c.id !== id);
+      setActiveCatId(remaining.length ? remaining[0].id : "");
+      setCatModal(null);
+    } else {
+      setLocalError("Unable to delete category.");
+    }
+    setIsLocalLoading(false);
   };
 
   const toggleSelection = (id: string) =>
@@ -462,15 +483,19 @@ const MenuCategoryManagement = () => {
   };
 
   const handleOpenModal = (item: MenuItem) => {
+    setLocalError(null);
     setOriginalItem(item);
     setDraftItem(JSON.parse(JSON.stringify(item)));
   };
   const handleCloseModal = () => {
+    setLocalError(null);
     setOriginalItem(null);
     setDraftItem(null);
   };
   const handleSaveItem = async () => {
     if (!draftItem || !isValidDraft) return;
+    setLocalError(null);
+    setIsLocalLoading(true);
 
     let finalImage = draftItem.image;
     if (draftItem.image && draftItem.image.startsWith("data:image")) {
@@ -481,11 +506,22 @@ const MenuCategoryManagement = () => {
       const uploadedUrl = await uploadImage(blob, fileName);
       if (uploadedUrl) {
         finalImage = uploadedUrl;
+      } else {
+        setLocalError("Image upload failed. Please try again.");
+        setIsLocalLoading(false);
+        return;
       }
     }
 
-    await saveItem({ ...draftItem, image: finalImage });
-    handleCloseModal();
+    const savedItem = await saveItem({ ...draftItem, image: finalImage });
+    if (savedItem) {
+      handleCloseModal();
+    } else {
+      setLocalError(
+        "Unable to save item. Please check required fields and tenant access.",
+      );
+    }
+    setIsLocalLoading(false);
   };
 
   const handleCreateNewItem = () => {
@@ -1353,6 +1389,11 @@ const MenuCategoryManagement = () => {
             </div>
 
             <div className="p-4 border-t-2 border-black/5 flex items-center justify-end gap-3 flex-shrink-0 bg-white">
+              {(localError || actionError) && (
+                <div className="mr-auto rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                  {localError || actionError}
+                </div>
+              )}
               {hasChanges && (
                 <div className="flex flex-col text-left mr-auto">
                   <span className="b4 font-bold text-text-primary">
@@ -1380,14 +1421,14 @@ const MenuCategoryManagement = () => {
               <Button
                 variant="primary"
                 onClick={handleSaveItem}
-                disabled={!hasChanges || !isValidDraft}
+                disabled={!hasChanges || !isValidDraft || isLocalLoading}
                 className={cn(
                   "b4 bg-brand-accent hover:bg-brand-accent/90 border-brand-accent text-white",
-                  (!hasChanges || !isValidDraft) &&
+                  (!hasChanges || !isValidDraft || isLocalLoading) &&
                     "opacity-50 pointer-events-none",
                 )}
               >
-                Save Changes
+                {isLocalLoading ? "Saving..." : "Save Changes"}
               </Button>
             </div>
           </div>
@@ -1426,6 +1467,11 @@ const MenuCategoryManagement = () => {
               className="p-6 overflow-y-auto custom-scrollbar flex flex-col gap-5"
               style={{ minHeight: 0 }}
             >
+              {(localError || actionError) && (
+                <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                  {localError || actionError}
+                </div>
+              )}
               <div>
                 <FieldLabel>
                   Category Name <span className="text-brand-accent">*</span>
@@ -1484,10 +1530,14 @@ const MenuCategoryManagement = () => {
               <Button
                 variant="primary"
                 onClick={handleSaveCategory}
-                disabled={!catDraft.name?.trim()}
+                disabled={!catDraft.name?.trim() || isLocalLoading}
                 className="b4 bg-brand-accent hover:bg-brand-accent/90 border-brand-accent text-white"
               >
-                {catModal === "new" ? "Create Category" : "Save Changes"}
+                {isLocalLoading
+                  ? "Saving..."
+                  : catModal === "new"
+                    ? "Create Category"
+                    : "Save Changes"}
               </Button>
             </div>
           </div>

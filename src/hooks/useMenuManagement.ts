@@ -41,6 +41,45 @@ export const useMenuManagement = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [items, setItems] = useState<MenuItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  const getErrorMessage = (error: unknown, fallback: string) => {
+    if (error && typeof error === "object" && "message" in error) {
+      return String((error as { message: unknown }).message);
+    }
+    return fallback;
+  };
+
+  const getCurrentTenantId = async (): Promise<string> => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    const jwtTenantId = (session?.user?.app_metadata?.tenant_id ||
+      session?.user?.user_metadata?.tenant_id) as string | undefined;
+    if (jwtTenantId) return jwtTenantId;
+
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      throw new Error("No authenticated user found.");
+    }
+
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("tenant_id")
+      .eq("id", user.id)
+      .single();
+
+    if (profileError || !profile?.tenant_id) {
+      throw new Error("Unable to resolve tenant context for this account.");
+    }
+
+    return profile.tenant_id;
+  };
 
   // Fetch initial data
   useEffect(() => {
@@ -56,7 +95,7 @@ export const useMenuManagement = () => {
         if (itemsRes.error) throw itemsRes.error;
 
         setCategories(
-          catsRes.data.map((c) => ({
+          catsRes.data.map((c: any) => ({
             id: c.id,
             name: c.name,
             icon: c.icon || "flame",
@@ -64,7 +103,7 @@ export const useMenuManagement = () => {
         );
 
         setItems(
-          itemsRes.data.map((i) => ({
+          itemsRes.data.map((i: any) => ({
             id: i.id,
             categoryId: i.category_id,
             name: i.name,
@@ -91,11 +130,10 @@ export const useMenuManagement = () => {
   }, [supabase]);
 
   const saveCategory = async (catDraft: Partial<Category>, isNew: boolean) => {
+    setActionError(null);
     try {
       if (isNew) {
-        // Find tenant_id
-        const userRes = await supabase.auth.getUser();
-        const tenant_id = userRes.data.user?.user_metadata?.tenant_id;
+        const tenant_id = await getCurrentTenantId();
 
         const { data, error } = await supabase
           .from("categories")
@@ -116,10 +154,14 @@ export const useMenuManagement = () => {
         setCategories((prev) => [...prev, newCat]);
         return newCat;
       } else {
+        if (!catDraft.id) {
+          throw new Error("Missing category id for update.");
+        }
+
         const { data, error } = await supabase
           .from("categories")
           .update({ name: catDraft.name, icon: catDraft.icon })
-          .eq("id", catDraft.id!)
+          .eq("id", catDraft.id)
           .select()
           .single();
 
@@ -134,12 +176,14 @@ export const useMenuManagement = () => {
         return { id: data.id, name: data.name, icon: data.icon } as Category;
       }
     } catch (e) {
+      setActionError(getErrorMessage(e, "Failed to save category."));
       console.error(e);
       return null;
     }
   };
 
   const deleteCategory = async (id: string) => {
+    setActionError(null);
     try {
       const { error } = await supabase.from("categories").delete().eq("id", id);
       if (error) throw error;
@@ -147,12 +191,14 @@ export const useMenuManagement = () => {
       setItems((prev) => prev.filter((i) => i.categoryId !== id));
       return true;
     } catch (e) {
+      setActionError(getErrorMessage(e, "Failed to delete category."));
       console.error(e);
       return false;
     }
   };
 
   const saveItem = async (draftItem: MenuItem) => {
+    setActionError(null);
     try {
       const isNew = draftItem.id.startsWith("item_");
 
@@ -169,8 +215,7 @@ export const useMenuManagement = () => {
       };
 
       if (isNew) {
-        const userRes = await supabase.auth.getUser();
-        const tenant_id = userRes.data.user?.user_metadata?.tenant_id;
+        const tenant_id = await getCurrentTenantId();
         const { data, error } = await supabase
           .from("menu_items")
           .insert({
@@ -186,24 +231,37 @@ export const useMenuManagement = () => {
         setItems((prev) => [...prev, newItem]);
         return newItem;
       } else {
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from("menu_items")
           .update(payload)
-          .eq("id", draftItem.id);
+          .eq("id", draftItem.id)
+          .select()
+          .single();
 
         if (error) throw error;
         setItems((prev) =>
-          prev.map((i) => (i.id === draftItem.id ? draftItem : i)),
+          prev.map((i) =>
+            i.id === draftItem.id
+              ? {
+                  ...draftItem,
+                  id: data.id,
+                  categoryId: data.category_id,
+                  image: data.image_url || undefined,
+                }
+              : i,
+          ),
         );
         return draftItem;
       }
     } catch (e) {
+      setActionError(getErrorMessage(e, "Failed to save menu item."));
       console.error(e);
       return null;
     }
   };
 
   const deleteItems = async (ids: string[]) => {
+    setActionError(null);
     try {
       const { error } = await supabase
         .from("menu_items")
@@ -213,6 +271,7 @@ export const useMenuManagement = () => {
       setItems((prev) => prev.filter((i) => !ids.includes(i.id)));
       return true;
     } catch (e) {
+      setActionError(getErrorMessage(e, "Failed to delete menu item(s)."));
       console.error(e);
       return false;
     }
@@ -222,6 +281,7 @@ export const useMenuManagement = () => {
     id: string,
     currentAvailability: boolean,
   ) => {
+    setActionError(null);
     try {
       const { error } = await supabase
         .from("menu_items")
@@ -234,11 +294,13 @@ export const useMenuManagement = () => {
         ),
       );
     } catch (e) {
+      setActionError(getErrorMessage(e, "Failed to update item availability."));
       console.error(e);
     }
   };
 
   const updateCategoryOrder = async (newCategories: Category[]) => {
+    setActionError(null);
     setCategories(newCategories);
     try {
       const updates = newCategories.map((c, index) => ({
@@ -255,13 +317,15 @@ export const useMenuManagement = () => {
         ),
       );
     } catch (e) {
+      setActionError(getErrorMessage(e, "Failed to reorder categories."));
       console.error(e);
     }
   };
 
   const uploadImage = async (file: File | Blob, path: string) => {
+    setActionError(null);
     try {
-      const { data, error } = await supabase.storage
+      const { error } = await supabase.storage
         .from("menu-images")
         .upload(path, file, { upsert: true });
 
@@ -272,6 +336,7 @@ export const useMenuManagement = () => {
         .getPublicUrl(path);
       return publicUrlData.publicUrl;
     } catch (e) {
+      setActionError(getErrorMessage(e, "Failed to upload image."));
       console.error(e);
       return null;
     }
@@ -281,6 +346,7 @@ export const useMenuManagement = () => {
     categories,
     items,
     isLoading,
+    actionError,
     saveCategory,
     deleteCategory,
     saveItem,
