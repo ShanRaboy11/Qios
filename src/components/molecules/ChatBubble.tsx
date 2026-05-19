@@ -3,12 +3,11 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 import {
-  Bot,
-  User,
-  CheckCheck,
   ThumbsUp,
   ThumbsDown,
   ClipboardList,
+  CheckCheck,
+  User,
 } from "lucide-react";
 
 export type MessageRole = "system" | "customer";
@@ -25,6 +24,33 @@ interface ChatBubbleProps {
   onDislike?: () => void;
 }
 
+const LogoSVG = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 245 270"
+    width={32}
+    height={33}
+    style={{ display: "block" }}
+  >
+    <path
+      d="M-10,118 C-10,118 22,36 122.5,36 C223,36 255,118 255,118 C255,118 223,200 122.5,200 C22,200 -10,118 -10,118 Z"
+      fill="white"
+    />
+    <rect x="65" y="99" width="115" height="38" rx="19" fill="#1a1a1a" />
+    <ellipse cx="95" cy="118" rx="9" ry="9" fill="#e8405a" />
+    <ellipse cx="150" cy="118" rx="9" ry="9" fill="#e8405a" />
+    <g transform="translate(12,190) scale(0.898)">
+      <path
+        d="M49.493 6.01586C44.86 4.17819 40.316 2.17026 35.869 0C21.4169 9.97132 9.19957 22.3902 0 36.5589C15.6369 60.6421 39.9924 79.6696 69.2214 90.2156C83.1494 95.2409 98.184 98.3404 113.909 99.1433H130.296C146.017 98.3406 173.65 113.595 133.525 152.092C162.758 141.546 228.567 60.6448 244.205 36.5589C235.032 22.4305 222.858 10.0421 208.46 0.0852605C204.064 2.22496 199.574 4.20615 194.997 6.02118C175.837 13.6192 155.156 18.3054 133.525 19.5196C129.795 19.729 126.036 19.8352 122.252 19.8352C118.468 19.8352 114.709 19.729 110.979 19.5196C89.3424 18.3051 68.6565 13.617 49.493 6.01586Z"
+        fill="white"
+      />
+    </g>
+    <circle cx="94.5" cy="234" r="7.5" fill="#1a1a1a" />
+    <circle cx="122.5" cy="234" r="7.5" fill="#1a1a1a" />
+    <circle cx="150.5" cy="234" r="7.5" fill="#1a1a1a" />
+  </svg>
+);
+
 export const ChatBubble = ({
   message,
   timestamp,
@@ -37,90 +63,109 @@ export const ChatBubble = ({
 }: ChatBubbleProps) => {
   const isSystem = role === "system";
 
-  return (
-    <div
-      className={cn(
-        "flex w-full mb-6 gap-3",
-        isSystem ? "flex-row" : "flex-row-reverse",
-        className,
-      )}
-    >
-      {/* 1. Avatar Circle */}
-      <div className="flex flex-col justify-end">
-        <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-[#FFB84C] flex items-center justify-center border-2 border-white shadow-sm shrink-0">
-          {isSystem ? (
-            <Bot className="text-white w-6 h-6 sm:w-7 sm:h-7" />
-          ) : (
-            <User className="text-white w-6 h-6 sm:w-7 sm:h-7" />
-          )}
-        </div>
-      </div>
+  const handleCopy = () => {
+    navigator.clipboard.writeText(message).catch(() => {});
+  };
 
-      {/* 2. Message Container */}
-      <div
-        className={cn(
-          "flex flex-col max-w-[80%] sm:max-w-[70%]",
-          isSystem ? "items-start" : "items-end",
-        )}
-      >
-        {/* System Message Icons */}
-        {isSystem && (
-          <div className="flex gap-1 mb-[-10px] mr-2 self-end z-10">
-            <div className="p-1.5 bg-brand-primary rounded-lg text-white shadow-sm">
-              <ClipboardList size={14} />
+  if (isSystem) {
+    return (
+      <div className={cn("flex flex-col items-start pb-10", className)}>
+        <div className="group relative">
+          {/* Dark bubble */}
+          <div className="relative bg-[#2D2D2D] rounded-[12px_12px_12px_0px] pl-5 pr-4 pt-4 pb-8 shadow-[0px_2px_1px_rgba(0,0,0,0.05)] max-w-[312px]">
+            <p className="text-white text-base leading-[19px]">{message}</p>
+            {/* Copy / Like / Dislike — shown on hover or when reacted */}
+            <div
+              className={cn(
+                "absolute right-4 bottom-2 transition-opacity duration-150",
+                reaction !== null
+                  ? "opacity-100"
+                  : "opacity-0 group-hover:opacity-100",
+              )}
+            >
+              <div className="flex items-center gap-2 bg-[#FFC670] rounded-lg p-1">
+                <button
+                  onClick={handleCopy}
+                  title="Copy"
+                  className="text-white hover:opacity-75 transition-opacity active:scale-90"
+                >
+                  <ClipboardList size={16} />
+                </button>
+                <button
+                  onClick={onLike}
+                  title="Like"
+                  className={cn(
+                    "transition-all active:scale-90 rounded p-0.5",
+                    reaction === "like"
+                      ? "text-white bg-white/30 scale-110"
+                      : "text-white hover:opacity-75",
+                  )}
+                >
+                  <ThumbsUp size={16} />
+                </button>
+                <button
+                  onClick={onDislike}
+                  title="Dislike"
+                  className={cn(
+                    "transition-all active:scale-90 rounded p-0.5",
+                    reaction === "dislike"
+                      ? "text-white bg-white/30 scale-110"
+                      : "text-white hover:opacity-75",
+                  )}
+                >
+                  <ThumbsDown size={16} />
+                </button>
+              </div>
             </div>
-            <button
-              onClick={onLike}
-              title="Like"
-              className={cn(
-                "p-1.5 rounded-lg shadow-sm transition-all active:scale-90",
-                reaction === "like"
-                  ? "bg-green-500 text-white"
-                  : "bg-brand-primary text-white hover:bg-green-400",
-              )}
-            >
-              <ThumbsUp size={14} />
-            </button>
-            <button
-              onClick={onDislike}
-              title="Dislike"
-              className={cn(
-                "p-1.5 rounded-lg shadow-sm transition-all active:scale-90",
-                reaction === "dislike"
-                  ? "bg-red-500 text-white"
-                  : "bg-brand-primary text-white hover:bg-red-400",
-              )}
-            >
-              <ThumbsDown size={14} />
-            </button>
           </div>
-        )}
-
-        {/* Bubble */}
-        <div
-          className={cn(
-            "p-3 sm:p-4 rounded-2xl text-[14px] sm:b2 leading-relaxed shadow-sm",
-            isSystem
-              ? "bg-[#2D2D2D] text-white rounded-bl-none"
-              : "bg-[#E5E7EB] text-text-primary rounded-br-none",
-          )}
-        >
-          {message}
-        </div>
-
-        {/* 3. Footer: Time and Status */}
-        <div className="flex items-center gap-1 mt-1 px-1">
-          <span className="text-[10px] sm:b5 text-text-secondary">
+          {/* Timestamp below bubble */}
+          <span
+            className="absolute left-14 text-[10px] leading-3 text-[#888888]"
+            style={{ bottom: "-18px" }}
+          >
             {timestamp}
           </span>
-          {!isSystem && (
-            <CheckCheck
-              size={14}
-              className={cn(
-                isRead ? "text-brand-primary" : "text-text-secondary",
-              )}
-            />
-          )}
+          {/* Logo avatar at bottom-left */}
+          <div
+            className="absolute left-0 w-12 h-12 rounded-full bg-[#FFC670] flex items-center justify-center overflow-hidden"
+            style={{
+              bottom: "-29.5px",
+              filter: "drop-shadow(0px 2px 3px rgba(0,0,0,0.25))",
+            }}
+          >
+            <LogoSVG />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={cn("flex flex-col items-end pb-8", className)}>
+      <div className="group relative">
+        {/* Light bubble */}
+        <div className="relative bg-[#DEE2E6] rounded-[12px_12px_0px_12px] pl-5 pr-4 pt-4 pb-8 shadow-[0px_1px_1px_rgba(0,0,0,0.2)] max-w-[289px]">
+          <p className="text-[#2D2D2D] text-base leading-[19px]">{message}</p>
+        </div>
+        {/* Timestamp + read status */}
+        <div
+          className="absolute left-0 flex items-center gap-1"
+          style={{ bottom: "-18px" }}
+        >
+          <span className="text-[10px] leading-3 text-[#888888]">
+            {timestamp}
+          </span>
+          <CheckCheck
+            size={14}
+            className={cn(isRead ? "text-[#FFC670]" : "text-[#888888]")}
+          />
+        </div>
+        {/* User avatar at bottom-right */}
+        <div
+          className="absolute right-[-1px] w-12 h-12 rounded-full bg-[#FFC670] flex items-center justify-center"
+          style={{ bottom: "-18px", boxShadow: "0px 2px 3px rgba(0,0,0,0.25)" }}
+        >
+          <User size={24} className="text-[#FFF9EF]" />
         </div>
       </div>
     </div>
