@@ -1,7 +1,8 @@
 import React from "react";
-import { Search, User, ChevronLeft } from "lucide-react";
+import { Search, User, ChevronLeft, Receipt } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FormField } from "@/components/molecules/FormField";
+import Link from "next/link";
 
 export interface CustomerHeaderProps {
   isCategoryView?: boolean;
@@ -66,7 +67,7 @@ export const CustomerHeader = ({
           transition={smoothTransition}
           className="w-12 h-12 bg-white rounded-full flex items-center justify-center shrink-0 shadow-sm hover:shadow-md transition-shadow"
         >
-          <User className="text-[#2D2D2D]" size={24} />
+          <User className="text-[#2D2D2D]" size={22} />
         </motion.button>
       </motion.div>
 

@@ -12,6 +12,7 @@ import { PromoBanner } from "@/components/organisms/PromoBanner";
 import { ChevronRight } from "lucide-react";
 import OrderEditor from "@/components/organisms/OrderEditor";
 import { CartDrawer } from "@/components/organisms/CartDrawer";
+import { FloatingOrderStatus } from "@/components/organisms/FloatingOrderStatus";
 import { CartProvider } from "@/contexts/CartContext";
 import { MenuItemData } from "@/components/organisms/MenuCatalog";
 
@@ -283,6 +284,7 @@ export default function CustomerHomePage() {
           />
         )}
         <CartDrawer />
+        <FloatingOrderStatus />
       </motion.main>
     </CartProvider>
   );
