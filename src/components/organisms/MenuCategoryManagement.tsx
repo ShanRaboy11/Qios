@@ -10,23 +10,21 @@ import {
   GripVertical,
   Plus,
   Image as ImageIcon,
-  CheckCircle2,
   Trash2,
   Search,
   LayoutGrid,
   List as ListIcon,
   X,
   ChevronDown,
+  ChevronUp,
   ZoomIn,
   ZoomOut,
   Edit2,
   FolderPlus,
   Filter,
-  ChevronRight,
-  ChevronUp,
   Flame,
   Coffee,
-  IceCream,
+  IceCream2,
   Egg,
   Pizza,
   Beef,
@@ -39,7 +37,7 @@ import {
   Apple,
   Carrot,
   Grape,
-  Utensils,
+  UtensilsCrossed,
   Wine,
   Beer,
   Milk,
@@ -48,6 +46,12 @@ import {
   Moon,
   Leaf,
   Zap,
+  Drumstick,
+  ShoppingBag,
+  Croissant,
+  CupSoda,
+  Candy,
+  ChefHat,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -92,61 +96,73 @@ type FilterAvail = "all" | "avail" | "unavail";
 // ─── Icon options with Lucide components ─────────────────────────────────────
 
 const ICON_OPTIONS: { icon: string; component: React.ReactNode; label: string }[] = [
-  { icon: "flame", component: <Flame size={20} />, label: "Flame" },
+  { icon: "flame", component: <Flame size={20} />, label: "Sizzling" },
+  { icon: "drumstick", component: <Drumstick size={20} />, label: "Chicken" },
   { icon: "beef", component: <Beef size={20} />, label: "Beef" },
-  { icon: "fish", component: <Fish size={20} />, label: "Fish" },
+  { icon: "fish", component: <Fish size={20} />, label: "Seafood" },
   { icon: "egg", component: <Egg size={20} />, label: "Egg" },
-  { icon: "salad", component: <Salad size={20} />, label: "Salad" },
   { icon: "soup", component: <Soup size={20} />, label: "Soup" },
+  { icon: "salad", component: <Salad size={20} />, label: "Salad" },
   { icon: "pizza", component: <Pizza size={20} />, label: "Pizza" },
   { icon: "sandwich", component: <Sandwich size={20} />, label: "Sandwich" },
-  { icon: "utensils", component: <Utensils size={20} />, label: "Utensils" },
+  { icon: "croissant", component: <Croissant size={20} />, label: "Pastry" },
+  { icon: "chef-hat", component: <ChefHat size={20} />, label: "Chef's Special" },
+  { icon: "utensils-crossed", component: <UtensilsCrossed size={20} />, label: "Combo" },
   { icon: "coffee", component: <Coffee size={20} />, label: "Coffee" },
-  { icon: "wine", component: <Wine size={20} />, label: "Wine" },
+  { icon: "cup-soda", component: <CupSoda size={20} />, label: "Soda" },
   { icon: "beer", component: <Beer size={20} />, label: "Beer" },
+  { icon: "wine", component: <Wine size={20} />, label: "Wine" },
   { icon: "milk", component: <Milk size={20} />, label: "Milk" },
-  { icon: "ice-cream", component: <IceCream size={20} />, label: "Ice Cream" },
+  { icon: "ice-cream", component: <IceCream2 size={20} />, label: "Ice Cream" },
   { icon: "cake", component: <Cake size={20} />, label: "Cake" },
   { icon: "cookie", component: <Cookie size={20} />, label: "Cookie" },
-  { icon: "apple", component: <Apple size={20} />, label: "Apple" },
-  { icon: "carrot", component: <Carrot size={20} />, label: "Carrot" },
+  { icon: "candy", component: <Candy size={20} />, label: "Sweets" },
+  { icon: "apple", component: <Apple size={20} />, label: "Fruit" },
+  { icon: "carrot", component: <Carrot size={20} />, label: "Veggies" },
   { icon: "grape", component: <Grape size={20} />, label: "Grape" },
-  { icon: "leaf", component: <Leaf size={20} />, label: "Leaf" },
-  { icon: "sun", component: <Sun size={20} />, label: "Sun" },
-  { icon: "moon", component: <Moon size={20} />, label: "Moon" },
-  { icon: "star", component: <Star size={20} />, label: "Star" },
-  { icon: "zap", component: <Zap size={20} />, label: "Zap" },
+  { icon: "leaf", component: <Leaf size={20} />, label: "Vegan" },
+  { icon: "shopping-bag", component: <ShoppingBag size={20} />, label: "Bundle" },
+  { icon: "star", component: <Star size={20} />, label: "Favorites" },
+  { icon: "sun", component: <Sun size={20} />, label: "Breakfast" },
+  { icon: "moon", component: <Moon size={20} />, label: "Dinner" },
+  { icon: "zap", component: <Zap size={20} />, label: "Quick Bites" },
 ];
 
 // Map icon string to Lucide component for rendering
 const renderCategoryIcon = (icon: string, size = 20) => {
   const map: Record<string, React.ReactNode> = {
     flame: <Flame size={size} />,
+    drumstick: <Drumstick size={size} />,
     beef: <Beef size={size} />,
     fish: <Fish size={size} />,
     egg: <Egg size={size} />,
-    salad: <Salad size={size} />,
     soup: <Soup size={size} />,
+    salad: <Salad size={size} />,
     pizza: <Pizza size={size} />,
     sandwich: <Sandwich size={size} />,
-    utensils: <Utensils size={size} />,
+    croissant: <Croissant size={size} />,
+    "chef-hat": <ChefHat size={size} />,
+    "utensils-crossed": <UtensilsCrossed size={size} />,
     coffee: <Coffee size={size} />,
-    wine: <Wine size={size} />,
+    "cup-soda": <CupSoda size={size} />,
     beer: <Beer size={size} />,
+    wine: <Wine size={size} />,
     milk: <Milk size={size} />,
-    "ice-cream": <IceCream size={size} />,
+    "ice-cream": <IceCream2 size={size} />,
     cake: <Cake size={size} />,
     cookie: <Cookie size={size} />,
+    candy: <Candy size={size} />,
     apple: <Apple size={size} />,
     carrot: <Carrot size={size} />,
     grape: <Grape size={size} />,
     leaf: <Leaf size={size} />,
+    "shopping-bag": <ShoppingBag size={size} />,
+    star: <Star size={size} />,
     sun: <Sun size={size} />,
     moon: <Moon size={size} />,
-    star: <Star size={size} />,
     zap: <Zap size={size} />,
   };
-  return map[icon] ?? <Utensils size={size} />;
+  return map[icon] ?? <UtensilsCrossed size={size} />;
 };
 
 // ─── Mock data ───────────────────────────────────────────────────────────────
@@ -489,32 +505,45 @@ const MenuCategoryManagement = () => {
         />
       )}
 
-      {/* ── Sidebar ─────────────────────────────────────────────────────── */}
+      {/* ── Sidebar — matches SubscriptionManagement layout ─────────────── */}
       <aside className={cn(
-        "fixed top-0 left-0 h-full w-72 z-40 flex flex-col bg-white border-r border-black/[0.07] shadow-xl transition-transform duration-300",
-        "lg:relative lg:translate-x-0 lg:shadow-none lg:z-auto lg:flex-shrink-0",
-        sidebarOpen ? "translate-x-0" : "-translate-x-full",
+        "fixed top-0 left-0 h-full w-[280px] z-40 flex flex-col bg-bg-primary transition-transform duration-300 border-r border-black/[0.06]",
+        "lg:relative lg:translate-x-0 lg:z-auto lg:flex-shrink-0",
+        sidebarOpen ? "translate-x-0 shadow-xl" : "-translate-x-full",
       )}>
-        {/* Sidebar header */}
-        <div className="p-4 border-b border-black/[0.06] flex-shrink-0">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="b3 font-bold text-text-primary">Categories</p>
-              <p className="b5 text-text-secondary mt-0.5">
-                {categories.length} categories · {items.length} items
-              </p>
+        {/* Mobile close strip */}
+        <div className="lg:hidden p-3 border-b border-black/[0.06] flex items-center justify-between flex-shrink-0">
+          <p className="b3 font-bold text-text-primary">Categories</p>
+          <button onClick={() => setSidebarOpen(false)} className="p-1.5 rounded-lg hover:bg-black/5 text-text-secondary">
+            <X size={16} />
+          </button>
+        </div>
+
+        <div className="flex flex-col gap-3 p-4 flex-shrink-0">
+          {/* New Category button — same as "New Plan" */}
+          <Button
+            variant="primary"
+            className="w-full bg-brand-accent hover:bg-brand-accent/90 border-brand-accent"
+            leftIcon={<Plus size={18} />}
+            onClick={openNewCatModal}
+          >
+            New Category
+          </Button>
+
+          {/* Search input — same as plan search */}
+          <div className="relative">
+            <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+              <Search size={16} className="text-text-secondary" />
             </div>
-            <button
-              onClick={() => setSidebarOpen(false)}
-              className="lg:hidden p-1.5 rounded-lg hover:bg-black/5 text-text-secondary"
-            >
-              <X size={16} />
-            </button>
+            <Input
+              placeholder="Search categories"
+              className="pl-11 !py-2.5 rounded-xl !bg-white/60 !border-white/50"
+            />
           </div>
         </div>
 
-        {/* Category list */}
-        <div className="flex-1 overflow-y-auto p-2.5 custom-scrollbar">
+        {/* Category list — same card style as plan list */}
+        <div className="flex-1 overflow-y-auto px-4 pb-4 custom-scrollbar flex flex-col gap-2">
           {categories.map((cat) => {
             const catCount = items.filter((i) => i.categoryId === cat.id).length;
             const isActive = cat.id === activeCatId;
@@ -527,42 +556,39 @@ const MenuCategoryManagement = () => {
                 onDrop={(e) => handleDropCategory(e, cat.id)}
                 onClick={() => { setActiveCatId(cat.id); setSearchQuery(""); setFilterAvail("all"); setSelectedItems([]); setSidebarOpen(false); }}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-3 rounded-2xl cursor-pointer transition-all mb-1.5 group border",
+                  "group flex items-center gap-3 p-3 rounded-2xl cursor-pointer transition-all duration-300 border",
                   isActive
-                    ? "bg-brand-accent/8 border-brand-accent/25 text-text-primary"
-                    : "border-transparent text-text-secondary hover:bg-black/4 hover:text-text-primary",
-                  draggedCategoryId === cat.id && "opacity-40 border-dashed border-brand-accent",
+                    ? "bg-white shadow-md border-white/60 scale-[1.02]"
+                    : "hover:bg-white/40 border-transparent",
+                  draggedCategoryId === cat.id && "opacity-50 border-dashed border-brand-accent border-2",
                 )}
               >
-                <GripVertical size={14} className="opacity-0 group-hover:opacity-30 flex-shrink-0 cursor-grab" />
-                <div className={cn(
-                  "w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 border transition-colors",
-                  isActive
-                    ? "bg-brand-accent text-white border-brand-accent shadow-sm"
-                    : "bg-black/6 border-transparent text-text-secondary group-hover:bg-brand-secondary/50 group-hover:text-brand-accent group-hover:border-brand-primary/30",
-                )}>
-                  {renderCategoryIcon(cat.icon, 20)}
+                <div className="cursor-grab text-text-secondary/40 hover:text-text-primary/60 active:cursor-grabbing flex-shrink-0">
+                  <GripVertical size={16} />
                 </div>
-                <span className={cn("b4 flex-1 truncate", isActive && "font-bold text-text-primary")}>{cat.name}</span>
-                <span className={cn(
-                  "b5 px-2 py-0.5 rounded-full flex-shrink-0 font-bold",
-                  isActive ? "bg-brand-accent/15 text-brand-accent" : "bg-black/8 text-text-secondary",
+                {/* Icon dot — replaces color dot from SubscriptionManagement */}
+                <div className={cn(
+                  "w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors",
+                  isActive
+                    ? "bg-brand-accent text-white shadow-sm"
+                    : "bg-black/6 text-text-secondary group-hover:bg-brand-secondary/60 group-hover:text-brand-accent",
                 )}>
-                  {catCount}
-                </span>
+                  {renderCategoryIcon(cat.icon, 17)}
+                </div>
+                <div className="flex flex-col min-w-0 flex-1">
+                  <span className={cn(
+                    "b2 font-bold transition-colors truncate",
+                    isActive ? "text-text-primary" : "text-text-primary/80",
+                  )}>
+                    {cat.name}
+                  </span>
+                  <span className="b5 text-text-secondary mt-0.5">
+                    {catCount} item{catCount !== 1 ? "s" : ""}
+                  </span>
+                </div>
               </div>
             );
           })}
-        </div>
-
-        {/* Add category button */}
-        <div className="p-3 border-t border-black/[0.06] flex-shrink-0">
-          <button
-            onClick={openNewCatModal}
-            className="w-full flex items-center justify-center gap-2 py-3 px-3 rounded-2xl border border-dashed border-black/15 text-text-secondary hover:border-brand-accent hover:text-brand-accent hover:bg-brand-accent/5 transition-all b4 font-medium"
-          >
-            <FolderPlus size={16} /> New Category
-          </button>
         </div>
       </aside>
 
@@ -571,21 +597,31 @@ const MenuCategoryManagement = () => {
 
         {/* Main header */}
         <div className="flex-shrink-0 bg-white/80 backdrop-blur-sm border-b border-black/[0.06] px-4 lg:px-6 py-3.5 flex items-center gap-3">
-          {/* Mobile sidebar toggle */}
+          {/* Mobile: sidebar toggle + active category name */}
           <button
             onClick={() => setSidebarOpen(true)}
-            className="lg:hidden p-2.5 rounded-xl hover:bg-black/5 text-text-secondary flex-shrink-0 border border-black/8"
+            className="lg:hidden p-2 rounded-xl hover:bg-black/5 text-text-secondary flex-shrink-0"
           >
             <Filter size={18} />
           </button>
 
-          {/* Active category info */}
+          {/* Mobile category name — shown only on mobile */}
           {activeCat && (
-            <div className="flex items-center gap-3 flex-shrink-0">
-              <div className="w-11 h-11 rounded-xl bg-brand-accent text-white flex items-center justify-center shadow-sm flex-shrink-0">
-                {renderCategoryIcon(activeCat.icon, 22)}
+            <div className="flex items-center gap-2.5 lg:hidden flex-shrink-0 min-w-0">
+              <div className="w-8 h-8 rounded-lg bg-brand-accent text-white flex items-center justify-center flex-shrink-0">
+                {renderCategoryIcon(activeCat.icon, 16)}
               </div>
-              <div className="hidden sm:block">
+              <span className="b3 font-bold text-text-primary truncate">{activeCat.name}</span>
+            </div>
+          )}
+
+          {/* Desktop: full category header */}
+          {activeCat && (
+            <div className="hidden lg:flex items-center gap-3 flex-shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-brand-accent text-white flex items-center justify-center shadow-sm flex-shrink-0">
+                {renderCategoryIcon(activeCat.icon, 20)}
+              </div>
+              <div>
                 <p className="b2 font-bold text-text-primary leading-tight">{activeCat.name}</p>
                 <p className="b5 text-text-secondary">{totalCount} items · {availCount} available</p>
               </div>
@@ -595,7 +631,7 @@ const MenuCategoryManagement = () => {
           {activeCat && (
             <button
               onClick={() => openEditCatModal(activeCat)}
-              className="p-2 rounded-xl hover:bg-black/5 text-text-secondary hover:text-text-primary transition-colors flex-shrink-0 border border-black/8"
+              className="p-2 rounded-xl hover:bg-black/5 text-text-secondary hover:text-text-primary transition-colors flex-shrink-0"
               title="Edit category"
             >
               <Edit2 size={15} />
@@ -758,7 +794,7 @@ const MenuCategoryManagement = () => {
             {/* Modal header */}
             <div className="bg-white px-6 py-4 flex-shrink-0 flex items-center gap-3 border-b border-black/[0.06]">
               <div className="w-10 h-10 rounded-xl bg-brand-accent/10 border border-brand-accent/20 flex items-center justify-center flex-shrink-0">
-                <Utensils size={18} className="text-brand-accent" />
+                <UtensilsCrossed size={18} className="text-brand-accent" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="b3 font-bold text-text-primary truncate">
