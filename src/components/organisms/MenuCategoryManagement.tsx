@@ -55,42 +55,15 @@ import {
   ChefHat,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  useMenuManagement,
+  Category,
+  MenuItem,
+  Addon,
+  Size,
+} from "@/hooks/useMenuManagement";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
-
-interface Category {
-  id: string;
-  name: string;
-  icon: string;
-}
-
-interface Addon {
-  id: string;
-  itemId: string;
-  name: string;
-  description: string;
-  price: string;
-}
-
-interface Size {
-  id: string;
-  name: string;
-  description: string;
-  price: string;
-}
-
-interface MenuItem {
-  id: string;
-  categoryId: string;
-  name: string;
-  description: string;
-  price: string;
-  isAvailable: boolean;
-  addonsEnabled: boolean;
-  addons: Addon[];
-  sizes: Size[];
-  image?: string;
-}
 
 type FilterAvail = "all" | "avail" | "unavail";
 
@@ -180,98 +153,6 @@ const renderCategoryIcon = (icon: string, size = 20) => {
   };
   return map[icon] ?? <UtensilsCrossed size={size} />;
 };
-
-// ─── Mock data ───────────────────────────────────────────────────────────────
-
-const INITIAL_CATEGORIES: Category[] = [
-  { id: "1", name: "Sizzling", icon: "flame" },
-  { id: "2", name: "Drinks", icon: "coffee" },
-  { id: "3", name: "Desserts", icon: "ice-cream" },
-  { id: "4", name: "Breakfast", icon: "egg" },
-];
-
-const INITIAL_ITEMS: MenuItem[] = [
-  {
-    id: "item_1",
-    categoryId: "1",
-    name: "Chicken Adobo",
-    description: "Slow-cooked in vinegar, soy, & garlic",
-    price: "500.00",
-    isAvailable: true,
-    addonsEnabled: true,
-    addons: [
-      {
-        id: "m1",
-        itemId: "item_2",
-        name: "Extra Rice",
-        description: "Steamed white rice",
-        price: "35.00",
-      },
-    ],
-    sizes: [
-      { id: "s1", name: "Regular", description: "Good for 1", price: "0.00" },
-      { id: "s2", name: "Large", description: "Good for 2-3", price: "150.00" },
-    ],
-  },
-  {
-    id: "item_2",
-    categoryId: "2",
-    name: "Extra Rice",
-    description: "Steamed white rice",
-    price: "35.00",
-    isAvailable: true,
-    addonsEnabled: false,
-    addons: [],
-    sizes: [],
-  },
-  {
-    id: "item_3",
-    categoryId: "2",
-    name: "Iced Tea",
-    description: "House blend iced tea",
-    price: "65.00",
-    isAvailable: false,
-    addonsEnabled: false,
-    addons: [],
-    sizes: [],
-  },
-  {
-    id: "item_4",
-    categoryId: "1",
-    name: "Pork Sinigang",
-    description: "Sour tamarind broth with tender pork",
-    price: "420.00",
-    isAvailable: true,
-    addonsEnabled: false,
-    addons: [],
-    sizes: [],
-  },
-  {
-    id: "item_5",
-    categoryId: "3",
-    name: "Leche Flan",
-    description: "Classic steamed caramel custard",
-    price: "120.00",
-    isAvailable: true,
-    addonsEnabled: false,
-    addons: [],
-    sizes: [],
-  },
-  {
-    id: "item_6",
-    categoryId: "4",
-    name: "Tapsilog",
-    description: "Cured beef, egg & garlic rice",
-    price: "195.00",
-    isAvailable: true,
-    addonsEnabled: false,
-    addons: [],
-    sizes: [
-      { id: "s5", name: "Solo", description: "", price: "0.00" },
-      { id: "s6", name: "Family", description: "", price: "250.00" },
-    ],
-  },
-];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -400,11 +281,22 @@ const Divider = () => <div className="w-full h-px bg-black/8" />;
 // ─── Main component ──────────────────────────────────────────────────────────
 
 const MenuCategoryManagement = () => {
-  const [categories, setCategories] = useState<Category[]>(INITIAL_CATEGORIES);
-  const [items, setItems] = useState<MenuItem[]>(INITIAL_ITEMS);
-  const [activeCatId, setActiveCatId] = useState<string>("1");
+  const {
+    categories,
+    items,
+    isLoading,
+    saveCategory,
+    deleteCategory,
+    saveItem,
+    deleteItems,
+    toggleAvailability,
+    updateCategoryOrder,
+    uploadImage,
+  } = useMenuManagement();
+
+  const [activeCatId, setActiveCatId] = useState<string>("");
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLocalLoading, setIsLocalLoading] = useState(false);
 
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchQuery, setSearchQuery] = useState("");
@@ -436,11 +328,12 @@ const MenuCategoryManagement = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const CROP_CONTAINER_SIZE = 320;
 
-  // Simulate loading state
+  // Set active cat on load
   useEffect(() => {
-    const t = setTimeout(() => setIsLoading(false), 1400);
-    return () => clearTimeout(t);
-  }, []);
+    if (categories.length > 0 && !activeCatId) {
+      setActiveCatId(categories[0].id);
+    }
+  }, [categories, activeCatId]);
 
   // Reset loading when category changes
   const handleCategoryChange = (id: string) => {
@@ -449,8 +342,6 @@ const MenuCategoryManagement = () => {
     setFilterAvail("all");
     setSelectedItems([]);
     setSidebarOpen(false);
-    setIsLoading(true);
-    setTimeout(() => setIsLoading(false), 800);
   };
 
   const activeCat =
@@ -525,7 +416,7 @@ const MenuCategoryManagement = () => {
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
   };
-  const handleDropCategory = (e: React.DragEvent, targetId: string) => {
+  const handleDropCategory = async (e: React.DragEvent, targetId: string) => {
     e.preventDefault();
     if (!draggedCategoryId || draggedCategoryId === targetId) return;
     const newCats = [...categories];
@@ -533,7 +424,7 @@ const MenuCategoryManagement = () => {
     const targetIdx = newCats.findIndex((c) => c.id === targetId);
     const [draggedCat] = newCats.splice(draggedIdx, 1);
     newCats.splice(targetIdx, 0, draggedCat);
-    setCategories(newCats);
+    await updateCategoryOrder(newCats);
     setDraggedCategoryId(null);
   };
 
@@ -546,36 +437,17 @@ const MenuCategoryManagement = () => {
     setCatModal("edit");
   };
 
-  const handleSaveCategory = () => {
+  const handleSaveCategory = async () => {
     if (!catDraft.name?.trim()) return;
-    if (catModal === "new") {
-      const nc: Category = {
-        id: `cat_${Date.now()}`,
-        name: catDraft.name.trim(),
-        icon: catDraft.icon ?? "flame",
-      };
-      setCategories([...categories, nc]);
-      setActiveCatId(nc.id);
-    } else {
-      setCategories(
-        categories.map((c) =>
-          c.id === catDraft.id
-            ? {
-                ...c,
-                name: catDraft.name!.trim(),
-                icon: catDraft.icon ?? c.icon,
-              }
-            : c,
-        ),
-      );
-    }
+    const isNew = catModal === "new";
+    const saved = await saveCategory(catDraft, isNew);
+    if (saved && isNew) setActiveCatId(saved.id);
     setCatModal(null);
   };
 
-  const handleDeleteCategory = (id: string) => {
+  const handleDeleteCategory = async (id: string) => {
+    await deleteCategory(id);
     const remaining = categories.filter((c) => c.id !== id);
-    setCategories(remaining);
-    setItems((prev) => prev.filter((i) => i.categoryId !== id));
     setActiveCatId(remaining.length ? remaining[0].id : "");
     setCatModal(null);
   };
@@ -584,8 +456,8 @@ const MenuCategoryManagement = () => {
     setSelectedItems((prev) =>
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
     );
-  const deleteSelectedItems = () => {
-    setItems((prev) => prev.filter((i) => !selectedItems.includes(i.id)));
+  const deleteSelectedItems = async () => {
+    await deleteItems(selectedItems);
     setSelectedItems([]);
   };
 
@@ -597,14 +469,22 @@ const MenuCategoryManagement = () => {
     setOriginalItem(null);
     setDraftItem(null);
   };
-  const handleSaveItem = () => {
+  const handleSaveItem = async () => {
     if (!draftItem || !isValidDraft) return;
-    const exists = items.some((i) => i.id === draftItem.id);
-    setItems(
-      exists
-        ? items.map((i) => (i.id === draftItem.id ? draftItem : i))
-        : [...items, draftItem],
-    );
+
+    let finalImage = draftItem.image;
+    if (draftItem.image && draftItem.image.startsWith("data:image")) {
+      // Convert base64 to Blob
+      const res = await fetch(draftItem.image);
+      const blob = await res.blob();
+      const fileName = `${draftItem.id}-${Date.now()}.jpg`;
+      const uploadedUrl = await uploadImage(blob, fileName);
+      if (uploadedUrl) {
+        finalImage = uploadedUrl;
+      }
+    }
+
+    await saveItem({ ...draftItem, image: finalImage });
     handleCloseModal();
   };
 
@@ -636,12 +516,12 @@ const MenuCategoryManagement = () => {
     if (val === "" || /^[0-9]*\.?[0-9]*$/.test(val)) callback(val);
   };
 
-  const toggleItemAvailability = (id: string) =>
-    setItems(
-      items.map((i) =>
-        i.id === id ? { ...i, isAvailable: !i.isAvailable } : i,
-      ),
-    );
+  const toggleItemAvailability = async (id: string) => {
+    const item = items.find((i) => i.id === id);
+    if (item) {
+      await toggleAvailability(id, item.isAvailable);
+    }
+  };
 
   const toggleRowExpand = (id: string) =>
     setExpandedRows((prev) =>
