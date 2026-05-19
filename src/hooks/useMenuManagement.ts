@@ -314,23 +314,40 @@ export const useMenuManagement = () => {
 
   const updateCategoryOrder = async (newCategories: Category[]) => {
     setActionError(null);
+    const previousCategories = categories;
     setCategories(newCategories);
     try {
-      const updates = newCategories.map((c, index) => ({
+      // Two-phase update avoids transient unique-key collisions when swapping positions.
+      const tempUpdates = newCategories.map((c, index) => ({
+        id: c.id,
+        display_order: -1000 - index,
+      }));
+
+      for (const update of tempUpdates) {
+        const { error } = await supabase
+          .from("categories")
+          .update({ display_order: update.display_order })
+          .eq("id", update.id);
+
+        if (error) throw error;
+      }
+
+      const finalUpdates = newCategories.map((c, index) => ({
         id: c.id,
         display_order: index,
       }));
-      // Using an upsert or running updates in parallel
-      await Promise.all(
-        updates.map((u) =>
-          supabase
-            .from("categories")
-            .update({ display_order: u.display_order })
-            .eq("id", u.id),
-        ),
-      );
+
+      for (const update of finalUpdates) {
+        const { error } = await supabase
+          .from("categories")
+          .update({ display_order: update.display_order })
+          .eq("id", update.id);
+
+        if (error) throw error;
+      }
     } catch (e) {
       setActionError(getErrorMessage(e, "Failed to reorder categories."));
+      setCategories(previousCategories);
       console.error(e);
     }
   };
