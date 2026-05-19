@@ -11,9 +11,10 @@ CREATE TABLE IF NOT EXISTS system_activity_logs (
 ALTER TABLE system_activity_logs ENABLE ROW LEVEL SECURITY;
 
 -- Policies policies
-CREATE POLICY "Admins can view system activity logs" 
-ON system_activity_logs FOR SELECT 
-TO authenticated 
+DROP POLICY IF EXISTS "Admins can view system activity logs" ON system_activity_logs;
+CREATE POLICY "Admins can view system activity logs"
+ON system_activity_logs FOR SELECT
+TO authenticated
 USING (
     EXISTS (
         SELECT 1 FROM profiles 
@@ -22,9 +23,10 @@ USING (
     )
 );
 
-CREATE POLICY "Admins can insert system activity logs" 
-ON system_activity_logs FOR INSERT 
-TO authenticated 
+DROP POLICY IF EXISTS "Admins can insert system activity logs" ON system_activity_logs;
+CREATE POLICY "Admins can insert system activity logs"
+ON system_activity_logs FOR INSERT
+TO authenticated
 WITH CHECK (
     EXISTS (
         SELECT 1 FROM profiles 

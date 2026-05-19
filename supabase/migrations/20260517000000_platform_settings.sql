@@ -34,15 +34,17 @@ EXECUTE FUNCTION public.trigger_set_platform_settings_timestamp();
 ALTER TABLE public.platform_settings ENABLE ROW LEVEL SECURITY;
 
 -- Allow read access to authenticated users (so they can see maintenance mode etc.)
-CREATE POLICY IF NOT EXISTS"Enable read access for authenticated users" 
-ON public.platform_settings FOR SELECT 
-TO authenticated 
+DROP POLICY IF EXISTS "Enable read access for authenticated users" ON public.platform_settings;
+CREATE POLICY "Enable read access for authenticated users"
+ON public.platform_settings FOR SELECT
+TO authenticated
 USING (true);
 
 -- Allow update access only to super_admins
-CREATE POLICY IF NOT EXISTS "Enable update for super admins" 
-ON public.platform_settings FOR UPDATE 
-TO authenticated 
+DROP POLICY IF EXISTS "Enable update for super admins" ON public.platform_settings;
+CREATE POLICY "Enable update for super admins"
+ON public.platform_settings FOR UPDATE
+TO authenticated
 USING (
   EXISTS (
     SELECT 1 FROM public.profiles 

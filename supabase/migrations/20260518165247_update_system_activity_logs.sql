@@ -16,10 +16,11 @@ CREATE TABLE IF NOT EXISTS system_activity_logs (
 ALTER TABLE system_activity_logs ENABLE ROW LEVEL SECURITY;
 
 -- Policy: Only Super Admins can see or insert logs
-CREATE POLICY "Admins full access" 
-ON system_activity_logs 
+DROP POLICY IF EXISTS "Admins full access" ON system_activity_logs;
+CREATE POLICY "Admins full access"
+ON system_activity_logs
 FOR ALL
-TO authenticated 
+TO authenticated
 USING (
     EXISTS (
         SELECT 1 FROM profiles 

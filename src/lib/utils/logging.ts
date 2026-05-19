@@ -6,7 +6,7 @@ interface LogParams {
   actorName: string;
   actionType: "CREATE" | "UPDATE" | "DELETE" | "REVOKE";
   description: string;
-  metadata?: any;
+  metadata?: unknown;
 }
 
 export const logActivity = async ({
@@ -27,5 +27,36 @@ export const logActivity = async ({
     metadata: metadata,
   });
 
-  if (error) console.error("Logging error:", error);
+  if (!error) {
+    return;
+  }
+
+  const message = String(error.message || "").toLowerCase();
+  const isColumnMismatch =
+    error.code === "42703" ||
+    message.includes("column") ||
+    message.includes("actor_") ||
+    message.includes("action_type") ||
+    message.includes("description");
+
+  if (!isColumnMismatch) {
+    console.error("Logging error:", error);
+    return;
+  }
+
+  const { error: legacyError } = await supabase
+    .from("system_activity_logs")
+    .insert({
+      user_id: actorId,
+      action: description,
+      details: {
+        action_type: actionType,
+        actor_name: actorName,
+        metadata,
+      },
+    });
+
+  if (legacyError) {
+    console.error("Logging error (legacy fallback):", legacyError);
+  }
 };

@@ -124,33 +124,33 @@ const AccountSettings = () => {
     loadProfile();
   }, [supabase]);
 
-const handleSave = async () => {
-  setShowConfirmModal(false);
-  setSaving(true);
-  const { data: userData } = await supabase.auth.getUser();
-  
-  if (userData?.user) {
-    const fullName = `${firstName} ${lastName}`.trim();
-    
-    // 1. Update Profile
-    await supabase
-      .from("profiles")
-      .update({ full_name: fullName })
-      .eq("id", userData.user.id);
+  const handleSave = async () => {
+    setShowConfirmModal(false);
+    setSaving(true);
+    const { data: userData } = await supabase.auth.getUser();
 
-    // 2. Log the activity using our new schema
-    await logActivity({
-      supabase,
-      actorId: userData.user.id,
-      actorName: fullName,
-      actionType: "UPDATE",
-      description: "Updated personal account profile settings",
-      metadata: { email, first_name: firstName, last_name: lastName }
-    });
-  }
-  setSaving(false);
-  setShowSuccessModal(true);
-};
+    if (userData?.user) {
+      const fullName = `${firstName} ${lastName}`.trim();
+
+      // 1. Update Profile
+      await supabase
+        .from("profiles")
+        .update({ full_name: fullName })
+        .eq("id", userData.user.id);
+
+      // 2. Log the activity using our new schema
+      await logActivity({
+        supabase,
+        actorId: userData.user.id,
+        actorName: fullName,
+        actionType: "UPDATE",
+        description: "Updated personal account profile settings",
+        metadata: { email, first_name: firstName, last_name: lastName },
+      });
+    }
+    setSaving(false);
+    setShowSuccessModal(true);
+  };
 
   if (loading) {
     return (
@@ -319,45 +319,45 @@ const PlatformSettings = () => {
   }, [supabase]);
 
   // Inside PlatformSettings -> handleSave
-const handleSave = async () => {
-  setShowConfirmModal(false);
-  setSaving(true);
-  const { data: userData } = await supabase.auth.getUser();
-  
-  // Get current user profile for their name
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("full_name")
-    .eq("id", userData?.user?.id)
-    .single();
+  const handleSave = async () => {
+    setShowConfirmModal(false);
+    setSaving(true);
+    const { data: userData } = await supabase.auth.getUser();
 
-  // 1. Update Platform Settings
-  await supabase
-    .from("platform_settings")
-    .update({
-      platform_name: platformName,
-      support_email: supportEmail,
-      default_currency: currency,
-      default_timezone: timezone,
-      maintenance_mode: maintenanceMode,
-    })
-    .eq("id", 1);
+    // Get current user profile for their name
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("id", userData?.user?.id)
+      .single();
 
-  // 2. Log the change
-  if (userData?.user) {
-    await logActivity({
-      supabase,
-      actorId: userData.user.id,
-      actorName: profile?.full_name || "Admin",
-      actionType: "UPDATE",
-      description: `Updated platform configuration: ${platformName}`,
-      metadata: { currency, timezone, maintenanceMode }
-    });
-  }
-  
-  setSaving(false);
-  setShowSuccessModal(true);
-};
+    // 1. Update Platform Settings
+    await supabase
+      .from("platform_settings")
+      .update({
+        platform_name: platformName,
+        support_email: supportEmail,
+        default_currency: currency,
+        default_timezone: timezone,
+        maintenance_mode: maintenanceMode,
+      })
+      .eq("id", 1);
+
+    // 2. Log the change
+    if (userData?.user) {
+      await logActivity({
+        supabase,
+        actorId: userData.user.id,
+        actorName: profile?.full_name || "Admin",
+        actionType: "UPDATE",
+        description: `Updated platform configuration: ${platformName}`,
+        metadata: { currency, timezone, maintenanceMode },
+      });
+    }
+
+    setSaving(false);
+    setShowSuccessModal(true);
+  };
 
   if (loading) {
     return (
@@ -682,10 +682,12 @@ const SecuritySettings = () => {
   const [sessionTimeoutHours, setSessionTimeoutHours] = useState("24");
   const [sessions, setSessions] = useState<any[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const [sessionToRevoke, setSessionToRevoke] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showRevokeConfirmModal, setShowRevokeConfirmModal] = useState(false);
   const supabase = createSupabaseBrowserClient();
 
   useEffect(() => {
@@ -741,10 +743,13 @@ const SecuritySettings = () => {
       .eq("id", 1);
 
     if (userData?.user) {
-      await supabase.from("system_activity_logs").insert({
-        user_id: userData.user.id,
-        action: "Update Security Settings",
-        details: {
+      await logActivity({
+        supabase,
+        actorId: userData.user.id,
+        actorName: "Admin",
+        actionType: "UPDATE",
+        description: "Updated security policy settings",
+        metadata: {
           password_min_length: passwordMinLength,
           session_timeout_hours: sessionTimeoutHours,
         },
@@ -755,21 +760,32 @@ const SecuritySettings = () => {
   };
 
   const handleRevokeSession = async (sessionId: string) => {
-  const { error } = await supabase.rpc("revoke_session", { session_id: sessionId });
-  
-  if (!error) {
-    const { data: userData } = await supabase.auth.getUser();
-    setSessions((prev) => prev.filter((s) => s.id !== sessionId));
-
-    await logActivity({
-      supabase,
-      actorId: userData.user?.id || "",
-      actorName: "Admin",
-      actionType: "REVOKE",
-      description: `Manually revoked active session: ${sessionId}`,
+    const { error } = await supabase.rpc("revoke_session", {
+      session_id: sessionId,
     });
-  }
-};
+
+    if (!error) {
+      const { data: userData } = await supabase.auth.getUser();
+      setSessions((prev) => prev.filter((s) => s.id !== sessionId));
+
+      await logActivity({
+        supabase,
+        actorId: userData.user?.id || "",
+        actorName: "Admin",
+        actionType: "REVOKE",
+        description: `Manually revoked active session: ${sessionId}`,
+      });
+    }
+  };
+
+  const confirmRevokeSession = async () => {
+    if (!sessionToRevoke) return;
+
+    const sessionId = sessionToRevoke.id;
+    setShowRevokeConfirmModal(false);
+    setSessionToRevoke(null);
+    await handleRevokeSession(sessionId);
+  };
 
   const parseUserAgent = (ua: string | undefined | null) => {
     let device = "Unknown Device";
@@ -874,7 +890,10 @@ const SecuritySettings = () => {
                     status={timeStr}
                     icon={icon}
                     isActive={isActive}
-                    onRevoke={() => handleRevokeSession(session.id)}
+                    onRevoke={() => {
+                      setSessionToRevoke(session);
+                      setShowRevokeConfirmModal(true);
+                    }}
                   />
                 );
               })
@@ -920,6 +939,35 @@ const SecuritySettings = () => {
         message="Security policies have been successfully updated."
         onClose={() => setShowSuccessModal(false)}
         onConfirm={() => setShowSuccessModal(false)}
+      />
+
+      <ActionConfirmationModal
+        isOpen={showRevokeConfirmModal}
+        action="delete"
+        title="Revoke this device?"
+        message={
+          sessionToRevoke ? (
+            <>
+              This will immediately sign out the active session on{" "}
+              <strong className="font-semibold text-text-primary">
+                {parseUserAgent(sessionToRevoke.user_agent).deviceText}
+              </strong>{" "}
+              at{" "}
+              <strong className="font-semibold text-text-primary">
+                {sessionToRevoke.ip || "Unknown Location"}
+              </strong>
+              .
+            </>
+          ) : (
+            "Select a device to revoke."
+          )
+        }
+        confirmLabel="Yes, revoke"
+        onClose={() => {
+          setShowRevokeConfirmModal(false);
+          setSessionToRevoke(null);
+        }}
+        onConfirm={confirmRevokeSession}
       />
     </div>
   );
