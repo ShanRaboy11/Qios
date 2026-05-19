@@ -30,9 +30,11 @@ export const SearchFilterBar = ({
       )}
     >
       {/* 1. Search Field */}
-      <div 
+      <div
         className={cn("w-full", !searchWidth && "flex-grow")}
-        style={searchWidth ? { width: searchWidth, flex: "0 0 auto" } : undefined}
+        style={
+          searchWidth ? { width: searchWidth, flex: "0 0 auto" } : undefined
+        }
       >
         <FormField
           label=""
@@ -45,22 +47,24 @@ export const SearchFilterBar = ({
       </div>
 
       {/* 2. Filter Action Button */}
-      <button
-        onClick={onFilterClick}
-        className={cn(
-          "h-[52px] px-6 flex items-center gap-2 bg-white border-2 border-[#E5E5E5] rounded-2xl",
-          "hover:bg-slate-50 active:scale-95 transition-all group",
-          "w-full md:w-auto justify-center shrink-0",
-        )}
-      >
-        <SlidersHorizontal
-          size={18}
-          className="text-text-secondary group-hover:text-brand-primary"
-        />
-        <span className="b2 font-bold text-text-secondary group-hover:text-text-primary">
-          Filters
-        </span>
-      </button>
+      {onFilterClick && (
+        <button
+          onClick={onFilterClick}
+          className={cn(
+            "h-[52px] px-6 flex items-center gap-2 bg-white border-2 border-[#E5E5E5] rounded-2xl",
+            "hover:bg-slate-50 active:scale-95 transition-all group",
+            "w-full md:w-auto justify-center shrink-0",
+          )}
+        >
+          <SlidersHorizontal
+            size={18}
+            className="text-text-secondary group-hover:text-brand-primary"
+          />
+          <span className="b2 font-bold text-text-secondary group-hover:text-text-primary">
+            Filters
+          </span>
+        </button>
+      )}
     </div>
   );
 };

@@ -1,17 +1,16 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
 import { Toggle } from "@/components/atoms/Toggle";
 import { Badge } from "@/components/atoms/Badge";
 import { Checkbox } from "@/components/atoms/Checkbox";
+import { SearchFilterBar } from "@/components/molecules/SearchFilterBar";
 import {
   GripVertical,
   Plus,
   Image as ImageIcon,
-  Sparkles,
-  CheckCircle2,
   Trash2,
   Search,
   LayoutGrid,
@@ -21,212 +20,358 @@ import {
   ChevronUp,
   ZoomIn,
   ZoomOut,
+  Edit2,
+  FolderPlus,
+  Filter,
+  Flame,
+  Coffee,
+  IceCream2,
+  Egg,
+  Pizza,
+  Beef,
+  Fish,
+  Salad,
+  Soup,
+  Sandwich,
+  Cookie,
+  Cake,
+  Apple,
+  Carrot,
+  Grape,
+  UtensilsCrossed,
+  Wine,
+  Beer,
+  Milk,
+  Star,
+  Sun,
+  Moon,
+  Leaf,
+  Zap,
+  Drumstick,
+  ShoppingBag,
+  Croissant,
+  CupSoda,
+  Candy,
+  ChefHat,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  useMenuManagement,
+  Category,
+  MenuItem,
+  Addon,
+  Size,
+} from "@/hooks/useMenuManagement";
 
-// types
+// ─── Types ──────────────────────────────────────────────────────────────────
 
-interface Category {
-  id: string;
-  name: string;
-}
+type FilterAvail = "all" | "avail" | "unavail";
 
-interface Modifier {
-  id: string;
-  itemId: string;
-  name: string;
-  description: string;
-  price: string;
-}
+// ─── Icon options with Lucide components ─────────────────────────────────────
 
-interface Size {
-  id: string;
-  name: string;
-  description: string;
-  price: string;
-}
-
-interface MenuItem {
-  id: string;
-  categoryId: string;
-  name: string;
-  description: string;
-  price: string;
-  isAvailable: boolean;
-  aiSynced: boolean;
-  addonsEnabled: boolean;
-  addons: Modifier[];
-  sizes: Size[];
-  image?: string;
-}
-
-// mock data
-
-const INITIAL_CATEGORIES: Category[] = [
-  { id: "1", name: "Sizzling" },
-  { id: "2", name: "Drinks" },
-  { id: "3", name: "Desserts" },
-  { id: "4", name: "Breakfast" },
+const ICON_OPTIONS: {
+  icon: string;
+  component: React.ReactNode;
+  label: string;
+}[] = [
+  { icon: "flame", component: <Flame size={18} />, label: "Sizzling" },
+  { icon: "drumstick", component: <Drumstick size={18} />, label: "Chicken" },
+  { icon: "beef", component: <Beef size={18} />, label: "Beef" },
+  { icon: "fish", component: <Fish size={18} />, label: "Seafood" },
+  { icon: "egg", component: <Egg size={18} />, label: "Egg" },
+  { icon: "soup", component: <Soup size={18} />, label: "Soup" },
+  { icon: "salad", component: <Salad size={18} />, label: "Salad" },
+  { icon: "pizza", component: <Pizza size={18} />, label: "Pizza" },
+  { icon: "sandwich", component: <Sandwich size={18} />, label: "Sandwich" },
+  { icon: "croissant", component: <Croissant size={18} />, label: "Pastry" },
+  {
+    icon: "chef-hat",
+    component: <ChefHat size={18} />,
+    label: "Chef's Special",
+  },
+  {
+    icon: "utensils-crossed",
+    component: <UtensilsCrossed size={18} />,
+    label: "Combo",
+  },
+  { icon: "coffee", component: <Coffee size={18} />, label: "Coffee" },
+  { icon: "cup-soda", component: <CupSoda size={18} />, label: "Soda" },
+  { icon: "beer", component: <Beer size={18} />, label: "Beer" },
+  { icon: "wine", component: <Wine size={18} />, label: "Wine" },
+  { icon: "milk", component: <Milk size={18} />, label: "Milk" },
+  { icon: "ice-cream", component: <IceCream2 size={18} />, label: "Ice Cream" },
+  { icon: "cake", component: <Cake size={18} />, label: "Cake" },
+  { icon: "cookie", component: <Cookie size={18} />, label: "Cookie" },
+  { icon: "candy", component: <Candy size={18} />, label: "Sweets" },
+  { icon: "apple", component: <Apple size={18} />, label: "Fruit" },
+  { icon: "carrot", component: <Carrot size={18} />, label: "Veggies" },
+  { icon: "grape", component: <Grape size={18} />, label: "Grape" },
+  { icon: "leaf", component: <Leaf size={18} />, label: "Vegan" },
+  {
+    icon: "shopping-bag",
+    component: <ShoppingBag size={18} />,
+    label: "Bundle",
+  },
+  { icon: "star", component: <Star size={18} />, label: "Favorites" },
+  { icon: "sun", component: <Sun size={18} />, label: "Breakfast" },
+  { icon: "moon", component: <Moon size={18} />, label: "Dinner" },
+  { icon: "zap", component: <Zap size={18} />, label: "Quick Bites" },
 ];
 
-const INITIAL_ITEMS: MenuItem[] = [
-  {
-    id: "item_1",
-    categoryId: "1",
-    name: "Chicken Adobo",
-    description: "Slow-cooked in vinegar, soy, & garlic",
-    price: "500.00",
-    isAvailable: true,
-    aiSynced: true,
-    addonsEnabled: true,
-    addons: [
-      {
-        id: "m1",
-        itemId: "item_2",
-        name: "Extra Rice",
-        description: "Steamed white rice",
-        price: "35.00",
-      },
-    ],
-    sizes: [
-      { id: "s1", name: "Regular", description: "Good for 1", price: "0.00" },
-      { id: "s2", name: "Large", description: "Good for 2-3", price: "150.00" },
-    ],
-  },
-  {
-    id: "item_2",
-    categoryId: "2",
-    name: "Extra Rice",
-    description: "Steamed white rice",
-    price: "35.00",
-    isAvailable: true,
-    aiSynced: true,
-    addonsEnabled: false,
-    addons: [],
-    sizes: [],
-  },
-  {
-    id: "item_3",
-    categoryId: "2",
-    name: "Iced Tea",
-    description: "House blend iced tea",
-    price: "65.00",
-    isAvailable: true,
-    aiSynced: true,
-    addonsEnabled: false,
-    addons: [],
-    sizes: [],
-  },
-];
+const renderCategoryIcon = (icon: string, size = 20) => {
+  const map: Record<string, React.ReactNode> = {
+    flame: <Flame size={size} />,
+    drumstick: <Drumstick size={size} />,
+    beef: <Beef size={size} />,
+    fish: <Fish size={size} />,
+    egg: <Egg size={size} />,
+    soup: <Soup size={size} />,
+    salad: <Salad size={size} />,
+    pizza: <Pizza size={size} />,
+    sandwich: <Sandwich size={size} />,
+    croissant: <Croissant size={size} />,
+    "chef-hat": <ChefHat size={size} />,
+    "utensils-crossed": <UtensilsCrossed size={size} />,
+    coffee: <Coffee size={size} />,
+    "cup-soda": <CupSoda size={size} />,
+    beer: <Beer size={size} />,
+    wine: <Wine size={size} />,
+    milk: <Milk size={size} />,
+    "ice-cream": <IceCream2 size={size} />,
+    cake: <Cake size={size} />,
+    cookie: <Cookie size={size} />,
+    candy: <Candy size={size} />,
+    apple: <Apple size={size} />,
+    carrot: <Carrot size={size} />,
+    grape: <Grape size={size} />,
+    leaf: <Leaf size={size} />,
+    "shopping-bag": <ShoppingBag size={size} />,
+    star: <Star size={size} />,
+    sun: <Sun size={size} />,
+    moon: <Moon size={size} />,
+    zap: <Zap size={size} />,
+  };
+  return map[icon] ?? <UtensilsCrossed size={size} />;
+};
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+const uid = () => `_${Math.random().toString(36).slice(2, 8)}`;
+
+// ─── Skeleton components ──────────────────────────────────────────────────────
+
+const Shimmer = ({ className }: { className?: string }) => (
+  <div className={cn("animate-pulse bg-black/[0.07] rounded-xl", className)} />
+);
+
+const GridCardSkeleton = () => (
+  <div className="bg-white rounded-2xl border border-black/5 overflow-hidden shadow-sm flex flex-col">
+    <div className="aspect-[4/3] bg-black/[0.06] animate-pulse" />
+    <div className="p-3.5 flex flex-col gap-2.5">
+      <div className="flex items-center justify-between gap-2">
+        <Shimmer className="h-3.5 w-2/3" />
+        <Shimmer className="h-3.5 w-12" />
+      </div>
+      <Shimmer className="h-2.5 w-full" />
+      <Shimmer className="h-2.5 w-3/4" />
+      <div className="flex gap-1.5 mt-1">
+        <Shimmer className="h-4 w-14 rounded-full" />
+        <Shimmer className="h-4 w-16 rounded-full" />
+      </div>
+    </div>
+    <div className="px-3.5 py-2.5 border-t border-black/5 flex items-center justify-between">
+      <Shimmer className="h-2.5 w-16" />
+      <Shimmer className="h-4 w-8 rounded-full" />
+    </div>
+  </div>
+);
+
+const ListRowSkeleton = () => (
+  <div className="flex items-center gap-3 px-4 py-3.5 border-b border-black/[0.05] last:border-0">
+    <Shimmer className="w-4 h-4 rounded flex-shrink-0" />
+    <Shimmer className="w-12 h-12 rounded-xl flex-shrink-0" />
+    <div className="flex-1 flex flex-col gap-1.5">
+      <Shimmer className="h-3 w-1/3" />
+      <Shimmer className="h-2.5 w-1/2 hidden sm:block" />
+    </div>
+    <Shimmer className="h-3.5 w-14 flex-shrink-0" />
+    <Shimmer className="h-3 w-14 hidden sm:block flex-shrink-0" />
+    <Shimmer className="w-8 h-4 rounded-full flex-shrink-0" />
+  </div>
+);
+
+// ─── Icon Picker ─────────────────────────────────────────────────────────────
+
+interface IconPickerProps {
+  value: string;
+  onChange: (icon: string) => void;
+}
+
+const IconPicker: React.FC<IconPickerProps> = ({ value, onChange }) => (
+  <div className="flex flex-col gap-3">
+    {/* Selected preview */}
+    <div className="flex items-center gap-3 p-3 bg-brand-secondary/40 rounded-2xl border border-black/5">
+      <div className="w-10 h-10 rounded-xl bg-white border border-brand-primary/30 flex items-center justify-center flex-shrink-0 shadow-sm text-brand-accent">
+        {renderCategoryIcon(value, 20)}
+      </div>
+      <div>
+        <p className="b4 font-bold text-text-primary">
+          {ICON_OPTIONS.find((o) => o.icon === value)?.label ?? "Icon"}
+        </p>
+        <p className="b5 text-text-secondary">Selected icon</p>
+      </div>
+    </div>
+
+    {/* Grid — fixed: added px-1 inside the scroll area so icons aren't clipped on the right */}
+    <div
+      className="overflow-y-auto custom-scrollbar"
+      style={{ maxHeight: 220 }}
+    >
+      {/* px-0.5 pt-1 pb-1 ensures the focus ring / scale on selected icon is not clipped on any side */}
+      <div className="grid grid-cols-6 gap-2 px-0.5 pt-1 pb-1">
+        {ICON_OPTIONS.map((opt) => (
+          <button
+            key={opt.icon}
+            onClick={() => onChange(opt.icon)}
+            title={opt.label}
+            type="button"
+            className={cn(
+              "w-full aspect-square rounded-xl flex items-center justify-center transition-all border",
+              value === opt.icon
+                ? "bg-brand-accent/10 border-brand-accent text-brand-accent shadow-sm scale-105"
+                : "bg-white/60 border-black/[0.08] text-text-secondary hover:bg-brand-secondary/50 hover:border-brand-primary hover:text-brand-accent",
+            )}
+          >
+            {React.cloneElement(opt.component as React.ReactElement, {
+              size: 18,
+            })}
+          </button>
+        ))}
+      </div>
+    </div>
+  </div>
+);
+
+// ─── Sub-components ──────────────────────────────────────────────────────────
+
+const SectionLabel: React.FC<{ title: string; required?: boolean }> = ({
+  title,
+  required,
+}) => (
+  <div className="flex items-center gap-2 mb-3">
+    <h4 className="b5 font-bold text-text-secondary uppercase tracking-widest">
+      {title}
+    </h4>
+    {required && (
+      <span className="text-[9px] px-1.5 py-0.5 uppercase font-bold rounded-full border border-brand-accent/30 text-brand-accent bg-brand-accent/5">
+        Required
+      </span>
+    )}
+  </div>
+);
+
+const FieldLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <label className="block b5 font-bold text-text-secondary uppercase tracking-widest mb-1.5">
+    {children}
+  </label>
+);
+
+const Divider = () => <div className="w-full h-px bg-black/8" />;
+
+// ─── Main component ──────────────────────────────────────────────────────────
 
 const MenuCategoryManagement = () => {
-  // global state
-  const [categories, setCategories] = useState<Category[]>(INITIAL_CATEGORIES);
-  const [items, setItems] = useState<MenuItem[]>(INITIAL_ITEMS);
-  const [expandedCategories, setExpandedCategories] = useState<string[]>(["1"]);
-  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const {
+    categories,
+    items,
+    isLoading,
+    actionError,
+    saveCategory,
+    deleteCategory,
+    saveItem,
+    deleteItems,
+    toggleAvailability,
+    updateCategoryOrder,
+    uploadImage,
+  } = useMenuManagement();
 
-  // dashboard state
+  const [activeCatId, setActiveCatId] = useState<string>("");
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [isLocalLoading, setIsLocalLoading] = useState(false);
+  const [localError, setLocalError] = useState<string | null>(null);
+
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchQuery, setSearchQuery] = useState("");
+  const [filterAvail, setFilterAvail] = useState<FilterAvail>("all");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // category modal state
-  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
-  const [newCategoryName, setNewCategoryName] = useState("");
+  const [expandedRows, setExpandedRows] = useState<string[]>([]);
 
-  // drawer state
+  const [catModal, setCatModal] = useState<null | "new" | "edit">(null);
+  const [catDraft, setCatDraft] = useState<Partial<Category>>({
+    name: "",
+    icon: "flame",
+  });
+
   const [originalItem, setOriginalItem] = useState<MenuItem | null>(null);
   const [draftItem, setDraftItem] = useState<MenuItem | null>(null);
-
-  // dropdown state for linking existing items
   const [isLinkDropdownOpen, setIsLinkDropdownOpen] = useState(false);
 
-  // drag state
   const [draggedCategoryId, setDraggedCategoryId] = useState<string | null>(
     null,
   );
 
-  // crop modal state
   const [cropModalImage, setCropModalImage] = useState<string | null>(null);
   const [imageNativeSize, setImageNativeSize] = useState({ w: 1, h: 1 });
   const [cropScale, setCropScale] = useState(1);
   const [cropPan, setCropPan] = useState({ x: 0, y: 0 });
-  const [isDragging, setIsDragging] = useState(false);
-  const dragStart = useRef({ x: 0, y: 0 });
+  const [isDraggingCrop, setIsDraggingCrop] = useState(false);
+  const dragStartCrop = useRef({ x: 0, y: 0 });
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // container size for crop bounds checking
   const CROP_CONTAINER_SIZE = 320;
 
-  // close dropdown when clicking outside
+  // Set active cat on load
   useEffect(() => {
-    const handleClickOutside = () => {
-      if (isLinkDropdownOpen) setIsLinkDropdownOpen(false);
-    };
-    document.addEventListener("click", handleClickOutside);
-    return () => document.removeEventListener("click", handleClickOutside);
-  }, [isLinkDropdownOpen]);
-
-  // handlers for category drag and drop
-  const handleDragStartCategory = (e: React.DragEvent, id: string) => {
-    setDraggedCategoryId(id);
-    e.dataTransfer.effectAllowed = "move";
-  };
-
-  const handleDragOverCategory = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
-  };
-
-  const handleDropCategory = (e: React.DragEvent, targetId: string) => {
-    e.preventDefault();
-    if (!draggedCategoryId || draggedCategoryId === targetId) return;
-
-    const newCats = [...categories];
-    const draggedIdx = newCats.findIndex((c) => c.id === draggedCategoryId);
-    const targetIdx = newCats.findIndex((c) => c.id === targetId);
-
-    const [draggedCat] = newCats.splice(draggedIdx, 1);
-    newCats.splice(targetIdx, 0, draggedCat);
-
-    setCategories(newCats);
-    setDraggedCategoryId(null);
-  };
-
-  const handleCreateCategory = () => {
-    if (newCategoryName.trim()) {
-      const newCat: Category = {
-        id: `cat_${Date.now()}`,
-        name: newCategoryName.trim(),
-      };
-      setCategories([...categories, newCat]);
-      setExpandedCategories([...expandedCategories, newCat.id]);
+    if (categories.length > 0 && !activeCatId) {
+      setActiveCatId(categories[0].id);
     }
-    setNewCategoryName("");
-    setIsCategoryModalOpen(false);
+  }, [categories, activeCatId]);
+
+  // Reset loading when category changes
+  const handleCategoryChange = (id: string) => {
+    setActiveCatId(id);
+    setSearchQuery("");
+    setFilterAvail("all");
+    setSelectedItems([]);
+    setSidebarOpen(false);
   };
 
-  const handleDeleteCategory = (e: React.MouseEvent, id: string) => {
-    e.stopPropagation();
-    const newCats = categories.filter((c) => c.id !== id);
-    setCategories(newCats);
-    // optionally delete all items in this category
-    setItems((prev) => prev.filter((i) => i.categoryId !== id));
-  };
+  const activeCat =
+    categories.find((c) => c.id === activeCatId) ?? categories[0];
+  const visibleItems = items.filter((i) => {
+    if (i.categoryId !== activeCatId) return false;
+    if (
+      searchQuery &&
+      !i.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
+      !i.description.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+      return false;
+    if (filterAvail === "avail" && !i.isAvailable) return false;
+    if (filterAvail === "unavail" && i.isAvailable) return false;
+    return true;
+  });
 
-  const toggleCategory = (id: string) => {
-    setExpandedCategories((prev) =>
-      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id],
-    );
-  };
+  const totalCount = items.filter((i) => i.categoryId === activeCatId).length;
+  const availCount = items.filter(
+    (i) => i.categoryId === activeCatId && i.isAvailable,
+  ).length;
 
-  // derived data
   const hasChanges = JSON.stringify(originalItem) !== JSON.stringify(draftItem);
-
+  const requiresImage = !!draftItem?.id?.startsWith("item_");
   const isValidDraft =
     draftItem?.name?.trim() !== "" &&
     draftItem?.price?.trim() !== "" &&
-    !!draftItem?.image &&
+    (!requiresImage || !!draftItem?.image) &&
     draftItem?.sizes.every(
       (s) => s.name.trim() !== "" && s.price.trim() !== "",
     ) &&
@@ -235,59 +380,163 @@ const MenuCategoryManagement = () => {
         (a) => a.name.trim() !== "" && a.price.trim() !== "",
       ));
 
-  // selection handlers
-  const toggleSelection = (id: string) => {
+  const coverScale = Math.max(
+    CROP_CONTAINER_SIZE / imageNativeSize.w,
+    CROP_CONTAINER_SIZE / imageNativeSize.h,
+  );
+  const renderedWidth = imageNativeSize.w * coverScale;
+  const renderedHeight = imageNativeSize.h * coverScale;
+  const maxPanX = Math.max(
+    0,
+    (renderedWidth * cropScale - CROP_CONTAINER_SIZE) / 2,
+  );
+  const maxPanY = Math.max(
+    0,
+    (renderedHeight * cropScale - CROP_CONTAINER_SIZE) / 2,
+  );
+
+  useEffect(() => {
+    setCropPan((prev) => ({
+      x: Math.max(-maxPanX, Math.min(maxPanX, prev.x)),
+      y: Math.max(-maxPanY, Math.min(maxPanY, prev.y)),
+    }));
+  }, [cropScale, maxPanX, maxPanY]);
+
+  useEffect(() => {
+    const handler = () => {
+      if (isLinkDropdownOpen) setIsLinkDropdownOpen(false);
+    };
+    document.addEventListener("click", handler);
+    return () => document.removeEventListener("click", handler);
+  }, [isLinkDropdownOpen]);
+
+  // Category handlers
+  const handleDragStartCategory = (e: React.DragEvent, id: string) => {
+    setDraggedCategoryId(id);
+    e.dataTransfer.effectAllowed = "move";
+  };
+  const handleDragOverCategory = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+  };
+  const handleDropCategory = async (e: React.DragEvent, targetId: string) => {
+    e.preventDefault();
+    if (!draggedCategoryId || draggedCategoryId === targetId) return;
+    const newCats = [...categories];
+    const draggedIdx = newCats.findIndex((c) => c.id === draggedCategoryId);
+    const targetIdx = newCats.findIndex((c) => c.id === targetId);
+    const [draggedCat] = newCats.splice(draggedIdx, 1);
+    newCats.splice(targetIdx, 0, draggedCat);
+    await updateCategoryOrder(newCats);
+    setDraggedCategoryId(null);
+  };
+
+  const openNewCatModal = () => {
+    setLocalError(null);
+    setCatDraft({ name: "", icon: "flame" });
+    setCatModal("new");
+  };
+  const openEditCatModal = (cat: Category) => {
+    setLocalError(null);
+    setCatDraft({ ...cat });
+    setCatModal("edit");
+  };
+
+  const handleSaveCategory = async () => {
+    if (!catDraft.name?.trim()) return;
+    setLocalError(null);
+    setIsLocalLoading(true);
+    const isNew = catModal === "new";
+    const saved = await saveCategory(catDraft, isNew);
+    if (saved) {
+      if (isNew) setActiveCatId(saved.id);
+      setCatModal(null);
+    } else {
+      setLocalError(
+        "Unable to save category. Please check your tenant access.",
+      );
+    }
+    setIsLocalLoading(false);
+  };
+
+  const handleDeleteCategory = async (id: string) => {
+    setLocalError(null);
+    setIsLocalLoading(true);
+    const ok = await deleteCategory(id);
+    if (ok) {
+      const remaining = categories.filter((c) => c.id !== id);
+      setActiveCatId(remaining.length ? remaining[0].id : "");
+      setCatModal(null);
+    } else {
+      setLocalError("Unable to delete category.");
+    }
+    setIsLocalLoading(false);
+  };
+
+  const toggleSelection = (id: string) =>
     setSelectedItems((prev) =>
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
     );
-  };
-
-  const deleteSelectedItems = () => {
-    setItems((prev) => prev.filter((i) => !selectedItems.includes(i.id)));
+  const deleteSelectedItems = async () => {
+    await deleteItems(selectedItems);
     setSelectedItems([]);
   };
 
-  // drawer handlers
-  const handleOpenDrawer = (item: MenuItem) => {
+  const handleOpenModal = (item: MenuItem) => {
+    setLocalError(null);
     setOriginalItem(item);
     setDraftItem(JSON.parse(JSON.stringify(item)));
   };
-
-  const handleCloseDrawer = () => {
+  const handleCloseModal = () => {
+    setLocalError(null);
     setOriginalItem(null);
     setDraftItem(null);
   };
-
-  const handleSaveItem = () => {
+  const handleSaveItem = async () => {
     if (!draftItem || !isValidDraft) return;
+    setLocalError(null);
+    setIsLocalLoading(true);
 
-    const exists = items.some((i) => i.id === draftItem.id);
-    if (exists) {
-      setItems(items.map((i) => (i.id === draftItem.id ? draftItem : i)));
-    } else {
-      setItems([...items, draftItem]);
+    let finalImage = draftItem.image;
+    if (draftItem.image && draftItem.image.startsWith("data:image")) {
+      // Convert base64 to Blob
+      const res = await fetch(draftItem.image);
+      const blob = await res.blob();
+      const fileName = `${draftItem.id}-${Date.now()}.jpg`;
+      const uploadedUrl = await uploadImage(blob, fileName);
+      if (uploadedUrl) {
+        finalImage = uploadedUrl;
+      } else {
+        setLocalError("Image upload failed. Please try again.");
+        setIsLocalLoading(false);
+        return;
+      }
     }
-    handleCloseDrawer();
+
+    const savedItem = await saveItem({ ...draftItem, image: finalImage });
+    if (savedItem) {
+      handleCloseModal();
+    } else {
+      setLocalError(
+        "Unable to save item. Please check required fields and tenant access.",
+      );
+    }
+    setIsLocalLoading(false);
   };
 
-  const handleCreateNewItem = (categoryId: string) => {
-    const newItem: MenuItem = {
+  const handleCreateNewItem = () => {
+    if (!activeCatId) return;
+    handleOpenModal({
       id: `item_${Date.now()}`,
-      categoryId,
+      categoryId: activeCatId,
       name: "",
       description: "",
       price: "",
       isAvailable: true,
-      aiSynced: false,
       addonsEnabled: false,
       addons: [],
       sizes: [],
-    };
-    handleOpenDrawer(newItem);
-    // ensure the category is expanded if they click add item (just in case)
-    if (!expandedCategories.includes(categoryId)) {
-      setExpandedCategories([...expandedCategories, categoryId]);
-    }
+    });
   };
 
   const updateDraft = (field: keyof MenuItem, value: any) => {
@@ -300,12 +549,21 @@ const MenuCategoryManagement = () => {
     callback: (val: string) => void,
   ) => {
     const val = e.target.value;
-    if (val === "" || /^[0-9]*\.?[0-9]*$/.test(val)) {
-      callback(val);
+    if (val === "" || /^[0-9]*\.?[0-9]*$/.test(val)) callback(val);
+  };
+
+  const toggleItemAvailability = async (id: string) => {
+    const item = items.find((i) => i.id === id);
+    if (item) {
+      await toggleAvailability(id, item.isAvailable);
     }
   };
 
-  // image handlers
+  const toggleRowExpand = (id: string) =>
+    setExpandedRows((prev) =>
+      prev.includes(id) ? prev.filter((r) => r !== id) : [...prev, id],
+    );
+
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -330,635 +588,436 @@ const MenuCategoryManagement = () => {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  // crop mathematical bounds & rendering
-  const coverScale = Math.max(
-    CROP_CONTAINER_SIZE / imageNativeSize.w,
-    CROP_CONTAINER_SIZE / imageNativeSize.h,
-  );
-  const renderedWidth = imageNativeSize.w * coverScale;
-  const renderedHeight = imageNativeSize.h * coverScale;
-  const maxPanX = Math.max(
-    0,
-    (renderedWidth * cropScale - CROP_CONTAINER_SIZE) / 2,
-  );
-  const maxPanY = Math.max(
-    0,
-    (renderedHeight * cropScale - CROP_CONTAINER_SIZE) / 2,
-  );
-
-  // automatically restrict bounds if zooming out
-  useEffect(() => {
-    setCropPan((prev) => ({
-      x: Math.max(-maxPanX, Math.min(maxPanX, prev.x)),
-      y: Math.max(-maxPanY, Math.min(maxPanY, prev.y)),
-    }));
-  }, [cropScale, maxPanX, maxPanY]);
-
   const confirmImageCrop = () => {
-    if (cropModalImage) {
-      const canvas = document.createElement("canvas");
-      // high res output for quality
-      canvas.width = 600;
-      canvas.height = 600;
-      const ctx = canvas.getContext("2d");
-
-      const img = new window.Image();
-      img.onload = () => {
-        if (!ctx) return;
-        ctx.fillStyle = "white";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        const outScale = canvas.width / CROP_CONTAINER_SIZE;
-
-        // mirror css transform: origin center, apply pan, apply scale
-        ctx.translate(canvas.width / 2, canvas.height / 2);
-        ctx.translate(cropPan.x * outScale, cropPan.y * outScale);
-        ctx.scale(cropScale, cropScale);
-
-        const drawW = renderedWidth * outScale;
-        const drawH = renderedHeight * outScale;
-        ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
-
-        const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
-        updateDraft("image", dataUrl);
-        setCropModalImage(null);
-      };
-      img.src = cropModalImage;
-    }
+    if (!cropModalImage) return;
+    const canvas = document.createElement("canvas");
+    canvas.width = 600;
+    canvas.height = 600;
+    const ctx = canvas.getContext("2d");
+    const img = new window.Image();
+    img.onload = () => {
+      if (!ctx) return;
+      ctx.fillStyle = "white";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      const outScale = canvas.width / CROP_CONTAINER_SIZE;
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.translate(cropPan.x * outScale, cropPan.y * outScale);
+      ctx.scale(cropScale, cropScale);
+      const drawW = renderedWidth * outScale;
+      const drawH = renderedHeight * outScale;
+      ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
+      updateDraft("image", canvas.toDataURL("image/jpeg", 0.9));
+      setCropModalImage(null);
+    };
+    img.src = cropModalImage;
   };
 
-  // crop interactions
-  const handleMouseDown = (e: React.MouseEvent) => {
-    setIsDragging(true);
-    dragStart.current = { x: e.clientX - cropPan.x, y: e.clientY - cropPan.y };
+  const handleCropMouseDown = (e: React.MouseEvent) => {
+    setIsDraggingCrop(true);
+    dragStartCrop.current = {
+      x: e.clientX - cropPan.x,
+      y: e.clientY - cropPan.y,
+    };
   };
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging) return;
-
-    const nextX = e.clientX - dragStart.current.x;
-    const nextY = e.clientY - dragStart.current.y;
-
+  const handleCropMouseMove = (e: React.MouseEvent) => {
+    if (!isDraggingCrop) return;
     setCropPan({
-      x: Math.max(-maxPanX, Math.min(maxPanX, nextX)),
-      y: Math.max(-maxPanY, Math.min(maxPanY, nextY)),
+      x: Math.max(
+        -maxPanX,
+        Math.min(maxPanX, e.clientX - dragStartCrop.current.x),
+      ),
+      y: Math.max(
+        -maxPanY,
+        Math.min(maxPanY, e.clientY - dragStartCrop.current.y),
+      ),
     });
   };
-  const handleMouseUp = () => setIsDragging(false);
+  const handleCropMouseUp = () => setIsDraggingCrop(false);
 
-  // formatting options for the addon dropdown
   const dropdownOptions = items
     .filter((i) => i.id !== draftItem?.id)
     .map((i) => ({ label: `${i.name} (₱${i.price})`, value: i.id }));
 
   return (
-    <div className="font-inter relative flex flex-col w-full">
-      <div className="flex flex-col w-full relative">
-        {/* left side: dashboard (100% or 60% when drawer open) */}
+    <div className="font-inter relative flex w-full h-full min-h-screen bg-bg-primary">
+      {/* ── Mobile sidebar overlay ──────────────────────────────────────── */}
+      {sidebarOpen && (
         <div
-          className={cn(
-            "flex-1 transition-all duration-500 w-full",
-            draftItem &&
-              "opacity-50 blur-[2px] pointer-events-none select-none lg:max-w-[60%]",
-          )}
-        >
-          {draftItem && (
-            <>
-              <div
-                className="absolute inset-0 z-40 bg-transparent pointer-events-auto cursor-default"
-                onClick={(e) => e.stopPropagation()}
-              />
-              <style>{`
-                nav { display: none !important; }
-              `}</style>
-            </>
-          )}
+          className="fixed inset-0 z-30 bg-black/30 backdrop-blur-sm lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
 
-          {/* item dashboard (main panel) */}
-          <main className="flex flex-col min-w-0 w-full">
-            {/* dashboard tools */}
-            <div className="flex-shrink-0 flex flex-col gap-6 mb-6">
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-                <div className="relative flex-1 max-w-md w-full">
-                  <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                    <Search size={18} className="text-text-secondary" />
-                  </div>
-                  <Input
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search all items"
-                    className="pl-12 !py-2.5 rounded-xl !bg-white/80 b2 w-full"
-                  />
-                </div>
-
-                <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
-                  <Button
-                    variant="primary"
-                    onClick={() => setIsCategoryModalOpen(true)}
-                    className="sm:hidden flex-1 justify-center b3 py-2 h-auto"
-                  >
-                    <Plus size={18} className="mr-1" /> Create Category
-                  </Button>
-                  <Button
-                    variant="primary"
-                    onClick={() => setIsCategoryModalOpen(true)}
-                    className="hidden sm:flex b3"
-                    leftIcon={<Plus size={18} />}
-                  >
-                    Create Category
-                  </Button>
-                  <div className="flex items-center gap-1 bg-white/80 p-1 rounded-xl shadow-sm border border-black/5 flex-shrink-0">
-                    <button
-                      onClick={() => setViewMode("grid")}
-                      className={cn(
-                        "p-2 rounded-lg transition-colors",
-                        viewMode === "grid"
-                          ? "bg-brand-primary text-white shadow-sm"
-                          : "text-text-secondary hover:text-text-primary hover:bg-black/5",
-                      )}
-                    >
-                      <LayoutGrid size={18} />
-                    </button>
-                    <button
-                      onClick={() => setViewMode("list")}
-                      className={cn(
-                        "p-2 rounded-lg transition-colors",
-                        viewMode === "list"
-                          ? "bg-brand-primary text-white shadow-sm"
-                          : "text-text-secondary hover:text-text-primary hover:bg-black/5",
-                      )}
-                    >
-                      <ListIcon size={18} />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* dashboard accordion content */}
-            <div
-              className={cn(
-                "flex-1 custom-scrollbar",
-                draftItem ? "overflow-hidden" : "",
-              )}
-            >
-              {categories.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full text-text-secondary opacity-70">
-                  <ImageIcon size={48} className="mb-4 opacity-50" />
-                  <p className="b2 font-bold">No categories found</p>
-                  <p className="b4">Create a new category to get started.</p>
-                </div>
-              ) : (
-                categories.map((cat) => {
-                  const catItems = items.filter(
-                    (i) =>
-                      i.categoryId === cat.id &&
-                      i.name.toLowerCase().includes(searchQuery.toLowerCase()),
-                  );
-                  const isExpanded = expandedCategories.includes(cat.id);
-
-                  // if searching and this category has no matches, we can optionally hide it
-                  if (searchQuery && catItems.length === 0) return null;
-
-                  return (
-                    <div
-                      key={cat.id}
-                      draggable
-                      onDragStart={(e) => handleDragStartCategory(e, cat.id)}
-                      onDragOver={handleDragOverCategory}
-                      onDrop={(e) => handleDropCategory(e, cat.id)}
-                      className={cn(
-                        "bg-white rounded-[24px] border border-[#E5E5E5] mb-6 shadow-sm transition-all text-left group/accordion",
-                        draggedCategoryId === cat.id &&
-                          "opacity-50 border-dashed border-2 border-brand-primary",
-                      )}
-                    >
-                      {/* accordion header */}
-                      <div
-                        onClick={() => toggleCategory(cat.id)}
-                        className={cn(
-                          "p-4 md:px-6 md:py-4 flex flex-col md:flex-row items-start overflow-hidden md:items-center justify-between cursor-pointer transition-colors gap-4 md:gap-0 bg-brand-secondary/70",
-                          isExpanded
-                            ? "rounded-t-[24px] border-b border-[#E5E5E5]"
-                            : "rounded-[24px]",
-                        )}
-                      >
-                        {/* mobile layout */}
-                        <div className="flex md:hidden flex-col w-full gap-1">
-                          <div className="flex items-center justify-between w-full">
-                            <div className="flex items-center gap-2">
-                              <div className="cursor-grab text-text-secondary/30 hover:text-text-primary active:cursor-grabbing">
-                                <GripVertical size={20} />
-                              </div>
-                              <h3 className="text-xl font-extrabold text-text-primary leading-tight">
-                                {cat.name}
-                              </h3>
-                            </div>
-                            <div
-                              className="flex items-center gap-1 shrink-0"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <button
-                                onClick={() => handleCreateNewItem(cat.id)}
-                                className="w-8 h-8 flex items-center justify-center text-brand-accent bg-brand-accent/10 rounded-lg transition-colors"
-                              >
-                                <Plus size={18} />
-                              </button>
-                              <button
-                                onClick={(e) => handleDeleteCategory(e, cat.id)}
-                                className="w-8 h-8 flex items-center justify-center text-warning-primary bg-warning-primary/10 rounded-lg transition-colors"
-                              >
-                                <Trash2 size={18} />
-                              </button>
-                            </div>
-                          </div>
-                          <div className="flex items-center justify-between w-full pl-7">
-                            <Badge
-                              color="secondary"
-                              variant="subtle"
-                              shape="pill"
-                              className="w-fit text-[11px] font-bold px-3 py-1"
-                            >
-                              {
-                                items.filter((i) => i.categoryId === cat.id)
-                                  .length
-                              }{" "}
-                              Items
-                            </Badge>
-                            <div
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggleCategory(cat.id);
-                              }}
-                              className="p-1 cursor-pointer"
-                            >
-                              <ChevronDown
-                                className={cn(
-                                  "text-text-secondary transition-transform duration-300",
-                                  isExpanded && "rotate-180",
-                                )}
-                              />
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* desktop layout */}
-                        <div className="hidden md:flex items-center gap-4 w-full md:w-auto justify-between md:justify-start">
-                          <div className="flex items-center gap-3">
-                            <div className="cursor-grab text-text-secondary/30 hover:text-text-primary active:cursor-grabbing mr-1">
-                              <GripVertical size={20} />
-                            </div>
-                            <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
-                              <h3 className="text-xl font-extrabold text-text-primary leading-tight">
-                                {cat.name}
-                              </h3>
-                              <Badge
-                                color="secondary"
-                                variant="subtle"
-                                shape="pill"
-                                className="w-fit text-[11px] font-bold px-3 py-1"
-                              >
-                                {
-                                  items.filter((i) => i.categoryId === cat.id)
-                                    .length
-                                }{" "}
-                                Items
-                              </Badge>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div
-                          className="hidden md:flex items-center gap-3 shrink-0"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleCreateNewItem(cat.id);
-                            }}
-                            className="px-3 py-1.5 flex items-center gap-2 text-brand-accent hover:bg-brand-accent/10 rounded-xl transition-colors b3"
-                            title="Add Item"
-                          >
-                            <Plus size={18} />
-                            <span className="hidden sm:inline">Add Item</span>
-                          </button>
-                          <button
-                            onClick={(e) => handleDeleteCategory(e, cat.id)}
-                            className="p-2 text-warning-primary hover:bg-warning-primary/10 rounded-xl transition-colors"
-                            title="Delete Category"
-                          >
-                            <Trash2 size={18} />
-                          </button>
-                          <div className="w-px h-6 bg-black/10 mx-1" />
-                          <div
-                            onClick={() => toggleCategory(cat.id)}
-                            className="p-1 cursor-pointer"
-                          >
-                            <ChevronDown
-                              className={cn(
-                                "text-text-secondary transition-transform duration-300",
-                                isExpanded && "rotate-180",
-                              )}
-                            />
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* accordion body */}
-                      {isExpanded && (
-                        <div className="p-6 bg-slate-50/50 rounded-b-[24px] animate-in fade-in slide-in-from-top-2 duration-200">
-                          {catItems.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center py-8 text-text-secondary opacity-70">
-                              <p className="b3 font-bold">No items</p>
-                              <p className="b5">Click 'Add Item' to start.</p>
-                            </div>
-                          ) : viewMode === "grid" ? (
-                            <div
-                              className={cn(
-                                "grid gap-6",
-                                draftItem
-                                  ? "grid-cols-1 xl:grid-cols-2"
-                                  : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4",
-                              )}
-                            >
-                              {catItems.map((item) => (
-                                <div
-                                  key={item.id}
-                                  onClick={() => handleOpenDrawer(item)}
-                                  className="bg-white rounded-[24px] border border-black/5 overflow-hidden shadow-sm hover:shadow-md hover:border-brand-primary/30 transition-all cursor-pointer group flex flex-col relative"
-                                >
-                                  {/* select checkbox with solid white background to prevent morphing */}
-                                  <div
-                                    className="absolute top-4 left-4 z-20 bg-white rounded-[4px] flex items-center justify-center"
-                                    onClick={(e) => e.stopPropagation()}
-                                  >
-                                    <Checkbox
-                                      checked={selectedItems.includes(item.id)}
-                                      onChange={() => toggleSelection(item.id)}
-                                    />
-                                  </div>
-
-                                  <div className="aspect-video bg-black/5 flex items-center justify-center relative overflow-hidden">
-                                    {item.image ? (
-                                      <img
-                                        src={item.image}
-                                        alt={item.name}
-                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                      />
-                                    ) : (
-                                      <ImageIcon
-                                        size={32}
-                                        className="text-black/20"
-                                      />
-                                    )}
-                                    {!item.isAvailable && (
-                                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-[2px]">
-                                        <Badge
-                                          color="error"
-                                          variant="solid"
-                                          className="px-2 py-0.5 text-[11px] font-bold"
-                                        >
-                                          Unavailable
-                                        </Badge>
-                                      </div>
-                                    )}
-                                    {/* ai synced badge on top right */}
-                                    {item.aiSynced && (
-                                      <div className="absolute top-3 right-3 z-10">
-                                        <Badge
-                                          color="success"
-                                          variant="subtle"
-                                          className="px-2 py-0.5 text-[11px] font-bold shadow-sm"
-                                        >
-                                          AI Synced
-                                        </Badge>
-                                      </div>
-                                    )}
-                                  </div>
-                                  <div className="p-5 flex flex-col flex-1">
-                                    <div className="flex items-start justify-between gap-3 mb-2">
-                                      <h4 className="b2 font-bold text-text-primary group-hover:text-brand-primary transition-colors leading-tight">
-                                        {item.name}
-                                      </h4>
-                                      <span className="b2 font-bold text-brand-accent flex-shrink-0">
-                                        ₱{item.price}
-                                      </span>
-                                    </div>
-                                    <p className="b4 text-text-secondary line-clamp-2 mt-auto">
-                                      {item.description}
-                                    </p>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <div className="flex flex-col gap-4">
-                              {catItems.map((item) => (
-                                <div
-                                  key={item.id}
-                                  onClick={() => handleOpenDrawer(item)}
-                                  className="bg-white rounded-2xl border border-black/5 p-3 md:p-2.5 flex flex-col md:flex-row md:items-center gap-3 md:gap-4 shadow-sm hover:shadow-md hover:border-brand-primary/30 transition-all cursor-pointer group relative pl-5"
-                                >
-                                  {/* select checkbox with a little left margin */}
-                                  <div
-                                    className="absolute left-4 top-4 md:relative md:top-auto md:left-auto md:translate-y-0 z-20 bg-white rounded-[4px] flex items-center justify-center"
-                                    onClick={(e) => e.stopPropagation()}
-                                  >
-                                    <Checkbox
-                                      checked={selectedItems.includes(item.id)}
-                                      onChange={() => toggleSelection(item.id)}
-                                    />
-                                  </div>
-
-                                  {/* mobile list layout */}
-                                  <div className="flex md:hidden flex-col gap-0.5 w-full pl-8">
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                      <h4 className="b3 font-bold text-text-primary truncate max-w-[140px]">
-                                        {item.name}
-                                      </h4>
-                                      <div className="flex gap-1">
-                                        {!item.isAvailable && (
-                                          <Badge
-                                            color="error"
-                                            variant="subtle"
-                                            className="px-1.5 py-0 text-[9px] font-bold"
-                                          >
-                                            Unavail
-                                          </Badge>
-                                        )}
-                                        {item.aiSynced && (
-                                          <Badge
-                                            color="success"
-                                            variant="subtle"
-                                            className="px-1.5 py-0 text-[9px] font-bold"
-                                          >
-                                            Synced
-                                          </Badge>
-                                        )}
-                                      </div>
-                                    </div>
-                                    <div className="font-bold text-brand-accent b3">
-                                      ₱{item.price}
-                                    </div>
-                                  </div>
-
-                                  <div className="hidden md:flex w-14 h-14 rounded-xl bg-black/5 flex-shrink-0 items-center justify-center overflow-hidden relative ml-2">
-                                    {item.image ? (
-                                      <img
-                                        src={item.image}
-                                        alt={item.name}
-                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                      />
-                                    ) : (
-                                      <ImageIcon
-                                        size={20}
-                                        className="text-black/20"
-                                      />
-                                    )}
-                                  </div>
-                                  <div className="hidden md:flex flex-1 min-w-0 flex-col justify-center">
-                                    <div className="flex items-center gap-2 mb-1">
-                                      <h4 className="b2 font-bold text-text-primary group-hover:text-brand-primary transition-colors truncate">
-                                        {item.name}
-                                      </h4>
-                                      {!item.isAvailable && (
-                                        <Badge
-                                          color="error"
-                                          variant="subtle"
-                                          className="px-2 py-0.5 text-[11px] font-bold"
-                                        >
-                                          Unavailable
-                                        </Badge>
-                                      )}
-                                      {item.aiSynced && (
-                                        <Badge
-                                          color="success"
-                                          variant="subtle"
-                                          className="px-2 py-0.5 text-[11px] font-bold"
-                                        >
-                                          AI Synced
-                                        </Badge>
-                                      )}
-                                    </div>
-                                    <p className="b4 text-text-secondary truncate">
-                                      {item.description}
-                                    </p>
-                                  </div>
-                                  <div className="hidden md:block font-bold text-brand-accent text-lg flex-shrink-0 pl-4 border-l border-black/5 min-w-[130px] max-w-[180px] text-right truncate">
-                                    ₱{item.price}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          </main>
+      {/* ── Sidebar ─────────────────────────────────────────────────────── */}
+      <aside
+        className={cn(
+          "fixed top-0 left-0 h-full w-[280px] z-40 flex flex-col bg-bg-primary transition-transform duration-300 border-r border-black/[0.06]",
+          "lg:relative lg:translate-x-0 lg:z-auto lg:flex-shrink-0",
+          sidebarOpen ? "translate-x-0 shadow-xl" : "-translate-x-full",
+        )}
+      >
+        <div className="lg:hidden p-3 border-b border-black/[0.06] flex items-center justify-between flex-shrink-0">
+          <p className="b3 font-bold text-text-primary">Categories</p>
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="p-1.5 rounded-lg hover:bg-black/5 text-text-secondary"
+          >
+            <X size={16} />
+          </button>
         </div>
 
-        {/* floating bulk action bar */}
-        {selectedItems.length > 0 && !draftItem && (
-          <div
-            className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-white px-5 py-2.5 rounded-full flex items-center gap-3 z-[60] border border-black/5 animate-in slide-in-from-bottom-10"
-            style={{ boxShadow: "var(--kds-shadow-hover)" }}
+        <div className="flex flex-col gap-3 p-4 flex-shrink-0">
+          <Button
+            variant="primary"
+            className="w-full bg-brand-accent hover:bg-brand-accent/90 border-brand-accent mb-1"
+            leftIcon={<Plus size={18} />}
+            onClick={openNewCatModal}
           >
-            <Button
-              variant="ghost"
-              onClick={() => setSelectedItems([])}
-              className="p-1 h-auto b2 font-bold text-text-secondary hover:text-text-primary hover:bg-transparent"
-            >
-              Deselect
-            </Button>
-            <div className="w-px h-5 bg-black/10" />
-            <Badge
-              color="primary"
-              variant="solid"
-              className="b2 font-bold px-3 py-1 text-text-primary shadow-sm"
-            >
-              {selectedItems.length} selected
-            </Badge>
-            <div className="w-px h-5 bg-black/10" />
-            <Button
-              variant="ghost"
-              onClick={deleteSelectedItems}
-              className="p-1 h-auto b2 font-bold text-warning-primary hover:text-warning-primary hover:bg-transparent"
-            >
-              Delete
-            </Button>
-          </div>
-        )}
+            New Category
+          </Button>
+          <SearchFilterBar
+            onSearch={(
+              val,
+            ) => {}} /* You can wire this up for category search */
+            placeholder="Search categories"
+            supportiveText=""
+            className="mb-0 [&_input]:!h-[41px] [&_input]:!text-sm [&_input]:!rounded-xl"
+          />
+        </div>
 
-        {/* right side: drawer (40% flush right, rounded left corners) */}
-        {draftItem && (
-          <div
-            className={cn(
-              "fixed bg-bg-primary shadow-2xl flex flex-col z-50 overflow-hidden duration-500 animate-in border-white",
-              "inset-x-0 bottom-0 top-16 w-full rounded-t-[32px] rounded-b-none slide-in-from-bottom border-t-4 border-x-4 border-b-0",
-              "lg:top-0 lg:inset-y-0 lg:right-0 lg:left-auto lg:w-[40%] lg:rounded-l-[40px] lg:rounded-r-none lg:slide-in-from-right lg:border-4 lg:border-r-0",
-            )}
-          >
-            {/* drawer header */}
-            <div className="bg-brand-secondary p-5 flex-shrink-0 relative flex flex-col gap-2">
-              <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
-                <button
-                  onClick={handleCloseDrawer}
-                  className="p-2 bg-black/5 hover:bg-black/10 rounded-full text-text-primary transition-colors"
+        <div className="flex-1 overflow-y-auto px-4 pb-4 custom-scrollbar flex flex-col gap-2">
+          {categories.map((cat) => {
+            const catCount = items.filter(
+              (i) => i.categoryId === cat.id,
+            ).length;
+            const isActive = cat.id === activeCatId;
+            return (
+              <div
+                key={cat.id}
+                draggable
+                onDragStart={(e) => handleDragStartCategory(e, cat.id)}
+                onDragOver={handleDragOverCategory}
+                onDrop={(e) => handleDropCategory(e, cat.id)}
+                onClick={() => handleCategoryChange(cat.id)}
+                className={cn(
+                  "group flex items-center gap-3 p-3 rounded-2xl cursor-pointer transition-all duration-300 border",
+                  isActive
+                    ? "bg-white shadow-md border-white/60 scale-[1.02]"
+                    : "hover:bg-white/40 border-transparent",
+                  draggedCategoryId === cat.id &&
+                    "opacity-50 border-dashed border-brand-accent border-2",
+                )}
+              >
+                <div className="cursor-grab text-text-secondary/40 hover:text-text-primary/60 active:cursor-grabbing flex-shrink-0">
+                  <GripVertical size={16} />
+                </div>
+                <div
+                  className={cn(
+                    "w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors",
+                    isActive
+                      ? "bg-brand-accent text-white shadow-sm"
+                      : "bg-black/6 text-text-secondary group-hover:bg-brand-secondary/60 group-hover:text-brand-accent",
+                  )}
                 >
-                  <X size={20} />
-                </button>
+                  {renderCategoryIcon(cat.icon, 17)}
+                </div>
+                <div className="flex flex-col min-w-0 flex-1">
+                  <span
+                    className={cn(
+                      "b2 font-bold transition-colors truncate",
+                      isActive ? "text-text-primary" : "text-text-primary/80",
+                    )}
+                  >
+                    {cat.name}
+                  </span>
+                  <span className="b5 text-text-secondary mt-0.5">
+                    {catCount} item{catCount !== 1 ? "s" : ""}
+                  </span>
+                </div>
               </div>
+            );
+          })}
+        </div>
+      </aside>
 
-              <div className="flex items-center gap-3">
-                <Badge
-                  color={draftItem.aiSynced ? "success" : "secondary"}
-                  variant="solid"
-                  shape="pill"
-                  leftIcon={
-                    draftItem.aiSynced ? (
-                      <CheckCircle2 size={14} />
-                    ) : (
-                      <Sparkles size={14} className="animate-pulse" />
-                    )
-                  }
-                  className="shadow-sm mt-2 text-[11px] font-bold px-3 py-1"
-                >
-                  {draftItem.aiSynced ? "AI Synced" : "Syncing to Gemini..."}
-                </Badge>
+      {/* ── Main content ─────────────────────────────────────────────────── */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* ── Header bar — glassmorphism ─────────────────────────────────── */}
+        <div className="flex-shrink-0 bg-white/80 backdrop-blur-sm border-b border-black/[0.06] px-4 lg:px-6 py-3.5 flex items-center gap-3">
+          {/* Mobile: sidebar toggle */}
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="lg:hidden p-2 rounded-xl hover:bg-black/5 text-text-secondary flex-shrink-0"
+          >
+            <Filter size={18} />
+          </button>
+
+          {/* Mobile category display — name + counts */}
+          {activeCat && (
+            <div className="flex items-center gap-2.5 lg:hidden flex-1 min-w-0">
+              <div className="w-8 h-8 rounded-lg bg-brand-accent text-white flex items-center justify-center flex-shrink-0">
+                {renderCategoryIcon(activeCat.icon, 16)}
+              </div>
+              <div className="flex flex-col min-w-0">
+                <span className="b3 font-bold text-text-primary truncate leading-tight">
+                  {activeCat.name}
+                </span>
+                <span className="b5 text-text-secondary leading-tight">
+                  {totalCount} items · {availCount} available
+                </span>
               </div>
             </div>
+          )}
 
-            {/* drawer body */}
-            <div className="flex-1 overflow-y-auto p-6 bg-bg-primary custom-scrollbar flex flex-col gap-8">
-              <div className="flex flex-col gap-5">
-                <div className="flex items-center gap-3">
-                  <h4 className="b3 font-bold text-text-secondary uppercase tracking-widest">
-                    Item Information
-                  </h4>
-                  <Badge
-                    color="error"
-                    variant="outline"
-                    shape="pill"
-                    className="text-[10px] px-2 py-0.5 uppercase font-bold border-warning-primary/30"
+          {/* Desktop: full category header */}
+          {activeCat && (
+            <div className="hidden lg:flex items-center gap-3 flex-shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-brand-accent text-white flex items-center justify-center shadow-sm flex-shrink-0">
+                {renderCategoryIcon(activeCat.icon, 20)}
+              </div>
+              <div>
+                <p className="b2 font-bold text-text-primary leading-tight">
+                  {activeCat.name}
+                </p>
+                <p className="b5 text-text-secondary">
+                  {totalCount} items · {availCount} available
+                </p>
+              </div>
+            </div>
+          )}
+
+          {activeCat && (
+            <button
+              onClick={() => openEditCatModal(activeCat)}
+              className="p-2 rounded-xl hover:bg-black/5 text-text-secondary hover:text-text-primary transition-colors flex-shrink-0"
+              title="Edit category"
+            >
+              <Edit2 size={15} />
+            </button>
+          )}
+
+          {/* Search */}
+          <div className="flex-1 max-w-sm ml-auto hidden sm:block">
+            <SearchFilterBar
+              onSearch={(val) => setSearchQuery(val)}
+              placeholder="Search items…"
+              supportiveText=""
+              className="mb-0 [&_input]:!h-[41px] [&_input]:!text-sm [&_input]:!rounded-xl"
+            />
+          </div>
+
+          {/* View toggle */}
+          <div className="flex items-center gap-0.5 bg-black/5 p-1 rounded-xl flex-shrink-0">
+            {(["grid", "list"] as const).map((mode) => (
+              <button
+                key={mode}
+                onClick={() => setViewMode(mode)}
+                className={cn(
+                  "p-2 rounded-lg transition-colors",
+                  viewMode === mode
+                    ? "bg-white text-text-primary shadow-sm"
+                    : "text-text-secondary hover:text-text-primary",
+                )}
+              >
+                {mode === "grid" ? (
+                  <LayoutGrid size={17} />
+                ) : (
+                  <ListIcon size={17} />
+                )}
+              </button>
+            ))}
+          </div>
+
+          {/* Add item */}
+          <Button
+            variant="primary"
+            onClick={handleCreateNewItem}
+            className="flex-shrink-0 b4 !py-2.5 !px-4 bg-brand-accent hover:bg-brand-accent/90 border-brand-accent"
+            leftIcon={<Plus size={16} />}
+          >
+            <span className="hidden sm:inline">Add Item</span>
+          </Button>
+        </div>
+
+        {/* Mobile search */}
+        <div className="sm:hidden px-4 pt-3 flex-shrink-0">
+          <SearchFilterBar
+            onSearch={(val) => setSearchQuery(val)}
+            placeholder="Search items…"
+            supportiveText=""
+            className="mb-0 [&_input]:!h-[41px] [&_input]:!text-sm [&_input]:!rounded-xl"
+          />
+        </div>
+
+        {/* Filter chips + bulk bar */}
+        <div className="flex-shrink-0 px-4 lg:px-6 pt-3 pb-2 flex flex-col gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="b5 text-text-secondary flex-shrink-0">
+              Filter:
+            </span>
+            {(
+              [
+                { key: "all", label: `All (${totalCount})` },
+                { key: "avail", label: `Available (${availCount})` },
+                {
+                  key: "unavail",
+                  label: `Unavailable (${totalCount - availCount})`,
+                },
+              ] as { key: FilterAvail; label: string }[]
+            ).map(({ key, label }) => (
+              <button
+                key={key}
+                onClick={() => setFilterAvail(key)}
+                className={cn(
+                  "px-3 py-1.5 rounded-full b5 font-medium border transition-all",
+                  filterAvail === key
+                    ? key === "unavail"
+                      ? "bg-brand-accent text-white border-brand-accent"
+                      : "bg-brand-accent text-white border-brand-accent"
+                    : "bg-white/60 text-text-secondary border-black/10 hover:border-black/20 hover:text-text-primary",
+                )}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {selectedItems.length > 0 && (
+            <div className="flex items-center gap-3 px-4 py-2.5 bg-white rounded-2xl border border-black/5 shadow-sm animate-in slide-in-from-top-2 duration-200">
+              <span className="b4 text-text-secondary flex-1">
+                <span className="font-bold text-text-primary">
+                  {selectedItems.length}
+                </span>{" "}
+                item{selectedItems.length > 1 ? "s" : ""} selected
+              </span>
+              <button
+                onClick={() => setSelectedItems([])}
+                className="b4 text-text-secondary hover:text-text-primary transition-colors"
+              >
+                Deselect
+              </button>
+              <div className="w-px h-4 bg-black/10" />
+              <button
+                onClick={deleteSelectedItems}
+                className="b4 font-medium text-brand-accent hover:text-brand-accent/80 flex items-center gap-1 transition-colors"
+              >
+                <Trash2 size={13} /> Delete
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Item grid/list */}
+        <div className="flex-1 overflow-y-auto px-4 lg:px-6 pb-8 custom-scrollbar">
+          {isLoading ? (
+            viewMode === "grid" ? (
+              <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <GridCardSkeleton key={i} />
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-black/[0.07] overflow-hidden bg-white shadow-sm">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <ListRowSkeleton key={i} />
+                ))}
+              </div>
+            )
+          ) : visibleItems.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-text-secondary/60">
+              <div className="w-16 h-16 rounded-2xl bg-black/4 flex items-center justify-center mb-3">
+                <ImageIcon size={28} className="opacity-40" />
+              </div>
+              <p className="b3 font-bold">
+                {searchQuery ? "No results found" : "No items yet"}
+              </p>
+              <p className="b5 mt-1">
+                {searchQuery
+                  ? "Try a different search term."
+                  : "Click 'Add Item' to get started."}
+              </p>
+            </div>
+          ) : viewMode === "grid" ? (
+            <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4">
+              {visibleItems.map((item) => (
+                <GridCard
+                  key={item.id}
+                  item={item}
+                  selected={selectedItems.includes(item.id)}
+                  onSelect={() => toggleSelection(item.id)}
+                  onClick={() => handleOpenModal(item)}
+                  onToggleAvail={() => toggleItemAvailability(item.id)}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-black/[0.07] overflow-hidden bg-white shadow-sm">
+              <div className="hidden sm:grid sm:grid-cols-[32px_56px_1fr_90px_90px_70px] gap-3 px-4 py-3 border-b border-black/[0.06] bg-black/[0.02]">
+                <div />
+                <div />
+                {["Item", "Price", "Sizes", "Status"].map((h) => (
+                  <div
+                    key={h}
+                    className="b5 text-text-secondary uppercase tracking-wider font-bold"
                   >
-                    Required
-                  </Badge>
-                </div>
+                    {h}
+                  </div>
+                ))}
+              </div>
+              {visibleItems.map((item) => (
+                <CollapsibleTableRow
+                  key={item.id}
+                  item={item}
+                  selected={selectedItems.includes(item.id)}
+                  onSelect={() => toggleSelection(item.id)}
+                  onClick={() => handleOpenModal(item)}
+                  onToggleAvail={() => toggleItemAvailability(item.id)}
+                  expanded={expandedRows.includes(item.id)}
+                  onToggleExpand={() => toggleRowExpand(item.id)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
 
-                {/* top row: image + name/desc side by side */}
-                <div className="flex flex-col sm:flex-row gap-6 items-start">
-                  {/* image upload box */}
-                  <div className="flex flex-col gap-2 w-48 flex-shrink-0">
+      {/* ── Item modal ─────────────────────────────────────────────────────── */}
+      {draftItem && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-bg-primary rounded-[28px] w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl border border-white/50 animate-in zoom-in-95 duration-300 overflow-hidden">
+            <div className="bg-white px-6 py-4 flex-shrink-0 flex items-center gap-3 border-b border-black/[0.06]">
+              <div className="w-10 h-10 rounded-xl bg-brand-accent/10 border border-brand-accent/20 flex items-center justify-center flex-shrink-0">
+                <UtensilsCrossed size={18} className="text-brand-accent" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="b3 font-bold text-text-primary truncate">
+                  {originalItem?.name
+                    ? `Edit: ${originalItem.name}`
+                    : "New Item"}
+                </p>
+                <p className="b5 text-text-secondary">
+                  {activeCat?.name} category
+                </p>
+              </div>
+              <button
+                onClick={handleCloseModal}
+                className="p-2 rounded-xl bg-black/5 hover:bg-black/10 transition-colors text-text-secondary"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-6 custom-scrollbar flex flex-col gap-6">
+              <section className="flex flex-col gap-4">
+                <SectionLabel title="Item Information" required />
+                <div className="flex flex-col sm:flex-row gap-4 items-start">
+                  <div className="flex flex-col gap-1.5 flex-shrink-0">
                     <div
                       className={cn(
-                        "w-48 h-48 rounded-2xl flex flex-col items-center justify-center cursor-pointer overflow-hidden group relative shadow-inner transition-colors bg-white/40 hover:bg-white/60",
+                        "w-36 h-36 rounded-2xl flex flex-col items-center justify-center cursor-pointer overflow-hidden group relative shadow-inner transition-all",
                         draftItem.image
                           ? "border-0"
-                          : "border-2 border-dashed border-black/10 hover:border-brand-primary",
+                          : "border-2 border-dashed border-black/15 hover:border-brand-accent bg-white/60 hover:bg-white/80",
                       )}
                       onClick={() => fileInputRef.current?.click()}
                     >
@@ -966,73 +1025,77 @@ const MenuCategoryManagement = () => {
                         <img
                           src={draftItem.image}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                          alt="item"
                         />
                       ) : (
                         <>
                           <ImageIcon
-                            size={32}
-                            className="text-black/20 group-hover:text-brand-primary transition-colors mb-2"
+                            size={24}
+                            className="text-black/20 group-hover:text-brand-accent transition-colors mb-1"
                           />
-                          <span className="b5 font-bold text-text-secondary uppercase">
+                          <span className="b5 font-bold text-text-secondary uppercase text-center px-2">
                             Upload Image
                           </span>
                         </>
                       )}
+                      {draftItem.image && (
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center">
+                          <ImageIcon
+                            size={20}
+                            className="text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                          />
+                        </div>
+                      )}
                     </div>
-                    <span className="b5 font-medium text-text-secondary/60 text-center uppercase tracking-wider">
-                      Max 5MB (JPG, PNG)
-                    </span>
+                    <p className="b5 text-text-secondary/50 text-center uppercase tracking-wide">
+                      Max 5MB
+                    </p>
                     <input
                       type="file"
                       className="hidden"
                       ref={fileInputRef}
-                      accept="image/jpeg, image/png, image/jpg"
+                      accept="image/jpeg,image/png"
                       onChange={handleImageSelect}
                     />
                   </div>
 
-                  {/* right: name & description */}
-                  <div className="flex-1 flex flex-col gap-4 w-full">
+                  <div className="flex-1 flex flex-col gap-3 w-full">
                     <div>
-                      <label className="b4 font-bold text-text-secondary uppercase tracking-widest block mb-1">
-                        Item Name{" "}
-                        <span className="text-brand-accent ml-0.5">*</span>
-                      </label>
+                      <FieldLabel>
+                        Item Name <span className="text-brand-accent">*</span>
+                      </FieldLabel>
                       <Input
                         value={draftItem.name}
                         onChange={(e) => updateDraft("name", e.target.value)}
                         placeholder="e.g. Chicken Adobo"
-                        className="bg-white !py-2.5 b2 font-bold placeholder:text-text-secondary/50 placeholder:font-normal"
+                        className="bg-white !py-2.5 b2 font-bold"
                       />
                     </div>
                     <div>
-                      <label className="b4 font-bold text-text-secondary uppercase tracking-widest flex justify-between mb-1">
-                        <span>Description</span>
-                        <span className="text-black/40 normal-case font-medium">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <FieldLabel>Description</FieldLabel>
+                        <span className="b5 text-black/30">
                           {draftItem.description.length}/150
                         </span>
-                      </label>
+                      </div>
                       <textarea
                         value={draftItem.description}
                         onChange={(e) => {
-                          if (e.target.value.length <= 150) {
+                          if (e.target.value.length <= 150)
                             updateDraft("description", e.target.value);
-                          }
                         }}
                         placeholder="Brief description"
-                        className="w-full bg-white border-2 border-[#E5E5E5] rounded-[14px] p-3 b2 focus:border-brand-primary outline-none transition-colors resize-none h-[88px] custom-scrollbar placeholder:text-text-secondary/50 placeholder:font-normal"
+                        className="w-full bg-white border-2 border-[#E5E5E5] rounded-[14px] p-2.5 b4 focus:border-brand-accent outline-none resize-none h-[76px] custom-scrollbar placeholder:text-text-secondary/40"
                       />
                     </div>
                   </div>
                 </div>
 
-                {/* bottom row: price & availability */}
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="b4 font-bold text-text-secondary uppercase tracking-widest block mb-1">
-                      Price (₱){" "}
-                      <span className="text-brand-accent ml-0.5">*</span>
-                    </label>
+                    <FieldLabel>
+                      Price (₱) <span className="text-brand-accent">*</span>
+                    </FieldLabel>
                     <Input
                       value={draftItem.price}
                       onChange={(e) =>
@@ -1040,94 +1103,84 @@ const MenuCategoryManagement = () => {
                       }
                       inputMode="decimal"
                       placeholder="0.00"
-                      className="bg-white !py-2.5 b2 font-bold placeholder:text-text-secondary/50 placeholder:font-normal"
+                      className="bg-white !py-2.5 b2 font-bold"
                     />
                   </div>
                   <div>
-                    <label className="b4 font-bold text-text-secondary uppercase tracking-widest block mb-1">
-                      Availability{" "}
-                      <span className="text-brand-accent ml-0.5">*</span>
-                    </label>
-                    <div className="flex items-center h-[46px]">
+                    <FieldLabel>Availability</FieldLabel>
+                    <div className="flex items-center h-[46px] gap-2.5">
                       <Toggle
                         isOn={draftItem.isAvailable}
                         onChange={(val) => updateDraft("isAvailable", val)}
                         variant="accent"
                       />
-                      <span className="ml-3 b2 font-medium text-text-secondary">
+                      <span
+                        className={cn(
+                          "b4 font-medium",
+                          draftItem.isAvailable
+                            ? "text-success-primary"
+                            : "text-text-secondary",
+                        )}
+                      >
                         {draftItem.isAvailable ? "Available" : "Hidden"}
                       </span>
                     </div>
                   </div>
                 </div>
-              </div>
+              </section>
 
-              <div className="w-full h-px bg-black/10 my-2" />
+              <Divider />
 
-              {/* sizes form section */}
-              <div>
-                <div className="flex items-center gap-3 mb-4">
-                  <h4 className="b3 font-bold text-text-secondary uppercase tracking-widest">
-                    Size Options
-                  </h4>
-                  <Badge
-                    color="error"
-                    variant="outline"
-                    shape="pill"
-                    className="text-[10px] px-2 py-0.5 uppercase font-bold border-warning-primary/30"
-                  >
-                    Required
-                  </Badge>
-                </div>
-
-                <div className="space-y-3">
+              <section>
+                <SectionLabel title="Size Options" />
+                <div className="space-y-2">
                   {draftItem.sizes.map((size, index) => (
                     <div
                       key={size.id}
-                      className="flex items-start gap-2 p-3 bg-white/80 rounded-2xl border border-black/5 shadow-sm group"
+                      className="flex items-start gap-2 p-3.5 bg-white/80 rounded-2xl border border-black/5 shadow-sm"
                     >
                       <div className="flex-1 flex flex-col gap-2">
                         <Input
                           value={size.name}
                           onChange={(e) => {
-                            const newSizes = [...draftItem.sizes];
-                            newSizes[index].name = e.target.value;
-                            updateDraft("sizes", newSizes);
+                            const ns = [...draftItem.sizes];
+                            ns[index].name = e.target.value;
+                            updateDraft("sizes", ns);
                           }}
                           placeholder="Size Name"
-                          className="!py-1.5 b2 placeholder:text-text-secondary/50"
+                          className="!py-2 b4"
                         />
                         <div className="flex flex-col sm:flex-row gap-2">
                           <Input
                             value={size.description}
                             onChange={(e) => {
-                              const newSizes = [...draftItem.sizes];
-                              newSizes[index].description = e.target.value;
-                              updateDraft("sizes", newSizes);
+                              const ns = [...draftItem.sizes];
+                              ns[index].description = e.target.value;
+                              updateDraft("sizes", ns);
                             }}
                             placeholder="Description (optional)"
-                            className="!py-1.5 flex-1 b2 placeholder:text-text-secondary/50"
+                            className="!py-2 flex-1 b4"
                           />
-                          <div className="relative w-full sm:w-32 flex-shrink-0">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary b2 font-medium">
+                          <div className="relative w-full sm:w-28 flex-shrink-0">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary b4">
                               ₱
                             </span>
                             <Input
                               value={size.price}
                               onChange={(e) => {
-                                const newSizes = [...draftItem.sizes];
+                                const ns = [...draftItem.sizes];
                                 const val = e.target.value;
                                 if (
                                   val === "" ||
                                   /^[0-9]*\.?[0-9]*$/.test(val)
                                 ) {
-                                  newSizes[index].price = val;
-                                  updateDraft("sizes", newSizes);
+                                  ns[index].price = val;
+                                  updateDraft("sizes", ns);
                                 }
                               }}
                               inputMode="decimal"
                               placeholder="0.00"
-                              className="!py-1.5 w-full pl-7 b2 placeholder:text-text-secondary/50"
+                              className="!py-2 w-full pl-7 b4"
                             />
                           </div>
                         </div>
@@ -1139,14 +1192,13 @@ const MenuCategoryManagement = () => {
                             draftItem.sizes.filter((s) => s.id !== size.id),
                           )
                         }
-                        className="p-2 text-text-secondary hover:bg-warning-secondary hover:text-warning-primary rounded-xl transition-colors mt-1"
+                        className="p-2 text-text-secondary hover:bg-brand-accent/10 hover:text-brand-accent rounded-xl transition-colors mt-0.5"
                       >
-                        <Trash2 size={18} />
+                        <Trash2 size={15} />
                       </button>
                     </div>
                   ))}
-                  <Button
-                    variant="ghost"
+                  <button
                     onClick={() =>
                       updateDraft("sizes", [
                         ...draftItem.sizes,
@@ -1158,113 +1210,99 @@ const MenuCategoryManagement = () => {
                         },
                       ])
                     }
-                    className="w-full border border-dashed border-black/10 hover:border-brand-primary hover:bg-brand-primary/5 text-text-secondary hover:text-brand-primary rounded-2xl py-3 mt-2 b2"
+                    className="w-full flex items-center justify-center gap-2 py-3 border border-dashed border-black/15 rounded-2xl text-text-secondary hover:border-brand-accent hover:text-brand-accent hover:bg-brand-accent/5 transition-all b4 font-medium"
                   >
-                    <Plus size={16} className="mr-2" /> Add Size
-                  </Button>
+                    <Plus size={14} /> Add Size
+                  </button>
                 </div>
-              </div>
+              </section>
 
-              <div className="w-full h-px bg-black/10 my-2" />
+              <Divider />
 
-              {/* add-ons form section */}
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <h4 className="b3 font-bold text-text-secondary uppercase tracking-widest">
-                      Add-ons
-                    </h4>
-                    <Badge
-                      color="warning"
-                      variant="outline"
-                      shape="pill"
-                      className="text-[10px] px-2 py-0.5 uppercase font-bold border-warning-primary/30"
-                    >
+              <section>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <SectionLabel title="Add-ons" />
+                    <span className="text-[9px] px-1.5 py-0.5 uppercase font-bold rounded-full border border-black/10 text-text-secondary bg-black/3 -mt-3">
                       Optional
-                    </Badge>
+                    </span>
                   </div>
                   <Toggle
                     isOn={draftItem.addonsEnabled}
                     onChange={(val) => updateDraft("addonsEnabled", val)}
-                    variant="primary"
+                    variant="accent"
                   />
                 </div>
 
                 {draftItem.addonsEnabled && (
-                  <div className="space-y-4 animate-in fade-in duration-300">
-                    <div className="space-y-3">
-                      {draftItem.addons.map((addon, index) => (
-                        <div
-                          key={addon.id}
-                          className="flex items-start gap-2 p-3 bg-white/80 rounded-2xl border border-black/5 shadow-sm group"
-                        >
-                          <div className="flex-1 flex flex-col gap-2">
+                  <div className="space-y-3 animate-in fade-in duration-200">
+                    {draftItem.addons.map((addon, index) => (
+                      <div
+                        key={addon.id}
+                        className="flex items-start gap-2 p-3.5 bg-white/80 rounded-2xl border border-black/5 shadow-sm"
+                      >
+                        <div className="flex-1 flex flex-col gap-2">
+                          <Input
+                            value={addon.name}
+                            onChange={(e) => {
+                              const na = [...draftItem.addons];
+                              na[index].name = e.target.value;
+                              updateDraft("addons", na);
+                            }}
+                            placeholder="Add-on Name"
+                            className="!py-2 b4"
+                          />
+                          <div className="flex flex-col sm:flex-row gap-2">
                             <Input
-                              value={addon.name}
+                              value={addon.description}
                               onChange={(e) => {
-                                const newAddons = [...draftItem.addons];
-                                newAddons[index].name = e.target.value;
-                                updateDraft("addons", newAddons);
+                                const na = [...draftItem.addons];
+                                na[index].description = e.target.value;
+                                updateDraft("addons", na);
                               }}
-                              placeholder="Add-on Name"
-                              className="!py-1.5 b2 placeholder:text-text-secondary/50"
+                              placeholder="Description (optional)"
+                              className="!py-2 flex-1 b4"
                             />
-                            <div className="flex flex-col sm:flex-row gap-2">
+                            <div className="relative w-full sm:w-28 flex-shrink-0">
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary b4">
+                                +₱
+                              </span>
                               <Input
-                                value={addon.description}
+                                value={addon.price}
                                 onChange={(e) => {
-                                  const newAddons = [...draftItem.addons];
-                                  newAddons[index].description = e.target.value;
-                                  updateDraft("addons", newAddons);
+                                  const na = [...draftItem.addons];
+                                  const val = e.target.value;
+                                  if (
+                                    val === "" ||
+                                    /^[0-9]*\.?[0-9]*$/.test(val)
+                                  ) {
+                                    na[index].price = val;
+                                    updateDraft("addons", na);
+                                  }
                                 }}
-                                placeholder="Description (optional)"
-                                className="!py-1.5 flex-1 b2 placeholder:text-text-secondary/50"
+                                inputMode="decimal"
+                                placeholder="0.00"
+                                className="!py-2 w-full pl-8 b4"
                               />
-                              <div className="relative w-full sm:w-32 flex-shrink-0">
-                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary b2 font-medium">
-                                  +₱
-                                </span>
-                                <Input
-                                  value={addon.price}
-                                  onChange={(e) => {
-                                    const newAddons = [...draftItem.addons];
-                                    const val = e.target.value;
-                                    if (
-                                      val === "" ||
-                                      /^[0-9]*\.?[0-9]*$/.test(val)
-                                    ) {
-                                      newAddons[index].price = val;
-                                      updateDraft("addons", newAddons);
-                                    }
-                                  }}
-                                  inputMode="decimal"
-                                  placeholder="0.00"
-                                  className="!py-1.5 w-full pl-8 text-right b2 placeholder:text-text-secondary/50"
-                                />
-                              </div>
                             </div>
                           </div>
-                          <button
-                            onClick={() =>
-                              updateDraft(
-                                "addons",
-                                draftItem.addons.filter(
-                                  (m) => m.id !== addon.id,
-                                ),
-                              )
-                            }
-                            className="p-2 text-text-secondary hover:bg-warning-secondary hover:text-warning-primary rounded-xl transition-colors mt-1"
-                          >
-                            <Trash2 size={18} />
-                          </button>
                         </div>
-                      ))}
-                    </div>
+                        <button
+                          onClick={() =>
+                            updateDraft(
+                              "addons",
+                              draftItem.addons.filter((m) => m.id !== addon.id),
+                            )
+                          }
+                          className="p-2 text-text-secondary hover:bg-brand-accent/10 hover:text-brand-accent rounded-xl transition-colors mt-0.5"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    ))}
 
-                    {/* add-on actions */}
-                    <div className="flex gap-3 mt-2">
-                      <Button
-                        variant="ghost"
+                    <div className="flex gap-2">
+                      <button
                         onClick={() =>
                           updateDraft("addons", [
                             ...draftItem.addons,
@@ -1277,81 +1315,64 @@ const MenuCategoryManagement = () => {
                             },
                           ])
                         }
-                        className="flex-1 border border-dashed border-black/10 hover:border-brand-primary hover:bg-brand-primary/5 text-text-secondary hover:text-brand-primary rounded-2xl py-3 b2"
+                        className="flex-1 flex items-center justify-center gap-2 py-3 border border-dashed border-black/15 rounded-2xl text-text-secondary hover:border-brand-accent hover:text-brand-accent hover:bg-brand-accent/5 transition-all b4 font-medium"
                       >
-                        <Plus size={16} className="mr-2" /> Create New
-                      </Button>
+                        <Plus size={14} /> Create New
+                      </button>
 
                       <div
                         className="flex-1 relative"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <Button
-                          variant="ghost"
+                        <button
                           onClick={() =>
                             setIsLinkDropdownOpen(!isLinkDropdownOpen)
                           }
                           className={cn(
-                            "w-full border border-dashed rounded-2xl py-3 transition-colors b2",
+                            "w-full flex items-center justify-center gap-2 py-3 border border-dashed rounded-2xl transition-all b4 font-medium",
                             isLinkDropdownOpen
-                              ? "border-brand-primary bg-brand-primary/5 text-brand-primary"
-                              : "border-black/10 hover:border-brand-primary hover:bg-brand-primary/5 text-text-secondary hover:text-brand-primary",
+                              ? "border-brand-accent text-brand-accent bg-brand-accent/5"
+                              : "border-black/15 text-text-secondary hover:border-brand-accent hover:text-brand-accent hover:bg-brand-accent/5",
                           )}
                         >
-                          Menu Item{" "}
+                          From Menu
                           <ChevronDown
-                            size={16}
+                            size={14}
                             className={cn(
-                              "ml-2 transition-transform duration-300",
+                              "transition-transform",
                               isLinkDropdownOpen && "rotate-180",
                             )}
                           />
-                        </Button>
-
-                        {/* flexible dropdown list mapped precisely to the user's snippet styling */}
+                        </button>
                         {isLinkDropdownOpen && (
-                          <div
-                            className={cn(
-                              "absolute top-[calc(100%+8px)] left-0 z-50 bg-white border-2 border-[#E5E5E5] rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-300 w-full",
-                            )}
-                          >
-                            <ul className="max-h-[240px] overflow-y-auto">
+                          <div className="absolute bottom-[calc(100%+6px)] left-0 z-50 bg-white border-2 border-[#E5E5E5] rounded-2xl shadow-xl overflow-hidden w-full animate-in fade-in zoom-in-95 duration-200">
+                            <ul className="max-h-[200px] overflow-y-auto custom-scrollbar">
                               {dropdownOptions.length === 0 ? (
-                                <li className="px-6 py-4 b2 text-text-secondary text-center">
+                                <li className="px-4 py-3 b4 text-text-secondary text-center">
                                   No items available
                                 </li>
                               ) : (
-                                dropdownOptions.map((option, index) => (
+                                dropdownOptions.map((option) => (
                                   <li
                                     key={option.value}
                                     onClick={() => {
-                                      const selectedItem = items.find(
-                                        (i) => i.id === option.value,
+                                      const si = items.find(
+                                        (x) => x.id === option.value,
                                       );
-                                      if (selectedItem) {
+                                      if (si)
                                         updateDraft("addons", [
                                           ...draftItem.addons,
                                           {
                                             id: `addon_${Date.now()}`,
-                                            itemId: selectedItem.id,
-                                            name: selectedItem.name,
-                                            description:
-                                              selectedItem.description,
-                                            price: selectedItem.price,
+                                            itemId: si.id,
+                                            name: si.name,
+                                            description: si.description,
+                                            price: si.price,
                                           },
                                         ]);
-                                      }
                                       setIsLinkDropdownOpen(false);
                                     }}
-                                    className={cn(
-                                      "cursor-pointer transition-colors",
-                                      "px-4 py-3 b2",
-                                      "hover:bg-slate-50",
-                                      index === 0 && "rounded-t-[14px]",
-                                      index === dropdownOptions.length - 1 &&
-                                        "rounded-b-[14px]",
-                                      "text-text-primary border-b border-black/5 last:border-0",
-                                    )}
+                                    className="px-4 py-2.5 b4 cursor-pointer hover:bg-brand-secondary/30 text-text-primary border-b border-black/5 last:border-0 transition-colors"
                                   >
                                     {option.label}
                                   </li>
@@ -1364,18 +1385,22 @@ const MenuCategoryManagement = () => {
                     </div>
                   </div>
                 )}
-              </div>
+              </section>
             </div>
 
-            {/* sticky save / discard footer */}
-            <div className="p-6 border-t-2 border-white/50 flex flex-col sm:flex-row items-center justify-end gap-3 flex-shrink-0 bg-white/80 backdrop-blur-md z-10">
+            <div className="p-4 border-t-2 border-black/5 flex items-center justify-end gap-3 flex-shrink-0 bg-white">
+              {(localError || actionError) && (
+                <div className="mr-auto rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                  {localError || actionError}
+                </div>
+              )}
               {hasChanges && (
-                <div className="flex flex-col text-left mr-auto hidden lg:flex">
-                  <span className="b2 font-bold text-text-primary">
+                <div className="flex flex-col text-left mr-auto">
+                  <span className="b4 font-bold text-text-primary">
                     Unsaved changes
                   </span>
                   <span className="b5 text-text-secondary">
-                    You modified this item's configuration.
+                    You modified this item.
                   </span>
                 </div>
               )}
@@ -1385,101 +1410,163 @@ const MenuCategoryManagement = () => {
                   onClick={() =>
                     setDraftItem(JSON.parse(JSON.stringify(originalItem)))
                   }
-                  className="text-warning-primary hover:bg-warning-secondary w-full sm:w-auto b3"
+                  className="text-text-secondary hover:bg-black/5 b4"
                 >
                   Discard
                 </Button>
               )}
+              <Button variant="ghost" onClick={handleCloseModal} className="b4">
+                Cancel
+              </Button>
               <Button
-                variant={hasChanges ? "primary" : "ghost"}
+                variant="primary"
                 onClick={handleSaveItem}
-                disabled={!hasChanges || !isValidDraft}
+                disabled={!hasChanges || !isValidDraft || isLocalLoading}
                 className={cn(
-                  (!hasChanges || !isValidDraft) && "opacity-50",
-                  "w-full sm:w-auto b3",
+                  "b4 bg-brand-accent hover:bg-brand-accent/90 border-brand-accent text-white",
+                  (!hasChanges || !isValidDraft || isLocalLoading) &&
+                    "opacity-50 pointer-events-none",
                 )}
               >
-                Save Changes
+                {isLocalLoading ? "Saving..." : "Save Changes"}
               </Button>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* new category modal exactly matching roles/page.tsx */}
-      {isCategoryModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-text-primary/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl md:rounded-[32px] w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
-            <div className="px-6 md:px-8 py-4 md:py-6 flex items-center justify-between border-b border-black/[0.05] flex-shrink-0">
-              <h2 className="b2 font-bold text-text-primary">
-                Create New Category
-              </h2>
-              <button
-                onClick={() => {
-                  setIsCategoryModalOpen(false);
-                  setNewCategoryName("");
-                }}
-                className="text-text-secondary hover:text-text-primary transition-colors p-1"
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            <div className="p-6 md:p-8 overflow-y-auto flex flex-col gap-6">
-              <p className="b3 text-text-secondary font-semibold">
-                Enter a name for the new menu category.
-              </p>
-
-              <Input
-                value={newCategoryName}
-                onChange={(e) => setNewCategoryName(e.target.value)}
-                placeholder="Category Name"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleCreateCategory();
-                }}
-                autoFocus
-                className="b2 bg-white"
-              />
-
-              <div className="flex justify-end pt-2">
-                <Button
-                  variant="primary"
-                  onClick={handleCreateCategory}
-                  className="w-full b2"
-                >
-                  Create Category
-                </Button>
-              </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* image crop modal */}
-      {cropModalImage && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200 select-none">
-          <div className="bg-bg-primary rounded-2xl md:rounded-[32px] w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]">
-            <div className="px-6 md:px-8 py-4 md:py-6 flex items-center justify-between border-b border-black/[0.05] flex-shrink-0">
-              <h2 className="b2 font-bold text-text-primary">Adjust Image</h2>
+      {/* ── Category modal ───────────────────────────────────────────────── */}
+      {catModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-text-primary/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl md:rounded-[28px] w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+            <div className="px-6 py-4 flex items-center justify-between border-b border-black/[0.05] flex-shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-brand-accent/10 flex items-center justify-center text-brand-accent">
+                  <FolderPlus size={18} />
+                </div>
+                <h2 className="b2 font-bold">
+                  {catModal === "new" ? "New Category" : "Edit Category"}
+                </h2>
+              </div>
               <button
-                onClick={() => setCropModalImage(null)}
-                className="text-text-secondary hover:text-text-primary transition-colors p-1"
+                onClick={() => setCatModal(null)}
+                className="p-2 rounded-xl text-text-secondary hover:bg-black/5 hover:text-text-primary transition-colors"
               >
-                <X size={20} />
+                <X size={18} />
               </button>
             </div>
 
-            <div className="p-6 md:p-8 overflow-y-auto flex flex-col gap-6">
-              <p className="b3 text-text-secondary font-semibold">
-                Zoom, crop, or re-center your menu item image.
-              </p>
+            {/*
+              ── Icon picker fix ───────────────────────────────────────────
+              Added overflow-hidden to the scroll container and px-0.5 inside
+              the grid so the selected icon's scale(1.05) isn't clipped.
+              Also gave the modal body overflow-y-auto with a min-height so
+              the picker grid is fully visible without the modal cropping it.
+            */}
+            <div
+              className="p-6 overflow-y-auto custom-scrollbar flex flex-col gap-5"
+              style={{ minHeight: 0 }}
+            >
+              {(localError || actionError) && (
+                <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                  {localError || actionError}
+                </div>
+              )}
+              <div>
+                <FieldLabel>
+                  Category Name <span className="text-brand-accent">*</span>
+                </FieldLabel>
+                <Input
+                  value={catDraft.name ?? ""}
+                  onChange={(e) =>
+                    setCatDraft({ ...catDraft, name: e.target.value })
+                  }
+                  placeholder="e.g. Appetizers"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && catDraft.name?.trim())
+                      handleSaveCategory();
+                  }}
+                  autoFocus
+                  className="bg-white b2"
+                />
+              </div>
 
+              <div>
+                <FieldLabel>Icon</FieldLabel>
+                {/* Wrapper: no overflow-hidden so the scale ring isn't clipped */}
+                <div className="rounded-2xl border border-black/[0.07] p-3 bg-bg-primary/60">
+                  <IconPicker
+                    value={catDraft.icon ?? "flame"}
+                    onChange={(icon) => setCatDraft({ ...catDraft, icon })}
+                  />
+                </div>
+              </div>
+
+              {catModal === "edit" && catDraft.id && (
+                <div className="pt-3 border-t border-black/[0.06]">
+                  <button
+                    onClick={() => {
+                      if (
+                        confirm(`Delete "${catDraft.name}" and all its items?`)
+                      )
+                        handleDeleteCategory(catDraft.id!);
+                    }}
+                    className="flex items-center gap-2 b4 text-brand-accent hover:bg-brand-accent/8 px-3 py-2 rounded-xl transition-colors"
+                  >
+                    <Trash2 size={14} /> Delete category & all items
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="px-6 py-4 border-t border-black/[0.05] flex justify-end gap-2 flex-shrink-0 bg-black/[0.01]">
+              <Button
+                variant="ghost"
+                onClick={() => setCatModal(null)}
+                className="b4"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleSaveCategory}
+                disabled={!catDraft.name?.trim() || isLocalLoading}
+                className="b4 bg-brand-accent hover:bg-brand-accent/90 border-brand-accent text-white"
+              >
+                {isLocalLoading
+                  ? "Saving..."
+                  : catModal === "new"
+                    ? "Create Category"
+                    : "Save Changes"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Crop modal ───────────────────────────────────────────────────── */}
+      {cropModalImage && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200 select-none">
+          <div className="bg-bg-primary rounded-2xl md:rounded-[28px] w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]">
+            <div className="px-6 py-4 flex items-center justify-between border-b border-black/[0.05] flex-shrink-0">
+              <h2 className="b2 font-bold">Adjust Image</h2>
+              <button
+                onClick={() => setCropModalImage(null)}
+                className="p-2 rounded-xl text-text-secondary hover:bg-black/5 transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto flex flex-col gap-5">
+              <p className="b4 text-text-secondary">
+                Drag to reposition, use slider to zoom.
+              </p>
               <div
-                className="relative w-[320px] h-[320px] mx-auto rounded-2xl overflow-hidden bg-black/5 flex items-center justify-center group cursor-move shadow-inner"
-                onMouseDown={handleMouseDown}
-                onMouseMove={handleMouseMove}
-                onMouseUp={handleMouseUp}
-                onMouseLeave={handleMouseUp}
+                className="relative w-[280px] h-[280px] sm:w-[320px] sm:h-[320px] mx-auto rounded-2xl overflow-hidden bg-black/5 cursor-move shadow-inner group"
+                onMouseDown={handleCropMouseDown}
+                onMouseMove={handleCropMouseMove}
+                onMouseUp={handleCropMouseUp}
+                onMouseLeave={handleCropMouseUp}
               >
                 <img
                   src={cropModalImage}
@@ -1487,25 +1574,24 @@ const MenuCategoryManagement = () => {
                     width: `${renderedWidth}px`,
                     height: `${renderedHeight}px`,
                     transform: `translate(${cropPan.x}px, ${cropPan.y}px) scale(${cropScale})`,
-                    transition: isDragging ? "none" : "transform 0.1s ease-out",
+                    transition: isDraggingCrop
+                      ? "none"
+                      : "transform 0.1s ease-out",
                   }}
                   className="max-w-none origin-center pointer-events-none absolute"
                   alt="Crop preview"
                 />
-                {/* 3x3 mock crop grid overlay */}
-                <div className="absolute inset-0 pointer-events-none grid grid-cols-3 grid-rows-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <div className="absolute inset-0 pointer-events-none grid grid-cols-3 grid-rows-3 opacity-0 group-hover:opacity-100 transition-opacity">
                   {Array.from({ length: 9 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className="border border-white/40 shadow-[inset_0_0_0_1px_rgba(0,0,0,0.1)]"
-                    ></div>
+                    <div key={i} className="border border-white/40" />
                   ))}
                 </div>
               </div>
-
-              {/* zoom controls */}
-              <div className="flex items-center gap-4 bg-white/50 p-4 rounded-2xl border border-white max-w-[320px] mx-auto w-full">
-                <ZoomOut size={18} className="text-text-secondary" />
+              <div className="flex items-center gap-3 bg-white/60 p-3 rounded-2xl border border-white max-w-[320px] mx-auto w-full">
+                <ZoomOut
+                  size={16}
+                  className="text-text-secondary flex-shrink-0"
+                />
                 <input
                   type="range"
                   min="1"
@@ -1513,23 +1599,25 @@ const MenuCategoryManagement = () => {
                   step="0.05"
                   value={cropScale}
                   onChange={(e) => setCropScale(parseFloat(e.target.value))}
-                  className="flex-1 accent-brand-primary"
+                  className="flex-1 accent-brand-accent"
                 />
-                <ZoomIn size={18} className="text-text-secondary" />
+                <ZoomIn
+                  size={16}
+                  className="text-text-secondary flex-shrink-0"
+                />
               </div>
-
-              <div className="flex justify-end gap-3 pt-2">
+              <div className="flex justify-end gap-2">
                 <Button
                   variant="ghost"
                   onClick={() => setCropModalImage(null)}
-                  className="b3"
+                  className="b4"
                 >
                   Cancel
                 </Button>
                 <Button
                   variant="primary"
                   onClick={confirmImageCrop}
-                  className="b3"
+                  className="b4 bg-brand-accent hover:bg-brand-accent/90 border-brand-accent text-white"
                 >
                   Confirm & Save
                 </Button>
@@ -1539,28 +1627,252 @@ const MenuCategoryManagement = () => {
         </div>
       )}
 
-      {/* scrollbar styling matching other pages */}
       <style
         dangerouslySetInnerHTML={{
           __html: `
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 6px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background-color: rgba(0,0,0,0.1);
-          border-radius: 10px;
-        }
-        .custom-scrollbar:hover::-webkit-scrollbar-thumb {
-          background-color: rgba(0,0,0,0.2);
-        }
-      `,
+          .custom-scrollbar::-webkit-scrollbar{width:5px}
+          .custom-scrollbar::-webkit-scrollbar-track{background:transparent}
+          .custom-scrollbar::-webkit-scrollbar-thumb{background-color:rgba(0,0,0,.08);border-radius:10px}
+          .custom-scrollbar:hover::-webkit-scrollbar-thumb{background-color:rgba(0,0,0,.18)}
+          @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+        `,
         }}
       />
     </div>
   );
 };
+
+// ─── Grid Card ───────────────────────────────────────────────────────────────
+
+interface CardProps {
+  item: MenuItem;
+  selected: boolean;
+  onSelect: () => void;
+  onClick: () => void;
+  onToggleAvail: () => void;
+}
+
+const GridCard: React.FC<CardProps> = ({
+  item,
+  selected,
+  onSelect,
+  onClick,
+  onToggleAvail,
+}) => (
+  <div
+    onClick={onClick}
+    className={cn(
+      "bg-white rounded-2xl border overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer group flex flex-col relative",
+      selected
+        ? "border-brand-accent/50 ring-2 ring-brand-accent/15"
+        : "border-black/5 hover:border-brand-accent/30",
+    )}
+  >
+    <div
+      className="absolute top-2.5 left-2.5 z-20 bg-white rounded-[6px] shadow-sm"
+      onClick={(e) => {
+        e.stopPropagation();
+        onSelect();
+      }}
+    >
+      <Checkbox checked={selected} onChange={onSelect} />
+    </div>
+    <div className="aspect-[4/3] bg-black/5 flex items-center justify-center relative overflow-hidden">
+      {item.image ? (
+        <img
+          src={item.image}
+          alt={item.name}
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+        />
+      ) : (
+        <div className="flex flex-col items-center gap-2">
+          <div className="w-12 h-12 rounded-xl bg-black/5 flex items-center justify-center">
+            <ImageIcon size={20} className="text-black/25" />
+          </div>
+        </div>
+      )}
+      {!item.isAvailable && (
+        <div className="absolute inset-0 bg-black/45 flex items-center justify-center backdrop-blur-[2px]">
+          <span className="text-white text-[10px] font-bold bg-black/60 px-2.5 py-1 rounded-full uppercase tracking-wider">
+            Unavailable
+          </span>
+        </div>
+      )}
+    </div>
+    <div className="p-3.5 flex flex-col flex-1">
+      <div className="flex items-start justify-between gap-2 mb-1">
+        <h4 className="b4 font-bold text-text-primary group-hover:text-brand-accent transition-colors leading-tight line-clamp-1">
+          {item.name}
+        </h4>
+        <span className="b4 font-bold text-brand-accent flex-shrink-0">
+          ₱{item.price}
+        </span>
+      </div>
+      <p className="b5 text-text-secondary line-clamp-2 mt-auto">
+        {item.description}
+      </p>
+      {(item.sizes.length > 0 ||
+        (item.addonsEnabled && item.addons.length > 0)) && (
+        <div className="flex gap-1 mt-2.5 flex-wrap">
+          {item.sizes.length > 0 && (
+            <span className="text-[9px] px-2 py-0.5 rounded-full bg-brand-secondary/50 border border-brand-primary/20 text-text-secondary font-medium">
+              {item.sizes.length} size{item.sizes.length > 1 ? "s" : ""}
+            </span>
+          )}
+          {item.addonsEnabled && item.addons.length > 0 && (
+            <span className="text-[9px] px-2 py-0.5 rounded-full bg-brand-accent/8 border border-brand-accent/20 text-brand-accent font-medium">
+              {item.addons.length} add-on{item.addons.length > 1 ? "s" : ""}
+            </span>
+          )}
+        </div>
+      )}
+    </div>
+    <div
+      className="px-3.5 py-2.5 border-t border-black/5 flex items-center justify-between"
+      onClick={(e) => {
+        e.stopPropagation();
+        onToggleAvail();
+      }}
+    >
+      <span className="b5 text-text-secondary">
+        {item.isAvailable ? "Available" : "Unavailable"}
+      </span>
+      <button
+        className={cn(
+          "relative transition-colors rounded-full border-none flex-shrink-0",
+          item.isAvailable ? "bg-success-primary" : "bg-black/20",
+        )}
+        style={{ width: 32, height: 18 }}
+        aria-pressed={item.isAvailable}
+      >
+        <span
+          className="absolute top-[2px] w-[14px] h-[14px] rounded-full bg-white shadow-sm transition-all"
+          style={{ left: item.isAvailable ? "calc(100% - 16px)" : 2 }}
+        />
+      </button>
+    </div>
+  </div>
+);
+
+// ─── Collapsible Table Row ────────────────────────────────────────────────────
+
+interface TableRowProps extends CardProps {
+  expanded: boolean;
+  onToggleExpand: () => void;
+}
+
+const CollapsibleTableRow: React.FC<TableRowProps> = ({
+  item,
+  selected,
+  onSelect,
+  onClick,
+  onToggleAvail,
+  expanded,
+  onToggleExpand,
+}) => (
+  <div
+    className={cn(
+      "border-b border-black/[0.05] last:border-0",
+      selected && "bg-brand-accent/4",
+    )}
+  >
+    <div className="flex items-center gap-3 px-4 py-3.5 cursor-pointer hover:bg-black/[0.02] transition-colors group">
+      <div
+        onClick={(e) => {
+          e.stopPropagation();
+          onSelect();
+        }}
+        className="flex items-center justify-center flex-shrink-0"
+      >
+        <Checkbox checked={selected} onChange={onSelect} />
+      </div>
+      <div className="w-12 h-12 rounded-xl bg-black/5 flex-shrink-0 flex items-center justify-center overflow-hidden">
+        {item.image ? (
+          <img
+            src={item.image}
+            alt={item.name}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <ImageIcon size={16} className="text-black/20" />
+        )}
+      </div>
+      <div className="flex-1 min-w-0 cursor-pointer" onClick={onClick}>
+        <p className="b4 font-bold text-text-primary group-hover:text-brand-accent transition-colors truncate">
+          {item.name}
+        </p>
+        <p className="b5 text-text-secondary truncate hidden sm:block">
+          {item.description || "—"}
+        </p>
+      </div>
+      <div className="b4 font-bold text-brand-accent flex-shrink-0">
+        ₱{item.price}
+      </div>
+      <div className="hidden sm:block b5 text-text-secondary flex-shrink-0 w-20">
+        {item.sizes.length ? (
+          `${item.sizes.length} size${item.sizes.length > 1 ? "s" : ""}`
+        ) : (
+          <span className="text-black/20">—</span>
+        )}
+      </div>
+      <div
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggleAvail();
+        }}
+        className="flex items-center flex-shrink-0"
+      >
+        <button
+          className={cn(
+            "relative transition-colors rounded-full border-none flex-shrink-0",
+            item.isAvailable ? "bg-success-primary" : "bg-black/20",
+          )}
+          style={{ width: 32, height: 18 }}
+          aria-pressed={item.isAvailable}
+        >
+          <span
+            className="absolute top-[2px] w-[14px] h-[14px] rounded-full bg-white shadow-sm transition-all"
+            style={{ left: item.isAvailable ? "calc(100% - 16px)" : 2 }}
+          />
+        </button>
+      </div>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggleExpand();
+        }}
+        className="sm:hidden p-1.5 rounded-lg hover:bg-black/5 text-text-secondary transition-colors flex-shrink-0"
+      >
+        {expanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+      </button>
+    </div>
+
+    {expanded && (
+      <div className="sm:hidden px-4 pb-3.5 pt-1 border-t border-black/5 bg-black/[0.01] flex flex-col gap-2 animate-in slide-in-from-top-1 duration-150">
+        {item.description && (
+          <p className="b5 text-text-secondary">{item.description}</p>
+        )}
+        <div className="flex gap-3 flex-wrap">
+          {item.sizes.length > 0 && (
+            <span className="text-[10px] px-2.5 py-1 rounded-full bg-brand-secondary/50 border border-brand-primary/20 text-text-secondary font-medium">
+              {item.sizes.length} size{item.sizes.length > 1 ? "s" : ""}
+            </span>
+          )}
+          {item.addonsEnabled && item.addons.length > 0 && (
+            <span className="text-[10px] px-2.5 py-1 rounded-full bg-brand-accent/8 border border-brand-accent/20 text-brand-accent font-medium">
+              {item.addons.length} add-on{item.addons.length > 1 ? "s" : ""}
+            </span>
+          )}
+        </div>
+        <button
+          onClick={onClick}
+          className="mt-1 flex items-center gap-1.5 text-brand-accent b5 font-bold hover:underline"
+        >
+          <Edit2 size={12} /> Edit item
+        </button>
+      </div>
+    )}
+  </div>
+);
 
 export default MenuCategoryManagement;

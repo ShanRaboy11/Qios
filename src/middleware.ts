@@ -29,26 +29,114 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  const isAuthRoute = request.nextUrl.pathname === "/login";
-  
-  // For now, only restrict admin (super admin) pages
-  const isProtectedRoute = request.nextUrl.pathname.startsWith("/admin");
-  const isPublicRoute = !isProtectedRoute && !isAuthRoute;
+  const pathParts = request.nextUrl.pathname.split("/").filter(Boolean);
+  const firstPathSegment = pathParts[0] || "";
 
-  // Skip auth check for public routes to avoid unnecessary network calls
+  const isAuthRoute = firstPathSegment === "login";
+  const isSuperAdminRoute = firstPathSegment === "admin";
+  
+  // Known top-level static route segments in your app directory
+  const knownStaticRoutes = [
+    "admin",
+    "api",
+    "auth",
+    "contact",
+    "draft",
+    "login",
+    "onboarding",
+    "services",
+    "setup",
+  ];
+
+  // If the URL has a first segment and it's not a known static route,
+  // it means it's hitting the dynamic [id] route for tenant/employee.
+  const isTenantOrEmployeeRoute = firstPathSegment !== "" && !knownStaticRoutes.includes(firstPathSegment);
+  const pathTenantId = isTenantOrEmployeeRoute ? firstPathSegment : null;
+
+  const isProtectedRoute = isSuperAdminRoute || isTenantOrEmployeeRoute;
+
+  // We should always get the user for protected routes or auth route.
   let user = null;
+  let accessToken = null;
+
   if (isProtectedRoute || isAuthRoute) {
     const {
       data: { user: authUser },
     } = await supabase.auth.getUser();
     user = authUser;
+    
+    if (user) {
+      const { data: sessionData } = await supabase.auth.getSession();
+      accessToken = sessionData.session?.access_token;
+    }
   }
 
-  // Redirect to login if accessing protected routes without session
-  if (!user && isProtectedRoute) {
+  const isDev = process.env.NODE_ENV === "development";
+
+  // Redirect to login if accessing protected routes without session (bypass in dev)
+  if (!user && isProtectedRoute && !isDev) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = "/login";
     return NextResponse.redirect(loginUrl);
+  }
+
+  // If the user tries to access a tenant/employee route, check their role and tenant_id (bypass in dev)
+  if (user && isTenantOrEmployeeRoute && !isDev) {
+    let role = null;
+    let userTenantId = null;
+
+    if (accessToken) {
+      try {
+        const payload = JSON.parse(
+          Buffer.from(accessToken.split(".")[1], "base64").toString()
+        );
+        role = payload.role ?? payload.user_role;
+        userTenantId = payload.tenant_id;
+      } catch (e) {}
+    }
+
+    if (!role) {
+      // Fallback to fetch profile from db if token doesn't have claims yet
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role, tenant_id")
+        .eq("id", user.id)
+        .single();
+        
+      if (profile) {
+        role = profile.role;
+        userTenantId = profile.tenant_id;
+      }
+    }
+
+    // Role-based access control for tenant paths
+    // Employee paths start with /[id]/employee
+    const isEmployeePath = request.nextUrl.pathname.startsWith(`/${pathTenantId}/employee`);
+    
+    if (role === 'super_admin') {
+      // Super admin can access anything? Or maybe we just redirect them to super admin area
+      // Let's pass them through for now. Or redirect if they shouldn't be here.
+    } else if (role === 'admin') {
+      // Must match tenant id
+      if (userTenantId !== pathTenantId || isEmployeePath) {
+        // Not authorized for this tenant or trying to access employee path as admin
+        const redirectUrl = request.nextUrl.clone();
+        redirectUrl.pathname = userTenantId ? `/${userTenantId}/dashboard` : "/";
+        return NextResponse.redirect(redirectUrl);
+      }
+    } else if (role === 'employee') {
+      if (userTenantId !== pathTenantId || !isEmployeePath) {
+        // Not authorized for this tenant or trying to access admin path as employee
+        const redirectUrl = request.nextUrl.clone();
+        redirectUrl.pathname = userTenantId ? `/${userTenantId}/employee/dashboard` : "/";
+        return NextResponse.redirect(redirectUrl);
+      }
+    } else {
+      // Any other role trying to access here -> home
+      const redirectUrl = request.nextUrl.clone();
+      redirectUrl.pathname = "/";
+      return NextResponse.redirect(redirectUrl);
+    }
   }
 
   // Redirect authenticated users trying to access login

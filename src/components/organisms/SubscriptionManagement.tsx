@@ -464,8 +464,64 @@ export default function SubscriptionManagement() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[500px]">
-        <Loader2 className="w-8 h-8 animate-spin text-[var(--color-brand-primary)]" />
+      <div className="flex flex-col md:flex-row gap-6 min-h-[700px] animate-pulse">
+        {/* ── Sidebar Skeleton ── */}
+        <div className="w-full md:w-[280px] flex-shrink-0 flex flex-col gap-3">
+          <div className="h-11 bg-black/5 rounded-full w-full" />
+          <div className="h-11 bg-black/5 rounded-xl w-full" />
+          <div className="flex flex-col gap-2 mt-1">
+            {[...Array(5)].map((_, i) => (
+              <div
+                key={i}
+                className="flex items-center gap-3 p-3 rounded-2xl bg-black/5 h-14"
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* ── Main panel Skeleton ── */}
+        <div className="flex-1 flex flex-col min-w-0 bg-white/50 rounded-[24px] border border-white/60 shadow-sm">
+          <div className="p-6 md:p-8 pb-5 border-b-2 border-white/50 flex-shrink-0 flex flex-col gap-5">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex-1 w-full max-w-2xl flex gap-4 md:gap-6">
+                <div className="flex-1">
+                  <div className="h-4 bg-black/5 rounded w-24 mb-2" />
+                  <div className="h-10 bg-black/5 rounded-xl w-full" />
+                </div>
+                <div className="flex-1">
+                  <div className="h-4 bg-black/5 rounded w-32 mb-2" />
+                  <div className="h-10 bg-black/5 rounded-xl w-full" />
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex-1">
+                <div className="h-4 bg-black/5 rounded w-24 mb-2" />
+                <div className="h-10 bg-black/5 rounded-xl w-full" />
+              </div>
+              <div className="flex-1">
+                <div className="h-4 bg-black/5 rounded w-32 mb-2" />
+                <div className="h-10 bg-black/5 rounded-xl w-full" />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-6 md:p-8 pb-24">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-x-8 gap-y-12">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="flex flex-col gap-4">
+                  <div className="h-6 bg-black/5 rounded w-1/3 mb-2" />
+                  {[...Array(4)].map((_, j) => (
+                    <div
+                      key={j}
+                      className="h-12 bg-black/5 rounded-xl w-full"
+                    />
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
