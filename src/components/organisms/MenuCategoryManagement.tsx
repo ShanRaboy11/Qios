@@ -760,10 +760,12 @@ const MenuCategoryManagement = () => {
             New Category
           </Button>
           <SearchFilterBar
-            onSearch={(val) => {}} /* You can wire this up for category search */
+            onSearch={(
+              val,
+            ) => {}} /* You can wire this up for category search */
             placeholder="Search categories"
             supportiveText=""
-            className="mb-0"
+            className="mb-0 [&_input]:!h-[41px] [&_input]:!text-sm [&_input]:!rounded-xl"
           />
         </div>
 
@@ -884,7 +886,7 @@ const MenuCategoryManagement = () => {
               onSearch={(val) => setSearchQuery(val)}
               placeholder="Search items…"
               supportiveText=""
-              className="mb-0"
+              className="mb-0 [&_input]:!h-[41px] [&_input]:!text-sm [&_input]:!rounded-xl"
             />
           </div>
 
@@ -927,7 +929,7 @@ const MenuCategoryManagement = () => {
             onSearch={(val) => setSearchQuery(val)}
             placeholder="Search items…"
             supportiveText=""
-            className="mb-0"
+            className="mb-0 [&_input]:!h-[41px] [&_input]:!text-sm [&_input]:!rounded-xl"
           />
         </div>
 
@@ -955,7 +957,7 @@ const MenuCategoryManagement = () => {
                   filterAvail === key
                     ? key === "unavail"
                       ? "bg-brand-accent text-white border-brand-accent"
-                      : "bg-text-primary text-white border-text-primary"
+                      : "bg-brand-accent text-white border-brand-accent"
                     : "bg-white/60 text-text-secondary border-black/10 hover:border-black/20 hover:text-text-primary",
                 )}
               >
