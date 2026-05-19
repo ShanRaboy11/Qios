@@ -178,7 +178,10 @@ export const TenantSettings = ({
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
             >
-              <TenantBillingSettings />
+              <TenantBillingSettings
+                tenantId={tenantId}
+                initialData={initialData.billing}
+              />
             </motion.div>
           )}
           {activeTab === "danger" && (

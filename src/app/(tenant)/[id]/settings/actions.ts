@@ -13,8 +13,12 @@ import {
 import crypto from "crypto";
 import type {
   SettingsActionState,
+  TenantBillingHistoryData,
+  TenantBillingSettingsData,
   TenantBrandingSettingsData,
   TenantNotificationSettingsData,
+  TenantPaymentMethodData,
+  TenantSubscriptionPlanData,
   TenantSecuritySettingsData,
   TenantSettingsPageData,
   TenantStoreSettingsData,
@@ -69,6 +73,20 @@ const BRANDING_DEFAULTS: TenantBrandingSettingsData = {
   instagramUrl: "",
   facebookUrl: "",
   tiktokUrl: "",
+};
+
+const BILLING_DEFAULTS: TenantBillingSettingsData = {
+  currentPlanName: "Basic",
+  currentPlanBadge: "Starter Ready",
+  currentPlanPriceMonthly: "1,499",
+  currentPlanPriceAnnually: "15,290",
+  currentPlanColor: "bg-[#ffc670]",
+  nextBillingDate: new Date(
+    Date.now() + 30 * 24 * 60 * 60 * 1000,
+  ).toISOString(),
+  availablePlans: [],
+  paymentMethods: [],
+  billingHistory: [],
 };
 
 const NOTIFICATION_DEFAULTS: TenantNotificationSettingsData = {
@@ -136,6 +154,52 @@ function readSettingBoolean(
   return fallback;
 }
 
+function readSettingStringArray(
+  settings: Record<string, unknown> | null,
+  key: string,
+) {
+  const value = settings?.[key];
+  if (!Array.isArray(value)) return [];
+  return value.filter((item): item is string => typeof item === "string");
+}
+
+function readSettingObjectArray<T>(
+  settings: Record<string, unknown> | null,
+  key: string,
+) {
+  const value = settings?.[key];
+  if (!Array.isArray(value)) return [] as T[];
+  return value.filter(
+    (item): item is T => typeof item === "object" && item !== null,
+  );
+}
+
+function formatMoney(amount: number | string, currency: string) {
+  const numeric = typeof amount === "number" ? amount : Number(amount);
+  const safeAmount = Number.isNaN(numeric) ? 0 : numeric;
+  const symbol =
+    currency === "USD"
+      ? "$"
+      : currency === "EUR"
+        ? "€"
+        : currency === "GBP"
+          ? "£"
+          : currency === "JPY"
+            ? "¥"
+            : currency === "AUD"
+              ? "A$"
+              : currency === "CAD"
+                ? "C$"
+                : currency === "SGD"
+                  ? "S$"
+                  : "₱";
+  return `${symbol}${safeAmount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+function normalizePlanName(name: string) {
+  return name.trim().toLowerCase();
+}
+
 function mergeSettings(
   currentSettings: Record<string, unknown> | null,
   patch: Record<string, unknown>,
@@ -196,7 +260,9 @@ export async function getTenantSettings(
 
   const { data: tenant, error: tenantError } = await admin
     .from("tenants")
-    .select("id, business_name, business_email, owner_name, settings")
+    .select(
+      "id, business_name, business_email, owner_name, subscription_plan, settings",
+    )
     .eq("id", tenantId)
     .maybeSingle();
 
@@ -230,6 +296,99 @@ export async function getTenantSettings(
     tenant.settings && typeof tenant.settings === "object"
       ? (tenant.settings as Record<string, unknown>)
       : null;
+
+  const { data: plans } = await admin
+    .from("subscription_plans")
+    .select(
+      "id, name, color, badge, price_monthly, price_annually, features, display_order",
+    )
+    .order("display_order", { ascending: true });
+
+  const availablePlans: TenantSubscriptionPlanData[] = (plans ?? []).map(
+    (plan) => ({
+      id: String(plan.id),
+      name: toText(plan.name),
+      color: toText(plan.color),
+      badge: toText(plan.badge),
+      priceMonthly: toText(plan.price_monthly),
+      priceAnnually: toText(plan.price_annually),
+      features:
+        plan.features && typeof plan.features === "object"
+          ? (plan.features as Record<string, unknown>)
+          : {},
+      displayOrder:
+        typeof plan.display_order === "number" ? plan.display_order : 0,
+    }),
+  );
+
+  const matchedPlan = availablePlans.find(
+    (plan) =>
+      normalizePlanName(plan.name) ===
+      normalizePlanName(toText(tenant.subscription_plan ?? "")),
+  );
+
+  const currentPlan = matchedPlan ?? availablePlans[0] ?? null;
+
+  const { data: paymentMethodRows } = await admin
+    .from("tenant_payment_methods")
+    .select(
+      "id, provider, display_name, last4, exp_month, exp_year, cardholder_name, is_default, created_at",
+    )
+    .eq("tenant_id", tenantId)
+    .order("is_default", { ascending: false })
+    .order("created_at", { ascending: false });
+
+  const paymentMethods: TenantPaymentMethodData[] = (
+    paymentMethodRows ?? []
+  ).map((method) => ({
+    id: String(method.id),
+    provider: toText(method.provider),
+    displayName: toText(method.display_name),
+    last4: toText(method.last4),
+    expMonth: toText(method.exp_month),
+    expYear: toText(method.exp_year),
+    cardholderName: toText(method.cardholder_name),
+    isDefault: method.is_default === true,
+    addedAt: toText(method.created_at),
+  }));
+
+  const { data: billingHistoryRows } = await admin
+    .from("tenant_billing_history")
+    .select(
+      "id, invoice_number, description, amount, currency, status, billing_date, invoice_url",
+    )
+    .eq("tenant_id", tenantId)
+    .order("billing_date", { ascending: false });
+
+  const billingHistory: TenantBillingHistoryData[] = (
+    billingHistoryRows ?? []
+  ).map((entry) => ({
+    id: String(entry.id),
+    invoiceNumber: toText(entry.invoice_number),
+    description: toText(entry.description),
+    amount: formatMoney(entry.amount ?? 0, toText(entry.currency) || "PHP"),
+    currency: toText(entry.currency) || "PHP",
+    status: toText(entry.status),
+    billingDate: toText(entry.billing_date),
+    invoiceUrl: toText(entry.invoice_url) || undefined,
+  }));
+
+  const nextBillingDate =
+    toText(settings?.next_billing_date) || BILLING_DEFAULTS.nextBillingDate;
+
+  const billing: TenantBillingSettingsData = {
+    currentPlanName: currentPlan?.name || BILLING_DEFAULTS.currentPlanName,
+    currentPlanBadge: currentPlan?.badge || BILLING_DEFAULTS.currentPlanBadge,
+    currentPlanPriceMonthly:
+      currentPlan?.priceMonthly || BILLING_DEFAULTS.currentPlanPriceMonthly,
+    currentPlanPriceAnnually:
+      currentPlan?.priceAnnually || BILLING_DEFAULTS.currentPlanPriceAnnually,
+    currentPlanColor: currentPlan?.color || BILLING_DEFAULTS.currentPlanColor,
+    nextBillingDate,
+    availablePlans,
+    paymentMethods,
+    billingHistory,
+  };
 
   const store: TenantStoreSettingsData = {
     storeName: toText(tenant.business_name),
@@ -372,6 +531,7 @@ export async function getTenantSettings(
     },
     store,
     branding,
+    billing,
     notifications,
     security,
   };
@@ -868,6 +1028,196 @@ export async function saveTenantNotificationSettings(
           : "Unable to save notification preferences.",
     };
   }
+}
+
+export async function updateTenantSubscriptionPlan(
+  tenantId: string,
+  planName: string,
+) {
+  const { admin, user } = await requireTenantContext(tenantId);
+  const normalizedPlanName = normalizePlanName(planName);
+
+  const { data: plan, error: planError } = await admin
+    .from("subscription_plans")
+    .select("name, price_monthly")
+    .ilike("name", planName.trim())
+    .maybeSingle();
+
+  if (planError) throw new Error(planError.message);
+  if (!plan) throw new Error("Selected plan is not available.");
+
+  const { data: tenant, error: tenantError } = await admin
+    .from("tenants")
+    .select("settings")
+    .eq("id", tenantId)
+    .maybeSingle();
+
+  if (tenantError) throw new Error(tenantError.message);
+
+  const nextBillingDate = new Date(
+    Date.now() + 30 * 24 * 60 * 60 * 1000,
+  ).toISOString();
+  const settings = mergeSettings(
+    tenant?.settings && typeof tenant.settings === "object"
+      ? (tenant.settings as Record<string, unknown>)
+      : null,
+    { next_billing_date: nextBillingDate },
+  );
+
+  const { error: updateError } = await admin
+    .from("tenants")
+    .update({ subscription_plan: plan.name, settings })
+    .eq("id", tenantId);
+
+  if (updateError) throw new Error(updateError.message);
+
+  const invoiceNumber = `INV-${Date.now().toString().slice(-8)}`;
+  const amountMatch = String(plan.price_monthly).replace(/[^0-9.]/g, "");
+  await admin.from("tenant_billing_history").insert({
+    tenant_id: tenantId,
+    invoice_number: invoiceNumber,
+    description: `Subscription plan updated to ${plan.name}`,
+    amount: amountMatch || 0,
+    currency: "PHP",
+    status: "paid",
+    billing_date: new Date().toISOString(),
+  });
+
+  revalidatePath(`/${tenantId}/settings`);
+
+  return { success: true };
+}
+
+export async function saveTenantPaymentMethod(
+  tenantId: string,
+  _previousState: SettingsActionState,
+  formData: FormData,
+): Promise<SettingsActionState> {
+  try {
+    await requireTenantContext(tenantId);
+
+    const methodId = toText(formData.get("methodId"));
+    const provider = toText(formData.get("provider"));
+    const displayName = toText(formData.get("displayName"));
+    const last4 = toText(formData.get("last4"));
+    const expMonth = toText(formData.get("expMonth"));
+    const expYear = toText(formData.get("expYear"));
+    const cardholderName = toText(formData.get("cardholderName"));
+    const isDefault = toBoolean(formData.get("isDefault"));
+
+    const fieldErrors: Record<string, string> = {};
+    if (!provider) fieldErrors.provider = "Payment provider is required.";
+    if (!displayName) fieldErrors.displayName = "Display name is required.";
+    if (!last4 || !/^[0-9]{4}$/.test(last4))
+      fieldErrors.last4 = "Enter the last 4 digits.";
+    if (!expMonth || Number(expMonth) < 1 || Number(expMonth) > 12)
+      fieldErrors.expMonth = "Enter a valid month.";
+    if (!expYear || Number(expYear) < 2026)
+      fieldErrors.expYear = "Enter a valid year.";
+    if (!cardholderName)
+      fieldErrors.cardholderName = "Cardholder name is required.";
+
+    if (Object.keys(fieldErrors).length > 0) {
+      return { ...EMPTY_ACTION_STATE, fieldErrors };
+    }
+
+    const { admin } = await requireTenantContext(tenantId);
+
+    if (isDefault) {
+      await admin
+        .from("tenant_payment_methods")
+        .update({ is_default: false })
+        .eq("tenant_id", tenantId);
+    }
+
+    if (methodId) {
+      const { error } = await admin
+        .from("tenant_payment_methods")
+        .update({
+          provider,
+          display_name: displayName,
+          last4,
+          exp_month: expMonth,
+          exp_year: expYear,
+          cardholder_name: cardholderName,
+          is_default: isDefault,
+        })
+        .eq("id", methodId)
+        .eq("tenant_id", tenantId);
+
+      if (error) throw new Error(error.message);
+    } else {
+      const { error } = await admin.from("tenant_payment_methods").insert({
+        tenant_id: tenantId,
+        provider,
+        display_name: displayName,
+        last4,
+        exp_month: expMonth,
+        exp_year: expYear,
+        cardholder_name: cardholderName,
+        is_default: isDefault,
+      });
+
+      if (error) throw new Error(error.message);
+    }
+
+    revalidatePath(`/${tenantId}/settings`);
+    return {
+      ...EMPTY_ACTION_STATE,
+      success: "Payment method saved successfully.",
+    };
+  } catch (error) {
+    return {
+      ...EMPTY_ACTION_STATE,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Unable to save payment method.",
+    };
+  }
+}
+
+export async function setTenantDefaultPaymentMethod(
+  tenantId: string,
+  methodId: string,
+) {
+  const { admin } = await requireTenantContext(tenantId);
+
+  const { error: clearError } = await admin
+    .from("tenant_payment_methods")
+    .update({ is_default: false })
+    .eq("tenant_id", tenantId);
+
+  if (clearError) throw new Error(clearError.message);
+
+  const { error: updateError } = await admin
+    .from("tenant_payment_methods")
+    .update({ is_default: true })
+    .eq("id", methodId)
+    .eq("tenant_id", tenantId);
+
+  if (updateError) throw new Error(updateError.message);
+
+  revalidatePath(`/${tenantId}/settings`);
+  return { success: true };
+}
+
+export async function deleteTenantPaymentMethod(
+  tenantId: string,
+  methodId: string,
+) {
+  const { admin } = await requireTenantContext(tenantId);
+
+  const { error } = await admin
+    .from("tenant_payment_methods")
+    .delete()
+    .eq("id", methodId)
+    .eq("tenant_id", tenantId);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath(`/${tenantId}/settings`);
+  return { success: true };
 }
 
 export interface TenantActiveSessionData {

@@ -3,13 +3,11 @@
 import React, { useActionState, useEffect, useState, useRef } from "react";
 import {
   CheckCircle2,
-  Shield,
   Laptop,
   Smartphone,
   Eye,
   EyeOff,
   LogOut,
-  Save,
   Edit2,
   Circle,
   SmartphoneNfc,
@@ -81,19 +79,24 @@ const PasswordRequirement = ({ met, text }: { met: boolean; text: string }) => (
   </div>
 );
 
-const getTimeAgo = (dateString?: string) => {
+const formatLastActive = (dateString?: string) => {
   if (!dateString) return "recently";
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffInMs = now.getTime() - date.getTime();
-  const diffInHours = diffInMs / (1000 * 60 * 60);
-  const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
 
-  if (diffInDays >= 1) return `${Math.floor(diffInDays)} days ago`;
-  if (diffInHours >= 1) return `${Math.floor(diffInHours)} hrs ago`;
-  const diffInMins = diffInMs / (1000 * 60);
-  return `${Math.floor(diffInMins)} mins ago`;
+  const date = new Date(dateString);
+  if (Number.isNaN(date.getTime())) return "recently";
+
+  return date.toLocaleString("en-US", {
+    month: "numeric",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true,
+  });
 };
+
+const getTimeAgo = formatLastActive;
 
 const parseSessionUserAgent = (userAgent?: string | null) => {
   let device = "Unknown device";
@@ -373,7 +376,9 @@ export const TenantSecuritySettings = ({
       try {
         const result = await getTenantActiveSessions(tenantId);
         if (!isMounted) return;
-        setCurrentSessionId(result.currentSessionId);
+        setCurrentSessionId(
+          result.currentSessionId ?? result.sessions[0]?.id ?? null,
+        );
         setSessions(result.sessions);
       } catch (error) {
         if (!isMounted) return;
@@ -1057,13 +1062,15 @@ export const TenantSecuritySettings = ({
                 </div>
               ) : sessions.length > 0 ? (
                 sessions.map((session) => {
-                  const isCurrent = session.id === currentSessionId;
+                  const resolvedCurrentSessionId =
+                    currentSessionId ?? sessions[0]?.id ?? null;
+                  const isCurrent = session.id === resolvedCurrentSessionId;
                   const { deviceText, icon } = parseSessionUserAgent(
                     session.user_agent,
                   );
                   const badgeText = isCurrent
                     ? "Active now"
-                    : `Last active ${getTimeAgo(session.updated_at)}`;
+                    : `Last active: ${formatLastActive(session.updated_at)}`;
 
                   return (
                     <SessionCardRow
