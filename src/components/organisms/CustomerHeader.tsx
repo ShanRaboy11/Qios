@@ -8,6 +8,8 @@ export interface CustomerHeaderProps {
   isCategoryView?: boolean;
   onBack?: () => void;
   onProfileClick?: () => void;
+  searchQuery?: string;
+  onSearchChange?: (val: string) => void;
 }
 
 // Add "as const" at the end to lock the string types
@@ -21,6 +23,8 @@ export const CustomerHeader = ({
   isCategoryView = false,
   onBack,
   onProfileClick,
+  searchQuery = "",
+  onSearchChange,
 }: CustomerHeaderProps) => {
   return (
     <motion.div
@@ -59,6 +63,8 @@ export const CustomerHeader = ({
           <FormField
             label=""
             placeholder="Search"
+            value={searchQuery}
+            onChange={(e) => onSearchChange?.(e.target.value)}
             leftIcon={<Search size={20} />}
             className="max-w-none"
           />
