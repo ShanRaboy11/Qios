@@ -104,12 +104,34 @@ export const LoginForm = () => {
       // avoids an extra DB round-trip and removes dependency on RLS being
       // configured on the profiles table.
       const claims = decodeJwtPayload(signInData.session.access_token);
-      const jwtRole =
-        (claims.role as string | undefined) ??
-        (claims.user_role as string | undefined);
+      let role = claims.user_role as string | undefined;
       const jwtTenantId = claims.tenant_id as string | undefined;
 
-      if (jwtRole === "super_admin") {
+      // Ensure we know the actual role for maintenance mode check
+      // If user_role is empty in JWT or the user has default 'authenticated' role, fetch application role from profiles
+      if (!role || role === "authenticated") {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", signInData.user.id)
+          .single();
+        role = profile?.role;
+      }
+
+      // Check maintenance mode
+      const { data: platformSettings } = await supabase
+        .from("platform_settings")
+        .select("maintenance_mode")
+        .eq("id", 1)
+        .single();
+
+      if (platformSettings?.maintenance_mode && role !== "super_admin") {
+        await supabase.auth.signOut();
+        setError("The system is currently undergoing maintenance. Please try again later.");
+        return;
+      }
+
+      if (role === "super_admin") {
         router.push("/admin/dashboard");
         return;
       }
@@ -134,12 +156,12 @@ export const LoginForm = () => {
           return;
         }
 
-        if (jwtRole === "admin") {
+        if (role === "admin") {
           router.push(`/${jwtTenantId}/dashboard`);
           return;
         }
 
-        if (jwtRole === "employee") {
+        if (role === "employee") {
           router.push(`/${jwtTenantId}/employee/dashboard`);
           return;
         }
