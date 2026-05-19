@@ -16,7 +16,7 @@ import {
   Mail,
   Copy,
   Download,
-  AlertTriangle,
+
   Trash2,
   KeyRound,
   Loader2,
@@ -61,13 +61,7 @@ const passwordRequirements = (password: string) => ({
   hasSpecial: /[^A-Za-z0-9]/.test(password),
 });
 
-const PasswordRequirement = ({
-  met,
-  text,
-}: {
-  met: boolean;
-  text: string;
-}) => (
+const PasswordRequirement = ({ met, text }: { met: boolean; text: string }) => (
   <div className="flex items-center gap-2">
     {met ? (
       <CheckCircle2 size={16} className="text-success-primary flex-shrink-0" />
@@ -77,7 +71,7 @@ const PasswordRequirement = ({
     <span
       className={cn(
         "b4 transition-colors",
-        met ? "text-text-primary font-medium" : "text-text-secondary/60"
+        met ? "text-text-primary font-medium" : "text-text-secondary/60",
       )}
     >
       {text}
@@ -92,17 +86,32 @@ const getTimeAgo = (dateString?: string) => {
   const diffInMs = now.getTime() - date.getTime();
   const diffInHours = diffInMs / (1000 * 60 * 60);
   const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
-  
+
   if (diffInDays >= 1) return `${Math.floor(diffInDays)} days ago`;
   if (diffInHours >= 1) return `${Math.floor(diffInHours)} hrs ago`;
   const diffInMins = diffInMs / (1000 * 60);
   return `${Math.floor(diffInMins)} mins ago`;
 };
 
-const SixDigitInput = ({ value, onChange, disabled, isError, errorMessage }: { value: string, onChange: (val: string) => void, disabled?: boolean, isError?: boolean, errorMessage?: string }) => {
+const SixDigitInput = ({
+  value,
+  onChange,
+  disabled,
+  isError,
+  errorMessage,
+}: {
+  value: string;
+  onChange: (val: string) => void;
+  disabled?: boolean;
+  isError?: boolean;
+  errorMessage?: string;
+}) => {
   const inputs = useRef<(HTMLInputElement | null)[]>([]);
 
-  const handleChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (
+    index: number,
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const val = e.target.value.replace(/[^0-9]/g, "");
     const newCode = [...value.padEnd(6, " ").split("")];
     if (!val) {
@@ -115,15 +124,25 @@ const SixDigitInput = ({ value, onChange, disabled, isError, errorMessage }: { v
     if (index < 5) inputs.current[index + 1]?.focus();
   };
 
-  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Backspace" && (!value[index] || value[index] === " ") && index > 0) {
+  const handleKeyDown = (
+    index: number,
+    e: React.KeyboardEvent<HTMLInputElement>,
+  ) => {
+    if (
+      e.key === "Backspace" &&
+      (!value[index] || value[index] === " ") &&
+      index > 0
+    ) {
       inputs.current[index - 1]?.focus();
     }
   };
 
   const handlePaste = (e: React.ClipboardEvent) => {
     e.preventDefault();
-    const pasted = e.clipboardData.getData("text").replace(/[^0-9]/g, "").slice(0, 6);
+    const pasted = e.clipboardData
+      .getData("text")
+      .replace(/[^0-9]/g, "")
+      .slice(0, 6);
     if (pasted) {
       onChange(pasted);
       inputs.current[Math.min(pasted.length, 5)]?.focus();
@@ -136,7 +155,9 @@ const SixDigitInput = ({ value, onChange, disabled, isError, errorMessage }: { v
         {Array.from({ length: 6 }).map((_, i) => (
           <input
             key={i}
-            ref={(el) => { inputs.current[i] = el; }}
+            ref={(el) => {
+              inputs.current[i] = el;
+            }}
             type="text"
             inputMode="numeric"
             pattern="[0-9]*"
@@ -147,9 +168,9 @@ const SixDigitInput = ({ value, onChange, disabled, isError, errorMessage }: { v
             onKeyDown={(e) => handleKeyDown(i, e)}
             className={cn(
               "w-10 h-12 sm:w-12 sm:h-14 text-center text-xl font-bold rounded-xl border outline-none transition-all disabled:opacity-50",
-              isError 
-                ? "border-warning-primary focus:border-warning-primary focus:ring-2 focus:ring-warning-primary/20 text-warning-primary bg-warning-primary/5" 
-                : "border-black/[0.08] focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 text-text-primary bg-white"
+              isError
+                ? "border-warning-primary focus:border-warning-primary focus:ring-2 focus:ring-warning-primary/20 text-warning-primary bg-warning-primary/5"
+                : "border-black/[0.08] focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 text-text-primary bg-white",
             )}
           />
         ))}
@@ -185,17 +206,31 @@ export const TenantSecuritySettings = ({
 
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-  // 2FA Detailed State
-  const [twoFactorEnabled, setTwoFactorEnabled] = useState(initialData.twoFactorEnabled || false);
-  const [hasAuthenticator, setHasAuthenticator] = useState(initialData.hasAuthenticator || false);
+  // 2fa detailed state
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(
+    initialData.twoFactorEnabled || false,
+  );
+  const [hasAuthenticator, setHasAuthenticator] = useState(
+    initialData.hasAuthenticator || false,
+  );
   const [hasEmail, setHasEmail] = useState(initialData.hasEmail || false);
-  const [authenticatorUpdatedAt, setAuthenticatorUpdatedAt] = useState(initialData.authenticatorUpdatedAt);
-  const [emailUpdatedAt, setEmailUpdatedAt] = useState(initialData.emailUpdatedAt);
-  const [recoveryCodesGeneratedAt, setRecoveryCodesGeneratedAt] = useState(initialData.recoveryCodesGeneratedAt);
-  const [showSetupOptions, setShowSetupOptions] = useState(initialData.twoFactorEnabled || false);
+  const [authenticatorUpdatedAt, setAuthenticatorUpdatedAt] = useState(
+    initialData.authenticatorUpdatedAt,
+  );
+  const [emailUpdatedAt, setEmailUpdatedAt] = useState(
+    initialData.emailUpdatedAt,
+  );
+  const [recoveryCodesGeneratedAt, setRecoveryCodesGeneratedAt] = useState(
+    initialData.recoveryCodesGeneratedAt,
+  );
+  const [showSetupOptions, setShowSetupOptions] = useState(
+    initialData.twoFactorEnabled || false,
+  );
 
   const [isSetupModalOpen, setIsSetupModalOpen] = useState(false);
-  const [setupStep, setSetupStep] = useState<"authenticator" | "email" | "recovery">("authenticator");
+  const [setupStep, setSetupStep] = useState<
+    "authenticator" | "email" | "recovery"
+  >("authenticator");
   const [setupSecret, setSetupSecret] = useState("");
   const [setupQrUrl, setSetupQrUrl] = useState("");
   const [setupVerificationCode, setSetupVerificationCode] = useState("");
@@ -204,7 +239,9 @@ export const TenantSecuritySettings = ({
   const [setupError, setSetupError] = useState("");
 
   const [isDisableModalOpen, setIsDisableModalOpen] = useState(false);
-  const [disableMethod, setDisableMethod] = useState<"all" | "authenticator" | "email">("all");
+  const [disableMethod, setDisableMethod] = useState<
+    "all" | "authenticator" | "email"
+  >("all");
   const [disablePassword, setDisablePassword] = useState("");
   const [disableLoading, setDisableLoading] = useState(false);
   const [disableError, setDisableError] = useState("");
@@ -237,7 +274,10 @@ export const TenantSecuritySettings = ({
     if (initialData.twoFactorEnabled) setShowSetupOptions(true);
   }, [initialData]);
 
-  const isPasswordDirty = currentPassword.length > 0 || newPassword.length > 0 || confirmPassword.length > 0;
+  const isPasswordDirty =
+    currentPassword.length > 0 ||
+    newPassword.length > 0 ||
+    confirmPassword.length > 0;
 
   const requirements = passwordRequirements(newPassword);
   const isPasswordStrong =
@@ -287,7 +327,7 @@ export const TenantSecuritySettings = ({
     setSetupVerificationCode("");
     setSetupLoading(true);
     setIsSetupModalOpen(true);
-    
+
     try {
       if (method === "authenticator") {
         const res = await setupAuthenticatorTwoFactor(tenantId);
@@ -313,9 +353,16 @@ export const TenantSecuritySettings = ({
     try {
       let res;
       if (setupStep === "authenticator") {
-        res = await verifyAndEnableAuthenticatorTwoFactor(tenantId, setupSecret, setupVerificationCode);
+        res = await verifyAndEnableAuthenticatorTwoFactor(
+          tenantId,
+          setupSecret,
+          setupVerificationCode,
+        );
       } else {
-        res = await verifyAndEnableEmailTwoFactor(tenantId, setupVerificationCode);
+        res = await verifyAndEnableEmailTwoFactor(
+          tenantId,
+          setupVerificationCode,
+        );
       }
       setSetupRecoveryCodes(res.recoveryCodes);
       setTwoFactorEnabled(true);
@@ -344,14 +391,26 @@ export const TenantSecuritySettings = ({
     setDisableLoading(true);
     setDisableError("");
     try {
-      // In a real app we might pass disableMethod to disable only one,
-      // but the current actions.ts clears everything.
-      await disableTwoFactorAuth(tenantId, disablePassword);
-      setTwoFactorEnabled(false);
-      setShowSetupOptions(false);
-      setHasAuthenticator(false);
-      setHasEmail(false);
-      setRecoveryCodesGeneratedAt(undefined);
+      await disableTwoFactorAuth(tenantId, disablePassword, disableMethod);
+
+      if (disableMethod === "all") {
+        setTwoFactorEnabled(false);
+        setShowSetupOptions(false);
+        setHasAuthenticator(false);
+        setHasEmail(false);
+        setRecoveryCodesGeneratedAt(undefined);
+      } else if (disableMethod === "authenticator") {
+        setHasAuthenticator(false);
+        setTwoFactorEnabled(hasEmail);
+        setShowSetupOptions(hasEmail);
+        if (!hasEmail) setRecoveryCodesGeneratedAt(undefined);
+      } else {
+        setHasEmail(false);
+        setTwoFactorEnabled(hasAuthenticator);
+        setShowSetupOptions(hasAuthenticator);
+        if (!hasAuthenticator) setRecoveryCodesGeneratedAt(undefined);
+      }
+
       setIsDisableModalOpen(false);
       setDisablePassword("");
     } catch (err: any) {
@@ -383,7 +442,9 @@ export const TenantSecuritySettings = ({
 
   const handleDownloadCodes = () => {
     const element = document.createElement("a");
-    const file = new Blob([setupRecoveryCodes.join("\n")], { type: "text/plain" });
+    const file = new Blob([setupRecoveryCodes.join("\n")], {
+      type: "text/plain",
+    });
     element.href = URL.createObjectURL(file);
     element.download = "qios-recovery-codes.txt";
     document.body.appendChild(element);
@@ -417,13 +478,18 @@ export const TenantSecuritySettings = ({
                 <div className="sm:col-span-2 space-y-3">
                   <div className="flex items-center gap-2 w-full text-green-700 bg-green-50 border border-green-100 rounded-xl px-4 py-3">
                     <CheckCircle2 className="h-4 w-4 shrink-0" />
-                    <p className="text-sm font-medium">{passwordState.success}</p>
+                    <p className="text-sm font-medium">
+                      {passwordState.success}
+                    </p>
                   </div>
                 </div>
               )}
               <div className="space-y-1.5 sm:col-span-2">
                 <label className="text-sm font-medium text-text-primary">
-                  Current Password {isPasswordDirty && <span className="text-brand-accent">*</span>}
+                  Current Password{" "}
+                  {isPasswordDirty && (
+                    <span className="text-brand-accent">*</span>
+                  )}
                 </label>
                 <div className="relative">
                   <Input
@@ -431,14 +497,18 @@ export const TenantSecuritySettings = ({
                     value={currentPassword}
                     onChange={(event) => {
                       setCurrentPassword(event.target.value);
-                      setFieldErrors(prev => ({ ...prev, currentPassword: "" }));
+                      setFieldErrors((prev) => ({
+                        ...prev,
+                        currentPassword: "",
+                      }));
                     }}
                     type={showCurrentPassword ? "text" : "password"}
                     placeholder="Current Password"
                     isError={!!fieldErrors.currentPassword}
                     className={cn(
                       "py-2.5 rounded-xl pr-10 focus:outline-none",
-                      !fieldErrors.currentPassword && "focus:border-brand-primary focus:ring-brand-primary"
+                      !fieldErrors.currentPassword &&
+                        "focus:border-brand-primary focus:ring-brand-primary",
                     )}
                   />
                   <button
@@ -464,7 +534,10 @@ export const TenantSecuritySettings = ({
               </div>
               <div className="space-y-1.5">
                 <label className="text-sm font-medium text-text-primary">
-                  New Password {isPasswordDirty && <span className="text-brand-accent">*</span>}
+                  New Password{" "}
+                  {isPasswordDirty && (
+                    <span className="text-brand-accent">*</span>
+                  )}
                 </label>
                 <div className="relative">
                   <Input
@@ -472,7 +545,7 @@ export const TenantSecuritySettings = ({
                     value={newPassword}
                     onChange={(event) => {
                       setNewPassword(event.target.value);
-                      setFieldErrors(prev => ({ ...prev, newPassword: "" }));
+                      setFieldErrors((prev) => ({ ...prev, newPassword: "" }));
                     }}
                     type={showNewPassword ? "text" : "password"}
                     placeholder="New Password"
@@ -482,7 +555,11 @@ export const TenantSecuritySettings = ({
                     }
                     className={cn(
                       "py-2.5 rounded-xl pr-10 focus:outline-none",
-                      !(!!fieldErrors.newPassword || (newPassword.length > 0 && !isPasswordStrong)) && "focus:border-brand-primary focus:ring-brand-primary"
+                      !(
+                        !!fieldErrors.newPassword ||
+                        (newPassword.length > 0 && !isPasswordStrong)
+                      ) &&
+                        "focus:border-brand-primary focus:ring-brand-primary",
                     )}
                   />
                   <button
@@ -507,18 +584,36 @@ export const TenantSecuritySettings = ({
                       password requirements
                     </p>
                     <div className="space-y-2">
-                      <PasswordRequirement met={requirements.hasMinLength} text="At least 8 characters" />
-                      <PasswordRequirement met={requirements.hasUppercase} text="At least one uppercase letter" />
-                      <PasswordRequirement met={requirements.hasLowercase} text="At least one lowercase letter" />
-                      <PasswordRequirement met={requirements.hasDigit} text="At least one digit (0-9)" />
-                      <PasswordRequirement met={requirements.hasSpecial} text="At least one special character (!@#$%^&*)" />
+                      <PasswordRequirement
+                        met={requirements.hasMinLength}
+                        text="At least 8 characters"
+                      />
+                      <PasswordRequirement
+                        met={requirements.hasUppercase}
+                        text="At least one uppercase letter"
+                      />
+                      <PasswordRequirement
+                        met={requirements.hasLowercase}
+                        text="At least one lowercase letter"
+                      />
+                      <PasswordRequirement
+                        met={requirements.hasDigit}
+                        text="At least one digit (0-9)"
+                      />
+                      <PasswordRequirement
+                        met={requirements.hasSpecial}
+                        text="At least one special character (!@#$%^&*)"
+                      />
                     </div>
                   </div>
                 )}
               </div>
               <div className="space-y-1.5">
                 <label className="text-sm font-medium text-text-primary">
-                  Confirm New Password {isPasswordDirty && <span className="text-brand-accent">*</span>}
+                  Confirm New Password{" "}
+                  {isPasswordDirty && (
+                    <span className="text-brand-accent">*</span>
+                  )}
                 </label>
                 <div className="relative">
                   <Input
@@ -526,14 +621,18 @@ export const TenantSecuritySettings = ({
                     value={confirmPassword}
                     onChange={(event) => {
                       setConfirmPassword(event.target.value);
-                      setFieldErrors(prev => ({ ...prev, confirmPassword: "" }));
+                      setFieldErrors((prev) => ({
+                        ...prev,
+                        confirmPassword: "",
+                      }));
                     }}
                     type={showConfirmPassword ? "text" : "password"}
                     placeholder="Confirm Password"
                     isError={!!fieldErrors.confirmPassword}
                     className={cn(
                       "py-2.5 rounded-xl pr-10 focus:outline-none",
-                      !fieldErrors.confirmPassword && "focus:border-brand-primary focus:ring-brand-primary"
+                      !fieldErrors.confirmPassword &&
+                        "focus:border-brand-primary focus:ring-brand-primary",
                     )}
                   />
                   <button
@@ -579,16 +678,30 @@ export const TenantSecuritySettings = ({
             <div className="flex flex-col gap-4 mt-2">
               <div className="flex items-center justify-between gap-4 p-4 rounded-xl border border-transparent bg-white hover:bg-black/[0.02] transition-all duration-300">
                 <div className="flex flex-col gap-0.5 select-none">
-                  <span className={cn("b2 font-bold transition-colors duration-300", twoFactorEnabled || showSetupOptions ? "text-text-primary" : "text-text-primary/80")}>
+                  <span
+                    className={cn(
+                      "b2 font-bold transition-colors duration-300",
+                      twoFactorEnabled || showSetupOptions
+                        ? "text-text-primary"
+                        : "text-text-primary/80",
+                    )}
+                  >
                     Require 2FA for Login
                   </span>
-                  <span className={cn("b4 transition-colors duration-300", twoFactorEnabled || showSetupOptions ? "text-text-secondary" : "text-text-secondary/90")}>
+                  <span
+                    className={cn(
+                      "b4 transition-colors duration-300",
+                      twoFactorEnabled || showSetupOptions
+                        ? "text-text-secondary"
+                        : "text-text-secondary/90",
+                    )}
+                  >
                     Add an extra layer of security to your account.
                   </span>
                 </div>
-                <Toggle 
-                  isOn={twoFactorEnabled || showSetupOptions} 
-                  onChange={handleMasterToggle} 
+                <Toggle
+                  isOn={twoFactorEnabled || showSetupOptions}
+                  onChange={handleMasterToggle}
                   variant="accent"
                 />
               </div>
@@ -606,27 +719,51 @@ export const TenantSecuritySettings = ({
                             Authenticator App
                           </span>
                           <span className="b4 transition-colors duration-300 text-text-secondary">
-                            Get codes from an app like Google Authenticator or Authy.
+                            Get codes from an app like Google Authenticator or
+                            Authy.
                           </span>
                         </div>
                       </div>
                       {!hasAuthenticator && (
-                        <Button variant="outline" size="sm" onClick={() => handleStartSetup("authenticator")}>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleStartSetup("authenticator")}
+                        >
                           Set Up
                         </Button>
                       )}
                     </div>
-                    
+
                     {hasAuthenticator && (
                       <div className="flex items-center justify-between mt-4 pt-4 border-t border-black/[0.05]">
-                        <Badge color="success" variant="subtle" shape="rounded" className="text-xs">
-                          Added {getTimeAgo(authenticatorUpdatedAt || recoveryCodesGeneratedAt)}
+                        <Badge
+                          color="success"
+                          variant="subtle"
+                          shape="rounded"
+                          className="text-xs"
+                        >
+                          Added{" "}
+                          {getTimeAgo(
+                            authenticatorUpdatedAt || recoveryCodesGeneratedAt,
+                          )}
                         </Badge>
                         <div className="flex items-center gap-2">
-                          <Button variant="outline" size="sm" onClick={() => handleStartSetup("authenticator")}>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleStartSetup("authenticator")}
+                          >
                             Change App
                           </Button>
-                          <Button variant="outline" size="icon" onClick={() => handleDisableSpecificMethod("authenticator")} className="border-brand-accent text-brand-accent hover:bg-brand-accent hover:text-white hover:border-brand-accent focus:ring-brand-accent">
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() =>
+                              handleDisableSpecificMethod("authenticator")
+                            }
+                            className="border-brand-accent text-brand-accent hover:bg-brand-accent hover:text-white hover:border-brand-accent focus:ring-brand-accent"
+                          >
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
@@ -650,7 +787,11 @@ export const TenantSecuritySettings = ({
                         </div>
                       </div>
                       {!hasEmail && (
-                        <Button variant="outline" size="sm" onClick={() => handleStartSetup("email")}>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleStartSetup("email")}
+                        >
                           Set Up
                         </Button>
                       )}
@@ -658,11 +799,24 @@ export const TenantSecuritySettings = ({
 
                     {hasEmail && (
                       <div className="flex items-center justify-between mt-4 pt-4 border-t border-black/[0.05]">
-                        <Badge color="success" variant="subtle" shape="rounded" className="text-xs">
-                          Added {getTimeAgo(emailUpdatedAt || recoveryCodesGeneratedAt)}
+                        <Badge
+                          color="success"
+                          variant="subtle"
+                          shape="rounded"
+                          className="text-xs"
+                        >
+                          Added{" "}
+                          {getTimeAgo(
+                            emailUpdatedAt || recoveryCodesGeneratedAt,
+                          )}
                         </Badge>
                         <div className="flex items-center gap-2">
-                          <Button variant="outline" size="icon" onClick={() => handleDisableSpecificMethod("email")} className="border-brand-accent text-brand-accent hover:bg-brand-accent hover:text-white hover:border-brand-accent focus:ring-brand-accent">
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => handleDisableSpecificMethod("email")}
+                            className="border-brand-accent text-brand-accent hover:bg-brand-accent hover:text-white hover:border-brand-accent focus:ring-brand-accent"
+                          >
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
@@ -684,18 +838,28 @@ export const TenantSecuritySettings = ({
                           Backup Recovery Codes
                         </span>
                         <span className="b4 transition-colors duration-300 text-text-secondary">
-                          Use these codes if you lose access to your other methods.
+                          Use these codes if you lose access to your other
+                          methods.
                         </span>
                       </div>
                     </div>
                   </div>
 
                   <div className="flex items-center justify-between mt-4 pt-4 border-t border-black/[0.05]">
-                    <Badge color="success" variant="subtle" shape="rounded" className="text-xs">
+                    <Badge
+                      color="success"
+                      variant="subtle"
+                      shape="rounded"
+                      className="text-xs"
+                    >
                       Generated {getTimeAgo(recoveryCodesGeneratedAt)}
                     </Badge>
                     <div className="flex items-center gap-2">
-                      <Button variant="outline" size="sm" onClick={() => setIsRegenerateModalOpen(true)}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsRegenerateModalOpen(true)}
+                      >
                         Regenerate
                       </Button>
                     </div>
@@ -772,19 +936,15 @@ export const TenantSecuritySettings = ({
             </div>
 
             <div className="p-6 md:p-8 overflow-y-auto">
-              {setupError && (
-                <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-100 flex gap-2 text-sm text-red-600 items-start">
-                  <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
-                  <p>{setupError}</p>
-                </div>
-              )}
 
               {setupStep === "authenticator" && (
                 <div className="space-y-6">
                   {setupLoading && !setupQrUrl ? (
                     <div className="flex flex-col items-center justify-center py-10 space-y-4">
                       <Loader2 className="w-8 h-8 animate-spin text-brand-primary" />
-                      <p className="text-sm text-text-secondary">Generating secure keys...</p>
+                      <p className="text-sm text-text-secondary">
+                        Generating secure keys...
+                      </p>
                     </div>
                   ) : (
                     <>
@@ -796,8 +956,11 @@ export const TenantSecuritySettings = ({
                           <QRCode value={setupQrUrl} size={160} />
                         </div>
                         <p className="text-xs text-text-secondary mt-2">
-                          Unable to scan? Enter this key manually:<br/>
-                          <span className="font-mono font-medium text-text-primary bg-gray-100 px-2 py-1 rounded inline-block mt-1">{setupSecret}</span>
+                          Unable to scan? Enter this key manually:
+                          <br />
+                          <span className="font-mono font-medium text-text-primary bg-gray-100 px-2 py-1 rounded inline-block mt-1">
+                            {setupSecret}
+                          </span>
                         </p>
                       </div>
 
@@ -805,16 +968,34 @@ export const TenantSecuritySettings = ({
                         <p className="text-sm text-text-secondary mb-3">
                           2. Enter the 6-digit code generated by your app.
                         </p>
-                        <SixDigitInput 
-                          value={setupVerificationCode} 
-                          onChange={setSetupVerificationCode} 
+                        <SixDigitInput
+                          value={setupVerificationCode}
+                          onChange={(val) => {
+                            setSetupVerificationCode(val);
+                            // clear error as soon as the user starts typing again
+                            if (setupError) setSetupError("");
+                          }}
                           disabled={setupLoading}
+                          isError={!!setupError}
+                          errorMessage={setupError || undefined}
                         />
                       </div>
 
                       <div className="flex gap-3 mt-6">
-                        <Button onClick={() => setIsSetupModalOpen(false)} variant="outline" className="flex-1">Cancel</Button>
-                        <Button onClick={handleVerifySetup} variant="primary" className="flex-1" loading={setupLoading} disabled={setupVerificationCode.length < 6}>
+                        <Button
+                          onClick={() => setIsSetupModalOpen(false)}
+                          variant="outline"
+                          className="flex-1"
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          onClick={handleVerifySetup}
+                          variant="primary"
+                          className="flex-1"
+                          loading={setupLoading}
+                          disabled={setupVerificationCode.length < 6}
+                        >
                           Verify & Enable
                         </Button>
                       </div>
@@ -826,26 +1007,48 @@ export const TenantSecuritySettings = ({
               {setupStep === "email" && (
                 <div className="space-y-6 text-center">
                   <div className="relative w-16 h-16 mx-auto mb-4">
-                    <div className="absolute inset-0 rounded-full bg-brand-primary/30 animate-ping" style={{ animationDuration: "1.8s" }} />
+                    <div
+                      className="absolute inset-0 rounded-full bg-brand-primary/30 animate-ping"
+                      style={{ animationDuration: "1.8s" }}
+                    />
                     <div className="relative w-16 h-16 bg-brand-primary/20 text-brand-primary rounded-full flex items-center justify-center shadow-lg shadow-brand-primary/20">
                       <Mail size={32} strokeWidth={2} />
                     </div>
                   </div>
                   <p className="text-sm text-text-secondary">
-                    We've sent a 6-digit verification code to your email. Please enter it below to confirm.
+                    We've sent a 6-digit verification code to your email. Please
+                    enter it below to confirm.
                   </p>
-                  
+
                   <div className="py-4">
-                    <SixDigitInput 
-                      value={setupVerificationCode} 
-                      onChange={setSetupVerificationCode} 
+                    <SixDigitInput
+                      value={setupVerificationCode}
+                      onChange={(val) => {
+                        setSetupVerificationCode(val);
+                        // clear error as soon as the user starts typing again
+                        if (setupError) setSetupError("");
+                      }}
                       disabled={setupLoading}
+                      isError={!!setupError}
+                      errorMessage={setupError || undefined}
                     />
                   </div>
 
                   <div className="flex gap-3 pt-2">
-                    <Button onClick={() => setIsSetupModalOpen(false)} variant="outline" className="flex-1">Cancel</Button>
-                    <Button onClick={handleVerifySetup} variant="primary" className="flex-1" loading={setupLoading} disabled={setupVerificationCode.length < 6}>
+                    <Button
+                      onClick={() => setIsSetupModalOpen(false)}
+                      variant="outline"
+                      className="flex-1"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleVerifySetup}
+                      variant="primary"
+                      className="flex-1"
+                      loading={setupLoading}
+                      disabled={setupVerificationCode.length < 6}
+                    >
                       Verify Code
                     </Button>
                   </div>
@@ -855,7 +1058,10 @@ export const TenantSecuritySettings = ({
               {setupStep === "recovery" && (
                 <div className="space-y-6 text-center">
                   <div className="relative w-16 h-16 mx-auto mb-2">
-                    <div className="absolute inset-0 rounded-full bg-success-secondary/60 animate-ping" style={{ animationDuration: "1.8s" }} />
+                    <div
+                      className="absolute inset-0 rounded-full bg-success-secondary/60 animate-ping"
+                      style={{ animationDuration: "1.8s" }}
+                    />
                     <div className="relative w-16 h-16 bg-success-secondary text-success-primary rounded-full flex items-center justify-center shadow-lg shadow-success-primary/20">
                       <Check size={32} strokeWidth={3} />
                     </div>
@@ -865,28 +1071,48 @@ export const TenantSecuritySettings = ({
                       2FA is now active!
                     </h3>
                     <p className="b4 text-text-secondary">
-                      Save these backup recovery codes in a secure place. They will only be shown once.
+                      Save these backup recovery codes in a secure place. They
+                      will only be shown once.
                     </p>
                   </div>
 
                   <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 grid grid-cols-2 gap-3 text-left">
                     {setupRecoveryCodes.map((code, idx) => (
-                      <div key={idx} className="font-mono text-sm font-medium text-text-primary tracking-wider text-center">
-                        {code.slice(0,4)}-{code.slice(4)}
+                      <div
+                        key={idx}
+                        className="font-mono text-sm font-medium text-text-primary tracking-wider text-center"
+                      >
+                        {code.slice(0, 4)}-{code.slice(4)}
                       </div>
                     ))}
                   </div>
 
                   <div className="flex gap-2 pt-2">
-                    <Button onClick={handleCopyCodes} variant="outline" shape="rounded" leftIcon={<Copy className="w-4 h-4"/>} className="flex-1">
+                    <Button
+                      onClick={handleCopyCodes}
+                      variant="outline"
+                      shape="rounded"
+                      leftIcon={<Copy className="w-4 h-4" />}
+                      className="flex-1"
+                    >
                       Copy
                     </Button>
-                    <Button onClick={handleDownloadCodes} variant="outline" shape="rounded" leftIcon={<Download className="w-4 h-4"/>} className="flex-1">
+                    <Button
+                      onClick={handleDownloadCodes}
+                      variant="outline"
+                      shape="rounded"
+                      leftIcon={<Download className="w-4 h-4" />}
+                      className="flex-1"
+                    >
                       Download
                     </Button>
                   </div>
 
-                  <Button onClick={() => setIsSetupModalOpen(false)} variant="primary" className="w-full mt-2">
+                  <Button
+                    onClick={() => setIsSetupModalOpen(false)}
+                    variant="primary"
+                    className="w-full mt-2"
+                  >
                     Done
                   </Button>
                 </div>
@@ -901,7 +1127,8 @@ export const TenantSecuritySettings = ({
           <div
             className="bg-white rounded-[28px] w-full max-w-sm shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
             style={{
-              boxShadow: "0 24px 64px rgba(0,0,0,0.14), 0 4px 16px rgba(0,0,0,0.08)",
+              boxShadow:
+                "0 24px 64px rgba(0,0,0,0.14), 0 4px 16px rgba(0,0,0,0.08)",
             }}
           >
             <div className="flex flex-col items-center text-center px-8 pt-8 pb-6">
@@ -911,17 +1138,26 @@ export const TenantSecuritySettings = ({
                   boxShadow: "0 4px 18px rgba(255,82,105,0.18)",
                 }}
               >
-                <ShieldAlert className="w-7 h-7 text-[#ec1313]" strokeWidth={1.75} />
+                <ShieldAlert
+                  className="w-7 h-7 text-[#ec1313]"
+                  strokeWidth={1.75}
+                />
               </div>
 
               <h3 className="font-bold text-[17px] text-text-primary leading-snug">
-                Disable {disableMethod === "all" ? "2FA" : disableMethod === "authenticator" ? "Authenticator App" : "Email Verification"}?
+                Disable{" "}
+                {disableMethod === "all"
+                  ? "2FA"
+                  : disableMethod === "authenticator"
+                    ? "Authenticator App"
+                    : "Email Verification"}
+                ?
               </h3>
 
               <p className="text-[13px] text-text-secondary mt-2 leading-relaxed max-w-[270px]">
-                {disableMethod === "all" 
-                  ? "Are you sure you want to disable all two-factor authentication methods? Your account will be less secure." 
-                  : "Are you sure you want to remove this 2FA method?"} 
+                {disableMethod === "all"
+                  ? "Are you sure you want to disable all two-factor authentication methods? Your account will be less secure."
+                  : "Are you sure you want to remove this 2FA method?"}
               </p>
             </div>
 
@@ -932,16 +1168,21 @@ export const TenantSecuritySettings = ({
                   placeholder="Current Password"
                   value={disablePassword}
                   onChange={(e) => {
-                     setDisablePassword(e.target.value);
-                     if (disableError) setDisableError("");
+                    setDisablePassword(e.target.value);
+                    if (disableError) setDisableError("");
                   }}
                   className={cn(
-                     "w-full py-2.5 rounded-xl pr-10 focus:outline-none",
-                     !disableError && "focus:border-brand-primary focus:ring-brand-primary"
+                    "w-full py-2.5 rounded-xl pr-10 focus:outline-none",
+                    !disableError &&
+                      "focus:border-brand-primary focus:ring-brand-primary",
                   )}
                   isError={!!disableError}
                 />
-                {disableError && <p className="text-xs text-[#ec1313] pl-1 text-left">{disableError}</p>}
+                {disableError && (
+                  <p className="text-xs text-[#ec1313] pl-1 text-left">
+                    {disableError}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -971,10 +1212,10 @@ export const TenantSecuritySettings = ({
 
       <ActionConfirmationModal
         isOpen={isRegenerateModalOpen}
-        action="save"
+        action="copy"
         title="Regenerate Recovery Codes?"
         message="This will invalidate all your existing backup codes immediately. Ensure you save the new ones."
-        confirmLabel="Regenerate"
+        confirmLabel="Generate"
         saving={regenerateLoading}
         onClose={() => setIsRegenerateModalOpen(false)}
         onConfirm={handleRegenerateCodes}

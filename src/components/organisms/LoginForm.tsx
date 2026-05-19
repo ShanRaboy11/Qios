@@ -15,7 +15,7 @@ import {
   verifyLoginTwoFactorCode,
 } from "@/app/login/actions";
 
-/** decode a jwt payload for client-side inspection only; this does not verify the token or its claims. */
+// decode a jwt payload for client-side inspection only; this does not verify the token or its claims.
 function decodeJwtPayload(token: string): Record<string, unknown> {
   try {
     const payload = token.split(".")[1];
@@ -49,7 +49,7 @@ const SixDigitInput = ({
     index: number,
     e: React.ChangeEvent<HTMLInputElement>,
   ) => {
-    const val = e.target.value.replace(/[^0-9A-Za-z]/g, ""); // allow letters for recovery codes theoretically, but mostly numbers
+    const val = e.target.value.replace(/[^0-9A-Za-z]/g, ""); // allow letters for recovery codes, but mostly numbers
     const newCode = [...value.padEnd(6, " ").split("")];
     if (!val) {
       newCode[index] = " ";
@@ -82,13 +82,13 @@ const SixDigitInput = ({
       .slice(0, 8); // recovery codes are 8 chars
     if (pasted) {
       onChange(pasted);
-      // focus the last filled input or end
+      // focus the last filled input or the end
       const focusIndex = Math.min(pasted.length, 5);
       inputs.current[focusIndex]?.focus();
     }
   };
 
-  // check if it's longer than 6 (e.g. 8 for recovery code)
+  // check if the value is longer than 6 chars (e.g. 8 for recovery code)
   const isRecovery = value.length > 6;
 
   if (isRecovery) {
@@ -105,7 +105,7 @@ const SixDigitInput = ({
             className={cn(
               "w-full h-12 sm:h-14 text-center text-xl font-bold font-mono tracking-widest rounded-xl border outline-none transition-all disabled:opacity-50",
               isError
-                ? "border-warning-primary focus:border-warning-primary focus:ring-2 focus:ring-warning-primary/20 text-warning-primary"
+                ? "border-warning-primary bg-warning-secondary/40 focus:border-warning-primary focus:ring-2 focus:ring-warning-primary/20 text-warning-primary"
                 : "border-black/[0.08] focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 text-text-primary",
             )}
           />
@@ -130,7 +130,7 @@ const SixDigitInput = ({
             }}
             type="text"
             inputMode="text"
-            maxLength={value.length > 5 ? 8 : 2} // allow longer paste or typing if they try to type recovery
+            maxLength={value.length > 5 ? 8 : 2} // allow longer paste for recovery codes
             value={value[i] && value[i] !== " " ? value[i] : ""}
             disabled={disabled}
             onChange={(e) => handleChange(i, e)}
@@ -138,7 +138,7 @@ const SixDigitInput = ({
             className={cn(
               "w-10 h-12 sm:w-12 sm:h-14 text-center text-xl font-bold rounded-xl border outline-none transition-all disabled:opacity-50",
               isError
-                ? "border-warning-primary focus:border-warning-primary focus:ring-2 focus:ring-warning-primary/20 text-warning-primary bg-warning-primary/5"
+                ? "border-warning-primary focus:border-warning-primary focus:ring-2 focus:ring-warning-primary/20 text-warning-primary bg-warning-secondary/40 shadow-[0_0_0_3px_color-mix(in_srgb,var(--color-warning-primary)_12%,transparent)]"
                 : "border-black/[0.08] focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 text-text-primary bg-white",
             )}
           />
@@ -176,6 +176,7 @@ export const LoginForm = () => {
   const [requires2FA, setRequires2FA] = useState(false);
   const [twoFactorCode, setTwoFactorCode] = useState("");
   const [twoFactorConfig, setTwoFactorConfig] = useState<{
+    userId: string;
     tenantId: string;
     hasAuthenticator: boolean;
     hasEmail: boolean;
@@ -183,6 +184,7 @@ export const LoginForm = () => {
   } | null>(null);
 
   useEffect(() => {
+    // restore remembered email on mount
     const storedEmail = localStorage.getItem("rememberedEmail");
     if (storedEmail) {
       setEmail(storedEmail);
@@ -190,7 +192,7 @@ export const LoginForm = () => {
     }
   }, []);
 
-  // Simple email regex for validation
+  // simple email regex for validation
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const vectorStyle =
     "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rotate-[6.521deg] overflow-visible";
@@ -220,14 +222,20 @@ export const LoginForm = () => {
     setIsLoading(true);
     setError(null);
     try {
-      await verifyLoginTwoFactorCode(twoFactorConfig.tenantId, twoFactorCode);
+      // NOTE: User requested UI-only for now: "dont validate code yet, show ui only... to redirect to their user dahboard"
+      // await verifyLoginTwoFactorCode(twoFactorConfig.userId, twoFactorCode);
       if (twoFactorConfig.routeDestination) {
         router.push(twoFactorConfig.routeDestination);
       } else {
         setError("Invalid route destination.");
       }
     } catch (err: any) {
-      setError(err.message || "Invalid verification code.");
+      const message = err instanceof Error ? err.message : String(err || "");
+      setError(
+        message.toLowerCase().includes("invalid verification code")
+          ? "Invalid verification code. Please try again."
+          : "An unexpected error occurred. Please try again.",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -240,7 +248,7 @@ export const LoginForm = () => {
       return handleVerify2FA();
     }
 
-    // Reset errors
+    // reset errors before validation
     setError(null);
     setSuccessMsg(null);
     setEmailError(false);
@@ -248,7 +256,7 @@ export const LoginForm = () => {
 
     let hasError = false;
 
-    // Validate Email
+    // validate email
     if (!email.trim()) {
       setEmailError(true);
       hasError = true;
@@ -257,7 +265,7 @@ export const LoginForm = () => {
       hasError = true;
     }
 
-    // Validate Password
+    // validate password
     if (!password) {
       setPasswordError(true);
       hasError = true;
@@ -289,7 +297,7 @@ export const LoginForm = () => {
         | string
         | undefined;
 
-      // if jwt role is missing or generic, fetch canonical role from profiles
+      // if jwt role is missing, fetch canonical role from profiles
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("role, tenant_id")
@@ -300,10 +308,10 @@ export const LoginForm = () => {
         role = profile.role;
       }
 
-      // determine tenant id source
+      // determine tenant id from jwt or profile
       const tenantId = jwtTenantId || profile?.tenant_id || "";
 
-      // check maintenance mode
+      // check maintenance mode before allowing further access
       const { data: platformSettings } = await supabase
         .from("platform_settings")
         .select("maintenance_mode")
@@ -318,7 +326,7 @@ export const LoginForm = () => {
         return;
       }
 
-      // tenant status enforcement for non-super-admins
+      // enforce tenant status for non-super-admins
       if (tenantId && role !== "super_admin") {
         const { data: tenantData } = await supabase
           .from("tenants")
@@ -338,26 +346,31 @@ export const LoginForm = () => {
         }
       }
 
-      // check two-factor requirement
-      const tfaCheck = await checkLoginTwoFactorRequired(tenantId || "");
+      // check if this user has 2fa enabled in their profile
+      const tfaCheck = await checkLoginTwoFactorRequired(
+        tenantId || "",
+        signInData.user.id,
+      );
 
       const routeDestination = determineRouteDestination(
         role || "employee",
         tenantId || undefined,
       );
 
-      if (tfaCheck?.required && tfaCheck?.tenantId) {
+      if (tfaCheck?.required) {
         setTwoFactorConfig({
-          tenantId: tfaCheck.tenantId,
+          userId: signInData.user.id,
+          tenantId: tenantId || "",
           hasAuthenticator: !!tfaCheck.hasAuthenticator,
           hasEmail: !!tfaCheck.hasEmail,
           routeDestination,
         });
 
+        // auto-send email code if the user has email 2fa enabled
         if (tfaCheck.hasEmail) {
           try {
             await sendLoginEmailCode(
-              tfaCheck.tenantId,
+              signInData.user.id,
               signInData.user.email!,
               tfaCheck.businessName || "",
             );
@@ -370,7 +383,7 @@ export const LoginForm = () => {
         return;
       }
 
-      // no 2fa required, route to destination
+      // no 2fa required — route directly to destination
       if (routeDestination) {
         router.push(routeDestination);
       } else {
@@ -405,7 +418,7 @@ export const LoginForm = () => {
         />
       </a>
 
-      {/* Background Vectors (Rotating) */}
+      {/* background vectors (rotating) */}
       <div className="absolute inset-0 z-0 overflow-hidden flex items-center justify-end pointer-events-none opacity-60">
         <div
           className="relative shrink-0 -mr-[200px] md:-mr-[400px]"
@@ -547,7 +560,7 @@ export const LoginForm = () => {
           </div>
         </div>
       </div>
-      {/* Big Qios Background Word */}
+      {/* big qios background word */}
       <div className="absolute bottom-0 -left-10 md:-left-20 lg:left-10 z-0 pointer-events-none select-none">
         <div
           className="absolute inset-0 z-0"
@@ -586,7 +599,7 @@ export const LoginForm = () => {
         </div>
       </div>
 
-      {/* Login Card */}
+      {/* login card */}
       <div className="relative z-10 w-full max-w-[440px] bg-white rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 md:p-10 flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
         {requires2FA && twoFactorConfig ? (
           <div className="flex flex-col items-center gap-3 animate-in fade-in zoom-in-95 duration-300 w-full">
@@ -615,9 +628,10 @@ export const LoginForm = () => {
                 isError={!!error}
                 errorMessage={error || undefined}
               />
-              {/* Error badge removed as it's now handled by SixDigitInput */}
+              {/* error badge removed — handled inline by SixDigitInput */}
 
               <Button
+                type="button"
                 onClick={handleVerify2FA}
                 variant="accent"
                 size="lg"
@@ -631,7 +645,7 @@ export const LoginForm = () => {
           </div>
         ) : (
           <>
-            {/* Header Section */}
+            {/* header section */}
             <div className="flex flex-col items-center gap-3">
               <div className="text-center">
                 <h1 className="text-2xl font-extrabold text-text-primary">
@@ -643,7 +657,7 @@ export const LoginForm = () => {
               </div>
             </div>
 
-            {/* Form Section */}
+            {/* form section */}
             <form
               onSubmit={handleSubmit}
               className="flex flex-col gap-5 w-full"
@@ -690,7 +704,7 @@ export const LoginForm = () => {
                 className="max-w-full"
               />
 
-              {/* Additional Options */}
+              {/* additional options */}
               <div className="flex items-center justify-between pt-1">
                 <Checkbox
                   label="Remember me"
@@ -705,7 +719,7 @@ export const LoginForm = () => {
                 </button>
               </div>
 
-              {/* Submit Button & Error */}
+              {/* submit button & error */}
               <div className="pt-2 flex flex-col gap-3">
                 {error && (
                   <Badge
@@ -741,7 +755,7 @@ export const LoginForm = () => {
                 </Button>
               </div>
 
-              {/* Sign Up Link */}
+              {/* sign up link */}
               <div className="text-center mt-2">
                 <span className="text-text-secondary text-sm">
                   Don't have an account?{" "}

@@ -51,8 +51,9 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // Redirect authenticated users trying to access login
-  if (user && isAuthRoute) {
+  // Redirect authenticated users trying to access login (but allow Server Actions to complete)
+  const isServerAction = request.headers.has("next-action");
+  if (user && isAuthRoute && !isServerAction) {
     // Attempt to decode role/tenant_id from the session token (requires the custom access token hook payload)
     // We can fetch user again via supabase or decode it
     const { data: sessionData } = await supabase.auth.getSession();

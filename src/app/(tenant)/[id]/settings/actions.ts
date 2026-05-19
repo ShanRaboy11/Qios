@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { generateSecret, generateURI, verifySync } from "otplib";
-import { encrypt, hashValue } from "@/lib/encryption";
+import { decrypt, encrypt, hashValue } from "@/lib/encryption";
 import {
   sendContactVerificationEmail,
   sendSecurityVerificationEmail,
@@ -24,6 +24,37 @@ const EMPTY_ACTION_STATE: SettingsActionState = {
   success: "",
   fieldErrors: {},
 };
+
+const RECOVERY_CODES_ENCRYPTED_FIELD = "recovery_codes_encrypted";
+
+function serializeRecoveryCodes(recoveryCodes: string[]) {
+  return encrypt(JSON.stringify(recoveryCodes));
+}
+
+function deserializeRecoveryCodes(encodedCodes: unknown) {
+  if (typeof encodedCodes !== "string" || !encodedCodes) return [];
+
+  try {
+    const decoded = JSON.parse(decrypt(encodedCodes));
+    return Array.isArray(decoded)
+      ? decoded.filter((code) => typeof code === "string")
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+// helper: build recovery code arrays from scratch
+function generateFreshRecoveryCodes() {
+  const codes = Array.from({ length: 10 }, () =>
+    crypto.randomBytes(4).toString("hex"),
+  );
+  return {
+    codes,
+    hashed: codes.map((c) => hashValue(c)),
+    encrypted: serializeRecoveryCodes(codes),
+  };
+}
 
 const BRANDING_DEFAULTS: TenantBrandingSettingsData = {
   primaryColor: "#FFC670",
@@ -234,46 +265,51 @@ export async function getTenantSettings(
         "secondaryFont",
       ]) || BRANDING_DEFAULTS.secondaryFont,
     qiosSubdomain:
-      readSettingValue(settings, [
-        "qios_subdomain",
-        "qiosSubdomain",
-      ]) || BRANDING_DEFAULTS.qiosSubdomain,
+      readSettingValue(settings, ["qios_subdomain", "qiosSubdomain"]) ||
+      BRANDING_DEFAULTS.qiosSubdomain,
     customDomain:
-      readSettingValue(settings, [
-        "custom_domain",
-        "customDomain",
-      ]) || BRANDING_DEFAULTS.customDomain,
+      readSettingValue(settings, ["custom_domain", "customDomain"]) ||
+      BRANDING_DEFAULTS.customDomain,
     instagramUrl:
-      readSettingValue(settings, [
-        "instagram_url",
-        "instagramUrl",
-      ]) || BRANDING_DEFAULTS.instagramUrl,
+      readSettingValue(settings, ["instagram_url", "instagramUrl"]) ||
+      BRANDING_DEFAULTS.instagramUrl,
     facebookUrl:
-      readSettingValue(settings, [
-        "facebook_url",
-        "facebookUrl",
-      ]) || BRANDING_DEFAULTS.facebookUrl,
+      readSettingValue(settings, ["facebook_url", "facebookUrl"]) ||
+      BRANDING_DEFAULTS.facebookUrl,
     tiktokUrl:
-      readSettingValue(settings, [
-        "tiktok_url",
-        "tiktokUrl",
-      ]) || BRANDING_DEFAULTS.tiktokUrl,
-    dashboardLogoUrl: readSettingValue(settings, ["branding_logo_dashboard"]) || undefined,
-    kioskSplashUrl: readSettingValue(settings, ["branding_kiosk_splash"]) || undefined,
+      readSettingValue(settings, ["tiktok_url", "tiktokUrl"]) ||
+      BRANDING_DEFAULTS.tiktokUrl,
+    dashboardLogoUrl:
+      readSettingValue(settings, ["branding_logo_dashboard"]) || undefined,
+    kioskSplashUrl:
+      readSettingValue(settings, ["branding_kiosk_splash"]) || undefined,
     faviconUrl: readSettingValue(settings, ["branding_favicon"]) || undefined,
-    customThemes: Array.isArray(settings?.branding_custom_themes) 
+    customThemes: Array.isArray(settings?.branding_custom_themes)
       ? (settings.branding_custom_themes as any[])
       : [],
   };
 
+  // read per-user 2fa data from the profiles table, not tenant.settings
+  const { data: userTwoFa } = await admin
+    .from("profiles")
+    .select(
+      "two_factor_enabled, has_authenticator, has_email_2fa, authenticator_updated_at, email_2fa_updated_at, recovery_codes_generated_at",
+    )
+    .eq("id", user.id)
+    .maybeSingle();
+
   const security: TenantSecuritySettingsData = {
-    requireTwoFactorAuth: (settings?.require_two_factor_auth === true),
-    twoFactorEnabled: (settings?.two_factor_enabled === true),
-    hasAuthenticator: (settings?.has_authenticator === true),
-    hasEmail: (settings?.has_email === true),
-    authenticatorUpdatedAt: settings?.authenticator_updated_at as string | undefined,
-    emailUpdatedAt: settings?.email_updated_at as string | undefined,
-    recoveryCodesGeneratedAt: settings?.recovery_codes_generated_at as string | undefined,
+    requireTwoFactorAuth: settings?.require_two_factor_auth === true,
+    twoFactorEnabled: userTwoFa?.two_factor_enabled === true,
+    hasAuthenticator: userTwoFa?.has_authenticator === true,
+    hasEmail: userTwoFa?.has_email_2fa === true,
+    authenticatorUpdatedAt: userTwoFa?.authenticator_updated_at as
+      | string
+      | undefined,
+    emailUpdatedAt: userTwoFa?.email_2fa_updated_at as string | undefined,
+    recoveryCodesGeneratedAt: userTwoFa?.recovery_codes_generated_at as
+      | string
+      | undefined,
   };
 
   return {
@@ -715,7 +751,7 @@ export async function saveTenantBrandingSettings(
 
 export async function saveTenantCustomThemes(
   tenantId: string,
-  customThemes: any[]
+  customThemes: any[],
 ) {
   const { admin } = await requireTenantContext(tenantId);
 
@@ -733,7 +769,7 @@ export async function saveTenantCustomThemes(
       : null,
     {
       branding_custom_themes: customThemes,
-    }
+    },
   );
 
   const { error: updateError } = await admin
@@ -930,7 +966,7 @@ export async function setupAuthenticatorTwoFactor(tenantId: string) {
   const otpauthUrl = generateURI({
     issuer: "Qios",
     label: businessName,
-    secret
+    secret,
   });
 
   return { secret, otpauthUrl };
@@ -939,46 +975,57 @@ export async function setupAuthenticatorTwoFactor(tenantId: string) {
 export async function verifyAndEnableAuthenticatorTwoFactor(
   tenantId: string,
   secret: string,
-  token: string
+  token: string,
 ) {
+  // verify the totp code using the correct otplib v13 verifySync api
   const result = verifySync({ token, secret });
   if (!result.valid) throw new Error("Invalid verification code.");
 
-  const { admin } = await getAuthenticatedTenantContext(tenantId);
+  const { admin, user } = await getAuthenticatedTenantContext(tenantId);
 
-  const { data: tenant } = await admin
-    .from("tenants")
-    .select("settings")
-    .eq("id", tenantId)
+  // check if the user already has recovery codes to avoid regenerating
+  const { data: existingProfile } = await admin
+    .from("profiles")
+    .select("recovery_codes_hashed, recovery_codes_encrypted")
+    .eq("id", user.id)
     .single();
 
-  const currentSettings = (tenant?.settings as Record<string, any>) || {};
+  let recoveryCodes: string[];
+  let recoveryCodesHashed: string[];
+  let recoveryCodesEncrypted: string;
 
-  let recoveryCodes: string[] = [];
-  let recoveryCodesHashed: string[] = currentSettings.recovery_codes_hashed || [];
-  
-  if (!recoveryCodesHashed.length) {
-    recoveryCodes = Array.from({ length: 10 }, () =>
-      crypto.randomBytes(4).toString("hex")
-    );
-    recoveryCodesHashed = recoveryCodes.map((c) => hashValue(c));
+  const existingCodes = deserializeRecoveryCodes(
+    existingProfile?.recovery_codes_encrypted,
+  );
+  const existingHashed: string[] = existingProfile?.recovery_codes_hashed || [];
+
+  if (existingHashed.length && existingCodes.length) {
+    // reuse existing recovery codes so enabling a second method doesn't regenerate them
+    recoveryCodes = existingCodes;
+    recoveryCodesHashed = existingHashed;
+    recoveryCodesEncrypted = existingProfile!.recovery_codes_encrypted!;
+  } else {
+    const fresh = generateFreshRecoveryCodes();
+    recoveryCodes = fresh.codes;
+    recoveryCodesHashed = fresh.hashed;
+    recoveryCodesEncrypted = fresh.encrypted;
   }
 
-  const settings = mergeSettings(
-    (tenant?.settings as Record<string, unknown>) || null,
-    {
+  // write 2fa data to the user's own profile row
+  const { error } = await admin
+    .from("profiles")
+    .update({
       two_factor_enabled: true,
       has_authenticator: true,
       authenticator_updated_at: new Date().toISOString(),
       totp_secret_encrypted: encrypt(secret),
       recovery_codes_hashed: recoveryCodesHashed,
+      [RECOVERY_CODES_ENCRYPTED_FIELD]: recoveryCodesEncrypted,
       recovery_codes_generated_at: new Date().toISOString(),
-    }
-  );
-
-  const { error } = await admin.from("tenants").update({ settings }).eq("id", tenantId);
+    })
+    .eq("id", user.id);
   if (error) throw new Error(error.message);
-  
+
   revalidatePath(`/${tenantId}/settings`);
 
   return { success: true, recoveryCodes };
@@ -989,35 +1036,37 @@ export async function setupEmailTwoFactor(tenantId: string) {
 
   const { data: tenant } = await admin
     .from("tenants")
-    .select("business_name, settings")
+    .select("business_name")
     .eq("id", tenantId)
     .single();
 
   const emailToUse = user.email;
   const businessName = tenant?.business_name || "Qios";
 
-  if (!emailToUse) throw new Error("No valid email found to send verification code to.");
+  if (!emailToUse)
+    throw new Error("No valid email found to send verification code to.");
 
   const code = Math.floor(100000 + Math.random() * 900000).toString();
   const codeHashed = hashValue(code);
   const expiresAt = new Date(Date.now() + 10 * 60000).toISOString(); // 10 mins
 
-  const settings = mergeSettings(
-    (tenant?.settings as Record<string, unknown>) || null,
-    {
-      email_verification_code_hashed: codeHashed,
-      email_verification_code_expires_at: expiresAt,
-    }
-  );
+  // store the verification code in the user's profile, not tenant.settings
+  const { error } = await admin
+    .from("profiles")
+    .update({
+      login_email_code_hashed: codeHashed,
+      login_email_code_expires_at: expiresAt,
+    })
+    .eq("id", user.id);
 
-  await admin.from("tenants").update({ settings }).eq("id", tenantId);
+  if (error) throw new Error("Failed to store verification code.");
 
   const res = await sendSecurityVerificationEmail({
     to: emailToUse,
     businessName,
     code,
   });
-  
+
   if (!res.success) {
     throw new Error("Unable to send verification email. Please try again.");
   }
@@ -1027,56 +1076,68 @@ export async function setupEmailTwoFactor(tenantId: string) {
 
 export async function verifyAndEnableEmailTwoFactor(
   tenantId: string,
-  code: string
+  code: string,
 ) {
-  const { admin } = await getAuthenticatedTenantContext(tenantId);
-  const { data: tenant } = await admin
-    .from("tenants")
-    .select("settings")
-    .eq("id", tenantId)
-    .single();
-  const currentSettings = (tenant?.settings as Record<string, any>) || {};
+  const { admin, user } = await getAuthenticatedTenantContext(tenantId);
 
-  if (
-    !currentSettings.email_verification_code_hashed ||
-    !currentSettings.email_verification_code_expires_at
-  ) {
+  // read pending verification code from the user's profile
+  const { data: profile } = await admin
+    .from("profiles")
+    .select(
+      "login_email_code_hashed, login_email_code_expires_at, recovery_codes_hashed, recovery_codes_encrypted",
+    )
+    .eq("id", user.id)
+    .single();
+
+  if (!profile?.login_email_code_hashed || !profile?.login_email_code_expires_at) {
     throw new Error("No pending verification code.");
   }
 
-  if (new Date(currentSettings.email_verification_code_expires_at) < new Date()) {
+  if (new Date(profile.login_email_code_expires_at) < new Date()) {
     throw new Error("Verification code has expired. Please request a new one.");
   }
 
-  if (currentSettings.email_verification_code_hashed !== hashValue(code)) {
+  if (profile.login_email_code_hashed !== hashValue(code)) {
     throw new Error("Invalid verification code.");
   }
 
-  let recoveryCodes: string[] = [];
-  let recoveryCodesHashed: string[] = currentSettings.recovery_codes_hashed || [];
-  let recoveryCodesGeneratedAt = currentSettings.recovery_codes_generated_at || null;
-  
-  if (!recoveryCodesHashed.length) {
-    recoveryCodes = Array.from({ length: 10 }, () =>
-      crypto.randomBytes(4).toString("hex")
-    );
-    recoveryCodesHashed = recoveryCodes.map((c) => hashValue(c));
+  // reuse existing recovery codes if already generated, otherwise create fresh ones
+  let recoveryCodes: string[];
+  let recoveryCodesHashed: string[];
+  let recoveryCodesEncrypted: string;
+  let recoveryCodesGeneratedAt: string;
+
+  const existingCodes = deserializeRecoveryCodes(profile.recovery_codes_encrypted);
+  const existingHashed: string[] = profile.recovery_codes_hashed || [];
+
+  if (existingHashed.length && existingCodes.length) {
+    recoveryCodes = existingCodes;
+    recoveryCodesHashed = existingHashed;
+    recoveryCodesEncrypted = profile.recovery_codes_encrypted!;
+    recoveryCodesGeneratedAt = new Date().toISOString();
+  } else {
+    const fresh = generateFreshRecoveryCodes();
+    recoveryCodes = fresh.codes;
+    recoveryCodesHashed = fresh.hashed;
+    recoveryCodesEncrypted = fresh.encrypted;
     recoveryCodesGeneratedAt = new Date().toISOString();
   }
 
-  const newSettings = mergeSettings(currentSettings, {
-    two_factor_enabled: true,
-    has_email: true,
-    email_updated_at: new Date().toISOString(),
-    recovery_codes_hashed: recoveryCodesHashed,
-    recovery_codes_generated_at: recoveryCodesGeneratedAt,
-    email_verification_code_hashed: null, // clear it
-    email_verification_code_expires_at: null,
-  });
-
-  const { error } = await admin.from("tenants").update({ settings: newSettings }).eq("id", tenantId);
+  const { error } = await admin
+    .from("profiles")
+    .update({
+      two_factor_enabled: true,
+      has_email_2fa: true,
+      email_2fa_updated_at: new Date().toISOString(),
+      recovery_codes_hashed: recoveryCodesHashed,
+      [RECOVERY_CODES_ENCRYPTED_FIELD]: recoveryCodesEncrypted,
+      recovery_codes_generated_at: recoveryCodesGeneratedAt,
+      login_email_code_hashed: null, // clear after successful verification
+      login_email_code_expires_at: null,
+    })
+    .eq("id", user.id);
   if (error) throw new Error(error.message);
-  
+
   revalidatePath(`/${tenantId}/settings`);
 
   return { success: true, recoveryCodes };
@@ -1084,73 +1145,101 @@ export async function verifyAndEnableEmailTwoFactor(
 
 export async function disableTwoFactorAuth(
   tenantId: string,
-  passwordConfirm: string
+  passwordConfirm: string,
+  method: "all" | "authenticator" | "email" = "all",
 ) {
-  const { admin, supabase } = await getAuthenticatedTenantContext(tenantId);
+  const { admin, supabase, user } =
+    await getAuthenticatedTenantContext(tenantId);
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user?.email) throw new Error("Not authenticated");
+  const {
+    data: { user: authUser },
+  } = await supabase.auth.getUser();
+  if (!authUser?.email) throw new Error("Not authenticated");
 
   const { error: signInError } = await supabase.auth.signInWithPassword({
-    email: user.email,
+    email: authUser.email,
     password: passwordConfirm,
   });
 
   if (signInError) throw new Error("Incorrect password.");
 
-  const { data: tenant } = await admin
-    .from("tenants")
-    .select("settings")
-    .eq("id", tenantId)
+  // read current 2fa state from user's profile
+  const { data: profile } = await admin
+    .from("profiles")
+    .select("has_authenticator, has_email_2fa")
+    .eq("id", user.id)
     .single();
-  const currentSettings = (tenant?.settings as Record<string, any>) || {};
 
-  const newSettings = { ...currentSettings };
-  delete newSettings.two_factor_enabled;
-  delete newSettings.has_authenticator;
-  delete newSettings.has_email;
-  delete newSettings.authenticator_updated_at;
-  delete newSettings.email_updated_at;
-  delete newSettings.totp_secret_encrypted;
-  delete newSettings.recovery_codes_hashed;
-  delete newSettings.recovery_codes_generated_at;
-  delete newSettings.require_two_factor_auth;
+  const profilePatch: Record<string, unknown> = {};
 
-  const { error } = await admin.from("tenants").update({ settings: newSettings }).eq("id", tenantId);
+  if (method === "all") {
+    profilePatch.two_factor_enabled = false;
+    profilePatch.has_authenticator = false;
+    profilePatch.has_email_2fa = false;
+    profilePatch.totp_secret_encrypted = null;
+    profilePatch.recovery_codes_hashed = null;
+    profilePatch[RECOVERY_CODES_ENCRYPTED_FIELD] = null;
+    profilePatch.recovery_codes_generated_at = null;
+    profilePatch.authenticator_updated_at = null;
+    profilePatch.email_2fa_updated_at = null;
+    profilePatch.login_email_code_hashed = null;
+    profilePatch.login_email_code_expires_at = null;
+  } else {
+    const remainingHasAuthenticator =
+      method === "email" ? profile?.has_authenticator === true : false;
+    const remainingHasEmail =
+      method === "authenticator" ? profile?.has_email_2fa === true : false;
+
+    if (method === "authenticator") {
+      profilePatch.has_authenticator = false;
+      profilePatch.totp_secret_encrypted = null;
+      profilePatch.authenticator_updated_at = null;
+    } else {
+      profilePatch.has_email_2fa = false;
+      profilePatch.email_2fa_updated_at = null;
+      profilePatch.login_email_code_hashed = null;
+      profilePatch.login_email_code_expires_at = null;
+    }
+
+    if (!remainingHasAuthenticator && !remainingHasEmail) {
+      // no methods left — fully disable 2fa and clear recovery codes
+      profilePatch.two_factor_enabled = false;
+      profilePatch.recovery_codes_hashed = null;
+      profilePatch[RECOVERY_CODES_ENCRYPTED_FIELD] = null;
+      profilePatch.recovery_codes_generated_at = null;
+    } else {
+      profilePatch.two_factor_enabled = true;
+    }
+  }
+
+  const { error } = await admin
+    .from("profiles")
+    .update(profilePatch)
+    .eq("id", user.id);
   if (error) throw new Error(error.message);
-  
+
   revalidatePath(`/${tenantId}/settings`);
 
   return { success: true };
 }
 
 export async function generateRecoveryCodes(tenantId: string) {
-  const { admin } = await getAuthenticatedTenantContext(tenantId);
+  const { admin, user } = await getAuthenticatedTenantContext(tenantId);
 
-  const recoveryCodes = Array.from({ length: 10 }, () =>
-    crypto.randomBytes(4).toString("hex")
-  );
-  const recoveryCodesHashed = recoveryCodes.map((c) => hashValue(c));
+  const fresh = generateFreshRecoveryCodes();
 
-  const { data: tenant } = await admin
-    .from("tenants")
-    .select("settings")
-    .eq("id", tenantId)
-    .single();
-
-  const settings = mergeSettings(
-    (tenant?.settings as Record<string, unknown>) || null,
-    {
-      recovery_codes_hashed: recoveryCodesHashed,
+  // write new recovery codes to the user's own profile row
+  const { error } = await admin
+    .from("profiles")
+    .update({
+      recovery_codes_hashed: fresh.hashed,
+      [RECOVERY_CODES_ENCRYPTED_FIELD]: fresh.encrypted,
       recovery_codes_generated_at: new Date().toISOString(),
-    }
-  );
-
-  const { error } = await admin.from("tenants").update({ settings }).eq("id", tenantId);
+    })
+    .eq("id", user.id);
   if (error) throw new Error(error.message);
-  
+
   revalidatePath(`/${tenantId}/settings`);
 
-  return { success: true, recoveryCodes };
+  return { success: true, recoveryCodes: fresh.codes };
 }
-
