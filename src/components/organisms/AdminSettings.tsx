@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   User,
   Globe,
@@ -13,14 +13,22 @@ import {
   Key,
   Laptop,
   Smartphone,
+  Loader2,
+  AlertCircle,
+  CheckCircle2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
 import { Toggle } from "@/components/atoms/Toggle";
+import { Modal } from "@/components/molecules/Modal";
+import { ActionConfirmationModal } from "@/components/molecules/ConfirmationModal";
+import { Dropdown } from "@/components/molecules/Dropdown";
 import { SectionHeader } from "@/components/molecules/SectionHeader";
 import { IntegrationCard } from "@/components/molecules/IntegrationCard";
 import { SessionCard } from "@/components/molecules/SessionCard";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { logActivity } from "@/lib/utils/logging";
 
 type SettingsTab =
   | "account"
@@ -86,6 +94,72 @@ export const AdminSettings = () => {
 };
 
 const AccountSettings = () => {
+  const [firstName, setFirstName] = useState("Admin");
+  const [lastName, setLastName] = useState("User");
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const supabase = createSupabaseBrowserClient();
+
+  useEffect(() => {
+    async function loadProfile() {
+      const { data: userData } = await supabase.auth.getUser();
+      if (userData?.user) {
+        setEmail(userData.user.email || "");
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("full_name")
+          .eq("id", userData.user.id)
+          .single();
+        if (profile) {
+          const parts = profile.full_name.split(" ");
+          setFirstName(parts[0] || "");
+          setLastName(parts.slice(1).join(" ") || "");
+        }
+      }
+      setLoading(false);
+    }
+    loadProfile();
+  }, [supabase]);
+
+  const handleSave = async () => {
+    setShowConfirmModal(false);
+    setSaving(true);
+    const { data: userData } = await supabase.auth.getUser();
+
+    if (userData?.user) {
+      const fullName = `${firstName} ${lastName}`.trim();
+
+      // 1. Update Profile
+      await supabase
+        .from("profiles")
+        .update({ full_name: fullName })
+        .eq("id", userData.user.id);
+
+      // 2. Log the activity using our new schema
+      await logActivity({
+        supabase,
+        actorId: userData.user.id,
+        actorName: fullName,
+        actionType: "UPDATE",
+        description: "Updated personal account profile settings",
+        metadata: { email, first_name: firstName, last_name: lastName },
+      });
+    }
+    setSaving(false);
+    setShowSuccessModal(true);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-brand-primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div>
@@ -105,8 +179,8 @@ const AccountSettings = () => {
             className="mb-0 py-2 border-gray-100"
           />
           <div className="flex flex-col sm:flex-row gap-6 pt-2">
-            <div className="w-24 h-24 rounded-full bg-brand-primary flex items-center justify-center text-white text-3xl font-bold flex-shrink-0 border-4 border-white shadow-md">
-              A
+            <div className="w-24 h-24 rounded-full bg-brand-primary flex items-center justify-center text-white text-3xl font-bold flex-shrink-0 border-4 border-white shadow-md uppercase">
+              {firstName.charAt(0)}
             </div>
             <div className="flex-1 space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -114,13 +188,21 @@ const AccountSettings = () => {
                   <label className="text-sm font-medium text-text-primary">
                     First Name
                   </label>
-                  <Input defaultValue="Admin" className="py-2.5 rounded-xl" />
+                  <Input
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    className="py-2.5 rounded-xl"
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium text-text-primary">
                     Last Name
                   </label>
-                  <Input defaultValue="User" className="py-2.5 rounded-xl" />
+                  <Input
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    className="py-2.5 rounded-xl"
+                  />
                 </div>
               </div>
               <div className="space-y-1.5">
@@ -128,7 +210,8 @@ const AccountSettings = () => {
                   Email Address
                 </label>
                 <Input
-                  defaultValue="admin@qios.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   type="email"
                   className="py-2.5 rounded-xl"
                 />
@@ -167,17 +250,123 @@ const AccountSettings = () => {
           <Button
             variant="accent"
             shape="rounded"
-            leftIcon={<Save size={18} />}
+            leftIcon={
+              saving ? (
+                <Loader2 size={18} className="animate-spin" />
+              ) : (
+                <Save size={18} />
+              )
+            }
+            onClick={() => setShowConfirmModal(true)}
+            disabled={saving}
           >
-            Save Changes
+            {saving ? "Saving..." : "Save Changes"}
           </Button>
         </div>
       </div>
+
+      <ActionConfirmationModal
+        isOpen={showConfirmModal}
+        action="save"
+        title="Confirm Updates"
+        message="Are you sure you want to apply these changes to your account settings?"
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={handleSave}
+        saving={saving}
+      />
+
+      <ActionConfirmationModal
+        isOpen={showSuccessModal}
+        action="success"
+        title="Success"
+        message="Your account settings have been successfully updated."
+        onClose={() => setShowSuccessModal(false)}
+        onConfirm={() => setShowSuccessModal(false)}
+      />
     </div>
   );
 };
 
 const PlatformSettings = () => {
+  const [platformName, setPlatformName] = useState("Qios");
+  const [supportEmail, setSupportEmail] = useState("support@qios.com");
+  const [currency, setCurrency] = useState("PHP");
+  const [timezone, setTimezone] = useState("Asia/Manila");
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const supabase = createSupabaseBrowserClient();
+
+  useEffect(() => {
+    async function loadSettings() {
+      const { data } = await supabase
+        .from("platform_settings")
+        .select("*")
+        .eq("id", 1)
+        .single();
+      if (data) {
+        setPlatformName(data.platform_name || "Qios");
+        setSupportEmail(data.support_email || "support@qios.com");
+        setCurrency(data.default_currency || "PHP");
+        setTimezone(data.default_timezone || "Asia/Manila");
+        setMaintenanceMode(data.maintenance_mode || false);
+      }
+      setLoading(false);
+    }
+    loadSettings();
+  }, [supabase]);
+
+  // Inside PlatformSettings -> handleSave
+  const handleSave = async () => {
+    setShowConfirmModal(false);
+    setSaving(true);
+    const { data: userData } = await supabase.auth.getUser();
+
+    // Get current user profile for their name
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("id", userData?.user?.id)
+      .single();
+
+    // 1. Update Platform Settings
+    await supabase
+      .from("platform_settings")
+      .update({
+        platform_name: platformName,
+        support_email: supportEmail,
+        default_currency: currency,
+        default_timezone: timezone,
+        maintenance_mode: maintenanceMode,
+      })
+      .eq("id", 1);
+
+    // 2. Log the change
+    if (userData?.user) {
+      await logActivity({
+        supabase,
+        actorId: userData.user.id,
+        actorName: profile?.full_name || "Admin",
+        actionType: "UPDATE",
+        description: `Updated platform configuration: ${platformName}`,
+        metadata: { currency, timezone, maintenanceMode },
+      });
+    }
+
+    setSaving(false);
+    setShowSuccessModal(true);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-brand-primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div>
@@ -201,14 +390,19 @@ const PlatformSettings = () => {
               <label className="text-sm font-medium text-text-primary">
                 Platform Name
               </label>
-              <Input defaultValue="Qios" className="py-2.5 rounded-xl" />
+              <Input
+                value={platformName}
+                onChange={(e) => setPlatformName(e.target.value)}
+                className="py-2.5 rounded-xl"
+              />
             </div>
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-text-primary">
                 Support Email
               </label>
               <Input
-                defaultValue="support@qios.com"
+                value={supportEmail}
+                onChange={(e) => setSupportEmail(e.target.value)}
                 type="email"
                 className="py-2.5 rounded-xl"
               />
@@ -227,7 +421,11 @@ const PlatformSettings = () => {
               <label className="text-sm font-medium text-text-primary">
                 Default Currency
               </label>
-              <select className="w-full px-4 py-2.5 rounded-xl border-2 border-[#E5E5E5] focus:outline-none focus:ring-2 focus:ring-brand-accent/20 focus:border-brand-accent transition-colors bg-white appearance-none cursor-pointer">
+              <select
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value)}
+                className="w-full px-4 py-2.5 rounded-xl border-2 border-[#E5E5E5] focus:outline-none focus:ring-2 focus:ring-brand-accent/20 focus:border-brand-accent transition-colors bg-white appearance-none cursor-pointer"
+              >
                 <option value="PHP">PHP (₱)</option>
                 <option value="USD">USD ($)</option>
                 <option value="EUR">EUR (€)</option>
@@ -237,7 +435,11 @@ const PlatformSettings = () => {
               <label className="text-sm font-medium text-text-primary">
                 Default Timezone
               </label>
-              <select className="w-full px-4 py-2.5 rounded-xl border-2 border-[#E5E5E5] focus:outline-none focus:ring-2 focus:ring-brand-accent/20 focus:border-brand-accent transition-colors bg-white appearance-none cursor-pointer">
+              <select
+                value={timezone}
+                onChange={(e) => setTimezone(e.target.value)}
+                className="w-full px-4 py-2.5 rounded-xl border-2 border-[#E5E5E5] focus:outline-none focus:ring-2 focus:ring-brand-accent/20 focus:border-brand-accent transition-colors bg-white appearance-none cursor-pointer"
+              >
                 <option value="Asia/Manila">Asia/Manila (GMT+8)</option>
                 <option value="UTC">UTC</option>
                 <option value="America/New_York">America/New_York (EST)</option>
@@ -262,7 +464,8 @@ const PlatformSettings = () => {
             </div>
             <Toggle
               variant="primary"
-              defaultIsOn={false}
+              isOn={maintenanceMode}
+              onChange={(val) => setMaintenanceMode(val)}
               className="ring-red-500 focus:ring-red-500 focus:ring-offset-red-50"
             />
           </div>
@@ -272,40 +475,78 @@ const PlatformSettings = () => {
           <Button
             variant="accent"
             shape="rounded"
-            leftIcon={<Save size={18} />}
+            leftIcon={
+              saving ? (
+                <Loader2 size={18} className="animate-spin" />
+              ) : (
+                <Save size={18} />
+              )
+            }
+            onClick={() => setShowConfirmModal(true)}
+            disabled={saving}
           >
-            Save Configuration
+            {saving ? "Saving..." : "Save Configuration"}
           </Button>
         </div>
       </div>
+
+      <ActionConfirmationModal
+        isOpen={showConfirmModal}
+        action="save"
+        title="Save Platform Configurations?"
+        message="Are you sure you want to apply these global platform configurations?"
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={handleSave}
+        saving={saving}
+      />
+
+      <ActionConfirmationModal
+        isOpen={showSuccessModal}
+        action="success"
+        title="Configurations Saved!"
+        message="Global platform configurations have been successfully updated."
+        onClose={() => setShowSuccessModal(false)}
+        onConfirm={() => setShowSuccessModal(false)}
+      />
     </div>
   );
 };
 
 const TeamSettings = () => {
-  const admins = [
-    {
-      id: 1,
-      name: "Admin User",
-      email: "admin@qios.com",
-      role: "Super Admin",
-      status: "Active",
-    },
-    {
-      id: 2,
-      name: "Support Staff",
-      email: "support@qios.com",
-      role: "Support",
-      status: "Active",
-    },
-    {
-      id: 3,
-      name: "Billing Manager",
-      email: "billing@qios.com",
-      role: "Billing",
-      status: "Inactive",
-    },
-  ];
+  const [admins, setAdmins] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const supabase = createSupabaseBrowserClient();
+
+  useEffect(() => {
+    async function loadAdmins() {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, full_name, role")
+        .in("role", ["super_admin"]);
+
+      if (data) {
+        setAdmins(
+          data.map((p: any) => ({
+            id: p.id,
+            name: p.full_name,
+            email: "Protected",
+            role: "Super Admin",
+            status: "Active",
+          })),
+        );
+      }
+      setLoading(false);
+    }
+    loadAdmins();
+  }, [supabase]);
+
+  if (loading) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-brand-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -346,7 +587,7 @@ const TeamSettings = () => {
                 >
                   <td className="py-4 px-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-brand-primary/20 flex items-center justify-center text-brand-accent font-bold">
+                      <div className="w-10 h-10 rounded-full bg-brand-primary/20 flex items-center justify-center text-brand-accent font-bold uppercase">
                         {admin.name.charAt(0)}
                       </div>
                       <div>
@@ -383,6 +624,16 @@ const TeamSettings = () => {
                   </td>
                 </tr>
               ))}
+              {admins.length === 0 && (
+                <tr>
+                  <td
+                    colSpan={4}
+                    className="py-8 text-center text-text-secondary"
+                  >
+                    No admins found.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -427,6 +678,148 @@ const IntegrationSettings = () => {
 };
 
 const SecuritySettings = () => {
+  const [passwordMinLength, setPasswordMinLength] = useState("8");
+  const [sessionTimeoutHours, setSessionTimeoutHours] = useState("24");
+  const [sessions, setSessions] = useState<any[]>([]);
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const [sessionToRevoke, setSessionToRevoke] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showRevokeConfirmModal, setShowRevokeConfirmModal] = useState(false);
+  const supabase = createSupabaseBrowserClient();
+
+  useEffect(() => {
+    async function loadSettings() {
+      // Load platform settings
+      const { data } = await supabase
+        .from("platform_settings")
+        .select("password_min_length, session_timeout_hours")
+        .eq("id", 1)
+        .single();
+      if (data) {
+        setPasswordMinLength(data.password_min_length?.toString() || "8");
+        setSessionTimeoutHours(data.session_timeout_hours?.toString() || "24");
+      }
+
+      // Load active sessions
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (sessionData?.session) {
+        setCurrentSessionId(sessionData.session.id);
+      }
+
+      const { data: mySessions, error: sessionFetchError } =
+        await supabase.rpc("get_my_sessions");
+      console.log("Sessions fetch result:", { mySessions, sessionFetchError });
+
+      if (mySessions) {
+        // Sort current session first
+        const sortedSessions = [...mySessions].sort((a, b) => {
+          if (a.id === sessionData?.session?.id) return -1;
+          if (b.id === sessionData?.session?.id) return 1;
+          return (
+            new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+          );
+        });
+        setSessions(sortedSessions);
+      }
+
+      setLoading(false);
+    }
+    loadSettings();
+  }, [supabase]);
+
+  const handleSave = async () => {
+    setShowConfirmModal(false);
+    setSaving(true);
+    const { data: userData } = await supabase.auth.getUser();
+    await supabase
+      .from("platform_settings")
+      .update({
+        password_min_length: parseInt(passwordMinLength),
+        session_timeout_hours: parseInt(sessionTimeoutHours),
+      })
+      .eq("id", 1);
+
+    if (userData?.user) {
+      await logActivity({
+        supabase,
+        actorId: userData.user.id,
+        actorName: "Admin",
+        actionType: "UPDATE",
+        description: "Updated security policy settings",
+        metadata: {
+          password_min_length: passwordMinLength,
+          session_timeout_hours: sessionTimeoutHours,
+        },
+      });
+    }
+    setSaving(false);
+    setShowSuccessModal(true);
+  };
+
+  const handleRevokeSession = async (sessionId: string) => {
+    const { error } = await supabase.rpc("revoke_session", {
+      session_id: sessionId,
+    });
+
+    if (!error) {
+      const { data: userData } = await supabase.auth.getUser();
+      setSessions((prev) => prev.filter((s) => s.id !== sessionId));
+
+      await logActivity({
+        supabase,
+        actorId: userData.user?.id || "",
+        actorName: "Admin",
+        actionType: "REVOKE",
+        description: `Manually revoked active session: ${sessionId}`,
+      });
+    }
+  };
+
+  const confirmRevokeSession = async () => {
+    if (!sessionToRevoke) return;
+
+    const sessionId = sessionToRevoke.id;
+    setShowRevokeConfirmModal(false);
+    setSessionToRevoke(null);
+    await handleRevokeSession(sessionId);
+  };
+
+  const parseUserAgent = (ua: string | undefined | null) => {
+    let device = "Unknown Device";
+    let icon = <Laptop className="w-8 h-8" strokeWidth={1.5} />;
+
+    if (!ua) return { deviceText: `${device} • Unknown Browser`, icon };
+
+    if (/Windows/i.test(ua)) device = "Windows";
+    else if (/Mac/i.test(ua) && !/iPhone|iPad|iPod/i.test(ua)) device = "macOS";
+    else if (/iPhone|iPad|iPod/i.test(ua)) {
+      device = "iOS";
+      icon = <Smartphone className="w-8 h-8" strokeWidth={1.5} />;
+    } else if (/Android/i.test(ua)) {
+      device = "Android";
+      icon = <Smartphone className="w-8 h-8" strokeWidth={1.5} />;
+    } else if (/Linux/i.test(ua)) device = "Linux";
+
+    let browser = "Unknown Browser";
+    if (/Edg/i.test(ua)) browser = "Edge";
+    else if (/Firefox/i.test(ua)) browser = "Firefox";
+    else if (/Chrome/i.test(ua)) browser = "Chrome";
+    else if (/Safari/i.test(ua) && !/Chrome/i.test(ua)) browser = "Safari";
+
+    return { deviceText: `${device} • ${browser}`, icon };
+  };
+
+  if (loading) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-brand-primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div>
@@ -446,26 +839,28 @@ const SecuritySettings = () => {
             className="mb-0 py-2 border-gray-100"
           />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-text-primary">
-                Minimum Password Length
-              </label>
-              <select className="w-full px-4 py-2.5 rounded-xl border-2 border-[#E5E5E5] focus:outline-none focus:ring-2 focus:ring-brand-accent/20 focus:border-brand-accent transition-colors bg-white appearance-none cursor-pointer">
-                <option value="8">8 Characters</option>
-                <option value="10">10 Characters</option>
-                <option value="12">12 Characters</option>
-              </select>
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-text-primary">
-                Session Timeout
-              </label>
-              <select className="w-full px-4 py-2.5 rounded-xl border-2 border-[#E5E5E5] focus:outline-none focus:ring-2 focus:ring-brand-accent/20 focus:border-brand-accent transition-colors bg-white appearance-none cursor-pointer">
-                <option value="2">2 Hours</option>
-                <option value="12">12 Hours</option>
-                <option value="24">24 Hours</option>
-              </select>
-            </div>
+            <Dropdown
+              label="Minimum Password Length"
+              value={passwordMinLength}
+              onSelect={(opt) => setPasswordMinLength(opt.value)}
+              options={[
+                { label: "8 Characters", value: "8" },
+                { label: "10 Characters", value: "10" },
+                { label: "12 Characters", value: "12" },
+              ]}
+              className="max-w-full"
+            />
+            <Dropdown
+              label="Session Timeout"
+              value={sessionTimeoutHours}
+              onSelect={(opt) => setSessionTimeoutHours(opt.value)}
+              options={[
+                { label: "2 Hours", value: "2" },
+                { label: "12 Hours", value: "12" },
+                { label: "24 Hours", value: "24" },
+              ]}
+              className="max-w-full"
+            />
           </div>
         </div>
 
@@ -476,21 +871,35 @@ const SecuritySettings = () => {
             className="mb-0 py-2 border-gray-100"
           />
           <div className="space-y-3 pt-2">
-            <SessionCard
-              device="Windows 11 • Chrome"
-              location="Manila, PH"
-              status="Current Session"
-              icon={<Laptop className="w-8 h-8" strokeWidth={1.5} />}
-              isActive={true}
-            />
+            {sessions.length > 0 ? (
+              sessions.map((session) => {
+                const isActive = session.id === currentSessionId;
+                const { deviceText, icon } = parseUserAgent(session.user_agent);
 
-            <SessionCard
-              device="iOS 17 • Safari"
-              location="Manila, PH"
-              status="Last active 2 hours ago"
-              icon={<Smartphone className="w-8 h-8" strokeWidth={1.5} />}
-              isActive={false}
-            />
+                // Keep time relatively simple for this display
+                const lastUpdated = new Date(session.updated_at);
+                const timeStr = isActive
+                  ? "Current Session"
+                  : `Last active: ${lastUpdated.toLocaleDateString()} ${lastUpdated.toLocaleTimeString()}`;
+
+                return (
+                  <SessionCard
+                    key={session.id}
+                    device={deviceText}
+                    location={session.ip || "Unknown Location"}
+                    status={timeStr}
+                    icon={icon}
+                    isActive={isActive}
+                    onRevoke={() => {
+                      setSessionToRevoke(session);
+                      setShowRevokeConfirmModal(true);
+                    }}
+                  />
+                );
+              })
+            ) : (
+              <p className="text-sm text-text-secondary">No sessions found.</p>
+            )}
           </div>
         </div>
 
@@ -498,12 +907,68 @@ const SecuritySettings = () => {
           <Button
             variant="accent"
             shape="rounded"
-            leftIcon={<Save size={18} />}
+            leftIcon={
+              saving ? (
+                <Loader2 size={18} className="animate-spin" />
+              ) : (
+                <Save size={18} />
+              )
+            }
+            onClick={() => setShowConfirmModal(true)}
+            disabled={saving}
           >
-            Save Policies
+            {saving ? "Saving..." : "Save Policies"}
           </Button>
         </div>
       </div>
+
+      <ActionConfirmationModal
+        isOpen={showConfirmModal}
+        action="save"
+        title="Save Security Policies?"
+        message="Are you sure you want to apply these security policy changes?"
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={handleSave}
+        saving={saving}
+      />
+
+      <ActionConfirmationModal
+        isOpen={showSuccessModal}
+        action="success"
+        title="Policies Saved!"
+        message="Security policies have been successfully updated."
+        onClose={() => setShowSuccessModal(false)}
+        onConfirm={() => setShowSuccessModal(false)}
+      />
+
+      <ActionConfirmationModal
+        isOpen={showRevokeConfirmModal}
+        action="delete"
+        title="Revoke this device?"
+        message={
+          sessionToRevoke ? (
+            <>
+              This will immediately sign out the active session on{" "}
+              <strong className="font-semibold text-text-primary">
+                {parseUserAgent(sessionToRevoke.user_agent).deviceText}
+              </strong>{" "}
+              at{" "}
+              <strong className="font-semibold text-text-primary">
+                {sessionToRevoke.ip || "Unknown Location"}
+              </strong>
+              .
+            </>
+          ) : (
+            "Select a device to revoke."
+          )
+        }
+        confirmLabel="Yes, revoke"
+        onClose={() => {
+          setShowRevokeConfirmModal(false);
+          setSessionToRevoke(null);
+        }}
+        onConfirm={confirmRevokeSession}
+      />
     </div>
   );
 };

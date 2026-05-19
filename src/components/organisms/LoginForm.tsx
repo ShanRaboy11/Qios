@@ -248,13 +248,42 @@ export const LoginForm = () => {
       }
       
       const claims = decodeJwtPayload(signInData.session.access_token);
-      const jwtRole =
-        (claims.role as string | undefined) ??
-        (claims.user_role as string | undefined);
+      let role = claims.user_role as string | undefined;
       const jwtTenantId = claims.tenant_id as string | undefined;
 
       // Ensure tenant status is valid before even checking 2FA
       if (jwtTenantId && jwtRole !== "super_admin") {
+      // Ensure we know the actual role for maintenance mode check
+      // If user_role is empty in JWT or the user has default 'authenticated' role, fetch application role from profiles
+      if (!role || role === "authenticated") {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", signInData.user.id)
+          .single();
+        role = profile?.role;
+      }
+
+      // Check maintenance mode
+      const { data: platformSettings } = await supabase
+        .from("platform_settings")
+        .select("maintenance_mode")
+        .eq("id", 1)
+        .single();
+
+      if (platformSettings?.maintenance_mode && role !== "super_admin") {
+        await supabase.auth.signOut();
+        setError("The system is currently undergoing maintenance. Please try again later.");
+        return;
+      }
+
+      if (role === "super_admin") {
+        router.push("/admin/dashboard");
+        return;
+      }
+
+      if (jwtTenantId) {
+        // Enforce tenant status check
         const { data: tenant } = await supabase
           .from("tenants")
           .select("status")
@@ -274,6 +303,50 @@ export const LoginForm = () => {
         }
       }
 
+        if (role === "admin") {
+          router.push(`/${jwtTenantId}/dashboard`);
+          return;
+        }
+
+        if (role === "employee") {
+          router.push(`/${jwtTenantId}/employee/dashboard`);
+          return;
+        }
+      }
+
+      // Fallback: query the profiles table (requires RLS policy allowing
+      // authenticated users to SELECT their own row).
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("role, tenant_id")
+        .eq("id", signInData.user.id)
+        .single();
+
+      if (profileError || !profile) {
+        setError(
+          "Could not load your account profile. Please contact support.",
+        );
+        return;
+      }
+      
+      let tenantStatus = "approved";
+      if (profile.tenant_id && profile.role !== "super_admin") {
+        // Try to fetch tenant status, but catch if the column doesn't exist yet
+        const { data: tenantData, error: tenantError } = await supabase
+          .from("tenants")
+          .select("status")
+          .eq("id", profile.tenant_id)
+          .single();
+          
+        if (!tenantError && tenantData?.status) {
+          tenantStatus = tenantData.status;
+        }
+      }
+
+      if (profile.role !== "super_admin" && tenantStatus !== "approved") {
+        await supabase.auth.signOut();
+        if (tenantStatus === "pending") {
+          setError("Your business registration is currently pending super admin approval.");
       // Check if 2FA is required for this user
       const tfaCheck = await checkLoginTwoFactorRequired(jwtTenantId || "");
       
