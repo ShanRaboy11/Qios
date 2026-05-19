@@ -182,6 +182,7 @@ export const LoginForm = () => {
     hasEmail: boolean;
     routeDestination: string;
   } | null>(null);
+  const [useRecoveryCode, setUseRecoveryCode] = useState(false);
 
   useEffect(() => {
     // restore remembered email on mount
@@ -222,8 +223,8 @@ export const LoginForm = () => {
     setIsLoading(true);
     setError(null);
     try {
-      // NOTE: User requested UI-only for now: "dont validate code yet, show ui only... to redirect to their user dahboard"
-      // await verifyLoginTwoFactorCode(twoFactorConfig.userId, twoFactorCode);
+      // fully verify against the user's own profile (handles TOTP, email, and recovery codes)
+      await verifyLoginTwoFactorCode(twoFactorConfig.userId, twoFactorCode);
       if (twoFactorConfig.routeDestination) {
         router.push(twoFactorConfig.routeDestination);
       } else {
@@ -292,24 +293,28 @@ export const LoginForm = () => {
       }
 
       const claims = decodeJwtPayload(signInData.session.access_token);
-      let role = (claims.user_role || claims.role) as string | undefined;
-      const jwtTenantId = (claims.tenant_id || claims.tenantId) as
-        | string
-        | undefined;
-
-      // if jwt role is missing, fetch canonical role from profiles
+      
+      // always fetch canonical role and tenant from profiles table
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("role, tenant_id")
         .eq("id", signInData.user.id)
         .single();
 
-      if (!role && profile && !profileError) {
-        role = profile.role;
+      let role = profile?.role;
+      let tenantId = profile?.tenant_id;
+
+      // fallback to jwt claims if profile data is missing
+      if (!role) {
+        // avoid generic supabase role "authenticated"
+        role = claims.user_role || (claims.role !== "authenticated" ? claims.role : undefined);
+      }
+      
+      if (!tenantId) {
+        tenantId = claims.tenant_id || claims.tenantId;
       }
 
-      // determine tenant id from jwt or profile
-      const tenantId = jwtTenantId || profile?.tenant_id || "";
+      tenantId = tenantId || "";
 
       // check maintenance mode before allowing further access
       const { data: platformSettings } = await supabase
@@ -607,28 +612,50 @@ export const LoginForm = () => {
               <Shield className="w-8 h-8 text-brand-accent" />
             </div>
             <h1 className="text-2xl font-extrabold text-text-primary text-center">
-              Two-Factor Authentication
+              {useRecoveryCode
+                ? "Recovery Code"
+                : "Two-Factor Authentication"}
             </h1>
             <p className="b4 text-text-secondary mt-1 text-center max-w-sm">
-              {twoFactorConfig.hasAuthenticator && twoFactorConfig.hasEmail
-                ? "Please enter the 6-digit code from your authenticator app or the code sent to your email."
-                : twoFactorConfig.hasAuthenticator
-                  ? "Please enter the 6-digit code from your authenticator app."
-                  : "Please enter the 6-digit code sent to your email."}
+              {useRecoveryCode
+                ? "Please enter one of your 8-character backup recovery codes."
+                : twoFactorConfig.hasAuthenticator && twoFactorConfig.hasEmail
+                  ? "Please enter the 6-digit code from your authenticator app or the code sent to your email."
+                  : twoFactorConfig.hasAuthenticator
+                    ? "Please enter the 6-digit code from your authenticator app."
+                    : "Please enter the 6-digit code sent to your email."}
             </p>
 
             <form className="w-full mt-6 space-y-6" onSubmit={handleSubmit}>
-              <SixDigitInput
-                value={twoFactorCode}
-                onChange={(val) => {
-                  setTwoFactorCode(val);
-                  if (error) setError(null);
-                }}
-                disabled={isLoading}
-                isError={!!error}
-                errorMessage={error || undefined}
-              />
-              {/* error badge removed — handled inline by SixDigitInput */}
+              {useRecoveryCode ? (
+                <FormField
+                  label="Recovery Code"
+                  type="text"
+                  placeholder="Enter 8-character code"
+                  value={twoFactorCode}
+                  onChange={(e) => {
+                    setTwoFactorCode(e.target.value.replace(/[^0-9A-Za-z]/g, ""));
+                    if (error) setError(null);
+                  }}
+                  onKeyDown={handleKeyDown}
+                  isError={!!error}
+                  supportiveText={error || undefined}
+                  leftIcon={<Lock size={20} />}
+                  className="max-w-full"
+                  maxLength={8}
+                />
+              ) : (
+                <SixDigitInput
+                  value={twoFactorCode}
+                  onChange={(val) => {
+                    setTwoFactorCode(val);
+                    if (error) setError(null);
+                  }}
+                  disabled={isLoading}
+                  isError={!!error}
+                  errorMessage={error || undefined}
+                />
+              )}
 
               <Button
                 type="button"
@@ -636,11 +663,35 @@ export const LoginForm = () => {
                 variant="accent"
                 size="lg"
                 className="w-full h-[52px]"
-                disabled={twoFactorCode.length < 6 || isLoading}
+                disabled={
+                  (useRecoveryCode ? twoFactorCode.length < 8 : twoFactorCode.length < 6) ||
+                  isLoading
+                }
                 loading={isLoading}
               >
                 {isLoading ? "Verifying..." : "Verify Code"}
               </Button>
+
+              <div className="text-center mt-4">
+                <span className="text-text-secondary text-sm">
+                  {useRecoveryCode
+                    ? "Have your device? "
+                    : "Having trouble? "}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUseRecoveryCode(!useRecoveryCode);
+                    setTwoFactorCode("");
+                    setError(null);
+                  }}
+                  className="text-brand-primary font-bold hover:text-brand-accent transition-colors focus:outline-none text-sm"
+                >
+                  {useRecoveryCode
+                    ? "Use authenticator"
+                    : "Use recovery code"}
+                </button>
+              </div>
             </form>
           </div>
         ) : (
