@@ -7,6 +7,7 @@ import Link from "next/link";
 export interface CustomerHeaderProps {
   isCategoryView?: boolean;
   onBack?: () => void;
+  onProfileClick?: () => void;
 }
 
 // Add "as const" at the end to lock the string types
@@ -19,6 +20,7 @@ const smoothTransition = {
 export const CustomerHeader = ({
   isCategoryView = false,
   onBack,
+  onProfileClick,
 }: CustomerHeaderProps) => {
   return (
     <motion.div
@@ -65,6 +67,7 @@ export const CustomerHeader = ({
         <motion.button
           layout
           transition={smoothTransition}
+          onClick={onProfileClick}
           className="w-12 h-12 bg-white rounded-full flex items-center justify-center shrink-0 shadow-sm hover:shadow-md transition-shadow"
         >
           <User className="text-[#2D2D2D]" size={22} />

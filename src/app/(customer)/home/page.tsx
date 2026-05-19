@@ -13,12 +13,14 @@ import { ChevronRight } from "lucide-react";
 import OrderEditor from "@/components/organisms/OrderEditor";
 import { CartDrawer } from "@/components/organisms/CartDrawer";
 import { FloatingOrderStatus } from "@/components/organisms/FloatingOrderStatus";
+import { GuestProfileDrawer } from "@/components/organisms/GuestProfileDrawer";
 import { CartProvider } from "@/contexts/CartContext";
 import { MenuItemData } from "@/components/organisms/MenuCatalog";
 
 export default function CustomerHomePage() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<MenuItemData | null>(null);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   const isCategoryView = selectedCategory !== null;
 
@@ -33,6 +35,7 @@ export default function CustomerHomePage() {
           <CustomerHeader
             isCategoryView={isCategoryView}
             onBack={() => setSelectedCategory(null)}
+            onProfileClick={() => setIsProfileOpen(true)}
           />
 
           <div className="flex-grow flex flex-col relative w-full items-center">
@@ -285,6 +288,7 @@ export default function CustomerHomePage() {
         )}
         <CartDrawer />
         <FloatingOrderStatus />
+        <GuestProfileDrawer isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} />
       </motion.main>
     </CartProvider>
   );
