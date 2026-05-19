@@ -135,12 +135,25 @@ export const useMenuManagement = () => {
       if (isNew) {
         const tenant_id = await getCurrentTenantId();
 
+        const { data: lastCategory, error: lastCategoryError } = await supabase
+          .from("categories")
+          .select("display_order")
+          .eq("tenant_id", tenant_id)
+          .order("display_order", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (lastCategoryError) throw lastCategoryError;
+
+        const nextDisplayOrder = (lastCategory?.display_order ?? -1) + 1;
+
         const { data, error } = await supabase
           .from("categories")
           .insert({
             name: catDraft.name,
             icon: catDraft.icon || "flame",
             tenant_id,
+            display_order: nextDisplayOrder,
           })
           .select()
           .single();
