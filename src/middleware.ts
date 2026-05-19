@@ -15,59 +15,152 @@ export async function middleware(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) =>
-            request.cookies.set(name, value)
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value),
           );
+
           supabaseResponse = NextResponse.next({
             request,
           });
+
           cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
+            supabaseResponse.cookies.set(name, value, options),
           );
         },
       },
-    }
+    },
   );
 
-  const isAuthRoute = request.nextUrl.pathname === "/login";
-  
-  // For now, only restrict admin (super admin) pages
-  const isProtectedRoute = request.nextUrl.pathname.startsWith("/admin");
-  const isPublicRoute = !isProtectedRoute && !isAuthRoute;
+  const pathParts = request.nextUrl.pathname.split("/").filter(Boolean);
+  const firstPathSegment = pathParts[0] || "";
 
-  // Skip auth check for public routes to avoid unnecessary network calls
+  const isAuthRoute = firstPathSegment === "login";
+  const isSuperAdminRoute = firstPathSegment === "admin";
+
+  // known top-level static route segments in app
+  const knownStaticRoutes = [
+    "admin",
+    "api",
+    "auth",
+    "contact",
+    "draft",
+    "login",
+    "onboarding",
+    "services",
+    "setup",
+  ];
+
+  // detect tenant or employee routes
+  const isTenantOrEmployeeRoute =
+    firstPathSegment !== "" && !knownStaticRoutes.includes(firstPathSegment);
+
+  const pathTenantId = isTenantOrEmployeeRoute ? firstPathSegment : null;
+
+  const isProtectedRoute = isSuperAdminRoute || isTenantOrEmployeeRoute;
+
+  // get user session for protected/auth routes
   let user = null;
+  let accessToken = null;
+
   if (isProtectedRoute || isAuthRoute) {
     const {
       data: { user: authUser },
     } = await supabase.auth.getUser();
+
     user = authUser;
+
+    if (user) {
+      const { data: sessionData } = await supabase.auth.getSession();
+      accessToken = sessionData.session?.access_token;
+    }
   }
 
-  // Redirect to login if accessing protected routes without session
-  if (!user && isProtectedRoute) {
+  const isDev = process.env.NODE_ENV === "development";
+
+  // redirect unauthenticated users away from protected routes (disabled in dev)
+  if (!user && isProtectedRoute && !isDev) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = "/login";
     return NextResponse.redirect(loginUrl);
   }
 
-  // Redirect authenticated users trying to access login (but allow Server Actions to complete)
+  // tenant/employee authorization check (disabled in dev)
+  if (user && isTenantOrEmployeeRoute && !isDev) {
+    let role = null;
+    let userTenantId = null;
+
+    if (accessToken) {
+      try {
+        const payload = JSON.parse(
+          Buffer.from(accessToken.split(".")[1], "base64").toString(),
+        );
+        role = payload.role ?? payload.user_role;
+        userTenantId = payload.tenant_id;
+      } catch (e) {}
+    }
+
+    // fallback to database if token does not contain claims
+    if (!role) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role, tenant_id")
+        .eq("id", user.id)
+        .single();
+
+      if (profile) {
+        role = profile.role;
+        userTenantId = profile.tenant_id;
+      }
+    }
+
+    // detect employee routes
+    const isEmployeePath = request.nextUrl.pathname.startsWith(
+      `/${pathTenantId}/employee`,
+    );
+
+    if (role === "super_admin") {
+      // allow all access for now
+    } else if (role === "admin") {
+      if (userTenantId !== pathTenantId || isEmployeePath) {
+        const redirectUrl = request.nextUrl.clone();
+        redirectUrl.pathname = userTenantId
+          ? `/${userTenantId}/dashboard`
+          : "/";
+        return NextResponse.redirect(redirectUrl);
+      }
+    } else if (role === "employee") {
+      if (userTenantId !== pathTenantId || !isEmployeePath) {
+        const redirectUrl = request.nextUrl.clone();
+        redirectUrl.pathname = userTenantId
+          ? `/${userTenantId}/employee/dashboard`
+          : "/";
+        return NextResponse.redirect(redirectUrl);
+      }
+    } else {
+      const redirectUrl = request.nextUrl.clone();
+      redirectUrl.pathname = "/";
+      return NextResponse.redirect(redirectUrl);
+    }
+  }
+
+  // redirect authenticated users away from login
   const isServerAction = request.headers.has("next-action");
+
   if (user && isAuthRoute && !isServerAction) {
-    // Attempt to decode role/tenant_id from the session token (requires the custom access token hook payload)
-    // We can fetch user again via supabase or decode it
     const { data: sessionData } = await supabase.auth.getSession();
     const token = sessionData.session?.access_token;
-    
+
     let redirectPath = "/";
+
     if (token) {
       try {
         const payload = JSON.parse(
-          Buffer.from(token.split(".")[1], "base64").toString()
+          Buffer.from(token.split(".")[1], "base64").toString(),
         );
+
         const role = payload.role ?? payload.user_role;
         const tenantId = payload.tenant_id;
-        
+
         if (role === "super_admin") {
           redirectPath = "/admin/dashboard";
         } else if (role === "admin" && tenantId) {
@@ -76,13 +169,12 @@ export async function middleware(request: NextRequest) {
           redirectPath = `/${tenantId}/employee/dashboard`;
         }
       } catch (error) {
-        // Fallback to fetch profile from db if token doesn't have claims yet
         const { data: profile } = await supabase
           .from("profiles")
           .select("role, tenant_id")
           .eq("id", user.id)
           .single();
-          
+
         if (profile) {
           if (profile.role === "super_admin") {
             redirectPath = "/admin/dashboard";
@@ -94,7 +186,7 @@ export async function middleware(request: NextRequest) {
         }
       }
     }
-    
+
     const dashboardUrl = request.nextUrl.clone();
     dashboardUrl.pathname = redirectPath;
     return NextResponse.redirect(dashboardUrl);
@@ -105,13 +197,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - images, svg, fonts
-     */
     "/((?!_next/static|_next/image|favicon.ico|images|svg|fonts|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
