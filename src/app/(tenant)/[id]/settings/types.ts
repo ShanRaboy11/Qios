@@ -40,6 +40,13 @@ export interface TenantBrandingSettingsData {
   customThemes?: CustomTheme[];
 }
 
+export interface TenantNotificationSettingsData {
+  receiveSecurityAlerts: boolean;
+  receiveDailySalesSummary: boolean;
+  receiveLowStockAlerts: boolean;
+  receiveStaffOvertimeAlerts: boolean;
+}
+
 export interface TenantSecuritySettingsData {
   requireTwoFactorAuth: boolean;
   twoFactorEnabled?: boolean;
@@ -54,6 +61,7 @@ export interface TenantSettingsPageData {
   profile: TenantProfileSettingsData;
   store: TenantStoreSettingsData;
   branding: TenantBrandingSettingsData;
+  notifications: TenantNotificationSettingsData;
   security: TenantSecuritySettingsData;
 }
 

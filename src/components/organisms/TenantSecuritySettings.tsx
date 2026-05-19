@@ -16,7 +16,6 @@ import {
   Mail,
   Copy,
   Download,
-
   Trash2,
   KeyRound,
   Loader2,
@@ -25,16 +24,19 @@ import {
   ShieldAlert,
 } from "lucide-react";
 import QRCode from "react-qr-code";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
 import { Toggle } from "@/components/atoms/Toggle";
 import { Badge } from "@/components/atoms/Badge";
 import { ActionConfirmationModal } from "@/components/molecules/ConfirmationModal";
 import { SectionHeader } from "@/components/molecules/SectionHeader";
-import { SessionCard } from "@/components/molecules/SessionCard";
 import { cn } from "@/lib/utils";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import {
+  getTenantActiveSessions,
   revokeOtherTenantSessions,
+  revokeTenantSession,
   updateTenantPassword,
   setupAuthenticatorTwoFactor,
   verifyAndEnableAuthenticatorTwoFactor,
@@ -91,6 +93,96 @@ const getTimeAgo = (dateString?: string) => {
   if (diffInHours >= 1) return `${Math.floor(diffInHours)} hrs ago`;
   const diffInMins = diffInMs / (1000 * 60);
   return `${Math.floor(diffInMins)} mins ago`;
+};
+
+const parseSessionUserAgent = (userAgent?: string | null) => {
+  let device = "Unknown device";
+  let icon = <Laptop className="w-8 h-8" strokeWidth={1.5} />;
+
+  if (!userAgent) {
+    return { deviceText: `${device} • Unknown browser`, icon };
+  }
+
+  if (/iPhone|iPad|iPod/i.test(userAgent)) {
+    device = "iOS";
+    icon = <Smartphone className="w-8 h-8" strokeWidth={1.5} />;
+  } else if (/Android/i.test(userAgent)) {
+    device = "Android";
+    icon = <Smartphone className="w-8 h-8" strokeWidth={1.5} />;
+  } else if (/Mac/i.test(userAgent) && !/iPhone|iPad|iPod/i.test(userAgent)) {
+    device = "macOS";
+  } else if (/Windows/i.test(userAgent)) {
+    device = "Windows";
+  } else if (/Linux/i.test(userAgent)) {
+    device = "Linux";
+  }
+
+  let browser = "Unknown browser";
+  if (/Edg/i.test(userAgent)) browser = "Edge";
+  else if (/Firefox/i.test(userAgent)) browser = "Firefox";
+  else if (/Chrome/i.test(userAgent)) browser = "Chrome";
+  else if (/Safari/i.test(userAgent) && !/Chrome/i.test(userAgent)) {
+    browser = "Safari";
+  }
+
+  return { deviceText: `${device} • ${browser}`, icon };
+};
+
+const SessionCardRow = ({
+  device,
+  location,
+  badgeText,
+  icon,
+  onRevoke,
+  loading,
+}: {
+  device: string;
+  location: string;
+  badgeText: string;
+  icon: React.ReactNode;
+  onRevoke: () => void;
+  loading?: boolean;
+}) => {
+  return (
+    <div className="flex flex-col p-5 rounded-2xl border border-black/[0.05] bg-white transition-colors hover:bg-black/[0.01]">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-start gap-4">
+          <div className="w-12 h-12 rounded-full bg-brand-primary/10 flex items-center justify-center shrink-0 text-brand-accent">
+            {icon}
+          </div>
+          <div className="flex flex-col gap-0.5 select-none pt-1">
+            <span className="b2 font-bold transition-colors duration-300 text-text-primary">
+              {device}
+            </span>
+            <span className="b4 transition-colors duration-300 text-text-secondary">
+              {location}
+            </span>
+          </div>
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={onRevoke}
+          loading={loading}
+          className="border-brand-accent text-brand-accent hover:bg-brand-accent hover:text-white hover:border-brand-accent focus:ring-brand-accent"
+        >
+          Revoke
+        </Button>
+      </div>
+
+      <div className="flex items-center justify-between mt-4 pt-4 border-t border-black/[0.05]">
+        <Badge
+          color="success"
+          variant="subtle"
+          shape="rounded"
+          className="text-xs"
+        >
+          {badgeText}
+        </Badge>
+      </div>
+    </div>
+  );
 };
 
 const SixDigitInput = ({
@@ -197,6 +289,12 @@ export const TenantSecuritySettings = ({
   const [confirmPassword, setConfirmPassword] = useState("");
   const [sessionNotice, setSessionNotice] = useState("");
   const [sessionError, setSessionError] = useState("");
+  const [sessions, setSessions] = useState<any[]>([]);
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const [loadingSessions, setLoadingSessions] = useState(true);
+  const [revokingSessionId, setRevokingSessionId] = useState<string | null>(
+    null,
+  );
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [loggingOutSessions, setLoggingOutSessions] = useState(false);
   const [passwordState, passwordAction, passwordPending] = useActionState(
@@ -205,6 +303,8 @@ export const TenantSecuritySettings = ({
   );
 
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const router = useRouter();
+  const supabase = createSupabaseBrowserClient();
 
   // 2fa detailed state
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(
@@ -265,6 +365,36 @@ export const TenantSecuritySettings = ({
   }, [passwordState.success]);
 
   useEffect(() => {
+    let isMounted = true;
+
+    const loadSessions = async () => {
+      setLoadingSessions(true);
+
+      try {
+        const result = await getTenantActiveSessions(tenantId);
+        if (!isMounted) return;
+        setCurrentSessionId(result.currentSessionId);
+        setSessions(result.sessions);
+      } catch (error) {
+        if (!isMounted) return;
+        setSessionError(
+          error instanceof Error ? error.message : "Unable to load sessions.",
+        );
+      } finally {
+        if (isMounted) {
+          setLoadingSessions(false);
+        }
+      }
+    };
+
+    void loadSessions();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [tenantId]);
+
+  useEffect(() => {
     setTwoFactorEnabled(initialData.twoFactorEnabled || false);
     setHasAuthenticator(initialData.hasAuthenticator || false);
     setHasEmail(initialData.hasEmail || false);
@@ -295,6 +425,9 @@ export const TenantSecuritySettings = ({
     try {
       await revokeOtherTenantSessions(tenantId);
       setSessionNotice("Other sessions were logged out successfully.");
+      setSessions((previous) =>
+        previous.filter((session) => session.id === currentSessionId),
+      );
       setIsLogoutModalOpen(false);
     } catch (error) {
       setSessionError(
@@ -304,6 +437,37 @@ export const TenantSecuritySettings = ({
       );
     } finally {
       setLoggingOutSessions(false);
+    }
+  };
+
+  const handleRevokeSession = async (sessionId: string) => {
+    setSessionError("");
+    setSessionNotice("");
+    setRevokingSessionId(sessionId);
+
+    try {
+      await revokeTenantSession(tenantId, sessionId);
+
+      if (sessionId === currentSessionId) {
+        try {
+          await supabase.auth.signOut();
+        } catch {
+          // ignore
+        }
+        router.replace("/login");
+        return;
+      }
+
+      setSessions((previous) =>
+        previous.filter((session) => session.id !== sessionId),
+      );
+      setSessionNotice("Session revoked successfully.");
+    } catch (error) {
+      setSessionError(
+        error instanceof Error ? error.message : "Unable to revoke session.",
+      );
+    } finally {
+      setRevokingSessionId(null);
     }
   };
 
@@ -874,29 +1038,61 @@ export const TenantSecuritySettings = ({
               title="Active Sessions"
               className="mb-0 py-2 border-gray-100"
             />
+            {sessionNotice && (
+              <div className="flex items-center gap-2 w-full text-green-700 bg-green-50 border border-green-100 rounded-xl px-4 py-3">
+                <CheckCircle2 className="h-4 w-4 shrink-0" />
+                <p className="text-sm font-medium">{sessionNotice}</p>
+              </div>
+            )}
+            {sessionError && (
+              <div className="flex items-center gap-2 w-full text-red-700 bg-red-50 border border-red-100 rounded-xl px-4 py-3">
+                <ShieldAlert className="h-4 w-4 shrink-0" />
+                <p className="text-sm font-medium">{sessionError}</p>
+              </div>
+            )}
             <div className="space-y-3 pt-2">
-              <SessionCard
-                device="Windows 11 • Chrome"
-                location="Manila, PH"
-                status="Current Session"
-                icon={<Laptop className="w-8 h-8" strokeWidth={1.5} />}
-                isActive={true}
-              />
-              <SessionCard
-                device="iOS 17 • Safari"
-                location="Manila, PH"
-                status="Last active 2 hours ago"
-                icon={<Smartphone className="w-8 h-8" strokeWidth={1.5} />}
-                isActive={false}
-              />
+              {loadingSessions ? (
+                <div className="flex h-40 items-center justify-center rounded-2xl border border-black/[0.05] bg-white">
+                  <Loader2 className="h-6 w-6 animate-spin text-brand-primary" />
+                </div>
+              ) : sessions.length > 0 ? (
+                sessions.map((session) => {
+                  const isCurrent = session.id === currentSessionId;
+                  const { deviceText, icon } = parseSessionUserAgent(
+                    session.user_agent,
+                  );
+                  const badgeText = isCurrent
+                    ? "Active now"
+                    : `Last active ${getTimeAgo(session.updated_at)}`;
+
+                  return (
+                    <SessionCardRow
+                      key={session.id}
+                      device={deviceText}
+                      location={session.ip_address || "Unknown location"}
+                      badgeText={badgeText}
+                      icon={icon}
+                      loading={revokingSessionId === session.id}
+                      onRevoke={() => void handleRevokeSession(session.id)}
+                    />
+                  );
+                })
+              ) : (
+                <div className="rounded-2xl border border-black/[0.05] bg-white px-5 py-6">
+                  <p className="text-sm text-text-secondary">
+                    No active sessions found.
+                  </p>
+                </div>
+              )}
             </div>
             <div className="flex justify-end mt-4">
               <Button
                 type="button"
-                variant="accent"
+                variant="outline"
                 shape="rounded"
                 leftIcon={<LogOut className="w-4 h-4" />}
                 onClick={() => setIsLogoutModalOpen(true)}
+                loading={loggingOutSessions}
               >
                 Log Out All Other Sessions
               </Button>
@@ -936,7 +1132,6 @@ export const TenantSecuritySettings = ({
             </div>
 
             <div className="p-6 md:p-8 overflow-y-auto">
-
               {setupStep === "authenticator" && (
                 <div className="space-y-6">
                   {setupLoading && !setupQrUrl ? (

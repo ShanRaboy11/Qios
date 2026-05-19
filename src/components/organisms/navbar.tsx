@@ -29,10 +29,75 @@ export const Navbar = ({
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const navRef = useRef<HTMLElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
+  const [tenantDisplayName, setTenantDisplayName] = useState("Tenant");
+  const [tenantDisplayEmail, setTenantDisplayEmail] =
+    useState("tenant@qios.com");
+  const [tenantAvatarInitials, setTenantAvatarInitials] = useState("TU");
   const router = useRouter();
   const params = useParams();
   const pathname = usePathname();
   const tenantId = (params?.id as string) || "default-tenant";
+
+  useEffect(() => {
+    if (type !== "tenant") return;
+
+    let isMounted = true;
+
+    const loadTenantHeader = async () => {
+      try {
+        const supabase = createSupabaseBrowserClient();
+        const { data: authData } = await supabase.auth.getUser();
+        const user = authData.user;
+
+        if (!user || !isMounted) return;
+
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("full_name")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        const metadata = user.user_metadata as Record<string, unknown> | null;
+        const nameFromMetadata =
+          typeof metadata?.full_name === "string" && metadata.full_name.trim()
+            ? metadata.full_name.trim()
+            : typeof metadata?.display_name === "string" &&
+                metadata.display_name.trim()
+              ? metadata.display_name.trim()
+              : "";
+
+        const displayName =
+          nameFromMetadata ||
+          profile?.full_name?.trim() ||
+          user.email ||
+          "Tenant";
+        const displayEmail = user.email || "tenant@qios.com";
+        const initialsSource = displayName
+          .split(/\s+/)
+          .filter(Boolean)
+          .slice(0, 2);
+
+        setTenantDisplayName(displayName);
+        setTenantDisplayEmail(displayEmail);
+        setTenantAvatarInitials(
+          initialsSource.length > 1
+            ? `${initialsSource[0].charAt(0)}${initialsSource[1].charAt(0)}`.toUpperCase()
+            : displayName.charAt(0).toUpperCase() || "TU",
+        );
+      } catch {
+        if (!isMounted) return;
+        setTenantDisplayName("Tenant");
+        setTenantDisplayEmail("tenant@qios.com");
+        setTenantAvatarInitials("TU");
+      }
+    };
+
+    void loadTenantHeader();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [type]);
 
   const handleLogout = async () => {
     try {
@@ -231,7 +296,7 @@ export const Navbar = ({
               className="rounded-full border border-brand-accent/20 hover:scale-110 transition-transform duration-300 focus:outline-none ring-2 ring-transparent focus:ring-brand-accent/50 shadow-sm"
             >
               <Avatar
-                initials={type === "admin" ? "AD" : "TU"}
+                initials={type === "admin" ? "AD" : tenantAvatarInitials}
                 size="md"
                 status="online"
               />
@@ -245,14 +310,14 @@ export const Navbar = ({
                       ? "Admin User"
                       : type === "employee"
                         ? "Employee User"
-                        : "Tenant User"}
+                        : tenantDisplayName}
                   </p>
                   <p className="text-[13px] text-text-secondary truncate mt-0.5">
                     {type === "admin"
                       ? "admin@qios.com"
                       : type === "employee"
                         ? "employee@qios.com"
-                        : "tenant@qios.com"}
+                        : tenantDisplayEmail}
                   </p>
                 </div>
                 <button

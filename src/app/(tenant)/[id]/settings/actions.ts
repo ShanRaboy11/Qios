@@ -14,6 +14,7 @@ import crypto from "crypto";
 import type {
   SettingsActionState,
   TenantBrandingSettingsData,
+  TenantNotificationSettingsData,
   TenantSecuritySettingsData,
   TenantSettingsPageData,
   TenantStoreSettingsData,
@@ -70,6 +71,13 @@ const BRANDING_DEFAULTS: TenantBrandingSettingsData = {
   tiktokUrl: "",
 };
 
+const NOTIFICATION_DEFAULTS: TenantNotificationSettingsData = {
+  receiveSecurityAlerts: true,
+  receiveDailySalesSummary: true,
+  receiveLowStockAlerts: true,
+  receiveStaffOvertimeAlerts: false,
+};
+
 const STORE_DEFAULTS: TenantStoreSettingsData = {
   storeName: "",
   publicContactEmail: "",
@@ -106,6 +114,26 @@ function readSettingValue(
   }
 
   return "";
+}
+
+function readSettingBoolean(
+  settings: Record<string, unknown> | null,
+  keys: string[],
+  fallback: boolean,
+) {
+  if (!settings) return fallback;
+
+  for (const key of keys) {
+    const value = settings[key];
+    if (typeof value === "boolean") {
+      return value;
+    }
+    if (typeof value === "string" && value.trim() !== "") {
+      return toBoolean(value);
+    }
+  }
+
+  return fallback;
 }
 
 function mergeSettings(
@@ -289,6 +317,29 @@ export async function getTenantSettings(
       : [],
   };
 
+  const notifications: TenantNotificationSettingsData = {
+    receiveSecurityAlerts: readSettingBoolean(
+      settings,
+      ["receive_security_alerts", "security_alerts"],
+      NOTIFICATION_DEFAULTS.receiveSecurityAlerts,
+    ),
+    receiveDailySalesSummary: readSettingBoolean(
+      settings,
+      ["receive_daily_sales_summary", "daily_sales_summary"],
+      NOTIFICATION_DEFAULTS.receiveDailySalesSummary,
+    ),
+    receiveLowStockAlerts: readSettingBoolean(
+      settings,
+      ["receive_low_stock_alerts", "low_stock_alerts"],
+      NOTIFICATION_DEFAULTS.receiveLowStockAlerts,
+    ),
+    receiveStaffOvertimeAlerts: readSettingBoolean(
+      settings,
+      ["receive_staff_overtime_alerts", "staff_overtime_alerts"],
+      NOTIFICATION_DEFAULTS.receiveStaffOvertimeAlerts,
+    ),
+  };
+
   // read per-user 2fa data from the profiles table, not tenant.settings
   const { data: userTwoFa } = await admin
     .from("profiles")
@@ -321,6 +372,7 @@ export async function getTenantSettings(
     },
     store,
     branding,
+    notifications,
     security,
   };
 }
@@ -749,6 +801,118 @@ export async function saveTenantBrandingSettings(
   }
 }
 
+export async function saveTenantNotificationSettings(
+  tenantId: string,
+  _previousState: SettingsActionState,
+  formData: FormData,
+): Promise<SettingsActionState> {
+  try {
+    const { admin } = await requireTenantContext(tenantId);
+
+    const receiveSecurityAlerts = toBoolean(
+      formData.get("receiveSecurityAlerts"),
+    );
+    const receiveDailySalesSummary = toBoolean(
+      formData.get("receiveDailySalesSummary"),
+    );
+    const receiveLowStockAlerts = toBoolean(
+      formData.get("receiveLowStockAlerts"),
+    );
+    const receiveStaffOvertimeAlerts = toBoolean(
+      formData.get("receiveStaffOvertimeAlerts"),
+    );
+
+    const { data: tenant, error: tenantError } = await admin
+      .from("tenants")
+      .select("settings")
+      .eq("id", tenantId)
+      .maybeSingle();
+
+    if (tenantError) {
+      throw new Error(tenantError.message);
+    }
+
+    const settings = mergeSettings(
+      tenant?.settings && typeof tenant.settings === "object"
+        ? (tenant.settings as Record<string, unknown>)
+        : null,
+      {
+        receive_security_alerts: receiveSecurityAlerts,
+        receive_daily_sales_summary: receiveDailySalesSummary,
+        receive_low_stock_alerts: receiveLowStockAlerts,
+        receive_staff_overtime_alerts: receiveStaffOvertimeAlerts,
+      },
+    );
+
+    const { error: updateError } = await admin
+      .from("tenants")
+      .update({ settings })
+      .eq("id", tenantId);
+
+    if (updateError) {
+      throw new Error(updateError.message);
+    }
+
+    revalidatePath(`/${tenantId}/settings`);
+
+    return {
+      ...EMPTY_ACTION_STATE,
+      success: "Notification preferences saved successfully.",
+    };
+  } catch (error) {
+    return {
+      ...EMPTY_ACTION_STATE,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Unable to save notification preferences.",
+    };
+  }
+}
+
+export interface TenantActiveSessionData {
+  id: string;
+  user_agent: string | null;
+  ip_address: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function getTenantActiveSessions(tenantId: string) {
+  const { supabase } = await requireTenantContext(tenantId);
+
+  const [{ data: sessionData }, { data: sessions, error: sessionsError }] =
+    await Promise.all([
+      supabase.auth.getSession(),
+      supabase.rpc("get_my_sessions"),
+    ]);
+
+  if (sessionsError) {
+    throw new Error(sessionsError.message);
+  }
+
+  const currentSessionId = sessionData.session?.id ?? null;
+
+  return {
+    currentSessionId,
+    sessions: (sessions ?? []) as TenantActiveSessionData[],
+  };
+}
+
+export async function revokeTenantSession(tenantId: string, sessionId: string) {
+  const { supabase } = await requireTenantContext(tenantId);
+
+  const { error } = await supabase.rpc("revoke_session", {
+    session_id: sessionId,
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return { success: true };
+}
+
 export async function saveTenantCustomThemes(
   tenantId: string,
   customThemes: any[],
@@ -951,7 +1115,7 @@ export async function updateTenantPassword(
   }
 }
 
-// ─── 2FA Management ─────────────────────────────────────────────────────────
+// ─── 2fa management ─────────────────────────────────────────────────────────
 
 export async function setupAuthenticatorTwoFactor(tenantId: string) {
   const { admin } = await getAuthenticatedTenantContext(tenantId);
@@ -1089,7 +1253,10 @@ export async function verifyAndEnableEmailTwoFactor(
     .eq("id", user.id)
     .single();
 
-  if (!profile?.login_email_code_hashed || !profile?.login_email_code_expires_at) {
+  if (
+    !profile?.login_email_code_hashed ||
+    !profile?.login_email_code_expires_at
+  ) {
     throw new Error("No pending verification code.");
   }
 
@@ -1107,7 +1274,9 @@ export async function verifyAndEnableEmailTwoFactor(
   let recoveryCodesEncrypted: string;
   let recoveryCodesGeneratedAt: string;
 
-  const existingCodes = deserializeRecoveryCodes(profile.recovery_codes_encrypted);
+  const existingCodes = deserializeRecoveryCodes(
+    profile.recovery_codes_encrypted,
+  );
   const existingHashed: string[] = profile.recovery_codes_hashed || [];
 
   if (existingHashed.length && existingCodes.length) {
