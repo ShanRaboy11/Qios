@@ -1241,7 +1241,7 @@ export async function getTenantActiveSessions(tenantId: string) {
     throw new Error(sessionsError.message);
   }
 
-  const currentSessionId = sessionData.session?.id ?? null;
+  const currentSessionId = (sessionData.session as any)?.id ?? null;
 
   return {
     currentSessionId,
