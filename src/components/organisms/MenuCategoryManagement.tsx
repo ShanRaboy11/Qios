@@ -85,7 +85,18 @@ const ICON_OPTIONS: {
   { icon: "sandwich", component: <Sandwich size={18} />, label: "Sandwich" },
   { icon: "croissant", component: <Croissant size={18} />, label: "Pastry" },
   {
+  // ─── Skeleton Loader Component ──────────────────────────────────────────────
     icon: "chef-hat",
+  const CategorySkeleton = () => (
+    <div className="flex items-center gap-3 p-3 rounded-2xl border border-transparent">
+      <div className="w-4 h-4 rounded bg-black/10 animate-pulse flex-shrink-0" />
+      <div className="w-8 h-8 rounded-xl bg-black/10 animate-pulse flex-shrink-0" />
+      <div className="flex flex-col gap-2 flex-1 min-w-0">
+        <div className="h-4 rounded bg-black/10 animate-pulse w-24" />
+        <div className="h-3 rounded bg-black/10 animate-pulse w-16" />
+      </div>
+    </div>
+  );
     component: <ChefHat size={18} />,
     label: "Chef's Special",
   },
@@ -740,6 +751,11 @@ const MenuCategoryManagement = () => {
         </div>
       </aside>
 
+          {isLoading
+            ? Array.from({ length: 5 }).map((_, idx) => (
+                <CategorySkeleton key={`skeleton-${idx}`} />
+              ))
+            : categories.map((cat) => {
       {/* ── Main content ─────────────────────────────────────────────────── */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* ── Header bar — glassmorphism ─────────────────────────────────── */}
@@ -752,6 +768,7 @@ const MenuCategoryManagement = () => {
             <Filter size={18} />
           </button>
 
+            })}
           {/* Mobile category display — name + counts */}
           {activeCat && (
             <div className="flex items-center gap-2.5 lg:hidden flex-1 min-w-0">

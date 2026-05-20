@@ -1,4 +1,4 @@
--- =============================================================================
+﻿-- =============================================================================
 -- MENU ACTIVITY LOGGING TRIGGERS
 -- =============================================================================
 -- This migration adds triggers to automatically log create, update, and delete
@@ -421,3 +421,4 @@ CREATE TRIGGER trg_log_menu_item_update
 CREATE TRIGGER trg_log_menu_item_deletion
     AFTER DELETE ON public.menu_items
     FOR EACH ROW EXECUTE FUNCTION log_menu_item_deletion();
+
