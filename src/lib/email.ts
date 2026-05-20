@@ -431,7 +431,133 @@ export const sendContactVerificationEmail = async ({
   }
 };
 
-// ─── 2. Business Verification Status Email ────────────────────────────────────
+// ─── 2. Security Verification Code Email ──────────────────────────────────────
+
+export const sendSecurityVerificationEmail = async ({
+  to,
+  businessName,
+  code,
+}: {
+  to: string;
+  businessName: string;
+  code: string;
+}) => {
+  const smtp = readSmtpConfig();
+  if (!smtp) {
+    return {
+      success: false,
+      reason: "SMTP_NOT_CONFIGURED" as const,
+      error: new Error(
+        "SMTP is not fully configured.",
+      ),
+    };
+  }
+
+  const digits = code.split("");
+  const mid = Math.floor(digits.length / 2);
+  const left = digits.slice(0, mid);
+  const right = digits.slice(mid);
+
+  const tile = (d: string) =>
+    `<td style="padding:0 4px;">
+       <div style="width:44px;height:56px;background:${B.goldSoft};
+                   border:2px solid ${B.gold};border-radius:10px;text-align:center;
+                   line-height:56px;font-size:26px;font-weight:700;color:${B.goldDark};
+                   font-family:'Courier New',monospace;
+                   box-shadow:0 2px 8px rgba(192,122,0,0.12);">${d}</div>
+     </td>`;
+
+  const sep = `<td style="padding:0 8px;vertical-align:middle;font-size:22px;
+                           color:${B.border};line-height:56px;">&middot;</td>`;
+
+  const isPersonalized = Boolean(businessName && !businessName.includes("@"));
+
+  const subject = "Security Verification Code — Qios";
+  const greetingHtml = isPersonalized
+    ? `<p style="margin:0 0 10px;font-size:15px;color:${B.textPrimary};">Hi <strong>${businessName}</strong>,</p>`
+    : `<p style="margin:0 0 10px;font-size:15px;color:${B.textPrimary};">Hello,</p>`;
+
+  const html = emailWrapper(`
+    ${brandHeader({
+      title: "Security Verification Code",
+      subtitle: "Enter the code below to verify your identity",
+      pillLabel: "Secure Action",
+      pillBg: B.coralSoft,
+      pillBorder: "#ffb3bd",
+      pillColor: B.coral,
+    })}
+
+    <tr>
+      <td style="padding:32px 40px 28px;background:#fffdf8;">
+        ${greetingHtml}
+        <p style="margin:0 0 24px;font-size:14px;color:${B.textSecondary};line-height:1.7;">A request was made to verify your identity. Please use the verification code below to proceed.</p>
+
+        <!-- OTP block -->
+        <table width="100%" cellpadding="0" cellspacing="0" role="presentation"
+               style="background:linear-gradient(145deg,${B.goldSoft} 0%,#fff8e6 100%);
+                      border:1.5px solid ${B.gold};border-radius:14px;margin-bottom:24px;
+                      box-shadow:0 4px 18px rgba(255,215,122,0.25);">
+          <tr>
+            <td align="center" style="padding:24px 20px 10px;">
+              <p style="margin:0 0 14px;font-size:11px;color:${B.goldDark};
+                        text-transform:uppercase;letter-spacing:0.12em;font-weight:600;">
+                Your verification code
+              </p>
+              <table cellpadding="0" cellspacing="0" role="presentation">
+                <tr>
+                  ${left.map(tile).join("")}
+                  ${sep}
+                  ${right.map(tile).join("")}
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td align="center" style="padding:10px 20px 20px;">
+              <table cellpadding="0" cellspacing="0" role="presentation">
+                <tr>
+                  <td style="background-color:${B.border};border-radius:20px;padding:4px 14px;">
+                    <p style="margin:0;font-size:11px;color:${B.brownMid};font-weight:500;">
+                      &#x23F3; Expires in 10 minutes
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+
+        ${divider}
+
+        <p style="margin:0;font-size:13px;color:#b8a898;line-height:1.6;">
+          If you did not request this code, you can safely ignore this email. Someone may have entered your address by mistake.
+        </p>
+      </td>
+    </tr>
+
+    ${emailFooter(`This email was sent to <strong style="color:${B.textPrimary};">${to}</strong> to verify a security action.`)}
+  `);
+
+  const transporter = createTransporter(smtp);
+  try {
+    const info = await transporter.sendMail({
+      from: smtp.from,
+      to,
+      subject,
+      html,
+    });
+    return { success: true as const, messageId: info.messageId };
+  } catch (error) {
+    console.error("Error sending verification email:", error);
+    return {
+      success: false as const,
+      reason: "SMTP_SEND_FAILED" as const,
+      error,
+    };
+  }
+};
+
+// ─── 3. Business Verification Status Email ────────────────────────────────────
 
 export const sendBusinessVerificationEmail = async ({
   to,

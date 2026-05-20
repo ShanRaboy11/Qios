@@ -24,6 +24,7 @@ import { TenantSecuritySettings } from "./TenantSecuritySettings";
 import { TenantNotificationSettings } from "./TenantNotificationSettings";
 import { TenantBillingSettings } from "./TenantBillingSettings";
 import { TenantDangerZone } from "./TenantDangerZone";
+import type { TenantSettingsPageData } from "@/app/(tenant)/[id]/settings/types";
 
 type SettingsTab =
   | "profile"
@@ -34,7 +35,15 @@ type SettingsTab =
   | "billing"
   | "danger";
 
-export const TenantSettings = () => {
+interface TenantSettingsProps {
+  tenantId: string;
+  initialData: TenantSettingsPageData;
+}
+
+export const TenantSettings = ({
+  tenantId,
+  initialData,
+}: TenantSettingsProps) => {
   const [activeTab, setActiveTab] = useState<SettingsTab>("profile");
 
   const tabs = [
@@ -49,7 +58,7 @@ export const TenantSettings = () => {
 
   return (
     <div className="flex flex-col md:flex-row gap-6 md:gap-8 min-h-[600px] w-full">
-      {/* Sidebar */}
+      {/* sidebar */}
       <div className="w-full md:w-64 flex-shrink-0 flex flex-col gap-2">
         {tabs.map((tab) => {
           const Icon = tab.icon;
@@ -88,8 +97,8 @@ export const TenantSettings = () => {
         })}
       </div>
 
-      {/* Content Area */}
-      <div className="flex-1 bg-white rounded-[24px] shadow-sm border border-gray-100 p-6 md:p-8 overflow-hidden w-full">
+      {/* content area */}
+      <div className="flex-1 bg-white rounded-[24px] shadow-sm border border-gray-100 p-6 md:p-8 w-full">
         <AnimatePresence mode="wait">
           {activeTab === "profile" && (
             <motion.div
@@ -99,7 +108,10 @@ export const TenantSettings = () => {
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
             >
-              <TenantProfileSettings />
+              <TenantProfileSettings
+                tenantId={tenantId}
+                initialData={initialData.profile}
+              />
             </motion.div>
           )}
           {activeTab === "store" && (
@@ -110,7 +122,10 @@ export const TenantSettings = () => {
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
             >
-              <TenantStoreSettings />
+              <TenantStoreSettings
+                tenantId={tenantId}
+                initialData={initialData.store}
+              />
             </motion.div>
           )}
           {activeTab === "branding" && (
@@ -121,7 +136,10 @@ export const TenantSettings = () => {
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
             >
-              <TenantBrandingSettings />
+              <TenantBrandingSettings
+                tenantId={tenantId}
+                initialData={initialData.branding}
+              />
             </motion.div>
           )}
           {activeTab === "security" && (
@@ -132,7 +150,10 @@ export const TenantSettings = () => {
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
             >
-              <TenantSecuritySettings />
+              <TenantSecuritySettings
+                tenantId={tenantId}
+                initialData={initialData.security}
+              />
             </motion.div>
           )}
           {activeTab === "notifications" && (
@@ -143,7 +164,10 @@ export const TenantSettings = () => {
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
             >
-              <TenantNotificationSettings />
+              <TenantNotificationSettings
+                tenantId={tenantId}
+                initialData={initialData.notifications}
+              />
             </motion.div>
           )}
           {activeTab === "billing" && (
@@ -154,7 +178,10 @@ export const TenantSettings = () => {
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
             >
-              <TenantBillingSettings />
+              <TenantBillingSettings
+                tenantId={tenantId}
+                initialData={initialData.billing}
+              />
             </motion.div>
           )}
           {activeTab === "danger" && (
