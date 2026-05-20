@@ -7,6 +7,7 @@ import { Toggle } from "@/components/atoms/Toggle";
 import { Badge } from "@/components/atoms/Badge";
 import { Checkbox } from "@/components/atoms/Checkbox";
 import { SearchFilterBar } from "@/components/molecules/SearchFilterBar";
+import { ActionConfirmationModal } from "@/components/molecules/ConfirmationModal";
 import {
   GripVertical,
   Plus,
@@ -85,18 +86,7 @@ const ICON_OPTIONS: {
   { icon: "sandwich", component: <Sandwich size={18} />, label: "Sandwich" },
   { icon: "croissant", component: <Croissant size={18} />, label: "Pastry" },
   {
-  // ─── Skeleton Loader Component ──────────────────────────────────────────────
     icon: "chef-hat",
-  const CategorySkeleton = () => (
-    <div className="flex items-center gap-3 p-3 rounded-2xl border border-transparent">
-      <div className="w-4 h-4 rounded bg-black/10 animate-pulse flex-shrink-0" />
-      <div className="w-8 h-8 rounded-xl bg-black/10 animate-pulse flex-shrink-0" />
-      <div className="flex flex-col gap-2 flex-1 min-w-0">
-        <div className="h-4 rounded bg-black/10 animate-pulse w-24" />
-        <div className="h-3 rounded bg-black/10 animate-pulse w-16" />
-      </div>
-    </div>
-  );
     component: <ChefHat size={18} />,
     label: "Chef's Special",
   },
@@ -170,6 +160,17 @@ const renderCategoryIcon = (icon: string, size = 20) => {
 const uid = () => `_${Math.random().toString(36).slice(2, 8)}`;
 
 // ─── Skeleton components ──────────────────────────────────────────────────────
+
+const CategorySkeleton = () => (
+  <div className="flex items-center gap-3 p-3 rounded-2xl border border-transparent">
+    <div className="w-4 h-4 rounded bg-black/10 animate-pulse flex-shrink-0" />
+    <div className="w-8 h-8 rounded-xl bg-black/10 animate-pulse flex-shrink-0" />
+    <div className="flex flex-col gap-2 flex-1 min-w-0">
+      <div className="h-4 rounded bg-black/10 animate-pulse w-24" />
+      <div className="h-3 rounded bg-black/10 animate-pulse w-16" />
+    </div>
+  </div>
+);
 
 const Shimmer = ({ className }: { className?: string }) => (
   <div className={cn("animate-pulse bg-black/[0.07] rounded-xl", className)} />
@@ -331,6 +332,12 @@ const MenuCategoryManagement = () => {
   const [draggedCategoryId, setDraggedCategoryId] = useState<string | null>(
     null,
   );
+
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    isOpen: boolean;
+    type: "category" | "items" | null;
+    categoryId?: string;
+  }>({ isOpen: false, type: null });
 
   const [cropModalImage, setCropModalImage] = useState<string | null>(null);
   const [imageNativeSize, setImageNativeSize] = useState({ w: 1, h: 1 });
@@ -697,7 +704,11 @@ const MenuCategoryManagement = () => {
         </div>
 
         <div className="flex-1 overflow-y-auto px-4 pb-4 custom-scrollbar flex flex-col gap-2">
-          {categories.map((cat) => {
+          {isLoading
+            ? Array.from({ length: 5 }).map((_, idx) => (
+                <CategorySkeleton key={`skeleton-${idx}`} />
+              ))
+            : categories.map((cat) => {
             const catCount = items.filter(
               (i) => i.categoryId === cat.id,
             ).length;
@@ -751,11 +762,6 @@ const MenuCategoryManagement = () => {
         </div>
       </aside>
 
-          {isLoading
-            ? Array.from({ length: 5 }).map((_, idx) => (
-                <CategorySkeleton key={`skeleton-${idx}`} />
-              ))
-            : categories.map((cat) => {
       {/* ── Main content ─────────────────────────────────────────────────── */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* ── Header bar — glassmorphism ─────────────────────────────────── */}
@@ -768,7 +774,6 @@ const MenuCategoryManagement = () => {
             <Filter size={18} />
           </button>
 
-            })}
           {/* Mobile category display — name + counts */}
           {activeCat && (
             <div className="flex items-center gap-2.5 lg:hidden flex-1 min-w-0">
@@ -915,7 +920,7 @@ const MenuCategoryManagement = () => {
               </button>
               <div className="w-px h-4 bg-black/10" />
               <button
-                onClick={deleteSelectedItems}
+                onClick={() => setDeleteConfirm({ isOpen: true, type: "items" })}
                 className="b4 font-medium text-brand-accent hover:text-brand-accent/80 flex items-center gap-1 transition-colors"
               >
                 <Trash2 size={13} /> Delete
@@ -1523,10 +1528,7 @@ const MenuCategoryManagement = () => {
                 <div className="pt-3 border-t border-black/[0.06]">
                   <button
                     onClick={() => {
-                      if (
-                        confirm(`Delete "${catDraft.name}" and all its items?`)
-                      )
-                        handleDeleteCategory(catDraft.id!);
+                      setDeleteConfirm({ isOpen: true, type: "category", categoryId: catDraft.id });
                     }}
                     className="flex items-center gap-2 b4 text-brand-accent hover:bg-brand-accent/8 px-3 py-2 rounded-xl transition-colors"
                   >
@@ -1654,6 +1656,23 @@ const MenuCategoryManagement = () => {
           @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
         `,
         }}
+      />
+
+      <ActionConfirmationModal
+        isOpen={deleteConfirm.isOpen}
+        action="delete"
+        title={deleteConfirm.type === "category" ? "Delete Category" : "Delete Items"}
+        message={deleteConfirm.type === "category" ? "Are you sure you want to delete this category and all its items? This cannot be undone." : `Are you sure you want to delete ${selectedItems.length} item(s)? This cannot be undone.`}
+        onClose={() => setDeleteConfirm({ isOpen: false, type: null })}
+        onConfirm={async () => {
+          if (deleteConfirm.type === "category" && deleteConfirm.categoryId) {
+            await handleDeleteCategory(deleteConfirm.categoryId);
+          } else if (deleteConfirm.type === "items") {
+            await deleteSelectedItems();
+          }
+          setDeleteConfirm({ isOpen: false, type: null });
+        }}
+        saving={isLocalLoading}
       />
     </div>
   );

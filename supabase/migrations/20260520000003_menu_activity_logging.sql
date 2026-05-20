@@ -1,4 +1,4 @@
-﻿-- =============================================================================
+-- =============================================================================
 -- MENU ACTIVITY LOGGING TRIGGERS
 -- =============================================================================
 -- This migration adds triggers to automatically log create, update, and delete
@@ -57,7 +57,7 @@ BEGIN
         'CREATE',
         'Created menu category: ' || NEW.name,
         NEW.tenant_id,
-        (SELECT name FROM tenants WHERE id = NEW.tenant_id),
+        (SELECT business_name FROM tenants WHERE id = NEW.tenant_id),
         jsonb_build_object(
             'table', 'categories',
             'record_id', NEW.id,
@@ -126,7 +126,7 @@ BEGIN
         'UPDATE',
         'Updated menu category: ' || NEW.name,
         NEW.tenant_id,
-        (SELECT name FROM tenants WHERE id = NEW.tenant_id),
+        (SELECT business_name FROM tenants WHERE id = NEW.tenant_id),
         jsonb_build_object(
             'table', 'categories',
             'record_id', NEW.id,
@@ -175,7 +175,7 @@ BEGIN
         'DELETE',
         'Deleted menu category: ' || OLD.name,
         OLD.tenant_id,
-        (SELECT name FROM tenants WHERE id = OLD.tenant_id),
+        (SELECT business_name FROM tenants WHERE id = OLD.tenant_id),
         jsonb_build_object(
             'table', 'categories',
             'record_id', OLD.id,
@@ -248,7 +248,7 @@ BEGIN
         'CREATE',
         'Created menu item: ' || NEW.name,
         NEW.tenant_id,
-        (SELECT name FROM tenants WHERE id = NEW.tenant_id),
+        (SELECT business_name FROM tenants WHERE id = NEW.tenant_id),
         jsonb_build_object(
             'table', 'menu_items',
             'record_id', NEW.id,
@@ -338,7 +338,7 @@ BEGIN
         'UPDATE',
         'Updated menu item: ' || NEW.name,
         NEW.tenant_id,
-        (SELECT name FROM tenants WHERE id = NEW.tenant_id),
+        (SELECT business_name FROM tenants WHERE id = NEW.tenant_id),
         jsonb_build_object(
             'table', 'menu_items',
             'record_id', NEW.id,
@@ -387,7 +387,7 @@ BEGIN
         'DELETE',
         'Deleted menu item: ' || OLD.name,
         OLD.tenant_id,
-        (SELECT name FROM tenants WHERE id = OLD.tenant_id),
+        (SELECT business_name FROM tenants WHERE id = OLD.tenant_id),
         jsonb_build_object(
             'table', 'menu_items',
             'record_id', OLD.id,
