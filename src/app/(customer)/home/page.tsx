@@ -14,6 +14,7 @@ import OrderEditor from "@/components/organisms/OrderEditor";
 import { CartDrawer } from "@/components/organisms/CartDrawer";
 import { FloatingOrderStatus } from "@/components/organisms/FloatingOrderStatus";
 import { GuestProfileDrawer } from "@/components/organisms/GuestProfileDrawer";
+import { TenantBrandingProvider } from "@/components/providers/TenantBrandingProvider";
 import { CartProvider } from "@/contexts/CartContext";
 import { MenuItemData } from "@/components/organisms/MenuCatalog";
 
@@ -41,12 +42,22 @@ export default function CustomerHomePage() {
   );
 
   return (
-    <CartProvider>
-      <motion.main
-        layout
-        animate={{ backgroundColor: isCategoryView ? "#FF5269" : "#FFDC72" }}
-        className="flex flex-col min-h-screen w-full overflow-x-hidden relative transition-colors duration-500"
-      >
+    <TenantBrandingProvider
+      branding={{
+        primaryColor: "#00704A",     // Starbucks Green
+        secondaryColor: "#D4E9E2",   // Light Green
+        accentColor: "#1E3932",      // Dark Green
+        fontFamily: "playfair",
+        secondaryFont: "inter",
+        menuLayout: "grid",
+      } as any}
+    >
+      <CartProvider>
+        <motion.main
+          layout
+          // animate={{ backgroundColor: isCategoryView ? "#FF5269" : "#FFDC72" }}
+          className="flex flex-col min-h-screen w-full overflow-x-hidden relative transition-colors duration-500 bg-brand-secondary"
+        >
         <div className="w-full max-w-[500px] md:max-w-none mx-auto flex-grow flex flex-col relative pb-0 md:pb-10">
           <CustomerHeader
             isCategoryView={isCategoryView || isSearching}
@@ -154,7 +165,7 @@ export default function CustomerHomePage() {
                       <div className="mt-12 mb-8 h-[1px] w-full bg-[#FF5269]/50" />
                       <div className="mb-10 w-full">
                         <div className="flex items-center justify-between mb-6">
-                          <h3 className="h3 font-bold">Best Seller</h3>
+                          <h3 className="h3 font-bold font-brand">Best Seller</h3>
                           <button className="flex items-center gap-1 text-brand-accent font-inter text-[14px] hover:scale-110 transition-all duration-300 cursor-pointer">
                             View All <ChevronRight size={16} />
                           </button>
@@ -364,5 +375,6 @@ export default function CustomerHomePage() {
         <GuestProfileDrawer isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} />
       </motion.main>
     </CartProvider>
+  </TenantBrandingProvider>
   );
 }
