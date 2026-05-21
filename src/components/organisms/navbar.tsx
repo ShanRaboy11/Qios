@@ -8,6 +8,8 @@ import { Avatar } from "@/components/atoms/Avatar";
 import Link from "next/link";
 import { useRouter, useParams, usePathname } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import QRCode from "react-qr-code";
+import { QrCode as QrIcon } from "lucide-react";
 
 interface NavbarProps {
   variant?: "filled" | "transparent";
@@ -27,8 +29,10 @@ export const Navbar = ({
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isQrOpen, setIsQrOpen] = useState(false);
   const navRef = useRef<HTMLElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
+  const qrRef = useRef<HTMLDivElement>(null);
   const [tenantDisplayName, setTenantDisplayName] = useState("Tenant");
   const [tenantDisplayEmail, setTenantDisplayEmail] =
     useState("tenant@qios.com");
@@ -128,6 +132,13 @@ export const Navbar = ({
         !profileRef.current.contains(event.target as Node)
       ) {
         setIsProfileOpen(false);
+      }
+      if (
+        isQrOpen &&
+        qrRef.current &&
+        !qrRef.current.contains(event.target as Node)
+      ) {
+        setIsQrOpen(false);
       }
     };
 
@@ -290,59 +301,98 @@ export const Navbar = ({
             </Link>
           </div>
         ) : (
-          <div className="shrink-0 relative" ref={profileRef}>
-            <button
-              onClick={() => setIsProfileOpen(!isProfileOpen)}
-              className="rounded-full border border-brand-accent/20 hover:scale-110 transition-transform duration-300 focus:outline-none ring-2 ring-transparent focus:ring-brand-accent/50 shadow-sm"
-            >
-              <Avatar
-                initials={type === "admin" ? "AD" : tenantAvatarInitials}
-                size="md"
-                status="online"
-              />
-            </button>
+          <div className="shrink-0 relative flex items-center gap-4">
+            
+            {type === "tenant" && (
+              <div className="relative" ref={qrRef}>
+                <button
+                  onClick={() => setIsQrOpen(!isQrOpen)}
+                  className={cn(
+                    "p-2 rounded-full border transition-all duration-300 focus:outline-none ring-2 ring-transparent focus:ring-brand-accent/50 hover:bg-brand-accent/10 hover:text-brand-accent",
+                    isQrOpen ? "bg-brand-accent text-white border-brand-accent shadow-sm" : "border-brand-accent/20 text-text-secondary bg-white"
+                  )}
+                  title="Show Store QR"
+                >
+                  <QrIcon size={20} />
+                </button>
 
-            {isProfileOpen && (
-              <div className="absolute right-0 top-[calc(100%+12px)] w-56 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 py-2">
-                <div className="px-4 py-3 border-b border-gray-50 mb-2">
-                  <p className="text-[15px] font-bold text-text-primary truncate">
-                    {type === "admin"
-                      ? "Admin User"
-                      : type === "employee"
-                        ? "Employee User"
-                        : tenantDisplayName}
-                  </p>
-                  <p className="text-[13px] text-text-secondary truncate mt-0.5">
-                    {type === "admin"
-                      ? "admin@qios.com"
-                      : type === "employee"
-                        ? "employee@qios.com"
-                        : tenantDisplayEmail}
-                  </p>
-                </div>
-                <button
-                  className="w-full text-left px-4 py-2.5 text-[14px] text-text-primary hover:bg-gray-50 flex items-center gap-3 transition-colors font-medium"
-                  onClick={() => {
-                    setIsProfileOpen(false);
-                    onNavigate?.("settings");
-                  }}
-                >
-                  <Settings className="w-[18px] h-[18px]" />
-                  Account Settings
-                </button>
-                <div className="h-px bg-gray-50 my-2" />
-                <button
-                  className="w-full text-left px-4 py-2.5 text-[14px] text-[#EF4444] hover:bg-red-50 flex items-center gap-3 transition-colors font-bold"
-                  onClick={() => {
-                    setIsProfileOpen(false);
-                    handleLogout();
-                  }}
-                >
-                  <LogOut className="w-[18px] h-[18px]" />
-                  Log out
-                </button>
+                {isQrOpen && (
+                  <div className="absolute right-0 top-[calc(100%+12px)] w-64 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 p-5 flex flex-col items-center">
+                    <p className="text-[14px] font-bold text-text-primary text-center mb-3">Store QR Code</p>
+                    <div className="bg-white p-2 border border-gray-100 rounded-lg">
+                      <QRCode
+                        value={`${typeof window !== 'undefined' ? window.location.origin : ''}/${tenantId}/home`}
+                        size={160}
+                        level="H"
+                        fgColor="#1A1A1A"
+                        bgColor="#FFFFFF"
+                      />
+                    </div>
+                    <p className="text-[12px] text-text-secondary text-center mt-3">
+                      Customers can scan this to open your store menu.
+                    </p>
+                    <Link href={`/${tenantId}/settings`} onClick={() => setIsQrOpen(false)} className="mt-4 text-[13px] text-brand-accent font-medium hover:underline">
+                      More QR Options
+                    </Link>
+                  </div>
+                )}
               </div>
             )}
+
+            <div className="relative" ref={profileRef}>
+              <button
+                onClick={() => setIsProfileOpen(!isProfileOpen)}
+                className="rounded-full border border-brand-accent/20 hover:scale-110 transition-transform duration-300 focus:outline-none ring-2 ring-transparent focus:ring-brand-accent/50 shadow-sm"
+              >
+                <Avatar
+                  initials={type === "admin" ? "AD" : tenantAvatarInitials}
+                  size="md"
+                  status="online"
+                />
+              </button>
+
+              {isProfileOpen && (
+                <div className="absolute right-0 top-[calc(100%+12px)] w-56 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 py-2">
+                  <div className="px-4 py-3 border-b border-gray-50 mb-2">
+                    <p className="text-[15px] font-bold text-text-primary truncate">
+                      {type === "admin"
+                        ? "Admin User"
+                        : type === "employee"
+                          ? "Employee User"
+                          : tenantDisplayName}
+                    </p>
+                    <p className="text-[13px] text-text-secondary truncate mt-0.5">
+                      {type === "admin"
+                        ? "admin@qios.com"
+                        : type === "employee"
+                          ? "employee@qios.com"
+                          : tenantDisplayEmail}
+                    </p>
+                  </div>
+                  <button
+                    className="w-full text-left px-4 py-2.5 text-[14px] text-text-primary hover:bg-gray-50 flex items-center gap-3 transition-colors font-medium"
+                    onClick={() => {
+                      setIsProfileOpen(false);
+                      onNavigate?.("settings");
+                    }}
+                  >
+                    <Settings className="w-[18px] h-[18px]" />
+                    Account Settings
+                  </button>
+                  <div className="h-px bg-gray-50 my-2" />
+                  <button
+                    className="w-full text-left px-4 py-2.5 text-[14px] text-[#EF4444] hover:bg-red-50 flex items-center gap-3 transition-colors font-bold"
+                    onClick={() => {
+                      setIsProfileOpen(false);
+                      handleLogout();
+                    }}
+                  >
+                    <LogOut className="w-[18px] h-[18px]" />
+                    Log out
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
