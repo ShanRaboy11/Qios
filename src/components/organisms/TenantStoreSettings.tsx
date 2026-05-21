@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useActionState, useEffect, useState, useRef } from "react";
-import { Save, CheckCircle2, Edit2 } from "lucide-react";
+import { Save, CheckCircle2, Edit2, Download, QrCode } from "lucide-react";
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
+import QRCode from "react-qr-code";
 import { Dropdown } from "@/components/molecules/Dropdown";
 import { SectionHeader } from "@/components/molecules/SectionHeader";
 import { saveTenantStoreSettings } from "@/app/(tenant)/[id]/settings/actions";
@@ -82,6 +83,35 @@ export const TenantStoreSettings = ({
     { label: "America/Los_Angeles (GMT-8)", value: "America/Los_Angeles" },
     { label: "UTC", value: "UTC" },
   ];
+
+  const [storeUrl, setStoreUrl] = useState("");
+  useEffect(() => {
+    setStoreUrl(`${window.location.origin}/${tenantId}/home`);
+  }, [tenantId]);
+
+  const handleDownloadQr = () => {
+    const svg = document.getElementById("store-qr-code");
+    if (!svg) return;
+    const svgData = new XMLSerializer().serializeToString(svg);
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    const img = new Image();
+    img.onload = () => {
+      canvas.width = img.width;
+      canvas.height = img.height;
+      if (ctx) {
+        ctx.fillStyle = "white";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0);
+        const pngFile = canvas.toDataURL("image/png");
+        const downloadLink = document.createElement("a");
+        downloadLink.download = `qios-${tenantId}-qr.png`;
+        downloadLink.href = `${pngFile}`;
+        downloadLink.click();
+      }
+    };
+    img.src = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgData)));
+  };
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 w-full">
@@ -376,6 +406,66 @@ export const TenantStoreSettings = ({
               )}
             </div>
           </form>
+        </div>
+
+        <div className="space-y-4 w-full">
+          <SectionHeader
+            title="Store Access & QR Code"
+            className="mb-0 py-2 border-gray-100"
+          />
+          <div className="flex flex-col md:flex-row gap-6 p-6 border border-gray-100 rounded-2xl bg-gray-50/50">
+            <div className="flex-shrink-0 bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex items-center justify-center">
+              {storeUrl ? (
+                <QRCode
+                  id="store-qr-code"
+                  value={storeUrl}
+                  size={150}
+                  level="H"
+                  fgColor="#1A1A1A"
+                  bgColor="#FFFFFF"
+                />
+              ) : (
+                <div className="w-[150px] h-[150px] bg-gray-100 animate-pulse rounded-lg flex items-center justify-center">
+                  <QrCode className="text-gray-400" size={32} />
+                </div>
+              )}
+            </div>
+            <div className="flex flex-col justify-center space-y-4">
+              <div>
+                <h3 className="text-[16px] font-bold text-text-primary">
+                  Customer Ordering App
+                </h3>
+                <p className="text-[14px] text-text-secondary mt-1">
+                  Customers can scan this QR code or visit the link below to access your store's digital menu and place orders.
+                </p>
+              </div>
+              <div className="flex items-center gap-2 max-w-md">
+                <Input 
+                  value={storeUrl || "Loading..."} 
+                  readOnly 
+                  className="bg-white text-sm"
+                />
+                <Button 
+                  variant="outline" 
+                  shape="rounded"
+                  onClick={() => navigator.clipboard.writeText(storeUrl)}
+                >
+                  Copy
+                </Button>
+              </div>
+              <div>
+                <Button 
+                  variant="accent" 
+                  shape="rounded" 
+                  leftIcon={<Download size={18} />}
+                  onClick={handleDownloadQr}
+                  disabled={!storeUrl}
+                >
+                  Download QR Code
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
