@@ -120,10 +120,10 @@ export const CategoryTabBar = ({
                   isCategoryView
                     ? isActive
                       ? "bg-transparent scale-110" // The white background is provided by the sliding indicator
-                      : "bg-[#FFF9EF] rounded-[30px] scale-90"
+                      : "bg-white/40 rounded-[30px] scale-90"
                     : isActive
-                      ? "bg-[#FFDC72] rounded-[30px] shadow-sm transform scale-100"
-                      : "bg-[#FEF5E7] rounded-[30px] group-hover:bg-[#FFDC72]/60 group-hover:scale-110",
+                      ? "bg-brand-primary rounded-[30px] shadow-sm transform scale-100"
+                      : "bg-white/30 rounded-[30px] group-hover:bg-brand-primary/80 group-hover:scale-110",
                 )}
               >
                 <img
@@ -137,7 +137,7 @@ export const CategoryTabBar = ({
               </div>
               <span
                 className={cn(
-                  "font-figtree font-semibold text-[15px] transition-colors duration-300",
+                  "font-brand font-semibold text-[15px] transition-colors duration-300",
                   isCategoryView && !isActive ? "text-[#2D2D2D]  " : "",
                   isCategoryView && isActive ? "text-[#2D2D2D]" : "",
                   !isCategoryView && isActive ? "text-text-primary mt-2" : "",

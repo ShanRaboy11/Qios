@@ -3,6 +3,7 @@ import { Search, User, ChevronLeft, Receipt } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FormField } from "@/components/molecules/FormField";
 import Link from "next/link";
+import { useTenantBranding } from "@/components/providers/TenantBrandingProvider";
 
 export interface CustomerHeaderProps {
   isCategoryView?: boolean;
@@ -26,6 +27,8 @@ export const CustomerHeader = ({
   searchQuery = "",
   onSearchChange,
 }: CustomerHeaderProps) => {
+  const { branding } = useTenantBranding();
+
   return (
     <motion.div
       layout
@@ -91,10 +94,17 @@ export const CustomerHeader = ({
             transition={{ ...smoothTransition, opacity: { duration: 0.2 } }}
             className="mt-8 flex flex-col gap-1 overflow-hidden"
           >
-            <h1 className="text-[40px] font-figtree font-medium text-[#2D2D2D] leading-tight">
+            {branding?.dashboardLogoUrl && (
+              <img 
+                src={branding.dashboardLogoUrl} 
+                alt="Brand Logo" 
+                className="h-10 w-auto object-contain mb-2 origin-left" 
+              />
+            )}
+            <h1 className="text-[40px] font-brand font-medium text-[#2D2D2D] leading-tight">
               Good Morning, Name!
             </h1>
-            <p className="text-[#2D2D2D]/80 font-inter text-[20px]">
+            <p className="text-[#2D2D2D]/80 font-brand-secondary text-[20px]">
               Rise and Shine! It's Breakfast Time
             </p>
           </motion.div>

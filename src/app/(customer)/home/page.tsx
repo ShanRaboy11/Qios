@@ -28,7 +28,18 @@ const MOCK_MENU_CATALOG: MenuItemData[] = [
   { id: "7", name: "Classic Burger with Fries", price: 5.99, available: true, category: "Meal", imageUrl: "/images/food-placeholder.png" },
 ];
 
+const MOCK_BRANDING = {
+  primaryColor: "#00704A",
+  secondaryColor: "#D4E9E2",
+  accentColor: "#1E3932",
+  fontFamily: "playfair",
+  secondaryFont: "inter",
+  menuLayout: "grid",
+  dashboardLogoUrl: "/images/starbucks-logo.png",
+};
+
 export default function CustomerHomePage() {
+  const isGridView = MOCK_BRANDING.menuLayout === "grid";
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<MenuItemData | null>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -43,14 +54,7 @@ export default function CustomerHomePage() {
 
   return (
     <TenantBrandingProvider
-      branding={{
-        primaryColor: "#00704A",     // Starbucks Green
-        secondaryColor: "#D4E9E2",   // Light Green
-        accentColor: "#1E3932",      // Dark Green
-        fontFamily: "playfair",
-        secondaryFont: "inter",
-        menuLayout: "grid",
-      } as any}
+      branding={MOCK_BRANDING as any}
     >
       <CartProvider>
         <motion.main
@@ -135,7 +139,7 @@ export default function CustomerHomePage() {
                               }}
                             >
                               <MenuItemCard
-                                variant="vertical"
+                                variant={isGridView ? "vertical" : "horizontal"}
                                 title={item.name}
                                 price={item.price}
                                 availability="Available"
@@ -162,7 +166,7 @@ export default function CustomerHomePage() {
                       transition={{ duration: 0.3 }}
                       className="w-full"
                     >
-                      <div className="mt-12 mb-8 h-[1px] w-full bg-[#FF5269]/50" />
+                      <div className="mt-12 mb-8 h-[1px] w-full bg-brand-accent/50" />
                       <div className="mb-10 w-full">
                         <div className="flex items-center justify-between mb-6">
                           <h3 className="h3 font-bold font-brand">Best Seller</h3>
@@ -337,7 +341,7 @@ export default function CustomerHomePage() {
                             }}
                           >
                             <MenuItemCard
-                              variant="vertical"
+                              variant={isGridView ? "vertical" : "horizontal"}
                               title="Spicy seasoned seafood noodles"
                               price={2.29}
                               availability="20 Bowls available"
