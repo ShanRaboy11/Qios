@@ -223,10 +223,10 @@ export const LoginForm = () => {
     setIsLoading(true);
     setError(null);
     try {
-      // fully verify against the user's own profile (handles TOTP, email, and recovery codes)
+      // fully verify against the user's own profile (handles totp, email, and recovery codes)
       await verifyLoginTwoFactorCode(twoFactorConfig.userId, twoFactorCode);
       if (twoFactorConfig.routeDestination) {
-        router.push(twoFactorConfig.routeDestination);
+        window.location.href = twoFactorConfig.routeDestination;
       } else {
         setError("Invalid route destination.");
       }

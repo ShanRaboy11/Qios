@@ -22,6 +22,8 @@ import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
 import { Toggle } from "@/components/atoms/Toggle";
 import { SectionHeader } from "@/components/molecules/SectionHeader";
+import { Dropdown } from "@/components/molecules/Dropdown";
+import { ActionConfirmationModal } from "@/components/molecules/ConfirmationModal";
 import { cn } from "@/lib/utils";
 import {
   deleteTenantPaymentMethod,
@@ -90,6 +92,35 @@ const providerMeta: Record<
   },
 };
 
+const getPlanCardStyles = (planName: string, isActive: boolean) => {
+  const name = planName.toLowerCase();
+  if (name.includes("basic") || name.includes("starter") || name.includes("yellow")) {
+    return {
+      cardClass: isActive
+        ? "bg-gradient-to-br from-[#ffc670]/20 to-[#ffc670]/10 border-[#ffc670] shadow-[0_0_15px_rgba(255,198,112,0.15)] ring-2 ring-[#ffc670]/20"
+        : "bg-gradient-to-br from-[#ffc670]/10 to-[#ffc670]/5 border-[#ffc670]/20 hover:from-[#ffc670]/15 hover:to-[#ffc670]/10",
+      buttonColor: "bg-[#ffc670] hover:bg-[#ffc670]/90 text-text-primary",
+      badgeColor: "bg-[#ffc670]/20 text-[#7a5800]",
+    };
+  }
+  if (name.includes("business") || name.includes("pro") || name.includes("red")) {
+    return {
+      cardClass: isActive
+        ? "bg-gradient-to-br from-[#ff5269]/20 to-[#ff5269]/10 border-[#ff5269] shadow-[0_0_15px_rgba(255,82,105,0.15)] ring-2 ring-[#ff5269]/20"
+        : "bg-gradient-to-br from-[#ff5269]/10 to-[#ff5269]/5 border-[#ff5269]/20 hover:from-[#ff5269]/15 hover:to-[#ff5269]/10",
+      buttonColor: "bg-[#ff5269] hover:bg-[#ff5269]/90 text-white",
+      badgeColor: "bg-[#ff5269]/20 text-[#8f1929]",
+    };
+  }
+  return {
+    cardClass: isActive
+      ? "bg-gradient-to-br from-[#1fad66]/20 to-[#1fad66]/10 border-[#1fad66] shadow-[0_0_15px_rgba(31,173,102,0.15)] ring-2 ring-[#1fad66]/20"
+      : "bg-gradient-to-br from-[#1fad66]/10 to-[#1fad66]/5 border-[#1fad66]/20 hover:from-[#1fad66]/15 hover:to-[#1fad66]/10",
+    buttonColor: "bg-[#1fad66] hover:bg-[#1fad66]/90 text-white",
+    badgeColor: "bg-[#1fad66]/20 text-[#0d5931]",
+  };
+};
+
 export const TenantBillingSettings = ({
   tenantId,
   initialData,
@@ -103,6 +134,8 @@ export const TenantBillingSettings = ({
   const [planError, setPlanError] = useState("");
   const [savingPlanName, setSavingPlanName] = useState("");
   const [editingMethodId, setEditingMethodId] = useState("");
+  const [showSwitchModal, setShowSwitchModal] = useState(false);
+  const [pendingPlanName, setPendingPlanName] = useState("");
 
   const [formData, setFormData] = useState({
     methodId: "",
@@ -112,6 +145,9 @@ export const TenantBillingSettings = ({
     expMonth: "",
     expYear: "",
     cardholderName: "",
+    mobileNumber: "",
+    email: "",
+    description: "",
     isDefault: true,
   });
 
@@ -134,6 +170,9 @@ export const TenantBillingSettings = ({
       expMonth: "",
       expYear: "",
       cardholderName: "",
+      mobileNumber: "",
+      email: "",
+      description: "",
       isDefault: true,
     });
     router.refresh();
@@ -155,6 +194,16 @@ export const TenantBillingSettings = ({
       }
     };
   }, [showSuccess]);
+
+  // success message plan notice auto clear after 3 seconds
+  useEffect(() => {
+    if (planNotice) {
+      const timer = setTimeout(() => {
+        setPlanNotice("");
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [planNotice]);
 
   const currentPlan = useMemo(
     () =>
@@ -185,6 +234,18 @@ export const TenantBillingSettings = ({
       );
     } finally {
       setSavingPlanName("");
+    }
+  };
+
+  const handleConfirmPlanSwitch = (planName: string) => {
+    setPendingPlanName(planName);
+    setShowSwitchModal(true);
+  };
+
+  const handleExecutePlanSwitch = async () => {
+    setShowSwitchModal(false);
+    if (pendingPlanName) {
+      await handleChangePlan(pendingPlanName);
     }
   };
 
@@ -230,6 +291,9 @@ export const TenantBillingSettings = ({
       expMonth: "",
       expYear: "",
       cardholderName: "",
+      mobileNumber: "",
+      email: "",
+      description: "",
       isDefault: initialData.paymentMethods.length === 0,
     });
     setShowPaymentForm(true);
@@ -239,14 +303,18 @@ export const TenantBillingSettings = ({
     method: (typeof initialData.paymentMethods)[number],
   ) => {
     setEditingMethodId(method.id);
+    const prov = (method.provider || "visa").toLowerCase();
     setFormData({
       methodId: method.id,
-      provider: method.provider || "visa",
+      provider: prov,
       displayName: method.displayName,
-      last4: method.last4,
-      expMonth: method.expMonth,
-      expYear: method.expYear,
-      cardholderName: method.cardholderName,
+      last4: prov === "visa" || prov === "mastercard" ? method.last4 : "",
+      expMonth: prov === "visa" || prov === "mastercard" ? method.expMonth : "",
+      expYear: prov === "visa" || prov === "mastercard" ? method.expYear : "",
+      cardholderName: prov === "visa" || prov === "mastercard" ? method.cardholderName : "",
+      mobileNumber: prov === "gcash" ? method.cardholderName : "",
+      email: prov === "paypal" || prov === "stripe" ? method.cardholderName : "",
+      description: prov !== "visa" && prov !== "mastercard" && prov !== "gcash" && prov !== "paypal" && prov !== "stripe" ? method.cardholderName : "",
       isDefault: method.isDefault,
     });
     setShowPaymentForm(true);
@@ -292,14 +360,10 @@ export const TenantBillingSettings = ({
         <div className="p-6 rounded-2xl border border-brand-accent bg-brand-accent/5">
           <div className="flex items-start justify-between gap-4">
             <div className="space-y-2">
-              <span
-                className={cn(
-                  "inline-flex items-center gap-2 px-2.5 py-1 text-white text-xs font-bold rounded-full",
-                  currentPlan?.color || "bg-brand-accent",
-                )}
-              >
-                {currentPlan?.badge || initialData.currentPlanBadge}
-              </span>
+              {/* subscription plan name text capitalized first letter and stylized like price */}
+              <h2 className="text-2xl font-bold text-text-primary">
+                {initialData.currentPlanName.charAt(0).toUpperCase() + initialData.currentPlanName.slice(1).toLowerCase()}
+              </h2>
               <h3 className="text-xl font-bold text-text-primary">
                 ₱{initialData.currentPlanPriceMonthly}{" "}
                 <span className="text-sm text-text-secondary font-normal">
@@ -325,15 +389,14 @@ export const TenantBillingSettings = ({
             <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
               {initialData.availablePlans.map((plan) => {
                 const isActive = plan.name === initialData.currentPlanName;
+                const styles = getPlanCardStyles(plan.name, isActive);
 
                 return (
                   <div
                     key={plan.id}
                     className={cn(
-                      "rounded-2xl border p-5 bg-white",
-                      isActive
-                        ? "border-brand-accent/30 bg-brand-primary/5"
-                        : "border-gray-100",
+                      "rounded-2xl border p-5 relative transition-all duration-300",
+                      styles.cardClass
                     )}
                   >
                     <div className="flex items-start justify-between gap-3">
@@ -345,33 +408,35 @@ export const TenantBillingSettings = ({
                           {plan.badge}
                         </p>
                       </div>
-                      <span
-                        className={cn("w-3 h-3 rounded-full", plan.color)}
-                      />
+
+                      <div className="absolute top-4 right-4">
+                        {isActive ? (
+                          <span className={cn("px-2.5 py-1 text-xs font-bold rounded-full", styles.badgeColor)}>
+                            Current
+                          </span>
+                        ) : (
+                          <Button
+                            type="button"
+                            size="sm"
+                            onClick={() => handleConfirmPlanSwitch(plan.name)}
+                            loading={savingPlanName === plan.name}
+                            className={cn("py-1 px-3 text-xs border-transparent focus:ring-offset-2", styles.buttonColor)}
+                          >
+                            Switch Plan
+                          </Button>
+                        )}
+                      </div>
                     </div>
-                    <div className="mt-4 space-y-1">
+                    <div className="mt-6 space-y-1">
                       <p className="text-lg font-bold text-text-primary">
                         ₱{plan.priceMonthly}
                         <span className="text-sm text-text-secondary font-normal">
                           / month
                         </span>
                       </p>
-                      <p className="text-sm text-text-secondary">
+                      <p className="text-xs text-text-secondary">
                         ₱{plan.priceAnnually} / year
                       </p>
-                    </div>
-                    <div className="mt-4 flex justify-end">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="border-brand-accent text-brand-accent hover:bg-brand-accent hover:text-white hover:border-brand-accent focus:ring-brand-accent"
-                        onClick={() => handleChangePlan(plan.name)}
-                        loading={savingPlanName === plan.name}
-                        disabled={isActive}
-                      >
-                        {isActive ? "Current Plan" : "Switch Plan"}
-                      </Button>
                     </div>
                   </div>
                 );
@@ -390,7 +455,7 @@ export const TenantBillingSettings = ({
             {initialData.paymentMethods.length > 0 ? (
               initialData.paymentMethods.map((method) => {
                 const meta =
-                  providerMeta[method.provider] || providerMeta.other;
+                  providerMeta[method.provider.toLowerCase()] || providerMeta.other;
                 const isCurrent =
                   method.id === activePaymentMethodId || method.isDefault;
 
@@ -411,10 +476,22 @@ export const TenantBillingSettings = ({
                         </div>
                         <div className="flex flex-col gap-0.5 select-none pt-1">
                           <span className="b2 font-bold transition-colors duration-300 text-text-primary">
-                            {method.displayName || meta.label}
+                            {method.displayName} ({meta.label})
                           </span>
                           <span className="b4 transition-colors duration-300 text-text-secondary">
-                            {method.cardholderName}
+                            {(() => {
+                              const prov = method.provider.toLowerCase();
+                              if (prov === "visa" || prov === "mastercard") {
+                                return `${method.cardholderName} • Card ending in **** ${method.last4}`;
+                              }
+                              if (prov === "gcash") {
+                                return `Mobile: +63 ${method.cardholderName}`;
+                              }
+                              if (prov === "paypal" || prov === "stripe") {
+                                return `Email: ${method.cardholderName}`;
+                              }
+                              return `Description: ${method.cardholderName}`;
+                            })()}
                           </span>
                         </div>
                       </div>
@@ -464,8 +541,10 @@ export const TenantBillingSettings = ({
                         {isCurrent ? "Current method" : "Linked method"}
                       </Badge>
                       <p className="text-xs text-text-secondary">
-                        Added on {formatDateTime(method.addedAt)} • Expires{" "}
-                        {method.expMonth}/{method.expYear}
+                        Added on {formatDateTime(method.addedAt)}
+                        {["visa", "mastercard"].includes(method.provider.toLowerCase()) && (
+                          <> • Expires {method.expMonth}/{method.expYear}</>
+                        )}
                       </p>
                     </div>
                   </div>
@@ -485,7 +564,7 @@ export const TenantBillingSettings = ({
               type="button"
               variant="outline"
               shape="rounded"
-              leftIcon={<Edit2 size={18} />}
+              leftIcon={<Plus size={18} />}
               onClick={openAddPaymentMethod}
               className="border-brand-accent text-brand-accent hover:bg-brand-accent hover:text-white hover:border-brand-accent focus:ring-brand-accent"
             >
@@ -501,32 +580,42 @@ export const TenantBillingSettings = ({
               <input type="hidden" name="methodId" value={formData.methodId} />
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
+                {/* payment provider */}
+                <div className="space-y-1.5 relative z-50">
                   <label className="text-sm font-medium text-text-primary">
-                    Payment Provider
+                    Payment Provider <span className="text-brand-accent">*</span>
                   </label>
-                  <select
-                    name="provider"
+                  <input type="hidden" name="provider" value={formData.provider} />
+                  <Dropdown
+                    label=""
+                    className="w-full !max-w-full [&>label]:hidden"
+                    options={[
+                      { label: "Visa", value: "visa" },
+                      { label: "Mastercard", value: "mastercard" },
+                      { label: "PayPal", value: "paypal" },
+                      { label: "Stripe", value: "stripe" },
+                      { label: "GCash", value: "gcash" },
+                      { label: "Other", value: "other" },
+                    ]}
                     value={formData.provider}
-                    onChange={(event) =>
+                    onSelect={(option) =>
                       setFormData((previous) => ({
                         ...previous,
-                        provider: event.target.value,
+                        provider: option.value,
                       }))
                     }
-                    className="w-full rounded-xl border border-[#E5E5E5] px-3 py-2.5 text-sm text-text-primary focus:border-brand-primary focus:ring-brand-primary"
-                  >
-                    <option value="visa">Visa</option>
-                    <option value="mastercard">Mastercard</option>
-                    <option value="paypal">PayPal</option>
-                    <option value="stripe">Stripe</option>
-                    <option value="gcash">GCash</option>
-                    <option value="other">Other</option>
-                  </select>
+                  />
+                  {paymentState.fieldErrors?.provider && (
+                    <p className="text-xs text-red-500 pl-1 mt-1">
+                      {paymentState.fieldErrors.provider}
+                    </p>
+                  )}
                 </div>
+
+                {/* account name (globally renamed display name) */}
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium text-text-primary">
-                    Display Name
+                    Account Name <span className="text-brand-accent">*</span>
                   </label>
                   <Input
                     name="displayName"
@@ -539,83 +628,203 @@ export const TenantBillingSettings = ({
                     }
                     className="py-2.5 rounded-xl"
                   />
+                  {paymentState.fieldErrors?.displayName && (
+                    <p className="text-xs text-red-500 pl-1 mt-1">
+                      {paymentState.fieldErrors.displayName}
+                    </p>
+                  )}
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-text-primary">
-                    Cardholder Name
-                  </label>
-                  <Input
-                    name="cardholderName"
-                    value={formData.cardholderName}
-                    onChange={(event) =>
-                      setFormData((previous) => ({
-                        ...previous,
-                        cardholderName: event.target.value,
-                      }))
-                    }
-                    className="py-2.5 rounded-xl"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-text-primary">
-                    Card Number Last 4
-                  </label>
-                  <Input
-                    name="last4"
-                    value={formData.last4}
-                    onChange={(event) =>
-                      setFormData((previous) => ({
-                        ...previous,
-                        last4: event.target.value
-                          .replace(/[^0-9]/g, "")
-                          .slice(0, 4),
-                      }))
-                    }
-                    inputMode="numeric"
-                    maxLength={4}
-                    className="py-2.5 rounded-xl"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-text-primary">
-                    Expiry Month
-                  </label>
-                  <Input
-                    name="expMonth"
-                    value={formData.expMonth}
-                    onChange={(event) =>
-                      setFormData((previous) => ({
-                        ...previous,
-                        expMonth: event.target.value
-                          .replace(/[^0-9]/g, "")
-                          .slice(0, 2),
-                      }))
-                    }
-                    inputMode="numeric"
-                    maxLength={2}
-                    className="py-2.5 rounded-xl"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-text-primary">
-                    Expiry Year
-                  </label>
-                  <Input
-                    name="expYear"
-                    value={formData.expYear}
-                    onChange={(event) =>
-                      setFormData((previous) => ({
-                        ...previous,
-                        expYear: event.target.value
-                          .replace(/[^0-9]/g, "")
-                          .slice(0, 4),
-                      }))
-                    }
-                    inputMode="numeric"
-                    maxLength={4}
-                    className="py-2.5 rounded-xl"
-                  />
-                </div>
+
+                {/* conditional fields depending on provider */}
+                {["visa", "mastercard"].includes(formData.provider.toLowerCase()) && (
+                  <>
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-medium text-text-primary">
+                        Cardholder Name <span className="text-brand-accent">*</span>
+                      </label>
+                      <Input
+                        name="cardholderName"
+                        value={formData.cardholderName}
+                        onChange={(event) =>
+                          setFormData((previous) => ({
+                            ...previous,
+                            cardholderName: event.target.value,
+                          }))
+                        }
+                        className="py-2.5 rounded-xl"
+                      />
+                      {paymentState.fieldErrors?.cardholderName && (
+                        <p className="text-xs text-red-500 pl-1 mt-1">
+                          {paymentState.fieldErrors.cardholderName}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-medium text-text-primary">
+                        Card Number Last 4 <span className="text-brand-accent">*</span>
+                      </label>
+                      <Input
+                        name="last4"
+                        value={formData.last4}
+                        onChange={(event) =>
+                          setFormData((previous) => ({
+                            ...previous,
+                            last4: event.target.value
+                              .replace(/[^0-9]/g, "")
+                              .slice(0, 4),
+                          }))
+                        }
+                        inputMode="numeric"
+                        maxLength={4}
+                        className="py-2.5 rounded-xl"
+                      />
+                      {paymentState.fieldErrors?.last4 && (
+                        <p className="text-xs text-red-500 pl-1 mt-1">
+                          {paymentState.fieldErrors.last4}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-medium text-text-primary">
+                        Expiry Month (mm) <span className="text-brand-accent">*</span>
+                      </label>
+                      <Input
+                        name="expMonth"
+                        value={formData.expMonth}
+                        onChange={(event) => {
+                          const val = event.target.value.replace(/[^0-9]/g, "").slice(0, 2);
+                          if (val === "" || (Number(val) >= 1 && Number(val) <= 12) || val === "0") {
+                            setFormData((previous) => ({
+                              ...previous,
+                              expMonth: val,
+                            }));
+                          }
+                        }}
+                        inputMode="numeric"
+                        maxLength={2}
+                        className="py-2.5 rounded-xl"
+                      />
+                      {paymentState.fieldErrors?.expMonth && (
+                        <p className="text-xs text-red-500 pl-1 mt-1">
+                          {paymentState.fieldErrors.expMonth}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-medium text-text-primary">
+                        Expiry Year (yyyy) <span className="text-brand-accent">*</span>
+                      </label>
+                      <Input
+                        name="expYear"
+                        value={formData.expYear}
+                        onChange={(event) =>
+                          setFormData((previous) => ({
+                            ...previous,
+                            expYear: event.target.value
+                              .replace(/[^0-9]/g, "")
+                              .slice(0, 4),
+                          }))
+                        }
+                        inputMode="numeric"
+                        maxLength={4}
+                        className="py-2.5 rounded-xl"
+                      />
+                      {paymentState.fieldErrors?.expYear && (
+                        <p className="text-xs text-red-500 pl-1 mt-1">
+                          {paymentState.fieldErrors.expYear}
+                        </p>
+                      )}
+                    </div>
+                  </>
+                )}
+
+                {formData.provider.toLowerCase() === "gcash" && (
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <label className="text-sm font-medium text-text-primary">
+                      Mobile Number <span className="text-brand-accent">*</span>
+                    </label>
+                    <div className="flex gap-2 items-center">
+                      <span className="inline-flex items-center px-3 py-2.5 rounded-xl border bg-gray-50 border-[#E5E5E5] text-text-primary">
+                        +63
+                      </span>
+                      <Input
+                        name="mobileNumber"
+                        value={formData.mobileNumber}
+                        onChange={(event) =>
+                          setFormData((previous) => ({
+                            ...previous,
+                            mobileNumber: event.target.value
+                              .replace(/[^0-9]/g, "")
+                              .slice(0, 11),
+                          }))
+                        }
+                        inputMode="numeric"
+                        maxLength={11}
+                        className="py-2.5 rounded-xl flex-1"
+                        placeholder=""
+                      />
+                    </div>
+                    {paymentState.fieldErrors?.mobileNumber && (
+                      <p className="text-xs text-red-500 pl-1 mt-1">
+                        {paymentState.fieldErrors.mobileNumber}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {["paypal", "stripe"].includes(formData.provider.toLowerCase()) && (
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <label className="text-sm font-medium text-text-primary">
+                      Email Address <span className="text-brand-accent">*</span>
+                    </label>
+                    <Input
+                      name="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={(event) =>
+                        setFormData((previous) => ({
+                          ...previous,
+                          email: event.target.value,
+                        }))
+                      }
+                      className="py-2.5 rounded-xl"
+                      placeholder="account@email.com"
+                    />
+                    {paymentState.fieldErrors?.email && (
+                      <p className="text-xs text-red-500 pl-1 mt-1">
+                        {paymentState.fieldErrors.email}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {formData.provider.toLowerCase() === "other" && (
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <label className="text-sm font-medium text-text-primary">
+                      Description/Reference <span className="text-brand-accent">*</span>
+                    </label>
+                    <Input
+                      name="description"
+                      value={formData.description}
+                      onChange={(event) =>
+                        setFormData((previous) => ({
+                          ...previous,
+                          description: event.target.value,
+                        }))
+                      }
+                      className="py-2.5 rounded-xl"
+                      placeholder="Enter description or reference details"
+                    />
+                    {paymentState.fieldErrors?.description && (
+                      <p className="text-xs text-red-500 pl-1 mt-1">
+                        {paymentState.fieldErrors.description}
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center justify-between gap-4 pt-2">
@@ -725,6 +934,28 @@ export const TenantBillingSettings = ({
           </div>
         </div>
       </div>
+
+      <ActionConfirmationModal
+        isOpen={showSwitchModal}
+        action="save"
+        title="Confirm Plan Change"
+        message={
+          <div className="space-y-2 select-none">
+            <p>
+              Are you sure you want to change your subscription plan to{" "}
+              <strong>{pendingPlanName}</strong>?
+            </p>
+            <p className="text-xs text-text-secondary">
+              Standard Billing Notice: Your payment method will be charged for the new plan, and any unused portion of your current subscription will be prorated.
+            </p>
+          </div>
+        }
+        confirmLabel="Switch plan"
+        cancelLabel="Cancel"
+        onClose={() => setShowSwitchModal(false)}
+        onConfirm={handleExecutePlanSwitch}
+        saving={savingPlanName !== ""}
+      />
     </div>
   );
 };
