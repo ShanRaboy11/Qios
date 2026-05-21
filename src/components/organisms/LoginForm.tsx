@@ -226,7 +226,16 @@ export const LoginForm = () => {
       // fully verify against the user's own profile (handles totp, email, and recovery codes)
       await verifyLoginTwoFactorCode(twoFactorConfig.userId, twoFactorCode);
       if (twoFactorConfig.routeDestination) {
-        window.location.href = twoFactorConfig.routeDestination;
+        // sync router and reload based on environment
+        const isLocalhost = typeof window !== "undefined" && (
+          window.location.hostname === "localhost" ||
+          window.location.hostname === "127.0.0.1"
+        );
+        if (isLocalhost) {
+          router.push(twoFactorConfig.routeDestination);
+        } else {
+          window.location.href = twoFactorConfig.routeDestination;
+        }
       } else {
         setError("Invalid route destination.");
       }

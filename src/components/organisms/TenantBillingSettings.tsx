@@ -92,9 +92,12 @@ const providerMeta: Record<
   },
 };
 
-const getPlanCardStyles = (planName: string, isActive: boolean) => {
+const getPlanCardStyles = (planName: string, planColor: string, isActive: boolean) => {
   const name = planName.toLowerCase();
-  if (name.includes("basic") || name.includes("starter") || name.includes("yellow")) {
+  const color = planColor.toLowerCase();
+
+  // yellow theme
+  if (color.includes("ffc670") || name.includes("basic") || name.includes("starter") || name.includes("yellow")) {
     return {
       cardClass: isActive
         ? "bg-gradient-to-br from-[#ffc670]/20 to-[#ffc670]/10 border-[#ffc670] shadow-[0_0_15px_rgba(255,198,112,0.15)] ring-2 ring-[#ffc670]/20"
@@ -103,7 +106,8 @@ const getPlanCardStyles = (planName: string, isActive: boolean) => {
       badgeColor: "bg-[#ffc670]/20 text-[#7a5800]",
     };
   }
-  if (name.includes("business") || name.includes("pro") || name.includes("red")) {
+  // red theme
+  if (color.includes("ff5269") || name.includes("business") || name.includes("pro") || name.includes("red")) {
     return {
       cardClass: isActive
         ? "bg-gradient-to-br from-[#ff5269]/20 to-[#ff5269]/10 border-[#ff5269] shadow-[0_0_15px_rgba(255,82,105,0.15)] ring-2 ring-[#ff5269]/20"
@@ -112,6 +116,37 @@ const getPlanCardStyles = (planName: string, isActive: boolean) => {
       badgeColor: "bg-[#ff5269]/20 text-[#8f1929]",
     };
   }
+  // blue theme
+  if (color.includes("3b82f6") || name.includes("trial") || name.includes("free") || name.includes("blue")) {
+    return {
+      cardClass: isActive
+        ? "bg-gradient-to-br from-[#3b82f6]/20 to-[#3b82f6]/10 border-[#3b82f6] shadow-[0_0_15px_rgba(59,130,246,0.15)] ring-2 ring-[#3b82f6]/20"
+        : "bg-gradient-to-br from-[#3b82f6]/10 to-[#3b82f6]/5 border-[#3b82f6]/20 hover:from-[#3b82f6]/15 hover:to-[#3b82f6]/10",
+      buttonColor: "bg-[#3b82f6] hover:bg-[#3b82f6]/90 text-white",
+      badgeColor: "bg-[#3b82f6]/20 text-[#1e40af]",
+    };
+  }
+  // purple theme
+  if (color.includes("8b5cf6") || name.includes("purple")) {
+    return {
+      cardClass: isActive
+        ? "bg-gradient-to-br from-[#8b5cf6]/20 to-[#8b5cf6]/10 border-[#8b5cf6] shadow-[0_0_15px_rgba(139,92,246,0.15)] ring-2 ring-[#8b5cf6]/20"
+        : "bg-gradient-to-br from-[#8b5cf6]/10 to-[#8b5cf6]/5 border-[#8b5cf6]/20 hover:from-[#8b5cf6]/15 hover:to-[#8b5cf6]/10",
+      buttonColor: "bg-[#8b5cf6] hover:bg-[#8b5cf6]/90 text-white",
+      badgeColor: "bg-[#8b5cf6]/20 text-[#5c21b5]",
+    };
+  }
+  // dark theme
+  if (color.includes("text-primary") || name.includes("dark") || name.includes("black")) {
+    return {
+      cardClass: isActive
+        ? "bg-gradient-to-br from-text-primary/20 to-text-primary/10 border-text-primary shadow-[0_0_15px_rgba(0,0,0,0.15)] ring-2 ring-text-primary/20"
+        : "bg-gradient-to-br from-text-primary/10 to-text-primary/5 border-text-primary/20 hover:from-text-primary/15 hover:to-text-primary/10",
+      buttonColor: "bg-text-primary hover:bg-text-primary/90 text-white",
+      badgeColor: "bg-text-primary/20 text-text-primary",
+    };
+  }
+  // green theme (default/enterprise)
   return {
     cardClass: isActive
       ? "bg-gradient-to-br from-[#1fad66]/20 to-[#1fad66]/10 border-[#1fad66] shadow-[0_0_15px_rgba(31,173,102,0.15)] ring-2 ring-[#1fad66]/20"
@@ -389,7 +424,7 @@ export const TenantBillingSettings = ({
             <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
               {initialData.availablePlans.map((plan) => {
                 const isActive = plan.name === initialData.currentPlanName;
-                const styles = getPlanCardStyles(plan.name, isActive);
+                const styles = getPlanCardStyles(plan.name, plan.color, isActive);
 
                 return (
                   <div

@@ -1839,7 +1839,10 @@ export async function deactivateTenantStore(
 }
 
 export async function deleteTenantAccount(tenantId: string) {
-  const { admin, user } = await requireTenantContext(tenantId);
+  const { supabase, admin, user } = await requireTenantContext(tenantId);
+
+  // clear session cookies first so the client is clean
+  await supabase.auth.signOut();
 
   // delete user from auth triggers cascading db cleanup
   const { error } = await admin.auth.admin.deleteUser(user.id);

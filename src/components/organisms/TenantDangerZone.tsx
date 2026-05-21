@@ -17,18 +17,21 @@ export const TenantDangerZone = ({ tenantId, isDeactivated }: TenantDangerZonePr
   const [isDeactivating, setIsDeactivating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showDeactivateModal, setShowDeactivateModal] = useState(false);
   const router = useRouter();
 
-  const handleDeactivateToggle = async () => {
+  const handleDeactivateConfirm = async () => {
     setIsDeactivating(true);
     try {
       const nextState = !localIsDeactivated;
       await deactivateTenantStore(tenantId, nextState);
       setLocalIsDeactivated(nextState);
+      router.refresh();
     } catch (err: any) {
       console.error("deactivate error:", err);
     } finally {
       setIsDeactivating(false);
+      setShowDeactivateModal(false);
     }
   };
 
@@ -77,7 +80,7 @@ export const TenantDangerZone = ({ tenantId, isDeactivated }: TenantDangerZonePr
             type="button"
             variant="outline"
             size="sm"
-            onClick={handleDeactivateToggle}
+            onClick={() => setShowDeactivateModal(true)}
             loading={isDeactivating}
             className="border-orange-500 text-orange-600 hover:bg-orange-600 hover:text-white hover:border-orange-600 focus:ring-orange-500 flex-shrink-0"
           >
@@ -113,11 +116,27 @@ export const TenantDangerZone = ({ tenantId, isDeactivated }: TenantDangerZonePr
       </div>
 
       <ActionConfirmationModal
+        isOpen={showDeactivateModal}
+        action="save"
+        title={localIsDeactivated ? "Reactivate Store" : "Deactivate Store"}
+        message={
+          localIsDeactivated
+            ? "Are you sure you want to reactivate your store? This will make your store visible to customer-facing interfaces again."
+            : "Are you sure you want to deactivate your store? This will temporarily hide it from customer-facing interfaces."
+        }
+        confirmLabel={localIsDeactivated ? "Reactivate" : "Deactivate"}
+        cancelLabel="Cancel"
+        onClose={() => setShowDeactivateModal(false)}
+        onConfirm={handleDeactivateConfirm}
+        saving={isDeactivating}
+      />
+
+      <ActionConfirmationModal
         isOpen={showDeleteModal}
         action="delete"
         title="Delete Account & Store Data"
         message="Are you sure you want to permanently delete your account and all associated store data? This action is irreversible and cannot be undone."
-        confirmLabel="Delete permanently"
+        confirmLabel="Delete"
         cancelLabel="Cancel"
         onClose={() => setShowDeleteModal(false)}
         onConfirm={handleDeleteConfirm}
