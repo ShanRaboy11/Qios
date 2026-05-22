@@ -447,9 +447,7 @@ export const sendSecurityVerificationEmail = async ({
     return {
       success: false,
       reason: "SMTP_NOT_CONFIGURED" as const,
-      error: new Error(
-        "SMTP is not fully configured.",
-      ),
+      error: new Error("SMTP is not fully configured."),
     };
   }
 
@@ -655,12 +653,12 @@ export const sendBusinessVerificationEmail = async ({
     ? `<table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom:24px;">
         <tr>
           <td align="center">
-            <a href="#" style="display:inline-block;padding:14px 32px;
+            <a href="${publicBaseUrl}/setup/branding" style="display:inline-block;padding:14px 32px;
                                background:linear-gradient(135deg,${B.gold} 0%,${B.primary} 100%);
                                color:${B.brownDark};font-size:14px;font-weight:700;
                                border-radius:10px;text-decoration:none;
                                box-shadow:0 4px 14px rgba(255,215,122,0.45);">
-              Open your dashboard &rarr;
+              Set up your brand &rarr;
             </a>
           </td>
         </tr>
@@ -684,7 +682,7 @@ export const sendBusinessVerificationEmail = async ({
     ? `${divider}
        ${stepRow("1", "Set up your queue", "Configure your service types, capacity, and operating hours")}
        ${stepRow("2", "Invite your team", "Add staff members to help manage your customer flow")}
-       ${stepRow("3", "Go live", "Share your Qios link and start serving customers today")}`
+       ${stepRow("3", "Set up your brand", "Customize your brand colors, typography, and media to match your business")}`
     : "";
 
   const html = emailWrapper(`
