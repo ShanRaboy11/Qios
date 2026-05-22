@@ -20,79 +20,14 @@ interface Message {
   timestamp: string;
 }
 
-// ---------------------------------------------------------------------------
-// Mock AI brain (runs 100% client-side, no backend needed)
-// ---------------------------------------------------------------------------
-const MOCK_GREETINGS = [
-  "Hi there! I'm Qios Assistant 👋 How can I help you today?",
-];
+const INITIAL_GREETING =
+  "Hi there! I'm Qios Assistant 👋 How can I help you today?";
 
-const MOCK_RESPONSES: { keywords: string[]; reply: string }[] = [
-  {
-    keywords: ["hello", "hi", "hey", "good morning", "good afternoon"],
-    reply: "Hey! Great to chat with you. What can I help you with?",
-  },
-  {
-    keywords: ["menu", "food", "order", "eat", "dish", "item"],
-    reply:
-      "Our menu is packed with delicious options! You can browse categories like Mains, Sides, Drinks, and Desserts. Anything specific you're craving?",
-  },
-  {
-    keywords: ["price", "cost", "how much", "expensive", "cheap"],
-    reply:
-      "Prices vary by item. Most mains range from ₱150–₱350. Would you like me to show you a specific category?",
-  },
-  {
-    keywords: ["hours", "open", "close", "schedule", "time"],
-    reply:
-      "We're open Monday–Sunday, 9 AM to 10 PM. Is there anything else you'd like to know?",
-  },
-  {
-    keywords: ["location", "address", "where", "find"],
-    reply:
-      "You can find us at the food court! Once you scan a table QR code, you'll be directed to our ordering page automatically.",
-  },
-  {
-    keywords: ["allergy", "allergic", "gluten", "vegan", "vegetarian", "halal"],
-    reply:
-      "We take dietary needs seriously! Please let your server know about any allergies when placing your order, and we'll do our best to accommodate you.",
-  },
-  {
-    keywords: ["wait", "long", "how long", "eta", "ready"],
-    reply:
-      "Typical preparation time is 10–20 minutes depending on order volume. Our kitchen will notify you when your order is ready!",
-  },
-  {
-    keywords: ["cancel", "change", "modify", "update"],
-    reply:
-      "Orders can be modified within 2 minutes of placement. After that, please speak to a staff member at the counter.",
-  },
-  {
-    keywords: ["payment", "pay", "cash", "card", "gcash", "maya"],
-    reply:
-      "We accept Cash, GCash, Maya, and major credit/debit cards. Payment is done at the counter upon pickup or delivery to your table.",
-  },
-  {
-    keywords: ["thank", "thanks", "appreciate"],
-    reply:
-      "You're very welcome! Let me know if there's anything else I can help with. 😊",
-  },
-  {
-    keywords: ["bye", "goodbye", "see you", "later"],
-    reply: "Goodbye! Enjoy your meal and have a wonderful day! 🍽️",
-  },
-  {
-    keywords: ["help", "support", "assist"],
-    reply:
-      "Of course! I can help you with menu questions, pricing, hours, allergies, and order info. What do you need?",
-  },
-];
-
-const FALLBACK_RESPONSES = [
-  "That's a great question! Unfortunately, I'm not sure about that one. A staff member would be happy to help!",
-  "I don't have that info right now, but feel free to ask a staff member nearby.",
-  "Hmm, I'm still learning! Could you try rephrasing? Or ask one of our staff members.",
-];
+interface AiResponse {
+  output?: string;
+  error?: string;
+  details?: string;
+}
 
 const QUICK_TAGS = [
   { label: "View Menu", emoji: "🍽️" },
@@ -100,15 +35,29 @@ const QUICK_TAGS = [
   { label: "Hours", emoji: "🕐" },
 ];
 
-function getMockReply(input: string): string {
-  const lower = input.toLowerCase();
-  const match = MOCK_RESPONSES.find((r) =>
-    r.keywords.some((kw) => lower.includes(kw)),
+async function getGeminiReply(messages: Message[]): Promise<string> {
+  const latestMessage = messages.at(-1)?.message ?? "";
+  const response = await fetch("/api/ai", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      prompt: latestMessage,
+      messages: messages.map(({ role, message }) => ({ role, message })),
+    }),
+  });
+
+  const payload = (await response.json()) as AiResponse;
+
+  if (!response.ok) {
+    throw new Error(payload.details || payload.error || "AI request failed");
+  }
+
+  return (
+    payload.output?.trim() ||
+    "I couldn't generate a response right now. Please try again."
   );
-  if (match) return match.reply;
-  return FALLBACK_RESPONSES[
-    Math.floor(Math.random() * FALLBACK_RESPONSES.length)
-  ];
 }
 
 function getTimestamp(): string {
@@ -142,50 +91,74 @@ export function ChatbotUI() {
       {
         id: uid(),
         role: "system",
-        message: MOCK_GREETINGS[0],
+        message: INITIAL_GREETING,
         timestamp: getTimestamp(),
       },
     ]);
   }, []);
 
+  const updateScrollButtonVisibility = () => {
+    const el = scrollAreaRef.current;
+    if (!el) return;
+
+    const hasOverflowingMessages = el.scrollHeight > el.clientHeight;
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+
+    setShowScrollBtn(hasOverflowingMessages && distanceFromBottom > 80);
+  };
+
   // Auto-scroll to bottom on new message
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    updateScrollButtonVisibility();
   }, [messages, isTyping]);
 
-  // Show scroll-to-bottom button when user scrolls up
+  // Show scroll-to-bottom button only when more messages exist below the viewport
   const handleScroll = () => {
-    const el = scrollAreaRef.current;
-    if (!el) return;
-    const distFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
-    setShowScrollBtn(distFromBottom > 80 && messages.length > 4);
+    updateScrollButtonVisibility();
   };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const dispatchMessage = (text: string) => {
+  const dispatchMessage = async (text: string) => {
     if (!text.trim() || isTyping) return;
+
     const userMsg: Message = {
       id: uid(),
       role: "customer",
       message: text.trim(),
       timestamp: getTimestamp(),
     };
-    setMessages((prev) => [...prev, userMsg]);
+    const nextMessages = [...messages, userMsg];
+
+    setMessages(nextMessages);
     setIsTyping(true);
-    const delay = 800 + Math.random() * 700;
-    setTimeout(() => {
+
+    try {
+      const reply = await getGeminiReply(nextMessages);
       const botMsg: Message = {
         id: uid(),
         role: "system",
-        message: getMockReply(text.trim()),
+        message: reply,
         timestamp: getTimestamp(),
       };
       setMessages((prev) => [...prev, botMsg]);
+    } catch (error) {
+      const botMsg: Message = {
+        id: uid(),
+        role: "system",
+        message:
+          error instanceof Error
+            ? `I'm having trouble reaching Qios AI right now: ${error.message}`
+            : "I'm having trouble reaching Qios AI right now. Please try again.",
+        timestamp: getTimestamp(),
+      };
+      setMessages((prev) => [...prev, botMsg]);
+    } finally {
       setIsTyping(false);
-    }, delay);
+    }
   };
 
   const sendMessage = () => {
@@ -205,7 +178,7 @@ export function ChatbotUI() {
       {
         id: uid(),
         role: "system",
-        message: MOCK_GREETINGS[0],
+        message: INITIAL_GREETING,
         timestamp: getTimestamp(),
       },
     ]);
