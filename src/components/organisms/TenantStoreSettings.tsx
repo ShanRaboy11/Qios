@@ -86,7 +86,12 @@ export const TenantStoreSettings = ({
 
   const [storeUrl, setStoreUrl] = useState("");
   useEffect(() => {
-    setStoreUrl(`${window.location.origin}/${tenantId}/home`);
+    if (!tenantId) {
+      setStoreUrl("");
+      return;
+    }
+
+    setStoreUrl(new URL(`/${tenantId}/home`, window.location.origin).toString());
   }, [tenantId]);
 
   const handleDownloadQr = () => {
