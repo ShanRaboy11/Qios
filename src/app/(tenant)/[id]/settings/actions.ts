@@ -297,6 +297,8 @@ export async function getTenantSettings(
       ? (tenant.settings as Record<string, unknown>)
       : null;
 
+  const isDeactivated = settings?.is_deactivated === true;
+
   const { data: plans } = await admin
     .from("subscription_plans")
     .select(
@@ -534,6 +536,7 @@ export async function getTenantSettings(
     billing,
     notifications,
     security,
+    isDeactivated,
   };
 }
 
@@ -1099,23 +1102,62 @@ export async function saveTenantPaymentMethod(
     const methodId = toText(formData.get("methodId"));
     const provider = toText(formData.get("provider"));
     const displayName = toText(formData.get("displayName"));
-    const last4 = toText(formData.get("last4"));
-    const expMonth = toText(formData.get("expMonth"));
-    const expYear = toText(formData.get("expYear"));
-    const cardholderName = toText(formData.get("cardholderName"));
     const isDefault = toBoolean(formData.get("isDefault"));
 
     const fieldErrors: Record<string, string> = {};
     if (!provider) fieldErrors.provider = "Payment provider is required.";
-    if (!displayName) fieldErrors.displayName = "Display name is required.";
-    if (!last4 || !/^[0-9]{4}$/.test(last4))
-      fieldErrors.last4 = "Enter the last 4 digits.";
-    if (!expMonth || Number(expMonth) < 1 || Number(expMonth) > 12)
-      fieldErrors.expMonth = "Enter a valid month.";
-    if (!expYear || Number(expYear) < 2026)
-      fieldErrors.expYear = "Enter a valid year.";
-    if (!cardholderName)
-      fieldErrors.cardholderName = "Cardholder name is required.";
+    if (!displayName) fieldErrors.displayName = "Account name is required.";
+
+    let mappedLast4 = "0000";
+    let mappedExpMonth = "12";
+    let mappedExpYear = "2099";
+    let mappedCardholderName = "";
+
+    const normalizedProvider = provider.toLowerCase();
+    if (normalizedProvider === "visa" || normalizedProvider === "mastercard") {
+      const last4 = toText(formData.get("last4"));
+      const expMonth = toText(formData.get("expMonth"));
+      const expYear = toText(formData.get("expYear"));
+      const cardholderName = toText(formData.get("cardholderName"));
+
+      if (!cardholderName) {
+        fieldErrors.cardholderName = "Cardholder name is required.";
+      }
+      if (!last4 || !/^[0-9]{4}$/.test(last4)) {
+        fieldErrors.last4 = "Enter the last 4 digits.";
+      }
+      if (!expMonth || Number(expMonth) < 1 || Number(expMonth) > 12) {
+        fieldErrors.expMonth = "Enter a valid month.";
+      }
+      if (!expYear || Number(expYear) < 2026) {
+        fieldErrors.expYear = "Enter a valid year.";
+      }
+
+      mappedLast4 = last4;
+      mappedExpMonth = expMonth.padStart(2, "0");
+      mappedExpYear = expYear;
+      mappedCardholderName = cardholderName;
+    } else if (normalizedProvider === "gcash") {
+      const mobileNumber = toText(formData.get("mobileNumber"));
+      if (!mobileNumber || !/^[0-9]{10,11}$/.test(mobileNumber)) {
+        fieldErrors.mobileNumber = "Enter a valid 10-11 digit mobile number.";
+      }
+      mappedCardholderName = mobileNumber;
+      mappedLast4 = mobileNumber ? mobileNumber.slice(-4) : "0000";
+    } else if (normalizedProvider === "paypal" || normalizedProvider === "stripe") {
+      const email = toText(formData.get("email"));
+      if (!email || !validateEmail(email)) {
+        fieldErrors.email = "Enter a valid email address.";
+      }
+      mappedCardholderName = email;
+    } else {
+      // other
+      const description = toText(formData.get("description"));
+      if (!description) {
+        fieldErrors.description = "Description/Reference is required.";
+      }
+      mappedCardholderName = description;
+    }
 
     if (Object.keys(fieldErrors).length > 0) {
       return { ...EMPTY_ACTION_STATE, fieldErrors };
@@ -1136,10 +1178,10 @@ export async function saveTenantPaymentMethod(
         .update({
           provider,
           display_name: displayName,
-          last4,
-          exp_month: expMonth,
-          exp_year: expYear,
-          cardholder_name: cardholderName,
+          last4: mappedLast4,
+          exp_month: mappedExpMonth,
+          exp_year: mappedExpYear,
+          cardholder_name: mappedCardholderName,
           is_default: isDefault,
         })
         .eq("id", methodId)
@@ -1151,10 +1193,10 @@ export async function saveTenantPaymentMethod(
         tenant_id: tenantId,
         provider,
         display_name: displayName,
-        last4,
-        exp_month: expMonth,
-        exp_year: expYear,
-        cardholder_name: cardholderName,
+        last4: mappedLast4,
+        exp_month: mappedExpMonth,
+        exp_year: mappedExpYear,
+        cardholder_name: mappedCardholderName,
         is_default: isDefault,
       });
 
@@ -1761,4 +1803,50 @@ export async function generateRecoveryCodes(tenantId: string) {
   revalidatePath(`/${tenantId}/settings`);
 
   return { success: true, recoveryCodes: fresh.codes };
+}
+
+export async function deactivateTenantStore(
+  tenantId: string,
+  deactivate: boolean,
+) {
+  const { admin } = await requireTenantContext(tenantId);
+
+  const { data: tenant, error: tenantError } = await admin
+    .from("tenants")
+    .select("settings")
+    .eq("id", tenantId)
+    .maybeSingle();
+
+  if (tenantError) throw new Error(tenantError.message);
+
+  const settings = mergeSettings(
+    tenant?.settings && typeof tenant.settings === "object"
+      ? (tenant.settings as Record<string, unknown>)
+      : null,
+    { is_deactivated: deactivate },
+  );
+
+  const { error: updateError } = await admin
+    .from("tenants")
+    .update({ settings })
+    .eq("id", tenantId);
+
+  if (updateError) throw new Error(updateError.message);
+
+  revalidatePath(`/${tenantId}/settings`);
+
+  return { success: true };
+}
+
+export async function deleteTenantAccount(tenantId: string) {
+  const { supabase, admin, user } = await requireTenantContext(tenantId);
+
+  // clear session cookies first so the client is clean
+  await supabase.auth.signOut();
+
+  // delete user from auth triggers cascading db cleanup
+  const { error } = await admin.auth.admin.deleteUser(user.id);
+  if (error) throw new Error(error.message);
+
+  return { success: true };
 }
