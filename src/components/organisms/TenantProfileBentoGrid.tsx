@@ -23,6 +23,9 @@ import { Modal } from "@/components/molecules/Modal";
 
 import { cn } from "@/lib/utils";
 
+const formatPlanName = (name: string) =>
+  name ? name.charAt(0).toUpperCase() + name.slice(1).toLowerCase() : name;
+
 interface TenantProfileBentoGridProps {
   tenant: TenantProfileData;
   onUpdateDocumentStatus: (
@@ -113,27 +116,43 @@ export const TenantProfileBentoGrid = ({
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-3 mb-2">
               <span className="text-4xl font-black text-text-primary uppercase tracking-tight">
-                {tenant.plan}
+                {formatPlanName(tenant.plan)}
               </span>
-              <Badge color={subscriptionStatusColor} variant="solid" className="px-3 shadow-sm">
+              <Badge
+                color={subscriptionStatusColor}
+                variant="solid"
+                className="px-3 shadow-sm"
+              >
                 {tenant.status}
               </Badge>
             </div>
             <div className="flex flex-col gap-3 p-4 bg-gray-50 rounded-[16px] border border-gray-100">
               <div className="flex justify-between items-center border-b border-gray-200/60 pb-3">
-                <span className="text-sm font-medium text-text-secondary">Billing Cycle</span>
-                <span className="text-sm font-bold text-text-primary capitalize">{tenant.billingCycle}</span>
+                <span className="text-sm font-medium text-text-secondary">
+                  Billing Cycle
+                </span>
+                <span className="text-sm font-bold text-text-primary capitalize">
+                  {tenant.billingCycle}
+                </span>
               </div>
               <div className="flex justify-between items-center border-b border-gray-200/60 pb-3">
-                <span className="text-sm font-medium text-text-secondary">Next Billing</span>
-                <span className="text-sm font-bold text-text-primary">May 15, 2026</span>
+                <span className="text-sm font-medium text-text-secondary">
+                  Next Billing
+                </span>
+                <span className="text-sm font-bold text-text-primary">
+                  May 15, 2026
+                </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm font-medium text-text-secondary">Est. Amount</span>
-                <span className="text-sm font-bold text-text-primary">₱1,499.00</span>
+                <span className="text-sm font-medium text-text-secondary">
+                  Est. Amount
+                </span>
+                <span className="text-sm font-bold text-text-primary">
+                  ₱1,499.00
+                </span>
               </div>
             </div>
-            
+
             <div className="mt-2">
               <Button
                 variant="outline"
@@ -161,7 +180,9 @@ export const TenantProfileBentoGrid = ({
                 if (title.includes("DTI") || title.includes("SEC"))
                   return <Building2 className="w-4 h-4 text-text-secondary" />;
                 if (title.includes("Mayor"))
-                  return <ShieldCheck className="w-4 h-4 text-text-secondary" />;
+                  return (
+                    <ShieldCheck className="w-4 h-4 text-text-secondary" />
+                  );
                 if (title.includes("BIR"))
                   return <Receipt className="w-4 h-4 text-text-secondary" />;
                 return <FileText className="w-4 h-4 text-text-secondary" />;

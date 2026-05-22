@@ -153,9 +153,9 @@ export default function SubscriptionManagement() {
 
   const normalizePlanName = (name: string) => name.trim().toLowerCase();
   const formatPlanLabel = (name: string) =>
-    name ? name.charAt(0).toUpperCase() + name.slice(1) : name;
+    name ? name.charAt(0).toUpperCase() + name.slice(1).toLowerCase() : name;
   const formatPlanInput = (name: string) =>
-    name ? name.charAt(0).toUpperCase() + name.slice(1) : "";
+    name ? name.charAt(0).toUpperCase() + name.slice(1).toLowerCase() : "";
 
   useEffect(() => {
     async function fetchPlans() {
@@ -907,7 +907,7 @@ export default function SubscriptionManagement() {
                       </span>
                       <p className="b4 text-text-secondary">
                         Pre-configured with standard{" "}
-                        {template.name.toLowerCase()} tier access.
+                        {formatPlanLabel(template.name)} tier access.
                       </p>
                     </div>
                   </button>

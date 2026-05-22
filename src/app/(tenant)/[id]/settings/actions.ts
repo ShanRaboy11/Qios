@@ -1079,7 +1079,7 @@ export async function updateTenantSubscriptionPlan(
   await admin.from("tenant_billing_history").insert({
     tenant_id: tenantId,
     invoice_number: invoiceNumber,
-    description: `Subscription plan updated to ${plan.name}`,
+    description: `Subscription plan updated to ${plan.name.charAt(0).toUpperCase() + plan.name.slice(1).toLowerCase()}`,
     amount: amountMatch || 0,
     currency: "PHP",
     status: "paid",
@@ -1144,7 +1144,10 @@ export async function saveTenantPaymentMethod(
       }
       mappedCardholderName = mobileNumber;
       mappedLast4 = mobileNumber ? mobileNumber.slice(-4) : "0000";
-    } else if (normalizedProvider === "paypal" || normalizedProvider === "stripe") {
+    } else if (
+      normalizedProvider === "paypal" ||
+      normalizedProvider === "stripe"
+    ) {
       const email = toText(formData.get("email"));
       if (!email || !validateEmail(email)) {
         fieldErrors.email = "Enter a valid email address.";
