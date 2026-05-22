@@ -1,60 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-
-const resolvePostAuthRedirect = async (
-  supabase: ReturnType<typeof createServerClient>,
-  userId: string,
-  nextPath: string,
-) => {
-  if (nextPath && nextPath !== "/") {
-    return nextPath;
-  }
-
-  const { data: sessionData } = await supabase.auth.getSession();
-  const accessToken = sessionData.session?.access_token;
-
-  let role: string | null = null;
-  let tenantId: string | null = null;
-
-  if (accessToken) {
-    try {
-      const payload = JSON.parse(
-        Buffer.from(accessToken.split(".")[1], "base64").toString(),
-      );
-      role = payload.role ?? payload.user_role ?? null;
-      tenantId = payload.tenant_id ?? null;
-    } catch {
-      // fall through to profile lookup
-    }
-  }
-
-  if (!role) {
-    const supabaseAdmin = createSupabaseAdminClient();
-    const { data: profile } = await supabaseAdmin
-      .from("profiles")
-      .select("role, tenant_id")
-      .eq("id", userId)
-      .maybeSingle();
-
-    role = profile?.role ?? null;
-    tenantId = profile?.tenant_id ?? null;
-  }
-
-  if (role === "super_admin") {
-    return "/admin/dashboard";
-  }
-
-  if (role === "admin" && tenantId) {
-    return `/${tenantId}/dashboard`;
-  }
-
-  if (role === "employee" && tenantId) {
-    return `/${tenantId}/employee/dashboard`;
-  }
-
-  return "/";
-};
 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
@@ -87,18 +32,8 @@ export async function GET(request: NextRequest) {
     );
 
     const { error } = await supabase.auth.exchangeCodeForSession(code);
-
+    
     if (!error) {
-      const { data: userData } = await supabase.auth.getUser();
-      const resolvedPath = userData.user?.id
-        ? await resolvePostAuthRedirect(supabase, userData.user.id, next)
-        : next;
-
-      supabaseResponse.headers.set(
-        "Location",
-        new URL(resolvedPath, request.url).toString(),
-      );
-
       return supabaseResponse;
     }
   }
