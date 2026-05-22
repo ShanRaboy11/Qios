@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useContext } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/atoms/Button";
 import { ArrowRight, Menu, X, User, LogOut, Settings } from "lucide-react";
@@ -8,6 +8,7 @@ import { Avatar } from "@/components/atoms/Avatar";
 import Link from "next/link";
 import { useRouter, useParams, usePathname } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { TenantBrandingContext } from "@/components/providers/TenantBrandingProvider";
 
 interface NavbarProps {
   variant?: "filled" | "transparent";
@@ -37,6 +38,9 @@ export const Navbar = ({
   const params = useParams();
   const pathname = usePathname();
   const tenantId = (params?.id as string) || "default-tenant";
+  
+  const { branding } = useContext(TenantBrandingContext);
+  const tenantLogoUrl = branding?.dashboardLogoUrl;
 
   useEffect(() => {
     if (type !== "tenant") return;
@@ -226,21 +230,29 @@ export const Navbar = ({
             onNavigate?.("dashboard");
           }
         }}
-        className="font-ibrand shrink-0 relative cursor-pointer"
-        style={{
-          textAlign: "right",
-          fontSize: "50px",
-          fontWeight: 400,
-          fontStyle: "normal",
-          lineHeight: "normal",
-          background:
-            "linear-gradient(to bottom right, #FFD77A 0%, #FF5269 50%) bottom right / 50% 50% no-repeat, linear-gradient(to bottom left, #FFD77A 0%, #FF5269 50%) bottom left / 50% 50% no-repeat, linear-gradient(to top left, #FFD77A 0%, #FF5269 50%) top left / 50% 50% no-repeat, linear-gradient(to top right, #FFD77A 0%, #FF5269 50%) top right / 50% 50% no-repeat",
-          WebkitBackgroundClip: "text",
-          backgroundClip: "text",
-          WebkitTextFillColor: "transparent",
-        }}
+        className="shrink-0 relative cursor-pointer flex items-center"
       >
-        Qios
+        {type === "tenant" && tenantLogoUrl ? (
+          <img src={tenantLogoUrl} alt="Tenant Logo" className="h-10 w-auto object-contain" />
+        ) : (
+          <span
+            className="font-ibrand"
+            style={{
+              textAlign: "right",
+              fontSize: "50px",
+              fontWeight: 400,
+              fontStyle: "normal",
+              lineHeight: "normal",
+              background:
+                "linear-gradient(to bottom right, var(--brand-secondary, #FFD77A) 0%, var(--brand-accent, #FF5269) 50%) bottom right / 50% 50% no-repeat, linear-gradient(to bottom left, var(--brand-secondary, #FFD77A) 0%, var(--brand-accent, #FF5269) 50%) bottom left / 50% 50% no-repeat, linear-gradient(to top left, var(--brand-secondary, #FFD77A) 0%, var(--brand-accent, #FF5269) 50%) top left / 50% 50% no-repeat, linear-gradient(to top right, var(--brand-secondary, #FFD77A) 0%, var(--brand-accent, #FF5269) 50%) top right / 50% 50% no-repeat",
+              WebkitBackgroundClip: "text",
+              backgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+            }}
+          >
+            Qios
+          </span>
+        )}
       </Link>
 
       <div

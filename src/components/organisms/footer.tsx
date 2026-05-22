@@ -5,10 +5,11 @@ import { cn } from "@/lib/utils";
 
 interface FooterProps {
   hideSocials?: boolean;
-  variant?: "default" | "admin";
+  variant?: "default" | "admin" | "tenant";
+  tenantName?: string;
 }
 
-export const Footer = ({ hideSocials, variant = "default" }: FooterProps) => {
+export const Footer = ({ hideSocials, variant = "default", tenantName = "Tenant" }: FooterProps) => {
   const shouldHideSocials = hideSocials || variant === "admin";
   return (
     <footer
@@ -36,23 +37,25 @@ export const Footer = ({ hideSocials, variant = "default" }: FooterProps) => {
         }}
       />
 
-      <div className="absolute -left-6 md:-left-8 lg:-left-10 max-md:-bottom-16 md:-bottom-32 lg:-bottom-36 z-2 pointer-events-none select-none overflow-hidden">
-        <h1
-          className="font-ibrand text-[min(50vw,500px)] md:text-[min(45vw,500px)]"
-          style={{
-            fontWeight: 400,
-            lineHeight: "1",
-            background:
-              "linear-gradient(to bottom right, #FFD77A 0%, #FF5269 50%) bottom right / 50% 50% no-repeat, linear-gradient(to bottom left, #FFD77A 0%, #FF5269 50%) bottom left / 50% 50% no-repeat, linear-gradient(to top left, #FFD77A 0%, #FF5269 50%) top left / 50% 50% no-repeat, linear-gradient(to top right, #FFD77A 0%, #FF5269 50%) top right / 50% 50% no-repeat",
-            WebkitBackgroundClip: "text",
-            backgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            display: "inline-block",
-          }}
-        >
-          Qios
-        </h1>
-      </div>
+      {variant === "default" && (
+        <div className="absolute -left-6 md:-left-8 lg:-left-10 max-md:-bottom-16 md:-bottom-32 lg:-bottom-36 z-2 pointer-events-none select-none overflow-hidden">
+          <h1
+            className="font-ibrand text-[min(50vw,500px)] md:text-[min(45vw,500px)]"
+            style={{
+              fontWeight: 400,
+              lineHeight: "1",
+              background:
+                "linear-gradient(to bottom right, #FFD77A 0%, #FF5269 50%) bottom right / 50% 50% no-repeat, linear-gradient(to bottom left, #FFD77A 0%, #FF5269 50%) bottom left / 50% 50% no-repeat, linear-gradient(to top left, #FFD77A 0%, #FF5269 50%) top left / 50% 50% no-repeat, linear-gradient(to top right, #FFD77A 0%, #FF5269 50%) top right / 50% 50% no-repeat",
+              WebkitBackgroundClip: "text",
+              backgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              display: "inline-block",
+            }}
+          >
+            Qios
+          </h1>
+        </div>
+      )}
 
       <div
         className={cn(
@@ -162,7 +165,11 @@ export const Footer = ({ hideSocials, variant = "default" }: FooterProps) => {
               fontWeight: 400,
             }}
           >
-            © 2026 Qios. All rights reserved.
+            {variant === "tenant" ? (
+              <>© 2026 {tenantName}. <span className="text-text-secondary/60 text-[16px]">Powered by Qios.</span></>
+            ) : (
+              "© 2026 Qios. All rights reserved."
+            )}
           </div>
         </div>
       </div>

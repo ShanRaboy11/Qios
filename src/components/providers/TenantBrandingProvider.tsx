@@ -9,7 +9,7 @@ interface TenantBrandingContextType {
   branding: Partial<TenantBrandingSettingsData> | null;
 }
 
-const TenantBrandingContext = createContext<TenantBrandingContextType>({ branding: null });
+export const TenantBrandingContext = createContext<TenantBrandingContextType>({ branding: null });
 
 // Hook for consuming the context
 export const useTenantBranding = () => {
