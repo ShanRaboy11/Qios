@@ -681,6 +681,11 @@ export async function saveOnboardingProgress(
 
 export async function saveDocumentUploads(data: DocumentUploadInput) {
   const supabase = createSupabaseAdminClient();
+  if (!data.tenantId) {
+    throw new Error(
+      "Tenant record is missing. Please complete business information first.",
+    );
+  }
   if (!data.userId) {
     throw new Error("User account was not created. Please return to Step 1.");
   }
@@ -728,7 +733,7 @@ export async function saveDocumentUploads(data: DocumentUploadInput) {
     try {
       const buffer = Buffer.from(fileInfo.base64, "base64");
       const safeName = fileInfo.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
-      const filePath = `${data.userId}/${key}-${safeName}`;
+      const filePath = `${data.tenantId}/${key}-${safeName}`;
 
       const { error: uploadError } = await supabase.storage
         .from("verification-docs")
