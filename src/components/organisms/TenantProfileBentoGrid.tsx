@@ -7,7 +7,6 @@ import {
   Settings,
   CreditCard,
   Check,
-  AlertCircle,
   FileImage,
   Eye,
   ShieldCheck,
@@ -230,44 +229,6 @@ export const TenantProfileBentoGrid = ({
                           >
                             <Eye className="w-3.5 h-3.5" /> View
                           </button>
-                        )}
-                        <Badge
-                          color={
-                            doc.status === "Approved"
-                              ? "success"
-                              : doc.status === "Revision Requested"
-                                ? "error"
-                                : "warning"
-                          }
-                          variant="solid"
-                          className="font-bold shadow-sm"
-                        >
-                          {doc.status}
-                        </Badge>
-                        {doc.status === "Pending" && (
-                          <div className="flex items-center gap-1.5">
-                            <button
-                              onClick={() =>
-                                onUpdateDocumentStatus(
-                                  doc.id,
-                                  "Revision Requested",
-                                )
-                              }
-                              className="p-1.5 text-red-500 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors border border-transparent hover:border-red-100"
-                              title="Request Revision"
-                            >
-                              <AlertCircle className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() =>
-                                onUpdateDocumentStatus(doc.id, "Approved")
-                              }
-                              className="p-1.5 text-success-primary hover:bg-success-secondary hover:text-success-primary rounded-lg transition-colors border border-transparent hover:border-green-200"
-                              title="Approve"
-                            >
-                              <Check className="w-4 h-4" />
-                            </button>
-                          </div>
                         )}
                       </>
                     ) : (
