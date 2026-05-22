@@ -94,8 +94,8 @@ export async function middleware(request: NextRequest) {
         const payload = JSON.parse(
           Buffer.from(accessToken.split(".")[1], "base64").toString(),
         );
-        role = payload.role ?? payload.user_role;
-        userTenantId = payload.tenant_id;
+        role = payload.user_role || (payload.role !== "authenticated" ? payload.role : null);
+        userTenantId = payload.tenant_id || payload.tenantId;
       } catch (e) {}
     }
 
@@ -158,8 +158,8 @@ export async function middleware(request: NextRequest) {
           Buffer.from(token.split(".")[1], "base64").toString(),
         );
 
-        const role = payload.role ?? payload.user_role;
-        const tenantId = payload.tenant_id;
+        const role = payload.user_role || (payload.role !== "authenticated" ? payload.role : null);
+        const tenantId = payload.tenant_id || payload.tenantId;
 
         if (role === "super_admin") {
           redirectPath = "/admin/dashboard";

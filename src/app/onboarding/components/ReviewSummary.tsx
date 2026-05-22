@@ -4,6 +4,9 @@ import React from "react";
 import { ArrowLeft, CheckCircle2, ClipboardCheck } from "lucide-react";
 import { Button } from "@/components/atoms/Button";
 
+const formatPlanName = (name: string) =>
+  name ? name.charAt(0).toUpperCase() + name.slice(1).toLowerCase() : name;
+
 interface ReviewSummaryProps {
   adminEmail: string;
   selectedPlanName: string;
@@ -97,7 +100,7 @@ export function ReviewSummary({
               Selected Plan
             </p>
             <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
-              {selectedPlanName || "-"}
+              {formatPlanName(selectedPlanName) || "-"}
             </p>
           </div>
         </div>

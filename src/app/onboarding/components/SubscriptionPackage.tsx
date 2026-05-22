@@ -45,6 +45,9 @@ const CATEGORY_LABELS: Record<keyof Features, string> = {
   admin_controls: "Admin Controls",
 };
 
+const formatPlanName = (name: string) =>
+  name ? name.charAt(0).toUpperCase() + name.slice(1).toLowerCase() : name;
+
 export function SubscriptionPackage({
   data,
   setData,
@@ -200,7 +203,7 @@ export function SubscriptionPackage({
               selectedId === pkg.id ? { backgroundColor: activeColorHex } : {}
             }
           >
-            {pkg.name}
+            {formatPlanName(pkg.name)}
           </button>
         ))}
       </div>
@@ -227,7 +230,7 @@ export function SubscriptionPackage({
               </Badge>
             )}
             <h2 className="text-3xl lg:text-[40px] font-bold text-text-primary leading-tight">
-              {activePackage.name}
+              {formatPlanName(activePackage.name)}
             </h2>
           </div>
 
@@ -325,7 +328,7 @@ export function SubscriptionPackage({
             onNext();
           }}
         >
-          Select {activePackage.name}
+          Select {formatPlanName(activePackage.name)}
         </Button>
       </div>
     </div>

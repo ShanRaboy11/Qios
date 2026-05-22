@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { CheckCircle2, Mail, Clock, Palette } from "lucide-react";
+import { CheckCircle2, Mail, Clock, Home } from "lucide-react";
 import { Button } from "@/components/atoms/Button";
 import { useRouter } from "next/navigation";
 
@@ -76,7 +76,10 @@ export function RegistrationSuccessModal({
         {/* Message */}
         <p className="text-center text-sm text-gray-600 mb-6">
           We'll notify you via email as soon as your registration is approved or
-          if we need any additional information.
+          if we need any additional information.{" "}
+          <span className="font-medium text-gray-800">
+            You will receive a link to set up your store's branding once verified.
+          </span>
         </p>
 
         {/* Action Buttons */}
@@ -86,19 +89,13 @@ export function RegistrationSuccessModal({
             size="lg"
             className="w-full flex items-center justify-center gap-2"
             onClick={() => {
-              onClose(); // Still call onClose to clear state
-              router.push("/setup/branding");
+              onClose();
+              router.push("/");
             }}
           >
-            <Palette size={18} />
-            Set Up Your Brand
+            <Home size={18} />
+            Go Home
           </Button>
-          <button
-            onClick={onClose}
-            className="w-full py-2 text-sm text-gray-500 hover:text-gray-800 transition-colors font-medium"
-          >
-            I'll do this later
-          </button>
         </div>
       </div>
     </div>

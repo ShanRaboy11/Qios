@@ -1,7 +1,16 @@
 import React from "react";
 import { Badge } from "@/components/atoms/Badge";
 import { Button } from "@/components/atoms/Button";
-import { ArrowLeft, Check, X, Pause, Building2, MapPin, Calendar, CircleDot } from "lucide-react";
+import {
+  ArrowLeft,
+  Check,
+  X,
+  Pause,
+  Building2,
+  MapPin,
+  Calendar,
+  CircleDot,
+} from "lucide-react";
 import Link from "next/link";
 import { TenantProfileData } from "./TenantProfilePage";
 import { cn } from "@/lib/utils";
@@ -55,7 +64,7 @@ export const TenantProfileHeader = ({
                 {tenant.status}
               </Badge>
             </div>
-            
+
             <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[14px] text-text-secondary font-medium">
               <span className="font-mono text-[13px] text-gray-400">
                 Tenant ID: {tenant.id}
@@ -94,7 +103,7 @@ export const TenantProfileHeader = ({
               variant="outline"
               shape="rounded"
               onClick={() => onStatusChange("Suspended")}
-              className="border-gray-200 text-text-primary hover:bg-gray-50 font-bold px-6 shadow-sm"
+              className="border-gray-200 text-text-primary hover:bg-brand-primary hover:text-white hover:border-brand-primary font-bold px-6 shadow-sm"
             >
               <Pause className="w-4 h-4 mr-2" />
               Suspend Account
@@ -102,8 +111,8 @@ export const TenantProfileHeader = ({
           )}
 
           {tenant.status === "Suspended" && (
-            <Button 
-              variant="primary" 
+            <Button
+              variant="primary"
               shape="rounded"
               onClick={() => onStatusChange("Active")}
               className="font-bold px-8 shadow-sm"

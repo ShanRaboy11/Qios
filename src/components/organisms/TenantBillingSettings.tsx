@@ -56,6 +56,9 @@ const formatDateTime = (value?: string) => {
   });
 };
 
+const formatPlanName = (name: string) =>
+  name ? name.charAt(0).toUpperCase() + name.slice(1).toLowerCase() : name;
+
 const providerMeta: Record<
   string,
   { label: string; accent: string; icon: React.ReactNode }
@@ -92,12 +95,21 @@ const providerMeta: Record<
   },
 };
 
-const getPlanCardStyles = (planName: string, planColor: string, isActive: boolean) => {
+const getPlanCardStyles = (
+  planName: string,
+  planColor: string,
+  isActive: boolean,
+) => {
   const name = planName.toLowerCase();
   const color = planColor.toLowerCase();
 
   // yellow theme
-  if (color.includes("ffc670") || name.includes("basic") || name.includes("starter") || name.includes("yellow")) {
+  if (
+    color.includes("ffc670") ||
+    name.includes("basic") ||
+    name.includes("starter") ||
+    name.includes("yellow")
+  ) {
     return {
       cardClass: isActive
         ? "bg-gradient-to-br from-[#ffc670]/20 to-[#ffc670]/10 border-[#ffc670] shadow-[0_0_15px_rgba(255,198,112,0.15)] ring-2 ring-[#ffc670]/20"
@@ -107,7 +119,12 @@ const getPlanCardStyles = (planName: string, planColor: string, isActive: boolea
     };
   }
   // red theme
-  if (color.includes("ff5269") || name.includes("business") || name.includes("pro") || name.includes("red")) {
+  if (
+    color.includes("ff5269") ||
+    name.includes("business") ||
+    name.includes("pro") ||
+    name.includes("red")
+  ) {
     return {
       cardClass: isActive
         ? "bg-gradient-to-br from-[#ff5269]/20 to-[#ff5269]/10 border-[#ff5269] shadow-[0_0_15px_rgba(255,82,105,0.15)] ring-2 ring-[#ff5269]/20"
@@ -117,7 +134,12 @@ const getPlanCardStyles = (planName: string, planColor: string, isActive: boolea
     };
   }
   // blue theme
-  if (color.includes("3b82f6") || name.includes("trial") || name.includes("free") || name.includes("blue")) {
+  if (
+    color.includes("3b82f6") ||
+    name.includes("trial") ||
+    name.includes("free") ||
+    name.includes("blue")
+  ) {
     return {
       cardClass: isActive
         ? "bg-gradient-to-br from-[#3b82f6]/20 to-[#3b82f6]/10 border-[#3b82f6] shadow-[0_0_15px_rgba(59,130,246,0.15)] ring-2 ring-[#3b82f6]/20"
@@ -137,7 +159,11 @@ const getPlanCardStyles = (planName: string, planColor: string, isActive: boolea
     };
   }
   // dark theme
-  if (color.includes("text-primary") || name.includes("dark") || name.includes("black")) {
+  if (
+    color.includes("text-primary") ||
+    name.includes("dark") ||
+    name.includes("black")
+  ) {
     return {
       cardClass: isActive
         ? "bg-gradient-to-br from-text-primary/20 to-text-primary/10 border-text-primary shadow-[0_0_15px_rgba(0,0,0,0.15)] ring-2 ring-text-primary/20"
@@ -260,7 +286,7 @@ export const TenantBillingSettings = ({
 
     try {
       await updateTenantSubscriptionPlan(tenantId, planName);
-      setPlanNotice(`Subscription updated to ${planName}.`);
+      setPlanNotice(`Subscription updated to ${formatPlanName(planName)}.`);
       setShowPlanPicker(false);
       router.refresh();
     } catch (error) {
@@ -346,10 +372,19 @@ export const TenantBillingSettings = ({
       last4: prov === "visa" || prov === "mastercard" ? method.last4 : "",
       expMonth: prov === "visa" || prov === "mastercard" ? method.expMonth : "",
       expYear: prov === "visa" || prov === "mastercard" ? method.expYear : "",
-      cardholderName: prov === "visa" || prov === "mastercard" ? method.cardholderName : "",
+      cardholderName:
+        prov === "visa" || prov === "mastercard" ? method.cardholderName : "",
       mobileNumber: prov === "gcash" ? method.cardholderName : "",
-      email: prov === "paypal" || prov === "stripe" ? method.cardholderName : "",
-      description: prov !== "visa" && prov !== "mastercard" && prov !== "gcash" && prov !== "paypal" && prov !== "stripe" ? method.cardholderName : "",
+      email:
+        prov === "paypal" || prov === "stripe" ? method.cardholderName : "",
+      description:
+        prov !== "visa" &&
+        prov !== "mastercard" &&
+        prov !== "gcash" &&
+        prov !== "paypal" &&
+        prov !== "stripe"
+          ? method.cardholderName
+          : "",
       isDefault: method.isDefault,
     });
     setShowPaymentForm(true);
@@ -397,7 +432,7 @@ export const TenantBillingSettings = ({
             <div className="space-y-2">
               {/* subscription plan name text capitalized first letter and stylized like price */}
               <h2 className="text-2xl font-bold text-text-primary">
-                {initialData.currentPlanName.charAt(0).toUpperCase() + initialData.currentPlanName.slice(1).toLowerCase()}
+                {formatPlanName(initialData.currentPlanName)}
               </h2>
               <h3 className="text-xl font-bold text-text-primary">
                 ₱{initialData.currentPlanPriceMonthly}{" "}
@@ -424,20 +459,24 @@ export const TenantBillingSettings = ({
             <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
               {initialData.availablePlans.map((plan) => {
                 const isActive = plan.name === initialData.currentPlanName;
-                const styles = getPlanCardStyles(plan.name, plan.color, isActive);
+                const styles = getPlanCardStyles(
+                  plan.name,
+                  plan.color,
+                  isActive,
+                );
 
                 return (
                   <div
                     key={plan.id}
                     className={cn(
                       "rounded-2xl border p-5 relative transition-all duration-300",
-                      styles.cardClass
+                      styles.cardClass,
                     )}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="text-sm font-bold text-text-primary uppercase tracking-[0.2em]">
-                          {plan.name}
+                          {formatPlanName(plan.name)}
                         </p>
                         <p className="text-xs text-text-secondary mt-1">
                           {plan.badge}
@@ -446,7 +485,12 @@ export const TenantBillingSettings = ({
 
                       <div className="absolute top-4 right-4">
                         {isActive ? (
-                          <span className={cn("px-2.5 py-1 text-xs font-bold rounded-full", styles.badgeColor)}>
+                          <span
+                            className={cn(
+                              "px-2.5 py-1 text-xs font-bold rounded-full",
+                              styles.badgeColor,
+                            )}
+                          >
                             Current
                           </span>
                         ) : (
@@ -455,7 +499,10 @@ export const TenantBillingSettings = ({
                             size="sm"
                             onClick={() => handleConfirmPlanSwitch(plan.name)}
                             loading={savingPlanName === plan.name}
-                            className={cn("py-1 px-3 text-xs border-transparent focus:ring-offset-2", styles.buttonColor)}
+                            className={cn(
+                              "py-1 px-3 text-xs border-transparent focus:ring-offset-2",
+                              styles.buttonColor,
+                            )}
                           >
                             Switch Plan
                           </Button>
@@ -490,7 +537,8 @@ export const TenantBillingSettings = ({
             {initialData.paymentMethods.length > 0 ? (
               initialData.paymentMethods.map((method) => {
                 const meta =
-                  providerMeta[method.provider.toLowerCase()] || providerMeta.other;
+                  providerMeta[method.provider.toLowerCase()] ||
+                  providerMeta.other;
                 const isCurrent =
                   method.id === activePaymentMethodId || method.isDefault;
 
@@ -577,8 +625,13 @@ export const TenantBillingSettings = ({
                       </Badge>
                       <p className="text-xs text-text-secondary">
                         Added on {formatDateTime(method.addedAt)}
-                        {["visa", "mastercard"].includes(method.provider.toLowerCase()) && (
-                          <> • Expires {method.expMonth}/{method.expYear}</>
+                        {["visa", "mastercard"].includes(
+                          method.provider.toLowerCase(),
+                        ) && (
+                          <>
+                            {" "}
+                            • Expires {method.expMonth}/{method.expYear}
+                          </>
                         )}
                       </p>
                     </div>
@@ -618,9 +671,14 @@ export const TenantBillingSettings = ({
                 {/* payment provider */}
                 <div className="space-y-1.5 relative z-50">
                   <label className="text-sm font-medium text-text-primary">
-                    Payment Provider <span className="text-brand-accent">*</span>
+                    Payment Provider{" "}
+                    <span className="text-brand-accent">*</span>
                   </label>
-                  <input type="hidden" name="provider" value={formData.provider} />
+                  <input
+                    type="hidden"
+                    name="provider"
+                    value={formData.provider}
+                  />
                   <Dropdown
                     label=""
                     className="w-full !max-w-full [&>label]:hidden"
@@ -671,11 +729,14 @@ export const TenantBillingSettings = ({
                 </div>
 
                 {/* conditional fields depending on provider */}
-                {["visa", "mastercard"].includes(formData.provider.toLowerCase()) && (
+                {["visa", "mastercard"].includes(
+                  formData.provider.toLowerCase(),
+                ) && (
                   <>
                     <div className="space-y-1.5">
                       <label className="text-sm font-medium text-text-primary">
-                        Cardholder Name <span className="text-brand-accent">*</span>
+                        Cardholder Name{" "}
+                        <span className="text-brand-accent">*</span>
                       </label>
                       <Input
                         name="cardholderName"
@@ -697,7 +758,8 @@ export const TenantBillingSettings = ({
 
                     <div className="space-y-1.5">
                       <label className="text-sm font-medium text-text-primary">
-                        Card Number Last 4 <span className="text-brand-accent">*</span>
+                        Card Number Last 4{" "}
+                        <span className="text-brand-accent">*</span>
                       </label>
                       <Input
                         name="last4"
@@ -723,14 +785,21 @@ export const TenantBillingSettings = ({
 
                     <div className="space-y-1.5">
                       <label className="text-sm font-medium text-text-primary">
-                        Expiry Month (mm) <span className="text-brand-accent">*</span>
+                        Expiry Month (mm){" "}
+                        <span className="text-brand-accent">*</span>
                       </label>
                       <Input
                         name="expMonth"
                         value={formData.expMonth}
                         onChange={(event) => {
-                          const val = event.target.value.replace(/[^0-9]/g, "").slice(0, 2);
-                          if (val === "" || (Number(val) >= 1 && Number(val) <= 12) || val === "0") {
+                          const val = event.target.value
+                            .replace(/[^0-9]/g, "")
+                            .slice(0, 2);
+                          if (
+                            val === "" ||
+                            (Number(val) >= 1 && Number(val) <= 12) ||
+                            val === "0"
+                          ) {
                             setFormData((previous) => ({
                               ...previous,
                               expMonth: val,
@@ -750,7 +819,8 @@ export const TenantBillingSettings = ({
 
                     <div className="space-y-1.5">
                       <label className="text-sm font-medium text-text-primary">
-                        Expiry Year (yyyy) <span className="text-brand-accent">*</span>
+                        Expiry Year (yyyy){" "}
+                        <span className="text-brand-accent">*</span>
                       </label>
                       <Input
                         name="expYear"
@@ -810,7 +880,9 @@ export const TenantBillingSettings = ({
                   </div>
                 )}
 
-                {["paypal", "stripe"].includes(formData.provider.toLowerCase()) && (
+                {["paypal", "stripe"].includes(
+                  formData.provider.toLowerCase(),
+                ) && (
                   <div className="space-y-1.5 sm:col-span-2">
                     <label className="text-sm font-medium text-text-primary">
                       Email Address <span className="text-brand-accent">*</span>
@@ -839,7 +911,8 @@ export const TenantBillingSettings = ({
                 {formData.provider.toLowerCase() === "other" && (
                   <div className="space-y-1.5 sm:col-span-2">
                     <label className="text-sm font-medium text-text-primary">
-                      Description/Reference <span className="text-brand-accent">*</span>
+                      Description/Reference{" "}
+                      <span className="text-brand-accent">*</span>
                     </label>
                     <Input
                       name="description"
@@ -978,10 +1051,12 @@ export const TenantBillingSettings = ({
           <div className="space-y-2 select-none">
             <p>
               Are you sure you want to change your subscription plan to{" "}
-              <strong>{pendingPlanName}</strong>?
+              <strong>{formatPlanName(pendingPlanName)}</strong>?
             </p>
             <p className="text-xs text-text-secondary">
-              Standard Billing Notice: Your payment method will be charged for the new plan, and any unused portion of your current subscription will be prorated.
+              Standard Billing Notice: Your payment method will be charged for
+              the new plan, and any unused portion of your current subscription
+              will be prorated.
             </p>
           </div>
         }
