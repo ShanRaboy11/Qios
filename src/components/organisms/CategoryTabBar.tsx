@@ -126,13 +126,21 @@ export const CategoryTabBar = ({
                       : "bg-white/30 rounded-[30px] group-hover:bg-brand-primary/80 group-hover:scale-110",
                 )}
               >
-                <img
-                  src={cat.iconSrc}
-                  alt={cat.label}
+                <div
                   className={cn(
-                    "w-12 h-12 object-contain transition-transform duration-300",
+                    "w-12 h-12 transition-transform duration-300 bg-brand-accent",
                     isActive ? "scale-110" : "group-hover:scale-110",
                   )}
+                  style={{
+                    maskImage: `url(${cat.iconSrc})`,
+                    WebkitMaskImage: `url(${cat.iconSrc})`,
+                    maskSize: "contain",
+                    WebkitMaskSize: "contain",
+                    maskRepeat: "no-repeat",
+                    WebkitMaskRepeat: "no-repeat",
+                    maskPosition: "center",
+                    WebkitMaskPosition: "center",
+                  }}
                 />
               </div>
               <span

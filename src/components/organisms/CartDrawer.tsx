@@ -164,9 +164,9 @@ export const CartDrawer = () => {
 
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3">
                 <Button
-                  variant="primary"
+                  variant="accent"
                   shape="rounded"
-                  className="flex-1 h-[56px] font-bold text-base shadow-[0_8px_24px_rgba(255,215,122,0.35)] justify-center active:scale-[0.97] transition-transform"
+                  className="flex-1 h-[56px] font-bold text-base shadow-lg justify-center active:scale-[0.97] transition-all"
                   onClick={() => setIsConfirmOpen(true)}
                 >
                   Checkout

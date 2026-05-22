@@ -22,7 +22,7 @@ export const OrderReceiptModal = ({ onClose, orderId = "QIOS-9921" }: OrderRecei
       {Array.from({ length: 50 }).map((_, i) => (
         <div 
           key={i} 
-          className="w-4 h-full bg-[#FFDC72] shrink-0" 
+          className="w-4 h-full bg-brand-primary shrink-0" 
           style={{ clipPath: 'polygon(0 0, 100% 0, 50% 100%)' }} 
         />
       ))}
@@ -47,7 +47,7 @@ export const OrderReceiptModal = ({ onClose, orderId = "QIOS-9921" }: OrderRecei
         className="w-full max-w-[360px] flex flex-col items-center relative"
       >
         {/* Main Receipt Body */}
-        <div ref={receiptRef} className="bg-[#FFDC72] w-full rounded-t-[24px] px-6 pt-8 pb-6 flex flex-col relative">
+        <div ref={receiptRef} className="bg-brand-primary w-full rounded-t-[24px] px-6 pt-8 pb-6 flex flex-col relative">
           
           {/* Order Status / Number Pill */}
           <div className="flex flex-col items-center gap-4 mb-8">
@@ -58,7 +58,7 @@ export const OrderReceiptModal = ({ onClose, orderId = "QIOS-9921" }: OrderRecei
               Today, {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </div>
             
-            <div className="bg-[#FF5269] text-white px-6 py-2.5 rounded-full font-inter font-bold text-[16px] shadow-sm">
+            <div className="bg-brand-accent text-white px-6 py-2.5 rounded-full font-inter font-bold text-[16px] shadow-sm">
               Order #{orderId}
             </div>
           </div>
@@ -76,7 +76,7 @@ export const OrderReceiptModal = ({ onClose, orderId = "QIOS-9921" }: OrderRecei
           <div className="space-y-3 mb-6">
             {cart.map((item) => (
               <div key={item.id} className="flex justify-between items-start gap-4 border-b border-black/10 border-dashed pb-3 last:border-0 last:pb-0">
-                <div className="b2 font-medium text-[#2D2D2D] leading-tight">
+                <div className="b2 font-medium text-text-primary leading-tight">
                   {item.quantity}x {item.menuItem.name}
                   {(item.selectedSize !== "s1" || item.selectedModifiers.length > 0) && (
                     <div className="text-[12px] text-black/50 mt-0.5 font-normal">
@@ -84,7 +84,7 @@ export const OrderReceiptModal = ({ onClose, orderId = "QIOS-9921" }: OrderRecei
                     </div>
                   )}
                 </div>
-                <div className="b2 font-bold text-[#2D2D2D] shrink-0">
+                <div className="b2 font-bold text-text-primary shrink-0">
                   ₱{item.totalPrice.toFixed(2)}
                 </div>
               </div>
@@ -95,15 +95,15 @@ export const OrderReceiptModal = ({ onClose, orderId = "QIOS-9921" }: OrderRecei
 
           {/* Total */}
           <div className="flex justify-between items-center mb-8">
-            <h3 className="h3 font-bold text-[#2D2D2D]">Total</h3>
-            <h3 className="h3 font-bold text-[#2D2D2D]">₱{(cartTotal * 1.12).toFixed(2)}</h3>
+            <h3 className="h3 font-bold text-text-primary">Total</h3>
+            <h3 className="h3 font-bold text-text-primary">₱{(cartTotal * 1.12).toFixed(2)}</h3>
           </div>
 
           {/* Download Action */}
           <Button
             variant="primary"
             shape="rounded"
-            className="w-full bg-[#FF5269] hover:bg-[#FF3B55] text-white h-[56px] text-[16px] font-bold justify-center gap-2 shadow-[0_8px_20px_rgba(255,82,105,0.2)] active:scale-[0.98] transition-transform"
+            className="w-full bg-brand-accent hover:opacity-90 text-white h-[56px] text-[16px] font-bold justify-center gap-2 shadow-sm active:scale-[0.98] transition-all"
             onClick={() => {
               // Stub for download functionality. Could use html2canvas in future.
               alert("Receipt download functionality to be implemented.");

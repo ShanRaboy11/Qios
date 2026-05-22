@@ -85,10 +85,10 @@ export const PromoBanner = ({ className }: { className?: string }) => {
                 <div className="absolute -bottom-8 right-4 w-20 h-20 rounded-full border-[8px] border-white blur-[5px]" />
 
                 <div className="relative z-20">
-                  <p className="b4 md:text-[14px] leading-tight opacity-90 max-w-[120px] mx-auto">
+                  <p className="b4 md:text-[14px] leading-tight opacity-90 max-w-[120px] mx-auto text-white/90">
                     {item.subtitle}
                   </p>
-                  <h2 className="text-brand font-inter font-black text-[22px] md:text-[28px] tracking-tight mt-1">
+                  <h2 className="text-white font-inter font-black text-[22px] md:text-[28px] tracking-tight mt-1">
                     {item.title}
                   </h2>
                 </div>
@@ -116,8 +116,8 @@ export const PromoBanner = ({ className }: { className?: string }) => {
             className={cn(
               "h-1.5 rounded-full transition-all duration-300",
               currentIndex === index
-                ? "w-6 bg-[#FFDC72]"
-                : "w-4 bg-[#FFDC72]/30",
+                ? "w-6 bg-white"
+                : "w-4 bg-white/40",
             )}
           />
         ))}
