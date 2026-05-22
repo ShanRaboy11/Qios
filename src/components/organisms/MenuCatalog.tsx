@@ -7,7 +7,7 @@ import { FormField } from "@/components/molecules/FormField";
 import OrderEditor from "./OrderEditor";
 import { CartDrawer } from "./CartDrawer";
 
-export type Category = "Snacks" | "Meal" | "Vegan" | "Dessert" | "Drinks";
+export type Category = string;
 
 export interface MenuItemData {
   id: string;
@@ -48,13 +48,15 @@ const DrinksIcon = () => (
   </svg>
 );
 
-const CATEGORIES: { label: Category; icon: React.ReactNode }[] = [
-  { label: "Snacks", icon: <SnacksIcon /> },
-  { label: "Meal", icon: <MealIcon /> },
-  { label: "Vegan", icon: <VeganIcon /> },
-  { label: "Dessert", icon: <DessertIcon /> },
-  { label: "Drinks", icon: <DrinksIcon /> },
-];
+const CATEGORY_ICON_BY_LABEL: Record<string, React.ReactNode> = {
+  Snacks: <SnacksIcon />,
+  Meal: <MealIcon />,
+  Vegan: <VeganIcon />,
+  Dessert: <DessertIcon />,
+  Drinks: <DrinksIcon />,
+};
+
+const DEFAULT_CATEGORIES: Category[] = ["Snacks", "Meal", "Vegan", "Dessert", "Drinks"];
 
 export const MenuItem = ({ item, onSelect }: { item: MenuItemData; onSelect?: (item: MenuItemData) => void }) => {
   return (
@@ -94,8 +96,34 @@ export const MenuItem = ({ item, onSelect }: { item: MenuItemData; onSelect?: (i
 
 export default function MenuCatalog({ initialItems }: { initialItems: MenuItemData[] }) {
   const [query, setQuery] = useState("");
-  const [activeCategory, setActiveCategory] = useState<Category>("Snacks");
+  const categories = useMemo(() => {
+    const seen = new Set<string>();
+    const derived = initialItems
+      .map((item) => item.category)
+      .filter((category) => {
+        if (seen.has(category)) {
+          return false;
+        }
+
+        seen.add(category);
+        return true;
+      });
+
+    return derived.length > 0 ? derived : DEFAULT_CATEGORIES;
+  }, [initialItems]);
+
+  const [activeCategory, setActiveCategory] = useState<Category>(categories[0] ?? "");
   const [selectedItem, setSelectedItem] = useState<MenuItemData | null>(null);
+
+  React.useEffect(() => {
+    if (categories.length === 0) {
+      return;
+    }
+
+    if (!categories.includes(activeCategory)) {
+      setActiveCategory(categories[0]);
+    }
+  }, [activeCategory, categories]);
 
   const filteredItems = useMemo(() => {
     return initialItems.filter((item) => {
@@ -131,12 +159,13 @@ export default function MenuCatalog({ initialItems }: { initialItems: MenuItemDa
       <div className="w-full max-w-[1239px] h-[700px] md:h-[800px] bg-[#ffd77a] rounded-t-[30px] border-[1.50px] border-orange-300 relative flex flex-col overflow-hidden">
         
         <div className="pt-6 px-4 md:px-10 flex items-end gap-3 sm:gap-6 md:gap-10 overflow-x-auto no-scrollbar shrink-0 w-full justify-center md:justify-start">
-          {CATEGORIES.map((cat) => {
-            const isActive = activeCategory === cat.label;
+          {categories.map((category) => {
+            const isActive = activeCategory === category;
+            const icon = CATEGORY_ICON_BY_LABEL[category] ?? <MealIcon />;
             return (
               <button
-                key={cat.label}
-                onClick={() => setActiveCategory(cat.label)}
+                key={category}
+                onClick={() => setActiveCategory(category)}
                 className={cn(
                   "flex flex-col items-center transition-all duration-300 min-w-[70px] sm:min-w-[80px] md:min-w-[100px] shrink-0", 
                   isActive 
@@ -149,7 +178,7 @@ export default function MenuCatalog({ initialItems }: { initialItems: MenuItemDa
                   isActive ? "bg-[#ffd77a] scale-90" : "bg-white shadow-sm"
                 )}>
                   <div className="text-[#ff5269] scale-75 md:scale-100">
-                    {cat.icon}
+                    {icon}
                   </div>
                 </div>
 
@@ -157,7 +186,7 @@ export default function MenuCatalog({ initialItems }: { initialItems: MenuItemDa
                   "mt-2 text-xs md:text-sm font-bold transition-all",
                   isActive ? "text-[#2d2d2d] mb-3 md:mb-4" : "text-[#2d2d2d]"
                 )}>
-                  {cat.label}
+                  {category}
                 </span>
               </button>
             );
