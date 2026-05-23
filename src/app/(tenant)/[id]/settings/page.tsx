@@ -8,10 +8,10 @@ export default async function SettingsPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams?: { tab?: string; section?: string };
+  searchParams?: Promise<{ tab?: string; section?: string }>;
 }) {
   const resolvedParams = await params;
-  const resolvedSearchParams = searchParams ?? {};
+  const resolvedSearchParams = (await searchParams) ?? {};
   const initialTab = resolvedSearchParams.tab === "store" ? "store" : "profile";
   const scrollToQrSection = resolvedSearchParams.section === "store-access-qr";
 
