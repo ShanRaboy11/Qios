@@ -46,7 +46,10 @@ export interface TenantProfileDetails {
   joined: string;
   plan: string;
   billingCycle: string;
+  totalLocations: number;
+  totalStaff: number;
   features: string[];
+  suspendComment?: string | null;
   documents: TenantProfileDocument[];
 }
 
@@ -391,6 +394,85 @@ function resolveFeatureList(
     "feature_list",
   ]);
   return extractFeatureList(metadataFeatures);
+}
+
+function resolveTenantLocationCount(
+  tenantRecord: Record<string, unknown>,
+  ownerMetadata: Record<string, unknown>,
+) {
+  const locationCountKeys = [
+    "location_count",
+    "locations_count",
+    "store_count",
+    "stores_count",
+    "branch_count",
+    "branches_count",
+    "outlet_count",
+    "outlets_count",
+  ];
+
+  const parseCountValue = (value: unknown) => {
+    if (typeof value === "number" && Number.isFinite(value)) {
+      return Math.max(0, Math.floor(value));
+    }
+    if (typeof value === "string") {
+      const trimmed = value.trim();
+      if (/^\d+$/.test(trimmed)) {
+        return Math.max(0, parseInt(trimmed, 10));
+      }
+    }
+    return null;
+  };
+
+  const resolveArrayLength = (value: unknown) => {
+    if (Array.isArray(value)) return value.length;
+    if (typeof value === "string") {
+      try {
+        const parsed = JSON.parse(value);
+        if (Array.isArray(parsed)) return parsed.length;
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  };
+
+  for (const key of locationCountKeys) {
+    const value = tenantRecord[key];
+    const parsed = parseCountValue(value);
+    if (parsed !== null) return parsed;
+  }
+
+  const locationArrayKeys = [
+    "locations",
+    "branches",
+    "stores",
+    "outlets",
+    "location_list",
+    "branch_list",
+    "store_list",
+    "outlet_list",
+  ];
+
+  for (const key of locationArrayKeys) {
+    const value = tenantRecord[key];
+    const parsed = resolveArrayLength(value);
+    if (parsed !== null) return parsed;
+  }
+
+  for (const key of locationCountKeys) {
+    const value = ownerMetadata[key];
+    const parsed = parseCountValue(value);
+    if (parsed !== null) return parsed;
+  }
+
+  for (const key of locationArrayKeys) {
+    const value = ownerMetadata[key];
+    const parsed = resolveArrayLength(value);
+    if (parsed !== null) return parsed;
+  }
+
+  return 1;
 }
 
 function isMissingColumnError(errorMessage: string | undefined) {
@@ -829,6 +911,16 @@ export async function getTenantProfileDetails(
 
   const planLabel = resolveTenantPlanLabel(tenantRecord, ownerMetadata);
   const featureList = resolveFeatureList(tenantRecord, ownerMetadata);
+  const totalStaff = profiles.filter(
+    (profile: any) =>
+      profile &&
+      typeof profile.role === "string" &&
+      ["admin", "employee"].includes(profile.role),
+  ).length;
+  const totalLocations = resolveTenantLocationCount(
+    tenantRecord,
+    ownerMetadata,
+  );
 
   const profileDocuments: TenantProfileDocument[] = sortedDocuments.map(
     (document) => ({
@@ -855,7 +947,13 @@ export async function getTenantProfileDetails(
     joined: formatJoinedDate(tenant.created_at),
     plan: planLabel,
     billingCycle: resolveBillingCycle(tenantRecord, ownerMetadata),
+    totalLocations,
+    totalStaff,
     features: featureList,
+    suspendComment:
+      typeof tenantRecord.suspend_comment === "string"
+        ? tenantRecord.suspend_comment
+        : null,
     documents: profileDocuments,
   };
 }
@@ -973,18 +1071,27 @@ export async function updateTenantSubscription(
 
 export async function updateTenantStatus(
   tenantId: string,
-  status: "pending" | "approved" | "rejected",
+  status: "pending" | "approved" | "rejected" | "suspended",
   comments?: string,
 ) {
   const supabase = createSupabaseAdminClient();
   const trimmedComments = comments?.trim();
 
   const updateData: any = { status };
+
   if (status === "approved") {
-    // Automatically resolve any prior rejection comment when the tenant is approved.
+    // Automatically resolve any prior rejection or suspension comment when the tenant is approved.
     updateData.admin_comments = "RESOLVED";
-  } else if (trimmedComments !== undefined) {
-    updateData.admin_comments = trimmedComments;
+    updateData.suspend_comment = "RESOLVED";
+  } else if (status === "rejected") {
+    updateData.admin_comments = trimmedComments ?? null;
+    updateData.suspend_comment = "RESOLVED";
+  } else if (status === "suspended") {
+    updateData.admin_comments = null;
+    updateData.suspend_comment = trimmedComments ?? null;
+  } else {
+    updateData.admin_comments = null;
+    updateData.suspend_comment = "RESOLVED";
   }
 
   const { error } = await supabase
@@ -993,7 +1100,60 @@ export async function updateTenantStatus(
     .eq("id", tenantId);
 
   if (error) {
-    throw new Error(error.message);
+    const matchesInvalidEnum = (message: string | undefined, value: string) =>
+      typeof message === "string" &&
+      message.includes("invalid input value for enum tenant_status_enum") &&
+      message.toLowerCase().includes(value.toLowerCase());
+
+    const missingSuspendCommentColumn =
+      error.message?.includes("suspend_comment") ||
+      error.message?.includes("Could not find the 'suspend_comment' column");
+    const invalidSuspendedEnum = matchesInvalidEnum(error.message, "suspended");
+
+    if (missingSuspendCommentColumn || invalidSuspendedEnum) {
+      if (missingSuspendCommentColumn) {
+        delete updateData.suspend_comment;
+      }
+
+      if (invalidSuspendedEnum && updateData.status === "suspended") {
+        console.warn(
+          "[updateTenantStatus] tenant_status_enum is missing 'suspended'; falling back to rejected status for login blocking.",
+        );
+        updateData.status = "rejected";
+        updateData.admin_comments = trimmedComments ?? null;
+      }
+
+      const { error: retryError } = await supabase
+        .from("tenants")
+        .update(updateData)
+        .eq("id", tenantId);
+
+      if (retryError) {
+        if (
+          invalidSuspendedEnum &&
+          matchesInvalidEnum(retryError.message, "rejected")
+        ) {
+          throw new Error(
+            "Tenant status enum is missing both 'suspended' and 'rejected'. Apply the latest database migrations before retrying.",
+          );
+        }
+
+        throw new Error(retryError.message);
+      }
+
+      if (missingSuspendCommentColumn) {
+        console.warn(
+          "[updateTenantStatus] suspend_comment column missing; status updated without storing suspend reason.",
+        );
+      }
+      if (invalidSuspendedEnum) {
+        console.warn(
+          "[updateTenantStatus] tenant_status_enum is missing 'suspended'; tenant was saved as rejected until migrations are applied.",
+        );
+      }
+    } else {
+      throw new Error(error.message);
+    }
   }
 
   // Prefer the tenant's registered business email, then fall back to owner auth email.
@@ -1066,7 +1226,7 @@ export async function updateTenantStatus(
     recipientEmail ?? "(none — email will not be sent)",
   );
 
-  if (recipientEmail && status !== "pending") {
+  if (recipientEmail && (status === "approved" || status === "rejected")) {
     const { sendBusinessVerificationEmail } = await import("@/lib/email");
     console.log(
       "[updateTenantStatus] Sending",
@@ -1111,7 +1271,9 @@ export async function updateTenantStatus(
       ? "Approved tenant"
       : status === "rejected"
         ? "Rejected tenant"
-        : "Set tenant status to pending";
+        : status === "suspended"
+          ? "Suspended tenant"
+          : "Set tenant status to pending";
 
   await logActivity({
     actorName: "Super Admin",
