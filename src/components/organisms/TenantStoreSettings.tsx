@@ -16,11 +16,13 @@ import {
 interface TenantStoreSettingsProps {
   tenantId: string;
   initialData: TenantStoreSettingsData;
+  scrollToQrSection?: boolean;
 }
 
 export const TenantStoreSettings = ({
   tenantId,
   initialData,
+  scrollToQrSection = false,
 }: TenantStoreSettingsProps) => {
   const [formData, setFormData] = useState(initialData);
   const [isEditing, setIsEditing] = useState(false);
@@ -85,14 +87,30 @@ export const TenantStoreSettings = ({
   ];
 
   const [storeUrl, setStoreUrl] = useState("");
+  const qrSectionRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!tenantId) {
       setStoreUrl("");
       return;
     }
 
-    setStoreUrl(new URL(`/${tenantId}/home`, window.location.origin).toString());
+    setStoreUrl(
+      new URL(`/${tenantId}/home`, window.location.origin).toString(),
+    );
   }, [tenantId]);
+
+  useEffect(() => {
+    if (!scrollToQrSection) return;
+
+    const timer = window.setTimeout(() => {
+      qrSectionRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 150);
+
+    return () => window.clearTimeout(timer);
+  }, [scrollToQrSection]);
 
   const handleDownloadQr = () => {
     const svg = document.getElementById("store-qr-code");
@@ -115,7 +133,9 @@ export const TenantStoreSettings = ({
         downloadLink.click();
       }
     };
-    img.src = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgData)));
+    img.src =
+      "data:image/svg+xml;base64," +
+      btoa(unescape(encodeURIComponent(svgData)));
   };
 
   return (
@@ -413,7 +433,7 @@ export const TenantStoreSettings = ({
           </form>
         </div>
 
-        <div className="space-y-4 w-full">
+        <div ref={qrSectionRef} className="space-y-4 w-full">
           <SectionHeader
             title="Store Access & QR Code"
             className="mb-0 py-2 border-gray-100"
@@ -441,17 +461,18 @@ export const TenantStoreSettings = ({
                   Customer Ordering App
                 </h3>
                 <p className="text-[14px] text-text-secondary mt-1">
-                  Customers can scan this QR code or visit the link below to access your store's digital menu and place orders.
+                  Customers can scan this QR code or visit the link below to
+                  access your store's digital menu and place orders.
                 </p>
               </div>
               <div className="flex items-center gap-2 max-w-md">
-                <Input 
-                  value={storeUrl || "Loading..."} 
-                  readOnly 
+                <Input
+                  value={storeUrl || "Loading..."}
+                  readOnly
                   className="bg-white text-sm"
                 />
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   shape="rounded"
                   onClick={() => navigator.clipboard.writeText(storeUrl)}
                 >
@@ -459,9 +480,9 @@ export const TenantStoreSettings = ({
                 </Button>
               </div>
               <div>
-                <Button 
-                  variant="accent" 
-                  shape="rounded" 
+                <Button
+                  variant="accent"
+                  shape="rounded"
                   leftIcon={<Download size={18} />}
                   onClick={handleDownloadQr}
                   disabled={!storeUrl}

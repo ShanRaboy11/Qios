@@ -35,7 +35,9 @@ export async function middleware(request: NextRequest) {
   const firstPathSegment = pathParts[0] || "";
 
   const isAuthRoute = firstPathSegment === "login";
+  const isRootRoute = firstPathSegment === "";
   const isSuperAdminRoute = firstPathSegment === "admin";
+  const secondPathSegment = pathParts[1] || "";
 
   // known top-level static route segments in app
   const knownStaticRoutes = [
@@ -50,19 +52,25 @@ export async function middleware(request: NextRequest) {
     "setup",
   ];
 
+  const isPublicCustomerRoute =
+    firstPathSegment !== "" &&
+    !knownStaticRoutes.includes(firstPathSegment) &&
+    ["home", "order"].includes(secondPathSegment);
+
   // detect tenant or employee routes
   const isTenantOrEmployeeRoute =
     firstPathSegment !== "" && !knownStaticRoutes.includes(firstPathSegment);
 
   const pathTenantId = isTenantOrEmployeeRoute ? firstPathSegment : null;
 
-  const isProtectedRoute = isSuperAdminRoute || isTenantOrEmployeeRoute;
+  const isProtectedRoute =
+    (isSuperAdminRoute || isTenantOrEmployeeRoute) && !isPublicCustomerRoute;
 
   // get user session for protected/auth routes
   let user = null;
   let accessToken = null;
 
-  if (isProtectedRoute || isAuthRoute) {
+  if (isProtectedRoute || isAuthRoute || isRootRoute) {
     const {
       data: { user: authUser },
     } = await supabase.auth.getUser();
@@ -85,7 +93,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // tenant/employee authorization check (disabled in dev)
-  if (user && isTenantOrEmployeeRoute && !isDev) {
+  if (user && isTenantOrEmployeeRoute && !isPublicCustomerRoute && !isDev) {
     let role = null;
     let userTenantId = null;
 
@@ -94,7 +102,9 @@ export async function middleware(request: NextRequest) {
         const payload = JSON.parse(
           Buffer.from(accessToken.split(".")[1], "base64").toString(),
         );
-        role = payload.user_role || (payload.role !== "authenticated" ? payload.role : null);
+        role =
+          payload.user_role ||
+          (payload.role !== "authenticated" ? payload.role : null);
         userTenantId = payload.tenant_id || payload.tenantId;
       } catch (e) {}
     }
@@ -143,14 +153,16 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // redirect authenticated users away from login
+  // redirect authenticated users away from login or guest landing page
   const isServerAction = request.headers.has("next-action");
 
-  if (user && isAuthRoute && !isServerAction) {
+  if (user && (isAuthRoute || isRootRoute) && !isServerAction) {
     const { data: sessionData } = await supabase.auth.getSession();
     const token = sessionData.session?.access_token;
 
     let redirectPath = "/";
+    let role = null;
+    let tenantId = null;
 
     if (token) {
       try {
@@ -158,38 +170,39 @@ export async function middleware(request: NextRequest) {
           Buffer.from(token.split(".")[1], "base64").toString(),
         );
 
-        const role = payload.user_role || (payload.role !== "authenticated" ? payload.role : null);
-        const tenantId = payload.tenant_id || payload.tenantId;
+        role =
+          payload.user_role ||
+          (payload.role !== "authenticated" ? payload.role : null);
+        tenantId = payload.tenant_id || payload.tenantId;
+      } catch (error) {}
+    }
 
-        if (role === "super_admin") {
-          redirectPath = "/admin/dashboard";
-        } else if (role === "admin" && tenantId) {
-          redirectPath = `/${tenantId}/dashboard`;
-        } else if (role === "employee" && tenantId) {
-          redirectPath = `/${tenantId}/employee/dashboard`;
-        }
-      } catch (error) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("role, tenant_id")
-          .eq("id", user.id)
-          .single();
+    if (!role) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role, tenant_id")
+        .eq("id", user.id)
+        .single();
 
-        if (profile) {
-          if (profile.role === "super_admin") {
-            redirectPath = "/admin/dashboard";
-          } else if (profile.role === "admin" && profile.tenant_id) {
-            redirectPath = `/${profile.tenant_id}/dashboard`;
-          } else if (profile.role === "employee" && profile.tenant_id) {
-            redirectPath = `/${profile.tenant_id}/employee/dashboard`;
-          }
-        }
+      if (profile) {
+        role = profile.role;
+        tenantId = profile.tenant_id;
       }
     }
 
-    const dashboardUrl = request.nextUrl.clone();
-    dashboardUrl.pathname = redirectPath;
-    return NextResponse.redirect(dashboardUrl);
+    if (role === "super_admin") {
+      redirectPath = "/admin/dashboard";
+    } else if (role === "admin" && tenantId) {
+      redirectPath = `/${tenantId}/dashboard`;
+    } else if (role === "employee" && tenantId) {
+      redirectPath = `/${tenantId}/employee/dashboard`;
+    }
+
+    if (redirectPath !== request.nextUrl.pathname) {
+      const dashboardUrl = request.nextUrl.clone();
+      dashboardUrl.pathname = redirectPath;
+      return NextResponse.redirect(dashboardUrl);
+    }
   }
 
   return supabaseResponse;

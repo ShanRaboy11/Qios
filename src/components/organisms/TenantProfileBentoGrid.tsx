@@ -88,7 +88,7 @@ export const TenantProfileBentoGrid = ({
       <div className="col-span-1 row-span-1 h-full flex flex-col sm:flex-row xl:flex-col gap-4">
         <KPICard
           title="Total Locations"
-          value="3"
+          value={String(tenant.totalLocations ?? 0)}
           percentageChange={33}
           description="+1 this month"
           variant="outlined"
@@ -97,7 +97,7 @@ export const TenantProfileBentoGrid = ({
         />
         <KPICard
           title="Total Staff"
-          value="18"
+          value={String(tenant.totalStaff ?? 0)}
           description="Active now"
           variant="outlined"
           className="shadow-sm border-gray-100 h-full flex-1 justify-center bg-white rounded-[24px]"

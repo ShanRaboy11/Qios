@@ -9,7 +9,7 @@ export default async function CustomerMenuPage({
   params: Promise<{ id: string }>;
 }) {
   const { id: tenantId } = await params;
-  const initialItems = await fetchTenantCustomerMenu(tenantId);
+  const { items: initialItems } = await fetchTenantCustomerMenu(tenantId);
 
   return (
     <main className="min-h-screen bg-bg-primary">

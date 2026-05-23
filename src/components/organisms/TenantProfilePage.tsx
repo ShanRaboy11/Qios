@@ -28,6 +28,8 @@ export interface TenantProfileData {
   joined: string;
   plan: string;
   billingCycle: string;
+  totalLocations: number;
+  totalStaff: number;
   features: string[];
   documents: {
     id: string;
@@ -127,7 +129,11 @@ export const TenantProfilePage = ({ tenantId }: TenantProfilePageProps) => {
       try {
         const details = await getTenantProfileDetails(tenantId);
         if (!isMounted) return;
-        setTenant(details);
+        setTenant({
+          ...details,
+          totalLocations: details.totalLocations ?? 0,
+          totalStaff: details.totalStaff ?? 0,
+        });
       } catch (error) {
         console.error("Failed to load tenant profile", error);
         if (!isMounted) return;
@@ -273,6 +279,8 @@ export const TenantProfilePage = ({ tenantId }: TenantProfilePageProps) => {
         await updateTenantStatus(tenant.id, "rejected", adminComment);
         setTenant((prev) => (prev ? { ...prev, status: "Rejected" } : null));
       } else if (modal.type === "suspend_tenant") {
+        const adminComment = reason.trim() || undefined;
+        await updateTenantStatus(tenant.id, "suspended", adminComment);
         setTenant((prev) => (prev ? { ...prev, status: "Suspended" } : null));
       } else if (modal.type === "approve_doc" && modal.targetId) {
         setTenant((prev) =>
@@ -423,11 +431,16 @@ export const TenantProfilePage = ({ tenantId }: TenantProfilePageProps) => {
       {/* Approve / Reactivate / Reject use shared confirmation modal (keeps Cancel ghost variant). */}
       {(modal.type === "approve_tenant" ||
         modal.type === "reactivate_tenant" ||
-        modal.type === "reject_tenant") &&
+        modal.type === "reject_tenant" ||
+        modal.type === "suspend_tenant") &&
         tenant && (
           <ActionConfirmationModal
             isOpen={modal.isOpen}
-            action={modal.type === "reject_tenant" ? "reject" : "approve"}
+            action={
+              modal.type === "reject_tenant" || modal.type === "suspend_tenant"
+                ? "reject"
+                : "approve"
+            }
             activePlanName={tenant.business_name}
             title={modal.title}
             message={modal.description}
