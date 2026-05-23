@@ -16,31 +16,13 @@ import { GuestProfileDrawer } from "@/components/organisms/GuestProfileDrawer";
 import { CartProvider } from "@/contexts/CartContext";
 import { MenuItemData } from "@/components/organisms/MenuCatalog";
 
-const CATEGORY_ICON_BY_LABEL: Record<string, string> = {
-  Drinks: "/svg/drinks.svg",
-  Snacks: "/svg/snacks.svg",
-  Vegan: "/svg/vegan.svg",
-  Meal: "/svg/meal.svg",
-  Dessert: "/svg/dessert.svg",
-};
-
-const CATEGORY_ORDER = ["Drinks", "Snacks", "Vegan", "Meal", "Dessert"];
-
-const getCategoryIcon = (label: string) => CATEGORY_ICON_BY_LABEL[label] || "/svg/meal.svg";
-
-const buildCategoryList = (items: MenuItemData[]) => {
-  const uniqueLabels = Array.from(new Set(items.map((item) => item.category)));
-  const ordered = [
-    ...CATEGORY_ORDER.filter((label) => uniqueLabels.includes(label)),
-    ...uniqueLabels.filter((label) => !CATEGORY_ORDER.includes(label)),
-  ];
-
-  return ordered.length > 0 ? ordered : CATEGORY_ORDER;
-};
+import { renderCategoryIcon } from "@/lib/utils/categoryIcons";
 
 export default function CustomerOrderingHome({
+  initialCategories,
   initialItems,
 }: {
+  initialCategories: { id: string; name: string; icon: string }[];
   initialItems: MenuItemData[];
 }) {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -48,7 +30,7 @@ export default function CustomerOrderingHome({
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const categories = useMemo(() => buildCategoryList(initialItems), [initialItems]);
+  const categories = initialCategories;
   const isCategoryView = selectedCategory !== null;
   const isSearching = searchQuery.trim().length > 0;
 
@@ -78,7 +60,10 @@ export default function CustomerOrderingHome({
   }, [initialItems, searchQuery]);
 
   const bestSellers = useMemo(() => initialItems.slice(0, 5), [initialItems]);
-  const recommendedItems = useMemo(() => initialItems.slice(5, 7), [initialItems]);
+  const recommendedItems = useMemo(
+    () => initialItems.slice(5, 7),
+    [initialItems],
+  );
 
   return (
     <CartProvider>
@@ -103,9 +88,9 @@ export default function CustomerOrderingHome({
             <div className="w-full max-w-[500px] md:max-w-[1024px] relative z-50">
               <CategoryTabBar
                 categories={categories.map((category) => ({
-                  id: category,
-                  label: category,
-                  iconSrc: getCategoryIcon(category),
+                  id: category.name,
+                  label: category.name,
+                  icon: renderCategoryIcon(category.icon, 32),
                 }))}
                 activeCategory={selectedCategory}
                 onSelectCategory={setSelectedCategory}
@@ -161,8 +146,13 @@ export default function CustomerOrderingHome({
                                 variant="vertical"
                                 title={item.name}
                                 price={item.price}
-                                availability={item.available ? "Available" : "Sold Out"}
-                                imageSrc={item.imageUrl || "/images/food-placeholder.png"}
+                                availability={
+                                  item.available ? "Available" : "Sold Out"
+                                }
+                                imageSrc={
+                                  item.imageUrl ||
+                                  "/images/food-placeholder.png"
+                                }
                                 onAdd={() => setSelectedItem(item)}
                               />
                             </motion.div>
@@ -172,7 +162,9 @@ export default function CustomerOrderingHome({
                         <div className="flex flex-col items-center justify-center py-20 opacity-50">
                           <Search size={48} className="mb-4" />
                           <p className="text-lg font-bold">No items found</p>
-                          <p className="text-sm">Try searching for something else.</p>
+                          <p className="text-sm">
+                            Try searching for something else.
+                          </p>
                         </div>
                       )}
                     </motion.div>
@@ -201,13 +193,18 @@ export default function CustomerOrderingHome({
                                 key={item.id}
                                 variant="bestseller"
                                 price={item.price}
-                                imageSrc={item.imageUrl || "/images/food-placeholder.png"}
+                                imageSrc={
+                                  item.imageUrl ||
+                                  "/images/food-placeholder.png"
+                                }
                                 title={item.name}
                                 onAdd={() => setSelectedItem(item)}
                               />
                             ))
                           ) : (
-                            <div className="text-sm text-text-secondary">No items available.</div>
+                            <div className="text-sm text-text-secondary">
+                              No items available.
+                            </div>
                           )}
                         </div>
                       </div>
@@ -217,7 +214,9 @@ export default function CustomerOrderingHome({
                       </div>
 
                       <div className="w-full">
-                        <h3 className="h3 font-bold mb-6">Recommended For You</h3>
+                        <h3 className="h3 font-bold mb-6">
+                          Recommended For You
+                        </h3>
 
                         <div className="flex flex-col md:flex-row gap-6 w-full">
                           {recommendedItems.length > 0 ? (
@@ -227,13 +226,20 @@ export default function CustomerOrderingHome({
                                 variant="horizontal"
                                 title={item.name}
                                 price={item.price}
-                                availability={item.available ? "Available" : "Sold Out"}
-                                imageSrc={item.imageUrl || "/images/food-placeholder.png"}
+                                availability={
+                                  item.available ? "Available" : "Sold Out"
+                                }
+                                imageSrc={
+                                  item.imageUrl ||
+                                  "/images/food-placeholder.png"
+                                }
                                 onAdd={() => setSelectedItem(item)}
                               />
                             ))
                           ) : (
-                            <div className="text-sm text-text-secondary">More menu items will appear here.</div>
+                            <div className="text-sm text-text-secondary">
+                              More menu items will appear here.
+                            </div>
                           )}
                         </div>
                       </div>
@@ -277,8 +283,13 @@ export default function CustomerOrderingHome({
                                 variant="vertical"
                                 title={item.name}
                                 price={item.price}
-                                availability={item.available ? "Available" : "Sold Out"}
-                                imageSrc={item.imageUrl || "/images/food-placeholder.png"}
+                                availability={
+                                  item.available ? "Available" : "Sold Out"
+                                }
+                                imageSrc={
+                                  item.imageUrl ||
+                                  "/images/food-placeholder.png"
+                                }
                                 onAdd={() => setSelectedItem(item)}
                               />
                             </motion.div>

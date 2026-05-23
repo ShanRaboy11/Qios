@@ -6,7 +6,6 @@ import { cn } from "@/lib/utils";
 
 import { CustomerHeader } from "@/components/organisms/CustomerHeader";
 import { CategoryTabBar } from "@/components/organisms/CategoryTabBar";
-import { CategoryToggle } from "@/components/molecules/CategoryToggle";
 import { MenuItemCard } from "@/components/molecules/MenuItemCard";
 import { PromoBanner } from "@/components/organisms/PromoBanner";
 import { ChevronRight, Search } from "lucide-react";
@@ -16,15 +15,61 @@ import { FloatingOrderStatus } from "@/components/organisms/FloatingOrderStatus"
 import { GuestProfileDrawer } from "@/components/organisms/GuestProfileDrawer";
 import { CartProvider } from "@/contexts/CartContext";
 import { MenuItemData } from "@/components/organisms/MenuCatalog";
+import { renderCategoryIcon } from "@/lib/utils/categoryIcons";
+
+// Helper to create a mock MenuItemData with empty modifierGroups
+const mockItem = (
+  id: string,
+  name: string,
+  price: number,
+  category: string,
+  imageUrl: string,
+): MenuItemData => ({
+  id,
+  name,
+  price,
+  available: true,
+  category,
+  imageUrl,
+  modifierGroups: [],
+});
 
 const MOCK_MENU_CATALOG: MenuItemData[] = [
-  { id: "1", name: "Sushi", price: 105.5, available: true, category: "Meal", imageUrl: "/images/sushi.png" },
-  { id: "2", name: "Steak", price: 250.5, available: true, category: "Meal", imageUrl: "/images/steak.png" },
-  { id: "3", name: "Pasta", price: 80.5, available: true, category: "Meal", imageUrl: "/images/pasta.png" },
-  { id: "4", name: "Cupcake", price: 100.5, available: true, category: "Dessert", imageUrl: "/images/cupcake.png" },
-  { id: "5", name: "Noodles", price: 120.0, available: true, category: "Meal", imageUrl: "/images/noodles.png" },
-  { id: "6", name: "Spicy seasoned seafood noodles", price: 2.29, available: true, category: "Meal", imageUrl: "/images/noodles.png" },
-  { id: "7", name: "Classic Burger with Fries", price: 5.99, available: true, category: "Meal", imageUrl: "/images/food-placeholder.png" },
+  mockItem("1", "Sushi", 105.5, "Meal", "/images/sushi.png"),
+  mockItem("2", "Steak", 250.5, "Meal", "/images/steak.png"),
+  mockItem("3", "Pasta", 80.5, "Meal", "/images/pasta.png"),
+  mockItem("4", "Cupcake", 100.5, "Dessert", "/images/cupcake.png"),
+  mockItem("5", "Noodles", 120.0, "Meal", "/images/noodles.png"),
+  mockItem(
+    "6",
+    "Spicy seasoned seafood noodles",
+    2.29,
+    "Meal",
+    "/images/noodles.png",
+  ),
+  mockItem(
+    "7",
+    "Classic Burger with Fries",
+    5.99,
+    "Meal",
+    "/images/food-placeholder.png",
+  ),
+];
+
+const DEMO_CATEGORIES = [
+  { id: "Drinks", label: "Drinks", icon: renderCategoryIcon("coffee", 28) },
+  { id: "Snacks", label: "Snacks", icon: renderCategoryIcon("cookie", 28) },
+  { id: "Vegan", label: "Vegan", icon: renderCategoryIcon("leaf", 28) },
+  {
+    id: "Meal",
+    label: "Meal",
+    icon: renderCategoryIcon("utensils-crossed", 28),
+  },
+  {
+    id: "Dessert",
+    label: "Dessert",
+    icon: renderCategoryIcon("ice-cream", 28),
+  },
 ];
 
 export default function CustomerHomePage() {
@@ -36,8 +81,8 @@ export default function CustomerHomePage() {
   const isCategoryView = selectedCategory !== null;
   const isSearching = searchQuery.trim().length > 0;
 
-  const searchResults = MOCK_MENU_CATALOG.filter(item => 
-    item.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const searchResults = MOCK_MENU_CATALOG.filter((item) =>
+    item.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   return (
@@ -62,17 +107,7 @@ export default function CustomerHomePage() {
           <div className="flex-grow flex flex-col relative w-full items-center">
             <div className="w-full max-w-[500px] md:max-w-[1024px] relative z-50">
               <CategoryTabBar
-                categories={[
-                  { id: "Drinks", label: "Drinks", iconSrc: "/svg/drinks.svg" },
-                  { id: "Snacks", label: "Snacks", iconSrc: "/svg/snacks.svg" },
-                  { id: "Vegan", label: "Vegan", iconSrc: "/svg/vegan.svg" },
-                  { id: "Meal", label: "Meal", iconSrc: "/svg/meal.svg" },
-                  {
-                    id: "Dessert",
-                    label: "Dessert",
-                    iconSrc: "/svg/dessert.svg",
-                  },
-                ]}
+                categories={DEMO_CATEGORIES}
                 activeCategory={selectedCategory}
                 onSelectCategory={setSelectedCategory}
                 isCategoryView={isCategoryView}
@@ -83,7 +118,7 @@ export default function CustomerHomePage() {
               layout
               className={cn(
                 "flex-grow bg-white w-full p-7 md:px-32 pb-10 flex flex-col items-center relative z-40 shadow-[0_-4px_24px_rgba(0,0,0,0.05)] transition-all duration-500",
-                (isCategoryView || isSearching)
+                isCategoryView || isSearching
                   ? "-mt-[6px] pt-8 rounded-t-[18px]"
                   : "-mt-[165px] pt-[140px] rounded-t-[40px]",
               )}
@@ -128,7 +163,10 @@ export default function CustomerHomePage() {
                                 title={item.name}
                                 price={item.price}
                                 availability="Available"
-                                imageSrc={item.imageUrl || "/images/food-placeholder.png"}
+                                imageSrc={
+                                  item.imageUrl ||
+                                  "/images/food-placeholder.png"
+                                }
                                 onAdd={() => setSelectedItem(item)}
                               />
                             </motion.div>
@@ -138,7 +176,9 @@ export default function CustomerHomePage() {
                         <div className="flex flex-col items-center justify-center py-20 opacity-50">
                           <Search size={48} className="mb-4" />
                           <p className="text-lg font-bold">No items found</p>
-                          <p className="text-sm">Try searching for something else.</p>
+                          <p className="text-sm">
+                            Try searching for something else.
+                          </p>
                         </div>
                       )}
                     </motion.div>
@@ -161,86 +201,16 @@ export default function CustomerHomePage() {
                         </div>
 
                         <div className="flex flex-nowrap w-full justify-between sm:justify-start gap-4 pb-4">
-                          <MenuItemCard
-                            variant="bestseller"
-                            price={105.5}
-                            imageSrc="/images/sushi.png"
-                            title="Sushi"
-                            onAdd={() =>
-                              setSelectedItem({
-                                id: "1",
-                                name: "Sushi",
-                                price: 105.5,
-                                available: true,
-                                category: "Meal",
-                                imageUrl: "/images/sushi.png",
-                              })
-                            }
-                          />
-                          <MenuItemCard
-                            variant="bestseller"
-                            price={250.5}
-                            imageSrc="/images/steak.png"
-                            title="Steak"
-                            onAdd={() =>
-                              setSelectedItem({
-                                id: "2",
-                                name: "Steak",
-                                price: 250.5,
-                                available: true,
-                                category: "Meal",
-                                imageUrl: "/images/steak.png",
-                              })
-                            }
-                          />
-                          <MenuItemCard
-                            variant="bestseller"
-                            price={80.5}
-                            imageSrc="/images/pasta.png"
-                            title="Pasta"
-                            onAdd={() =>
-                              setSelectedItem({
-                                id: "3",
-                                name: "Pasta",
-                                price: 80.5,
-                                available: true,
-                                category: "Meal",
-                                imageUrl: "/images/pasta.png",
-                              })
-                            }
-                          />
-                          <MenuItemCard
-                            variant="bestseller"
-                            price={100.5}
-                            imageSrc="/images/cupcake.png"
-                            title="Cupcake"
-                            onAdd={() =>
-                              setSelectedItem({
-                                id: "4",
-                                name: "Cupcake",
-                                price: 100.5,
-                                available: true,
-                                category: "Dessert",
-                                imageUrl: "/images/cupcake.png",
-                              })
-                            }
-                          />
-                          <MenuItemCard
-                            variant="bestseller"
-                            price={120.0}
-                            imageSrc="/images/noodles.png"
-                            title="Noodles"
-                            onAdd={() =>
-                              setSelectedItem({
-                                id: "5",
-                                name: "Noodles",
-                                price: 120.0,
-                                available: true,
-                                category: "Meal",
-                                imageUrl: "/images/noodles.png",
-                              })
-                            }
-                          />
+                          {MOCK_MENU_CATALOG.slice(0, 5).map((item) => (
+                            <MenuItemCard
+                              key={item.id}
+                              variant="bestseller"
+                              price={item.price}
+                              imageSrc={item.imageUrl}
+                              title={item.name}
+                              onAdd={() => setSelectedItem(item)}
+                            />
+                          ))}
                         </div>
                       </div>
 
@@ -252,42 +222,18 @@ export default function CustomerHomePage() {
                         <h3 className="h3 font-bold mb-6">
                           Recommended For You
                         </h3>
-
                         <div className="flex flex-col md:flex-row gap-6 w-full">
-                          <MenuItemCard
-                            variant="horizontal"
-                            title="Spicy seasoned seafood noodles"
-                            price={2.29}
-                            availability="20 Bowls available"
-                            imageSrc="/images/noodles.png"
-                            onAdd={() =>
-                              setSelectedItem({
-                                id: "6",
-                                name: "Spicy seasoned seafood noodles",
-                                price: 2.29,
-                                available: true,
-                                category: "Meal",
-                                imageUrl: "/images/noodles.png",
-                              })
-                            }
-                          />
-                          <MenuItemCard
-                            variant="horizontal"
-                            title="Classic Burger with Fries"
-                            price={5.99}
-                            availability="15 Meals available"
-                            imageSrc="/images/food-placeholder.png"
-                            onAdd={() =>
-                              setSelectedItem({
-                                id: "7",
-                                name: "Classic Burger with Fries",
-                                price: 5.99,
-                                available: true,
-                                category: "Meal",
-                                imageUrl: "/images/food-placeholder.png",
-                              })
-                            }
-                          />
+                          {MOCK_MENU_CATALOG.slice(5).map((item) => (
+                            <MenuItemCard
+                              key={item.id}
+                              variant="horizontal"
+                              title={item.name}
+                              price={item.price}
+                              availability="Available"
+                              imageSrc={item.imageUrl}
+                              onAdd={() => setSelectedItem(item)}
+                            />
+                          ))}
                         </div>
                       </div>
                     </motion.div>
@@ -310,16 +256,16 @@ export default function CustomerHomePage() {
                           hidden: { opacity: 0 },
                           show: {
                             opacity: 1,
-                            transition: {
-                              staggerChildren: 0.08,
-                            },
+                            transition: { staggerChildren: 0.08 },
                           },
                         }}
                         className="grid grid-cols-2 gap-4 md:gap-6 md:grid-cols-3 lg:grid-cols-4"
                       >
-                        {[1, 2, 3, 4, 5, 6].map((i) => (
+                        {MOCK_MENU_CATALOG.filter(
+                          (i) => i.category === selectedCategory,
+                        ).map((item) => (
                           <motion.div
-                            key={i}
+                            key={item.id}
                             variants={{
                               hidden: { opacity: 0, y: 20 },
                               show: { opacity: 1, y: 0 },
@@ -327,20 +273,11 @@ export default function CustomerHomePage() {
                           >
                             <MenuItemCard
                               variant="vertical"
-                              title="Spicy seasoned seafood noodles"
-                              price={2.29}
-                              availability="20 Bowls available"
-                              imageSrc="/images/noodles.png"
-                              onAdd={() =>
-                                setSelectedItem({
-                                  id: `cat-${i}`,
-                                  name: "Spicy seasoned seafood noodles",
-                                  price: 2.29,
-                                  available: true,
-                                  category: "Meal",
-                                  imageUrl: "/images/noodles.png",
-                                })
-                              }
+                              title={item.name}
+                              price={item.price}
+                              availability="Available"
+                              imageSrc={item.imageUrl}
+                              onAdd={() => setSelectedItem(item)}
                             />
                           </motion.div>
                         ))}
@@ -361,7 +298,10 @@ export default function CustomerHomePage() {
         )}
         <CartDrawer />
         <FloatingOrderStatus />
-        <GuestProfileDrawer isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} />
+        <GuestProfileDrawer
+          isOpen={isProfileOpen}
+          onClose={() => setIsProfileOpen(false)}
+        />
       </motion.main>
     </CartProvider>
   );
