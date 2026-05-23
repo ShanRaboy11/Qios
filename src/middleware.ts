@@ -36,6 +36,7 @@ export async function middleware(request: NextRequest) {
 
   const isAuthRoute = firstPathSegment === "login";
   const isSuperAdminRoute = firstPathSegment === "admin";
+  const secondPathSegment = pathParts[1] || "";
 
   // known top-level static route segments in app
   const knownStaticRoutes = [
@@ -50,13 +51,19 @@ export async function middleware(request: NextRequest) {
     "setup",
   ];
 
+  const isPublicCustomerRoute =
+    firstPathSegment !== "" &&
+    !knownStaticRoutes.includes(firstPathSegment) &&
+    ["home", "order"].includes(secondPathSegment);
+
   // detect tenant or employee routes
   const isTenantOrEmployeeRoute =
     firstPathSegment !== "" && !knownStaticRoutes.includes(firstPathSegment);
 
   const pathTenantId = isTenantOrEmployeeRoute ? firstPathSegment : null;
 
-  const isProtectedRoute = isSuperAdminRoute || isTenantOrEmployeeRoute;
+  const isProtectedRoute =
+    (isSuperAdminRoute || isTenantOrEmployeeRoute) && !isPublicCustomerRoute;
 
   // get user session for protected/auth routes
   let user = null;
@@ -85,7 +92,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // tenant/employee authorization check (disabled in dev)
-  if (user && isTenantOrEmployeeRoute && !isDev) {
+  if (user && isTenantOrEmployeeRoute && !isPublicCustomerRoute && !isDev) {
     let role = null;
     let userTenantId = null;
 
