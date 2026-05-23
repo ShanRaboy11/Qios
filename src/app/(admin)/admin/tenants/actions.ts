@@ -1080,18 +1080,18 @@ export async function updateTenantStatus(
   const updateData: any = { status };
 
   if (status === "approved") {
-    // Automatically resolve any prior rejection comment when the tenant is approved.
+    // Automatically resolve any prior rejection or suspension comment when the tenant is approved.
     updateData.admin_comments = "RESOLVED";
-    updateData.suspend_comment = null;
+    updateData.suspend_comment = "RESOLVED";
   } else if (status === "rejected") {
     updateData.admin_comments = trimmedComments ?? null;
-    updateData.suspend_comment = null;
+    updateData.suspend_comment = "RESOLVED";
   } else if (status === "suspended") {
     updateData.admin_comments = null;
     updateData.suspend_comment = trimmedComments ?? null;
   } else {
     updateData.admin_comments = null;
-    updateData.suspend_comment = null;
+    updateData.suspend_comment = "RESOLVED";
   }
 
   const { error } = await supabase
