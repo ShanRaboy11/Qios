@@ -17,7 +17,9 @@ export const CartDrawer = () => {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [placedOrderId, setPlacedOrderId] = useState<string | null>(null);
-  
+  const [cartSnapshot, setCartSnapshot] = useState(cart);
+  const [cartTotalSnapshot, setCartTotalSnapshot] = useState(cartTotal);
+
   const params = useParams();
   const tenantId = typeof params?.id === "string" ? params.id : "";
 
@@ -99,15 +101,22 @@ export const CartDrawer = () => {
                       <div className="flex justify-between items-start gap-2">
                         <div className="space-y-1 min-w-0 flex-1">
                           <h3 className="b1 font-bold text-text-primary line-clamp-1">{item.menuItem.name}</h3>
-                          {item.selectedModifiers.length > 0 && (
-                            <span className="inline-block bg-brand-secondary/30 text-brand-primary text-[10px] font-bold px-2 py-0.5 rounded-pill uppercase tracking-wider">
-                              + {item.selectedModifiers.length} Add-ons
-                            </span>
+                          {item.selectedOptions.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {item.selectedOptions.map((o) => (
+                                <span
+                                  key={o.id}
+                                  className="inline-block bg-brand-secondary/30 text-brand-primary text-[10px] font-bold px-2 py-0.5 rounded-pill uppercase tracking-wider"
+                                >
+                                  {o.name}
+                                </span>
+                              ))}
+                            </div>
                           )}
-                          {item.selectedSize !== "s1" && (
-                            <span className="inline-block bg-info-secondary/30 text-info-primary text-[10px] font-bold px-2 py-0.5 rounded-pill uppercase tracking-wider ml-1">
-                              Large
-                            </span>
+                          {item.specialInstructions && (
+                            <p className="b5 text-text-secondary/60 line-clamp-1 italic">
+                              "{item.specialInstructions}"
+                            </p>
                           )}
                         </div>
                         <button
@@ -216,16 +225,18 @@ export const CartDrawer = () => {
                   onClick={async () => {
                     if (!tenantId) return;
                     setIsSubmitting(true);
-                    
+
                     const result = await placeOrder(tenantId, cart, cartTotal);
                     setIsSubmitting(false);
-                    
+
                     if (result.success && result.qrHash) {
+                      // Capture snapshot BEFORE clearing the cart
+                      setCartSnapshot([...cart]);
+                      setCartTotalSnapshot(cartTotal);
                       setPlacedOrderId(result.qrHash);
                       setIsConfirmOpen(false);
                       setIsOpen(false);
-                      clearCart(); // Clear the cart on success
-                      // Wait for animation before opening receipt
+                      clearCart();
                       setTimeout(() => setIsReceiptOpen(true), 200);
                     } else {
                       alert(result.error || "Failed to place order.");
@@ -243,9 +254,11 @@ export const CartDrawer = () => {
       {/* Order Receipt Modal */}
       <AnimatePresence>
         {isReceiptOpen && placedOrderId && (
-          <OrderReceiptModal 
-            onClose={() => setIsReceiptOpen(false)} 
-            orderId={placedOrderId} 
+          <OrderReceiptModal
+            onClose={() => setIsReceiptOpen(false)}
+            orderId={placedOrderId}
+            cartSnapshot={cartSnapshot}
+            cartTotal={cartTotalSnapshot}
           />
         )}
       </AnimatePresence>

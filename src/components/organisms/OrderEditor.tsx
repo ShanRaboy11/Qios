@@ -1,72 +1,14 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { X, Minus, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/atoms/Button";
 import { Badge } from "@/components/atoms/Badge";
 import { Checkbox } from "@/components/atoms/Checkbox";
 import { Radio } from "@/components/atoms/Radio";
-import { MenuItemData } from "./MenuCatalog";
-import { useCart } from "@/contexts/CartContext";
-
-// types
-interface Modifier {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-}
-
-interface Size {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-}
-
-// mock data
-const MODIFIERS: Modifier[] = [
-  {
-    id: "m1",
-    name: "Extra Rice",
-    description: "Pan-fried crispy tofu cubes",
-    price: 35,
-  },
-  {
-    id: "m2",
-    name: "French Fries",
-    description: "Pan-fried crispy tofu cubes",
-    price: 35,
-  },
-  {
-    id: "m3",
-    name: "Spaghetti",
-    description: "Pan-fried crispy tofu cubes",
-    price: 35,
-  },
-  {
-    id: "m4",
-    name: "Drinks",
-    description: "Pan-fried crispy tofu cubes",
-    price: 35,
-  },
-];
-
-const SIZES: Size[] = [
-  {
-    id: "s1",
-    name: "Regular",
-    description: "Gentle kick, great for sensitive palates",
-    price: 0,
-  },
-  {
-    id: "s2",
-    name: "Large",
-    description: "Extra portion for bigger appetites",
-    price: 50,
-  },
-];
+import { MenuItemData, MenuItemModifierOption } from "./MenuCatalog";
+import { useCart, SelectedModifierOption } from "@/contexts/CartContext";
 
 interface OrderEditorProps {
   menuItem: MenuItemData;
@@ -74,28 +16,77 @@ interface OrderEditorProps {
 }
 
 const OrderEditor = ({ menuItem, onClose }: OrderEditorProps) => {
-  // state
+  const { addToCart } = useCart();
+
   const [quantity, setQuantity] = useState(1);
-  const [selectedModifiers, setSelectedModifiers] = useState<string[]>([]);
-  const [selectedSize, setSelectedSize] = useState<string>("s2");
+  // Map of modifierGroupId -> Set of selected optionIds
+  const [selectionByGroup, setSelectionByGroup] = useState<
+    Map<string, Set<string>>
+  >(
+    () =>
+      new Map(
+        menuItem.modifierGroups.map((g) => [g.id, new Set<string>()]),
+      ),
+  );
   const [instructions, setInstructions] = useState("");
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-  // handlers
-  const toggleModifier = (id: string) => {
-    setSelectedModifiers((prev) =>
-      prev.includes(id) ? prev.filter((m) => m !== id) : [...prev, id],
-    );
-  };
+  // Flatten selected options across all groups for price + display
+  const selectedOptions = useMemo<SelectedModifierOption[]>(() => {
+    const result: SelectedModifierOption[] = [];
+    for (const group of menuItem.modifierGroups) {
+      const chosen = selectionByGroup.get(group.id) ?? new Set();
+      for (const option of group.options) {
+        if (chosen.has(option.id)) {
+          result.push({
+            id: option.id,
+            modifierGroupId: group.id,
+            modifierGroupName: group.name,
+            name: option.name,
+            additionalPrice: option.additionalPrice,
+          });
+        }
+      }
+    }
+    return result;
+  }, [selectionByGroup, menuItem.modifierGroups]);
 
-  const { addToCart } = useCart();
+  const modifiersTotal = selectedOptions.reduce(
+    (sum, o) => sum + o.additionalPrice,
+    0,
+  );
+  const unitPrice = menuItem.price + modifiersTotal;
+  const totalPrice = unitPrice * quantity;
+
+  const toggleOption = (
+    group: MenuItemData["modifierGroups"][number],
+    option: MenuItemModifierOption,
+  ) => {
+    setSelectionByGroup((prev) => {
+      const next = new Map(prev);
+      const current = new Set(next.get(group.id) ?? []);
+
+      if (group.maxSelections === 1) {
+        // Radio behaviour: only one allowed
+        next.set(group.id, new Set([option.id]));
+      } else {
+        // Checkbox behaviour: toggle, but respect maxSelections
+        if (current.has(option.id)) {
+          current.delete(option.id);
+        } else if (current.size < group.maxSelections) {
+          current.add(option.id);
+        }
+        next.set(group.id, current);
+      }
+      return next;
+    });
+  };
 
   const handleAddToOrder = () => {
     addToCart({
       menuItem,
       quantity,
-      selectedSize,
-      selectedModifiers,
+      selectedOptions,
       specialInstructions: instructions,
       totalPrice,
     });
@@ -103,16 +94,8 @@ const OrderEditor = ({ menuItem, onClose }: OrderEditorProps) => {
     setTimeout(() => {
       setShowSuccessModal(false);
       onClose();
-    }, 1500); // Close after showing success for 1.5s
+    }, 1500);
   };
-
-  const basePrice = menuItem.price;
-  const sizePrice = SIZES.find((s) => s.id === selectedSize)?.price ?? 0;
-  const modifiersTotal = selectedModifiers.reduce((sum, id) => {
-    const mod = MODIFIERS.find((m) => m.id === id);
-    return sum + (mod?.price ?? 0);
-  }, 0);
-  const totalPrice = (basePrice + sizePrice + modifiersTotal) * quantity;
 
   return (
     <div
@@ -138,7 +121,7 @@ const OrderEditor = ({ menuItem, onClose }: OrderEditorProps) => {
                 shape="rounded"
                 className="text-[10px] md:text-[11px] font-bold px-3 py-1.5 uppercase tracking-wider shadow-sm"
               >
-                Bestseller
+                {menuItem.category}
               </Badge>
               <h1 className="text-2xl md:text-4xl font-extrabold text-text-primary leading-tight">
                 {menuItem.name}
@@ -148,7 +131,7 @@ const OrderEditor = ({ menuItem, onClose }: OrderEditorProps) => {
               </p>
             </div>
 
-            {/* product image in circular frame */}
+            {/* product image */}
             <div className="absolute right-[10%] md:right-8 top-1/2 -translate-y-1/2 w-[120px] h-[120px] md:w-[200px] md:h-[200px] rounded-full overflow-hidden border-4 border-white/60 shadow-xl flex-shrink-0">
               <img
                 src={menuItem.imageUrl}
@@ -168,11 +151,18 @@ const OrderEditor = ({ menuItem, onClose }: OrderEditorProps) => {
 
           {/* pricing and quantity section */}
           <div className="px-2 md:px-4 flex items-center justify-between">
-            <h2 className="h2 text-brand-accent font-extrabold">
-              ₱ {basePrice.toFixed(2)}
-            </h2>
+            <div>
+              <h2 className="h2 text-brand-accent font-extrabold">
+                ₱ {totalPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </h2>
+              {modifiersTotal > 0 && (
+                <p className="b5 text-text-secondary/70 mt-0.5">
+                  ₱{menuItem.price.toFixed(2)} base + ₱{modifiersTotal.toFixed(2)} add-ons × {quantity}
+                </p>
+              )}
+            </div>
 
-            {/* quantity counter */}
+            {/* quantity stepper */}
             <div className="flex items-center gap-4">
               <button
                 onClick={() => setQuantity(Math.max(1, quantity - 1))}
@@ -194,105 +184,89 @@ const OrderEditor = ({ menuItem, onClose }: OrderEditorProps) => {
 
           <div className="h-px bg-[var(--kds-border-warm)] mx-2 md:mx-4" />
 
-          {/* modifiers section */}
-          <div className="space-y-3 px-2 md:px-4">
-            <div className="flex justify-between items-center mb-1">
-              <h4 className="b3 font-bold text-text-secondary uppercase tracking-widest text-[11px] md:text-[13px]">
-                Modifiers
-              </h4>
-              <Badge
-                color="primary"
-                variant="outline"
-                shape="rounded"
-                className="text-[10px] font-bold uppercase px-3 py-1"
-              >
-                Choose any
-              </Badge>
-            </div>
+          {/* Dynamic modifier groups */}
+          {menuItem.modifierGroups.length > 0 ? (
+            menuItem.modifierGroups.map((group) => {
+              const isRadio = group.maxSelections === 1;
+              const chosen = selectionByGroup.get(group.id) ?? new Set();
+              const atMax = chosen.size >= group.maxSelections;
 
-            <div className="space-y-1">
-              {MODIFIERS.map((mod) => (
-                <label
-                  key={mod.id}
-                  className="flex items-center justify-between p-3 md:p-3.5 hover:bg-bg-primary rounded-2xl cursor-pointer group transition-all active:scale-[0.995]"
-                >
-                  <div className="flex items-center gap-3 md:gap-4">
-                    <Checkbox
-                      variant="primary"
-                      checked={selectedModifiers.includes(mod.id)}
-                      onChange={() => toggleModifier(mod.id)}
-                    />
-                    <div>
-                      <p className="b2 font-semibold text-text-primary group-hover:text-brand-primary transition-colors text-sm md:text-base">
-                        {mod.name}
-                      </p>
-                      <p className="b5 text-text-secondary">
-                        {mod.description}
-                      </p>
-                    </div>
+              return (
+                <div key={group.id} className="space-y-3 px-2 md:px-4">
+                  <div className="flex justify-between items-center mb-1">
+                    <h4 className="b3 font-bold text-text-secondary uppercase tracking-widest text-[11px] md:text-[13px]">
+                      {group.name}
+                    </h4>
+                    <Badge
+                      color={group.isRequired ? "error" : "primary"}
+                      variant="outline"
+                      shape="rounded"
+                      className="text-[10px] font-bold uppercase px-3 py-1"
+                    >
+                      {group.isRequired ? "Required" : "Optional"}
+                    </Badge>
                   </div>
-                  <span className="b3 font-bold text-brand-primary shrink-0">
-                    +₱{mod.price.toFixed(2)}
-                  </span>
-                </label>
-              ))}
-            </div>
-          </div>
 
-          <div className="h-px bg-[var(--kds-border-warm)] mx-2 md:mx-4" />
+                  {group.options.length === 0 ? (
+                    <p className="b5 text-text-secondary/60 px-1">No options available</p>
+                  ) : (
+                    <div className="space-y-1">
+                      {group.options.map((option) => {
+                        const isSelected = chosen.has(option.id);
+                        const isDisabled = !option.isAvailable || (!isSelected && atMax && !isRadio);
 
-          {/* size options section */}
-          <div className="space-y-3 px-2 md:px-4">
-            <div className="flex justify-between items-center mb-1">
-              <h4 className="b3 font-bold text-text-secondary uppercase tracking-widest text-[11px] md:text-[13px]">
-                Size
-              </h4>
-              <Badge
-                color="error"
-                variant="outline"
-                shape="rounded"
-                className="text-[10px] font-bold uppercase"
-              >
-                Required
-              </Badge>
-            </div>
-
-            <div className="space-y-1">
-              {SIZES.map((size) => (
-                <label
-                  key={size.id}
-                  className={cn(
-                    "flex items-center justify-between p-3 md:p-3.5 rounded-2xl cursor-pointer group transition-all",
-                    selectedSize === size.id
-                      ? "bg-bg-primary"
-                      : "hover:bg-bg-primary",
+                        return (
+                          <label
+                            key={option.id}
+                            className={cn(
+                              "flex items-center justify-between p-3 md:p-3.5 rounded-2xl cursor-pointer group transition-all",
+                              isSelected ? "bg-brand-secondary/20" : "hover:bg-bg-primary",
+                              isDisabled && "opacity-40 cursor-not-allowed",
+                            )}
+                          >
+                            <div className="flex items-center gap-3 md:gap-4">
+                              {isRadio ? (
+                                <Radio
+                                  variant="accent"
+                                  name={`group-${group.id}`}
+                                  checked={isSelected}
+                                  onChange={() => !isDisabled && toggleOption(group, option)}
+                                  disabled={!option.isAvailable}
+                                />
+                              ) : (
+                                <Checkbox
+                                  variant="primary"
+                                  checked={isSelected}
+                                  onChange={() => !isDisabled && toggleOption(group, option)}
+                                  disabled={isDisabled}
+                                />
+                              )}
+                              <p className="b2 font-semibold text-text-primary text-sm md:text-base">
+                                {option.name}
+                              </p>
+                            </div>
+                            <span className="b3 font-bold text-brand-primary shrink-0">
+                              {option.additionalPrice === 0
+                                ? "Free"
+                                : `+₱${option.additionalPrice.toFixed(2)}`}
+                            </span>
+                          </label>
+                        );
+                      })}
+                    </div>
                   )}
-                >
-                  <div className="flex items-center gap-3 md:gap-4">
-                    <Radio
-                      variant="accent"
-                      name="size-option"
-                      checked={selectedSize === size.id}
-                      onChange={() => setSelectedSize(size.id)}
-                    />
-                    <div>
-                      <p className="b2 font-semibold text-text-primary group-hover:text-brand-accent transition-colors text-sm md:text-base">
-                        {size.name}
-                      </p>
-                      <p className="b5 text-text-secondary">
-                        {size.description}
-                      </p>
-                    </div>
-                  </div>
-                  <span className="b3 font-bold text-success-primary shrink-0">
-                    {size.price === 0 ? "Free" : `+₱${size.price.toFixed(2)}`}
-                  </span>
-                </label>
-              ))}
+                  <div className="h-px bg-[var(--kds-border-warm)]" />
+                </div>
+              );
+            })
+          ) : (
+            <div className="px-2 md:px-4">
+              <p className="b4 text-text-secondary/60 text-center py-2">
+                No customization options available for this item.
+              </p>
+              <div className="h-px bg-[var(--kds-border-warm)] mt-3" />
             </div>
-          </div>
-
-          <div className="h-px bg-[var(--kds-border-warm)] mx-2 md:mx-4" />
+          )}
 
           {/* special instructions section */}
           <div className="space-y-3 px-2 md:px-4">
@@ -303,7 +277,7 @@ const OrderEditor = ({ menuItem, onClose }: OrderEditorProps) => {
               <textarea
                 value={instructions}
                 onChange={(e) => setInstructions(e.target.value.slice(0, 2000))}
-                placeholder="e.g., less sauce, extra spicy"
+                placeholder="e.g., less sauce, extra spicy, no onions..."
                 className="w-full h-36 bg-transparent border-2 border-black/10 rounded-[20px] px-5 py-4 b1 outline-none focus:border-brand-secondary focus:ring-2 focus:ring-brand-secondary/20 transition-all resize-none placeholder:text-text-secondary/40"
               />
               <span className="absolute bottom-4 right-5 b5 text-text-secondary/50 font-medium">
@@ -340,13 +314,11 @@ const OrderEditor = ({ menuItem, onClose }: OrderEditorProps) => {
               className="w-full max-w-[420px] bg-white rounded-[32px] border-[8px] border-bg-primary shadow-[var(--kds-shadow-hover)] overflow-hidden animate-in slide-in-from-bottom-4 md:zoom-in-95 duration-300"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* modal handle */}
               <div className="flex justify-center pt-4 pb-1">
                 <div className="w-10 h-1.5 bg-black/10 rounded-full" />
               </div>
 
               <div className="p-6 md:p-8 flex flex-col items-center gap-4 text-center">
-                {/* success icon */}
                 <div className="w-16 h-16 rounded-full bg-success-secondary flex items-center justify-center shadow-sm">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -367,39 +339,29 @@ const OrderEditor = ({ menuItem, onClose }: OrderEditorProps) => {
                     Added to Order!
                   </h3>
                   <p className="b4 text-text-secondary">
-                    {quantity}x {menuItem.name} has been added to your cart.
+                    {quantity}× {menuItem.name} has been added to your cart.
                   </p>
                 </div>
 
-                {/* order summary */}
+                {/* summary */}
                 <div className="w-full bg-bg-primary rounded-2xl px-5 py-4 space-y-1.5 text-left">
                   <div className="flex justify-between b4 text-text-secondary">
                     <span>Base price</span>
                     <span className="font-semibold text-text-primary">
-                      ₱{basePrice.toFixed(2)}
+                      ₱{menuItem.price.toFixed(2)}
                     </span>
                   </div>
-                  {modifiersTotal > 0 && (
-                    <div className="flex justify-between b4 text-text-secondary">
-                      <span>Add-ons ({selectedModifiers.length})</span>
+                  {selectedOptions.map((o) => (
+                    <div key={o.id} className="flex justify-between b4 text-text-secondary">
+                      <span>{o.name}</span>
                       <span className="font-semibold text-text-primary">
-                        +₱{modifiersTotal.toFixed(2)}
+                        {o.additionalPrice === 0 ? "Free" : `+₱${o.additionalPrice.toFixed(2)}`}
                       </span>
                     </div>
-                  )}
-                  {sizePrice > 0 && (
-                    <div className="flex justify-between b4 text-text-secondary">
-                      <span>Size</span>
-                      <span className="font-semibold text-text-primary">
-                        +₱{sizePrice.toFixed(2)}
-                      </span>
-                    </div>
-                  )}
+                  ))}
                   <div className="flex justify-between b4 text-text-secondary">
                     <span>Qty</span>
-                    <span className="font-semibold text-text-primary">
-                      &times;{quantity}
-                    </span>
+                    <span className="font-semibold text-text-primary">×{quantity}</span>
                   </div>
                   <div className="h-px bg-black/5 my-1" />
                   <div className="flex justify-between b3 font-bold">
@@ -414,7 +376,6 @@ const OrderEditor = ({ menuItem, onClose }: OrderEditorProps) => {
                   </div>
                 </div>
 
-                {/* close btn */}
                 <Button
                   variant="accent"
                   shape="rounded"

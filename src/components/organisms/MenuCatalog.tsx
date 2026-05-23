@@ -9,6 +9,22 @@ import { CartDrawer } from "./CartDrawer";
 
 export type Category = string;
 
+export interface MenuItemModifierOption {
+  id: string;
+  name: string;
+  additionalPrice: number;
+  isAvailable: boolean;
+}
+
+export interface MenuItemModifierGroup {
+  id: string;
+  name: string;
+  isRequired: boolean;
+  minSelections: number;
+  maxSelections: number;
+  options: MenuItemModifierOption[];
+}
+
 export interface MenuItemData {
   id: string;
   name: string;
@@ -16,6 +32,7 @@ export interface MenuItemData {
   available: boolean;
   category: Category;
   imageUrl: string;
+  modifierGroups: MenuItemModifierGroup[];
 }
 
 const SnacksIcon = () => (
