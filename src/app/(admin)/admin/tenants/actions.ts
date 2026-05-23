@@ -1077,6 +1077,24 @@ export async function updateTenantStatus(
   const supabase = createSupabaseAdminClient();
   const trimmedComments = comments?.trim();
 
+  const { data: existingTenant, error: existingTenantError } = await supabase
+    .from("tenants")
+    .select("status")
+    .eq("id", tenantId)
+    .single();
+
+  if (existingTenantError || !existingTenant) {
+    throw new Error(
+      existingTenantError?.message ||
+        "Tenant not found when resolving current status.",
+    );
+  }
+
+  const previousStatus =
+    typeof existingTenant.status === "string"
+      ? existingTenant.status.toLowerCase()
+      : "approved";
+
   const updateData: any = { status };
 
   if (status === "approved") {
@@ -1266,28 +1284,33 @@ export async function updateTenantStatus(
 
   const tenantName = tenantNameRow?.business_name ?? tenantId;
 
+  const normalizedNewStatus = status.toLowerCase();
+  const normalizedPreviousStatus = previousStatus;
+
   const actionLabel =
-    status === "approved"
-      ? "Approved tenant"
-      : status === "rejected"
-        ? "Rejected tenant"
-        : status === "suspended"
-          ? "Suspended tenant"
-          : "Set tenant status to pending";
+    normalizedNewStatus === "approved" &&
+    normalizedPreviousStatus === "suspended"
+      ? "Reactivated tenant"
+      : normalizedNewStatus === "approved"
+        ? "Approved tenant"
+        : normalizedNewStatus === "rejected"
+          ? "Rejected tenant"
+          : normalizedNewStatus === "suspended"
+            ? "Suspended tenant"
+            : "Set tenant status to pending";
 
   await logActivity({
     actorName: "Super Admin",
     actorRole: "Super Admin",
-    actionType:
-      status === "approved"
-        ? "UPDATE"
-        : status === "rejected"
-          ? "DELETE"
-          : "UPDATE",
+    actionType: normalizedNewStatus === "rejected" ? "DELETE" : "UPDATE",
     description: `${actionLabel}: '${tenantName}'${trimmedComments ? ` — ${trimmedComments}` : ""}`,
     targetTenantId: tenantId,
     targetTenantName: tenantName,
-    metadata: { status, comments: trimmedComments ?? null },
+    metadata: {
+      status,
+      previousStatus: normalizedPreviousStatus,
+      comments: trimmedComments ?? null,
+    },
   });
 
   revalidatePath("/admin/tenants");
