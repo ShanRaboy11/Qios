@@ -24,9 +24,7 @@ const OrderEditor = ({ menuItem, onClose }: OrderEditorProps) => {
     Map<string, Set<string>>
   >(
     () =>
-      new Map(
-        menuItem.modifierGroups.map((g) => [g.id, new Set<string>()]),
-      ),
+      new Map(menuItem.modifierGroups.map((g) => [g.id, new Set<string>()])),
   );
   const [instructions, setInstructions] = useState("");
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -153,11 +151,16 @@ const OrderEditor = ({ menuItem, onClose }: OrderEditorProps) => {
           <div className="px-2 md:px-4 flex items-center justify-between">
             <div>
               <h2 className="h2 text-brand-accent font-extrabold">
-                ₱ {totalPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                ₱{" "}
+                {totalPrice.toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
               </h2>
               {modifiersTotal > 0 && (
                 <p className="b5 text-text-secondary/70 mt-0.5">
-                  ₱{menuItem.price.toFixed(2)} base + ₱{modifiersTotal.toFixed(2)} add-ons × {quantity}
+                  ₱{menuItem.price.toFixed(2)} base + ₱
+                  {modifiersTotal.toFixed(2)} add-ons × {quantity}
                 </p>
               )}
             </div>
@@ -208,19 +211,25 @@ const OrderEditor = ({ menuItem, onClose }: OrderEditorProps) => {
                   </div>
 
                   {group.options.length === 0 ? (
-                    <p className="b5 text-text-secondary/60 px-1">No options available</p>
+                    <p className="b5 text-text-secondary/60 px-1">
+                      No options available
+                    </p>
                   ) : (
                     <div className="space-y-1">
                       {group.options.map((option) => {
                         const isSelected = chosen.has(option.id);
-                        const isDisabled = !option.isAvailable || (!isSelected && atMax && !isRadio);
+                        const isDisabled =
+                          !option.isAvailable ||
+                          (!isSelected && atMax && !isRadio);
 
                         return (
                           <label
                             key={option.id}
                             className={cn(
                               "flex items-center justify-between p-3 md:p-3.5 rounded-2xl cursor-pointer group transition-all",
-                              isSelected ? "bg-brand-secondary/20" : "hover:bg-bg-primary",
+                              isSelected
+                                ? "bg-brand-secondary/20"
+                                : "hover:bg-bg-primary",
                               isDisabled && "opacity-40 cursor-not-allowed",
                             )}
                           >
@@ -230,14 +239,18 @@ const OrderEditor = ({ menuItem, onClose }: OrderEditorProps) => {
                                   variant="accent"
                                   name={`group-${group.id}`}
                                   checked={isSelected}
-                                  onChange={() => !isDisabled && toggleOption(group, option)}
+                                  onChange={() =>
+                                    !isDisabled && toggleOption(group, option)
+                                  }
                                   disabled={!option.isAvailable}
                                 />
                               ) : (
                                 <Checkbox
                                   variant="primary"
                                   checked={isSelected}
-                                  onChange={() => !isDisabled && toggleOption(group, option)}
+                                  onChange={() =>
+                                    !isDisabled && toggleOption(group, option)
+                                  }
                                   disabled={isDisabled}
                                 />
                               )}
@@ -352,16 +365,23 @@ const OrderEditor = ({ menuItem, onClose }: OrderEditorProps) => {
                     </span>
                   </div>
                   {selectedOptions.map((o) => (
-                    <div key={o.id} className="flex justify-between b4 text-text-secondary">
+                    <div
+                      key={o.id}
+                      className="flex justify-between b4 text-text-secondary"
+                    >
                       <span>{o.name}</span>
                       <span className="font-semibold text-text-primary">
-                        {o.additionalPrice === 0 ? "Free" : `+₱${o.additionalPrice.toFixed(2)}`}
+                        {o.additionalPrice === 0
+                          ? "Free"
+                          : `+₱${o.additionalPrice.toFixed(2)}`}
                       </span>
                     </div>
                   ))}
                   <div className="flex justify-between b4 text-text-secondary">
                     <span>Qty</span>
-                    <span className="font-semibold text-text-primary">×{quantity}</span>
+                    <span className="font-semibold text-text-primary">
+                      ×{quantity}
+                    </span>
                   </div>
                   <div className="h-px bg-black/5 my-1" />
                   <div className="flex justify-between b3 font-bold">

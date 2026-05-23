@@ -60,7 +60,10 @@ export default function CustomerOrderingHome({
   }, [initialItems, searchQuery]);
 
   const bestSellers = useMemo(() => initialItems.slice(0, 5), [initialItems]);
-  const recommendedItems = useMemo(() => initialItems.slice(5, 7), [initialItems]);
+  const recommendedItems = useMemo(
+    () => initialItems.slice(5, 7),
+    [initialItems],
+  );
 
   return (
     <CartProvider>
@@ -143,8 +146,13 @@ export default function CustomerOrderingHome({
                                 variant="vertical"
                                 title={item.name}
                                 price={item.price}
-                                availability={item.available ? "Available" : "Sold Out"}
-                                imageSrc={item.imageUrl || "/images/food-placeholder.png"}
+                                availability={
+                                  item.available ? "Available" : "Sold Out"
+                                }
+                                imageSrc={
+                                  item.imageUrl ||
+                                  "/images/food-placeholder.png"
+                                }
                                 onAdd={() => setSelectedItem(item)}
                               />
                             </motion.div>
@@ -154,7 +162,9 @@ export default function CustomerOrderingHome({
                         <div className="flex flex-col items-center justify-center py-20 opacity-50">
                           <Search size={48} className="mb-4" />
                           <p className="text-lg font-bold">No items found</p>
-                          <p className="text-sm">Try searching for something else.</p>
+                          <p className="text-sm">
+                            Try searching for something else.
+                          </p>
                         </div>
                       )}
                     </motion.div>
@@ -183,13 +193,18 @@ export default function CustomerOrderingHome({
                                 key={item.id}
                                 variant="bestseller"
                                 price={item.price}
-                                imageSrc={item.imageUrl || "/images/food-placeholder.png"}
+                                imageSrc={
+                                  item.imageUrl ||
+                                  "/images/food-placeholder.png"
+                                }
                                 title={item.name}
                                 onAdd={() => setSelectedItem(item)}
                               />
                             ))
                           ) : (
-                            <div className="text-sm text-text-secondary">No items available.</div>
+                            <div className="text-sm text-text-secondary">
+                              No items available.
+                            </div>
                           )}
                         </div>
                       </div>
@@ -199,7 +214,9 @@ export default function CustomerOrderingHome({
                       </div>
 
                       <div className="w-full">
-                        <h3 className="h3 font-bold mb-6">Recommended For You</h3>
+                        <h3 className="h3 font-bold mb-6">
+                          Recommended For You
+                        </h3>
 
                         <div className="flex flex-col md:flex-row gap-6 w-full">
                           {recommendedItems.length > 0 ? (
@@ -209,13 +226,20 @@ export default function CustomerOrderingHome({
                                 variant="horizontal"
                                 title={item.name}
                                 price={item.price}
-                                availability={item.available ? "Available" : "Sold Out"}
-                                imageSrc={item.imageUrl || "/images/food-placeholder.png"}
+                                availability={
+                                  item.available ? "Available" : "Sold Out"
+                                }
+                                imageSrc={
+                                  item.imageUrl ||
+                                  "/images/food-placeholder.png"
+                                }
                                 onAdd={() => setSelectedItem(item)}
                               />
                             ))
                           ) : (
-                            <div className="text-sm text-text-secondary">More menu items will appear here.</div>
+                            <div className="text-sm text-text-secondary">
+                              More menu items will appear here.
+                            </div>
                           )}
                         </div>
                       </div>
@@ -259,8 +283,13 @@ export default function CustomerOrderingHome({
                                 variant="vertical"
                                 title={item.name}
                                 price={item.price}
-                                availability={item.available ? "Available" : "Sold Out"}
-                                imageSrc={item.imageUrl || "/images/food-placeholder.png"}
+                                availability={
+                                  item.available ? "Available" : "Sold Out"
+                                }
+                                imageSrc={
+                                  item.imageUrl ||
+                                  "/images/food-placeholder.png"
+                                }
                                 onAdd={() => setSelectedItem(item)}
                               />
                             </motion.div>

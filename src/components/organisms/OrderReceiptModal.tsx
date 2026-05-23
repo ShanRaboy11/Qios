@@ -23,7 +23,10 @@ export const OrderReceiptModal = ({
   const receiptRef = useRef<HTMLDivElement>(null);
 
   const JaggedEdge = () => (
-    <div className="h-3 w-full flex overflow-hidden -mt-px relative z-10" aria-hidden="true">
+    <div
+      className="h-3 w-full flex overflow-hidden -mt-px relative z-10"
+      aria-hidden="true"
+    >
       {Array.from({ length: 50 }).map((_, i) => (
         <div
           key={i}
@@ -52,15 +55,32 @@ export const OrderReceiptModal = ({
         className="w-full max-w-[360px] flex flex-col items-center relative"
       >
         {/* Receipt Body */}
-        <div ref={receiptRef} className="bg-[#FFDC72] w-full rounded-t-[24px] px-6 pt-8 pb-6 flex flex-col relative">
-
+        <div
+          ref={receiptRef}
+          className="bg-[#FFDC72] w-full rounded-t-[24px] px-6 pt-8 pb-6 flex flex-col relative"
+        >
           {/* Order number + time */}
           <div className="flex flex-col items-center gap-4 mb-8">
             <div className="flex items-center gap-1.5 text-black/60 b5 font-medium">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
               </svg>
-              Today, {new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+              Today,{" "}
+              {new Date().toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
             </div>
             <div className="bg-[#FF5269] text-white px-6 py-2.5 rounded-full font-inter font-bold text-[16px] shadow-sm">
               Order #{orderId}
@@ -108,14 +128,18 @@ export const OrderReceiptModal = ({
           {/* Total */}
           <div className="flex justify-between items-center mb-8">
             <h3 className="h3 font-bold text-[#2D2D2D]">Total</h3>
-            <h3 className="h3 font-bold text-[#2D2D2D]">₱{(cartTotal * 1.12).toFixed(2)}</h3>
+            <h3 className="h3 font-bold text-[#2D2D2D]">
+              ₱{(cartTotal * 1.12).toFixed(2)}
+            </h3>
           </div>
 
           <Button
             variant="primary"
             shape="rounded"
             className="w-full bg-[#FF5269] hover:bg-[#FF3B55] text-white h-[56px] text-[16px] font-bold justify-center gap-2 shadow-[0_8px_20px_rgba(255,82,105,0.2)] active:scale-[0.98] transition-transform"
-            onClick={() => alert("Receipt download functionality to be implemented.")}
+            onClick={() =>
+              alert("Receipt download functionality to be implemented.")
+            }
           >
             <Download size={20} />
             Download Receipt

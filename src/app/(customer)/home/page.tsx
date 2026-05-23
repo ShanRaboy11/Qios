@@ -18,8 +18,20 @@ import { MenuItemData } from "@/components/organisms/MenuCatalog";
 import { renderCategoryIcon } from "@/lib/utils/categoryIcons";
 
 // Helper to create a mock MenuItemData with empty modifierGroups
-const mockItem = (id: string, name: string, price: number, category: string, imageUrl: string): MenuItemData => ({
-  id, name, price, available: true, category, imageUrl, modifierGroups: [],
+const mockItem = (
+  id: string,
+  name: string,
+  price: number,
+  category: string,
+  imageUrl: string,
+): MenuItemData => ({
+  id,
+  name,
+  price,
+  available: true,
+  category,
+  imageUrl,
+  modifierGroups: [],
 });
 
 const MOCK_MENU_CATALOG: MenuItemData[] = [
@@ -28,16 +40,36 @@ const MOCK_MENU_CATALOG: MenuItemData[] = [
   mockItem("3", "Pasta", 80.5, "Meal", "/images/pasta.png"),
   mockItem("4", "Cupcake", 100.5, "Dessert", "/images/cupcake.png"),
   mockItem("5", "Noodles", 120.0, "Meal", "/images/noodles.png"),
-  mockItem("6", "Spicy seasoned seafood noodles", 2.29, "Meal", "/images/noodles.png"),
-  mockItem("7", "Classic Burger with Fries", 5.99, "Meal", "/images/food-placeholder.png"),
+  mockItem(
+    "6",
+    "Spicy seasoned seafood noodles",
+    2.29,
+    "Meal",
+    "/images/noodles.png",
+  ),
+  mockItem(
+    "7",
+    "Classic Burger with Fries",
+    5.99,
+    "Meal",
+    "/images/food-placeholder.png",
+  ),
 ];
 
 const DEMO_CATEGORIES = [
   { id: "Drinks", label: "Drinks", icon: renderCategoryIcon("coffee", 28) },
   { id: "Snacks", label: "Snacks", icon: renderCategoryIcon("cookie", 28) },
   { id: "Vegan", label: "Vegan", icon: renderCategoryIcon("leaf", 28) },
-  { id: "Meal", label: "Meal", icon: renderCategoryIcon("utensils-crossed", 28) },
-  { id: "Dessert", label: "Dessert", icon: renderCategoryIcon("ice-cream", 28) },
+  {
+    id: "Meal",
+    label: "Meal",
+    icon: renderCategoryIcon("utensils-crossed", 28),
+  },
+  {
+    id: "Dessert",
+    label: "Dessert",
+    icon: renderCategoryIcon("ice-cream", 28),
+  },
 ];
 
 export default function CustomerHomePage() {
@@ -49,8 +81,8 @@ export default function CustomerHomePage() {
   const isCategoryView = selectedCategory !== null;
   const isSearching = searchQuery.trim().length > 0;
 
-  const searchResults = MOCK_MENU_CATALOG.filter(item =>
-    item.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const searchResults = MOCK_MENU_CATALOG.filter((item) =>
+    item.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   return (
@@ -86,7 +118,7 @@ export default function CustomerHomePage() {
               layout
               className={cn(
                 "flex-grow bg-white w-full p-7 md:px-32 pb-10 flex flex-col items-center relative z-40 shadow-[0_-4px_24px_rgba(0,0,0,0.05)] transition-all duration-500",
-                (isCategoryView || isSearching)
+                isCategoryView || isSearching
                   ? "-mt-[6px] pt-8 rounded-t-[18px]"
                   : "-mt-[165px] pt-[140px] rounded-t-[40px]",
               )}
@@ -111,21 +143,30 @@ export default function CustomerHomePage() {
                           animate="show"
                           variants={{
                             hidden: { opacity: 0 },
-                            show: { opacity: 1, transition: { staggerChildren: 0.08 } },
+                            show: {
+                              opacity: 1,
+                              transition: { staggerChildren: 0.08 },
+                            },
                           }}
                           className="grid grid-cols-2 gap-4 md:gap-6 md:grid-cols-3 lg:grid-cols-4"
                         >
                           {searchResults.map((item) => (
                             <motion.div
                               key={`search-${item.id}`}
-                              variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }}
+                              variants={{
+                                hidden: { opacity: 0, y: 20 },
+                                show: { opacity: 1, y: 0 },
+                              }}
                             >
                               <MenuItemCard
                                 variant="vertical"
                                 title={item.name}
                                 price={item.price}
                                 availability="Available"
-                                imageSrc={item.imageUrl || "/images/food-placeholder.png"}
+                                imageSrc={
+                                  item.imageUrl ||
+                                  "/images/food-placeholder.png"
+                                }
                                 onAdd={() => setSelectedItem(item)}
                               />
                             </motion.div>
@@ -135,7 +176,9 @@ export default function CustomerHomePage() {
                         <div className="flex flex-col items-center justify-center py-20 opacity-50">
                           <Search size={48} className="mb-4" />
                           <p className="text-lg font-bold">No items found</p>
-                          <p className="text-sm">Try searching for something else.</p>
+                          <p className="text-sm">
+                            Try searching for something else.
+                          </p>
                         </div>
                       )}
                     </motion.div>
@@ -176,7 +219,9 @@ export default function CustomerHomePage() {
                       </div>
 
                       <div className="w-full">
-                        <h3 className="h3 font-bold mb-6">Recommended For You</h3>
+                        <h3 className="h3 font-bold mb-6">
+                          Recommended For You
+                        </h3>
                         <div className="flex flex-col md:flex-row gap-6 w-full">
                           {MOCK_MENU_CATALOG.slice(5).map((item) => (
                             <MenuItemCard
@@ -201,20 +246,30 @@ export default function CustomerHomePage() {
                       transition={{ duration: 0.3 }}
                       className="w-full"
                     >
-                      <h2 className="h3 font-bold mb-6 -mt-2">{selectedCategory}</h2>
+                      <h2 className="h3 font-bold mb-6 -mt-2">
+                        {selectedCategory}
+                      </h2>
                       <motion.div
                         initial="hidden"
                         animate="show"
                         variants={{
                           hidden: { opacity: 0 },
-                          show: { opacity: 1, transition: { staggerChildren: 0.08 } },
+                          show: {
+                            opacity: 1,
+                            transition: { staggerChildren: 0.08 },
+                          },
                         }}
                         className="grid grid-cols-2 gap-4 md:gap-6 md:grid-cols-3 lg:grid-cols-4"
                       >
-                        {MOCK_MENU_CATALOG.filter(i => i.category === selectedCategory).map((item) => (
+                        {MOCK_MENU_CATALOG.filter(
+                          (i) => i.category === selectedCategory,
+                        ).map((item) => (
                           <motion.div
                             key={item.id}
-                            variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }}
+                            variants={{
+                              hidden: { opacity: 0, y: 20 },
+                              show: { opacity: 1, y: 0 },
+                            }}
                           >
                             <MenuItemCard
                               variant="vertical"
@@ -243,7 +298,10 @@ export default function CustomerHomePage() {
         )}
         <CartDrawer />
         <FloatingOrderStatus />
-        <GuestProfileDrawer isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} />
+        <GuestProfileDrawer
+          isOpen={isProfileOpen}
+          onClose={() => setIsProfileOpen(false)}
+        />
       </motion.main>
     </CartProvider>
   );
