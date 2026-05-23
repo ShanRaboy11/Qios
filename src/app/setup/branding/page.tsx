@@ -340,7 +340,7 @@ export default function BrandingSetupPage() {
           <div className="mb-10">
             <button
               onClick={() => router.push("/")}
-              className="flex items-center text-sm font-medium text-text-secondary hover:text-text-primary mb-6 transition-colors"
+              className="flex items-center text-sm font-medium text-text-secondary mb-6 transition-colors rounded-md px-2 py-1 hover:bg-brand-primary/10 hover:text-brand-primary"
             >
               <ArrowLeft size={16} className="mr-2" />
               Skip for now
@@ -368,26 +368,51 @@ export default function BrandingSetupPage() {
                   Quick Presets
                 </label>
                 <div className="flex flex-wrap items-center gap-3">
-                  {presetColors.map((color) => (
-                    <button
-                      key={color}
-                      onClick={() => handlePresetColor(color)}
-                      className={cn(
-                        "px-3 py-2 rounded-lg border transition-all duration-200 shadow-sm flex items-center gap-3",
-                        theme.primary === color
-                          ? "border-text-primary bg-gray-50"
-                          : "border-gray-100 hover:border-gray-200",
-                      )}
-                    >
-                      <div
-                        className="w-8 h-8 rounded-md shadow-sm"
-                        style={{ backgroundColor: color }}
-                      />
-                      <span className="font-mono text-sm text-text-primary">
-                        {color.toUpperCase()}
-                      </span>
-                    </button>
-                  ))}
+                  {presetColors.map((color) => {
+                    const presetAccent = chroma(color)
+                      .set("hsl.h", "+150")
+                      .saturate(2)
+                      .hex();
+                    const isActive =
+                      theme.primary.toLowerCase() === color.toLowerCase();
+                    return (
+                      <button
+                        key={color}
+                        onClick={() => handlePresetColor(color)}
+                        className={cn(
+                          "w-10 h-10 rounded-xl transition-all duration-200 shadow-sm relative overflow-hidden flex",
+                          isActive
+                            ? "scale-[1.02] border-transparent"
+                            : "border-2 border-gray-200 hover:scale-105",
+                        )}
+                        style={{
+                          boxShadow: isActive
+                            ? `0 0 0 2px white, 0 0 0 4px ${presetAccent}`
+                            : undefined,
+                        }}
+                        title={`Preset ${color}`}
+                      >
+                        <div
+                          className="w-1/2 h-full"
+                          style={{ backgroundColor: color }}
+                        />
+                        <div className="w-1/2 h-full flex flex-col">
+                          <div
+                            className="w-full h-1/2"
+                            style={{
+                              backgroundColor: chroma(color)
+                                .set("hsl.l", 0.95)
+                                .hex(),
+                            }}
+                          />
+                          <div
+                            className="w-full h-1/2"
+                            style={{ backgroundColor: presetAccent }}
+                          />
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -398,7 +423,7 @@ export default function BrandingSetupPage() {
                   <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
                     Primary
                   </label>
-                  <div className="relative group border border-gray-200 rounded-xl p-2 flex items-center gap-3 hover:border-brand-primary transition-colors">
+                  <div className="relative group border border-gray-200 rounded-xl p-2 flex items-center gap-3">
                     <div
                       className="w-8 h-8 rounded-lg shadow-inner flex items-center justify-center overflow-hidden relative cursor-pointer"
                       style={{ backgroundColor: theme.primary }}
@@ -424,7 +449,7 @@ export default function BrandingSetupPage() {
                           primary: e.target.value,
                         }))
                       }
-                      className="text-sm font-mono text-text-primary bg-transparent border-0 w-24"
+                      className="text-sm font-mono text-text-primary bg-transparent border-0 w-24 focus:outline-none"
                     />
                   </div>
                 </div>
@@ -434,7 +459,7 @@ export default function BrandingSetupPage() {
                   <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
                     Secondary
                   </label>
-                  <div className="relative group border border-gray-200 rounded-xl p-2 flex items-center gap-3 hover:border-brand-primary transition-colors">
+                  <div className="relative group border border-gray-200 rounded-xl p-2 flex items-center gap-3">
                     <div
                       className="w-8 h-8 rounded-lg shadow-inner flex items-center justify-center overflow-hidden relative cursor-pointer"
                       style={{ backgroundColor: theme.secondary }}
@@ -460,7 +485,7 @@ export default function BrandingSetupPage() {
                           secondary: e.target.value,
                         }))
                       }
-                      className="text-sm font-mono text-text-primary bg-transparent border-0 w-24"
+                      className="text-sm font-mono text-text-primary bg-transparent border-0 w-24 focus:outline-none"
                     />
                   </div>
                 </div>
@@ -470,7 +495,7 @@ export default function BrandingSetupPage() {
                   <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
                     Accent
                   </label>
-                  <div className="relative group border border-gray-200 rounded-xl p-2 flex items-center gap-3 hover:border-brand-primary transition-colors">
+                  <div className="relative group border border-gray-200 rounded-xl p-2 flex items-center gap-3">
                     <div
                       className="w-8 h-8 rounded-lg shadow-inner flex items-center justify-center overflow-hidden relative cursor-pointer"
                       style={{ backgroundColor: theme.accent }}
@@ -496,7 +521,7 @@ export default function BrandingSetupPage() {
                           accent: e.target.value,
                         }))
                       }
-                      className="text-sm font-mono text-text-primary bg-transparent border-0 w-24"
+                      className="text-sm font-mono text-text-primary bg-transparent border-0 w-24 focus:outline-none"
                     />
                   </div>
                 </div>
