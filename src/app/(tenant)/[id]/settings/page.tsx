@@ -5,10 +5,15 @@ import { getTenantSettings } from "./actions";
 
 export default async function SettingsPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams?: { tab?: string; section?: string };
 }) {
   const resolvedParams = await params;
+  const resolvedSearchParams = searchParams ?? {};
+  const initialTab = resolvedSearchParams.tab === "store" ? "store" : "profile";
+  const scrollToQrSection = resolvedSearchParams.section === "store-access-qr";
 
   let settingsData;
   try {
@@ -38,7 +43,12 @@ export default async function SettingsPage({
           </p>
         </div>
       </div>
-      <TenantSettings tenantId={resolvedParams.id} initialData={settingsData} />
+      <TenantSettings
+        tenantId={resolvedParams.id}
+        initialData={settingsData}
+        initialTab={initialTab}
+        scrollToQrSection={scrollToQrSection}
+      />
     </>
   );
 }
