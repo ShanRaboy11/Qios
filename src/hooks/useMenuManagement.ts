@@ -86,9 +86,15 @@ export const useMenuManagement = () => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
+        const tenantId = await getCurrentTenantId();
+
         const [catsRes, itemsRes] = await Promise.all([
-          supabase.from("categories").select("*").order("display_order"),
-          supabase.from("menu_items").select("*"),
+          supabase
+            .from("categories")
+            .select("*")
+            .eq("tenant_id", tenantId)
+            .order("display_order"),
+          supabase.from("menu_items").select("*").eq("tenant_id", tenantId),
         ]);
 
         if (catsRes.error) throw catsRes.error;
@@ -171,9 +177,12 @@ export const useMenuManagement = () => {
           throw new Error("Missing category id for update.");
         }
 
+        const tenant_id = await getCurrentTenantId();
+
         const { data, error } = await supabase
           .from("categories")
           .update({ name: catDraft.name, icon: catDraft.icon })
+          .eq("tenant_id", tenant_id)
           .eq("id", catDraft.id)
           .select()
           .single();
@@ -198,7 +207,12 @@ export const useMenuManagement = () => {
   const deleteCategory = async (id: string) => {
     setActionError(null);
     try {
-      const { error } = await supabase.from("categories").delete().eq("id", id);
+      const tenant_id = await getCurrentTenantId();
+      const { error } = await supabase
+        .from("categories")
+        .delete()
+        .eq("tenant_id", tenant_id)
+        .eq("id", id);
       if (error) throw error;
       setCategories((prev) => prev.filter((c) => c.id !== id));
       setItems((prev) => prev.filter((i) => i.categoryId !== id));
@@ -244,9 +258,11 @@ export const useMenuManagement = () => {
         setItems((prev) => [...prev, newItem]);
         return newItem;
       } else {
+        const tenant_id = await getCurrentTenantId();
         const { data, error } = await supabase
           .from("menu_items")
           .update(payload)
+          .eq("tenant_id", tenant_id)
           .eq("id", draftItem.id)
           .select()
           .single();
@@ -276,9 +292,11 @@ export const useMenuManagement = () => {
   const deleteItems = async (ids: string[]) => {
     setActionError(null);
     try {
+      const tenant_id = await getCurrentTenantId();
       const { error } = await supabase
         .from("menu_items")
         .delete()
+        .eq("tenant_id", tenant_id)
         .in("id", ids);
       if (error) throw error;
       setItems((prev) => prev.filter((i) => !ids.includes(i.id)));
@@ -296,9 +314,11 @@ export const useMenuManagement = () => {
   ) => {
     setActionError(null);
     try {
+      const tenant_id = await getCurrentTenantId();
       const { error } = await supabase
         .from("menu_items")
         .update({ is_available: !currentAvailability })
+        .eq("tenant_id", tenant_id)
         .eq("id", id);
       if (error) throw error;
       setItems((prev) =>
@@ -317,6 +337,8 @@ export const useMenuManagement = () => {
     const previousCategories = categories;
     setCategories(newCategories);
     try {
+      const tenant_id = await getCurrentTenantId();
+
       // Two-phase update avoids transient unique-key collisions when swapping positions.
       const tempUpdates = newCategories.map((c, index) => ({
         id: c.id,
@@ -327,6 +349,7 @@ export const useMenuManagement = () => {
         const { error } = await supabase
           .from("categories")
           .update({ display_order: update.display_order })
+          .eq("tenant_id", tenant_id)
           .eq("id", update.id);
 
         if (error) throw error;
@@ -341,6 +364,7 @@ export const useMenuManagement = () => {
         const { error } = await supabase
           .from("categories")
           .update({ display_order: update.display_order })
+          .eq("tenant_id", tenant_id)
           .eq("id", update.id);
 
         if (error) throw error;

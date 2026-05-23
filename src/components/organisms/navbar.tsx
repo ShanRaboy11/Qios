@@ -10,6 +10,11 @@ import { useRouter, useParams, usePathname } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import QRCode from "react-qr-code";
 import { QrCode as QrIcon } from "lucide-react";
+import {
+  clearAuthSessionExpiry,
+  getAuthSessionExpiry,
+  isAuthSessionExpired,
+} from "@/lib/authSession";
 
 interface NavbarProps {
   variant?: "filled" | "transparent";
@@ -104,6 +109,7 @@ export const Navbar = ({
   }, [type]);
 
   const handleLogout = async () => {
+    clearAuthSessionExpiry();
     try {
       const supabase = createSupabaseBrowserClient();
       await supabase.auth.signOut();
@@ -116,6 +122,23 @@ export const Navbar = ({
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
+    };
+
+    const handleSessionExpiry = () => {
+      const expiresAt = getAuthSessionExpiry();
+      if (!expiresAt) return;
+
+      const remaining = expiresAt - Date.now();
+      if (remaining <= 0 || isAuthSessionExpired()) {
+        void handleLogout();
+        return;
+      }
+
+      const timeout = window.setTimeout(() => {
+        void handleLogout();
+      }, remaining);
+
+      return () => window.clearTimeout(timeout);
     };
 
     const handleClickOutside = (event: MouseEvent) => {
@@ -143,12 +166,14 @@ export const Navbar = ({
     };
 
     window.addEventListener("scroll", handleScroll);
-    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("pointerdown", handleClickOutside);
+    const clearSessionTimer = handleSessionExpiry();
     return () => {
       window.removeEventListener("scroll", handleScroll);
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("pointerdown", handleClickOutside);
+      clearSessionTimer?.();
     };
-  }, [isOpen]);
+  }, [isOpen, isProfileOpen, isQrOpen, type]);
 
   const defaultLinks = [
     { label: "Home", href: "/", id: "home" },
@@ -302,14 +327,15 @@ export const Navbar = ({
           </div>
         ) : (
           <div className="shrink-0 relative flex items-center gap-4">
-            
             {type === "tenant" && (
               <div className="relative" ref={qrRef}>
                 <button
                   onClick={() => setIsQrOpen(!isQrOpen)}
                   className={cn(
                     "p-2 rounded-full border transition-all duration-300 focus:outline-none ring-2 ring-transparent focus:ring-brand-accent/50 hover:bg-brand-accent/10 hover:text-brand-accent",
-                    isQrOpen ? "bg-brand-accent text-white border-brand-accent shadow-sm" : "border-brand-accent/20 text-text-secondary bg-white"
+                    isQrOpen
+                      ? "bg-brand-accent text-white border-brand-accent shadow-sm"
+                      : "border-brand-accent/20 text-text-secondary bg-white",
                   )}
                   title="Show Store QR"
                 >
@@ -318,10 +344,12 @@ export const Navbar = ({
 
                 {isQrOpen && (
                   <div className="absolute right-0 top-[calc(100%+12px)] w-64 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 p-5 flex flex-col items-center">
-                    <p className="text-[14px] font-bold text-text-primary text-center mb-3">Store QR Code</p>
+                    <p className="text-[14px] font-bold text-text-primary text-center mb-3">
+                      Store QR Code
+                    </p>
                     <div className="bg-white p-2 border border-gray-100 rounded-lg">
                       <QRCode
-                        value={`${typeof window !== 'undefined' ? window.location.origin : ''}/${tenantId}/home`}
+                        value={`${typeof window !== "undefined" ? window.location.origin : ""}/${tenantId}/home`}
                         size={160}
                         level="H"
                         fgColor="#1A1A1A"
@@ -331,7 +359,11 @@ export const Navbar = ({
                     <p className="text-[12px] text-text-secondary text-center mt-3">
                       Customers can scan this to open your store menu.
                     </p>
-                    <Link href={`/${tenantId}/settings`} onClick={() => setIsQrOpen(false)} className="mt-4 text-[13px] text-brand-accent font-medium hover:underline">
+                    <Link
+                      href={`/${tenantId}/settings?tab=store&section=store-access-qr`}
+                      onClick={() => setIsQrOpen(false)}
+                      className="mt-4 text-[13px] text-brand-accent font-medium hover:underline"
+                    >
                       More QR Options
                     </Link>
                   </div>

@@ -173,11 +173,16 @@ const CategorySkeleton = () => (
 );
 
 const Shimmer = ({ className }: { className?: string }) => (
-  <div className={cn("animate-pulse bg-black/[0.07] rounded-xl", className)} />
+  <div
+    className={cn(
+      "animate-pulse bg-transparent rounded-xl border border-black/5",
+      className,
+    )}
+  />
 );
 
 const GridCardSkeleton = () => (
-  <div className="bg-white rounded-2xl border border-black/5 overflow-hidden shadow-sm flex flex-col">
+  <div className="bg-transparent rounded-2xl border border-black/5 overflow-hidden shadow-none flex flex-col">
     <div className="aspect-[4/3] bg-black/[0.06] animate-pulse" />
     <div className="p-3.5 flex flex-col gap-2.5">
       <div className="flex items-center justify-between gap-2">
@@ -221,7 +226,6 @@ interface IconPickerProps {
 
 const IconPicker: React.FC<IconPickerProps> = ({ value, onChange }) => (
   <div className="flex flex-col gap-3">
-    {/* Selected preview */}
     <div className="flex items-center gap-3 p-3 bg-brand-secondary/40 rounded-2xl border border-black/5">
       <div className="w-10 h-10 rounded-xl bg-white border border-brand-primary/30 flex items-center justify-center flex-shrink-0 shadow-sm text-brand-accent">
         {renderCategoryIcon(value, 20)}
@@ -233,13 +237,10 @@ const IconPicker: React.FC<IconPickerProps> = ({ value, onChange }) => (
         <p className="b5 text-text-secondary">Selected icon</p>
       </div>
     </div>
-
-    {/* Grid — fixed: added px-1 inside the scroll area so icons aren't clipped on the right */}
     <div
       className="overflow-y-auto custom-scrollbar"
       style={{ maxHeight: 220 }}
     >
-      {/* px-0.5 pt-1 pb-1 ensures the focus ring / scale on selected icon is not clipped on any side */}
       <div className="grid grid-cols-6 gap-2 px-0.5 pt-1 pb-1">
         {ICON_OPTIONS.map((opt) => (
           <button
@@ -251,7 +252,7 @@ const IconPicker: React.FC<IconPickerProps> = ({ value, onChange }) => (
               "w-full aspect-square rounded-xl flex items-center justify-center transition-all border",
               value === opt.icon
                 ? "bg-brand-accent/10 border-brand-accent text-brand-accent shadow-sm scale-105"
-                : "bg-white/60 border-black/[0.08] text-text-secondary hover:bg-brand-secondary/50 hover:border-brand-primary hover:text-brand-accent",
+                : "bg-transparent border-black/[0.08] text-text-secondary hover:border-brand-primary hover:text-brand-accent",
             )}
           >
             {React.cloneElement(opt.component as React.ReactElement, {
@@ -348,14 +349,12 @@ const MenuCategoryManagement = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const CROP_CONTAINER_SIZE = 320;
 
-  // Set active cat on load
   useEffect(() => {
     if (categories.length > 0 && !activeCatId) {
       setActiveCatId(categories[0].id);
     }
   }, [categories, activeCatId]);
 
-  // Reset loading when category changes
   const handleCategoryChange = (id: string) => {
     setActiveCatId(id);
     setSearchQuery("");
@@ -428,7 +427,6 @@ const MenuCategoryManagement = () => {
     return () => document.removeEventListener("click", handler);
   }, [isLinkDropdownOpen]);
 
-  // Category handlers
   const handleDragStartCategory = (e: React.DragEvent, id: string) => {
     setDraggedCategoryId(id);
     e.dataTransfer.effectAllowed = "move";
@@ -517,7 +515,6 @@ const MenuCategoryManagement = () => {
 
     let finalImage = draftItem.image;
     if (draftItem.image && draftItem.image.startsWith("data:image")) {
-      // Convert base64 to Blob
       const res = await fetch(draftItem.image);
       const blob = await res.blob();
       const fileName = `${draftItem.id}-${Date.now()}.jpg`;
@@ -572,9 +569,7 @@ const MenuCategoryManagement = () => {
 
   const toggleItemAvailability = async (id: string) => {
     const item = items.find((i) => i.id === id);
-    if (item) {
-      await toggleAvailability(id, item.isAvailable);
-    }
+    if (item) await toggleAvailability(id, item.isAvailable);
   };
 
   const toggleRowExpand = (id: string) =>
@@ -657,53 +652,34 @@ const MenuCategoryManagement = () => {
     .map((i) => ({ label: `${i.name} (₱${i.price})`, value: i.id }));
 
   return (
-    <div className="font-inter relative flex w-full h-full min-h-screen bg-bg-primary">
-      {/* ── Mobile sidebar overlay ──────────────────────────────────────── */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 z-30 bg-black/30 backdrop-blur-sm lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
+    <div className="font-inter relative flex w-full flex-col md:flex-row gap-6 min-h-[700px] bg-gradient-to-br from-[#FFF8EE] via-transparent to-[#FFF1F3] p-4 md:p-0">
       {/* ── Sidebar ─────────────────────────────────────────────────────── */}
-      <aside
-        className={cn(
-          "fixed top-0 left-0 h-full w-[280px] z-40 flex flex-col bg-bg-primary transition-transform duration-300 border-r border-black/[0.06]",
-          "lg:relative lg:translate-x-0 lg:z-auto lg:flex-shrink-0",
-          sidebarOpen ? "translate-x-0 shadow-xl" : "-translate-x-full",
-        )}
-      >
-        <div className="lg:hidden p-3 border-b border-black/[0.06] flex items-center justify-between flex-shrink-0">
-          <p className="b3 font-bold text-text-primary">Categories</p>
-          <button
-            onClick={() => setSidebarOpen(false)}
-            className="p-1.5 rounded-lg hover:bg-black/5 text-text-secondary"
-          >
-            <X size={16} />
-          </button>
-        </div>
-
-        <div className="flex flex-col gap-3 p-4 flex-shrink-0">
+      <aside className="w-full md:w-[290px] flex-shrink-0 flex flex-col gap-4 bg-white/70 backdrop-blur-sm rounded-[24px] border border-white/70 shadow-sm p-4 md:p-5">
+        <div className="flex flex-col gap-3">
+          <div>
+            <p className="b3 font-bold text-text-primary">Categories</p>
+            <p className="b5 text-text-secondary mt-0.5">
+              Organize menu groups and keep the active set in view.
+            </p>
+          </div>
           <Button
             variant="primary"
-            className="w-full bg-brand-accent hover:bg-brand-accent/90 border-brand-accent mb-1"
+            className="w-full bg-brand-accent hover:bg-brand-accent/90 border-brand-accent"
             leftIcon={<Plus size={18} />}
             onClick={openNewCatModal}
           >
-            New Category
+            New
           </Button>
-          <SearchFilterBar
-            onSearch={(
-              val,
-            ) => {}} /* You can wire this up for category search */
-            placeholder="Search categories"
-            supportiveText=""
-            className="mb-0 [&_input]:!h-[41px] [&_input]:!text-sm [&_input]:!rounded-xl"
-          />
         </div>
 
-        <div className="flex-1 overflow-y-auto px-4 pb-4 custom-scrollbar flex flex-col gap-2">
+        <SearchFilterBar
+          onSearch={(val) => {}}
+          placeholder="Search categories"
+          supportiveText=""
+          className="mb-0 [&_input]:!h-[41px] [&_input]:!text-sm [&_input]:!rounded-xl"
+        />
+
+        <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-2 pr-1">
           {isLoading
             ? Array.from({ length: 5 }).map((_, idx) => (
                 <CategorySkeleton key={`skeleton-${idx}`} />
@@ -722,7 +698,7 @@ const MenuCategoryManagement = () => {
                     onDrop={(e) => handleDropCategory(e, cat.id)}
                     onClick={() => handleCategoryChange(cat.id)}
                     className={cn(
-                      "group flex items-center gap-3 p-3 rounded-2xl cursor-pointer transition-all duration-300 border",
+                      "group flex items-center gap-3 p-3 rounded-2xl cursor-pointer transition-all duration-300 border bg-transparent",
                       isActive
                         ? "bg-white shadow-md border-white/60 scale-[1.02]"
                         : "hover:bg-white/40 border-transparent",
@@ -730,14 +706,14 @@ const MenuCategoryManagement = () => {
                         "opacity-50 border-dashed border-brand-accent border-2",
                     )}
                   >
-                    <div className="cursor-grab text-text-secondary/40 hover:text-text-primary/60 active:cursor-grabbing flex-shrink-0">
+                    <div className="cursor-grab text-text-secondary/65 hover:text-text-primary/80 active:cursor-grabbing flex-shrink-0">
                       <GripVertical size={16} />
                     </div>
                     <div
                       className={cn(
                         "w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors",
                         isActive
-                          ? "bg-brand-accent text-white shadow-sm"
+                          ? "bg-brand-secondary/70 text-brand-accent shadow-sm"
                           : "bg-black/6 text-text-secondary group-hover:bg-brand-secondary/60 group-hover:text-brand-accent",
                       )}
                     >
@@ -765,164 +741,151 @@ const MenuCategoryManagement = () => {
       </aside>
 
       {/* ── Main content ─────────────────────────────────────────────────── */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* ── Header bar — glassmorphism ─────────────────────────────────── */}
-        <div className="flex-shrink-0 bg-white/80 backdrop-blur-sm border-b border-black/[0.06] px-4 lg:px-6 py-3.5 flex items-center gap-3">
-          {/* Mobile: sidebar toggle */}
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="lg:hidden p-2 rounded-xl hover:bg-black/5 text-text-secondary flex-shrink-0"
+      <div className="flex-1 flex flex-col min-w-0 bg-white/50 backdrop-blur-sm rounded-[24px] overflow-hidden border border-white/60 shadow-sm">
+        {/* ── Header bar ─────────────────────────────────────────────────── */}
+        <div className="relative overflow-hidden flex-shrink-0 border-b border-[#ffd08a]/30">
+          {/* Decorative blobs */}
+          <div className="pointer-events-none absolute -top-16 -right-10 w-52 h-52 rounded-full bg-brand-accent/[0.06]" />
+          <div className="pointer-events-none absolute -bottom-10 right-28 w-40 h-40 rounded-full bg-brand-primary/[0.10]" />
+
+          {/* Main header row */}
+          <div
+            className="relative z-10 flex items-center gap-0 px-6 md:px-8 py-5"
+            style={{
+              background: "linear-gradient(135deg, #FFF3DA 0%, #FFE8EC 100%)",
+            }}
           >
-            <Filter size={18} />
-          </button>
+            {/* Category identity */}
+            {activeCat && (
+              <div className="flex items-center gap-4 flex-1 min-w-0">
+                <div className="w-[54px] h-[54px] rounded-[18px] bg-brand-secondary/70 border border-brand-primary/30 flex items-center justify-center flex-shrink-0 text-brand-accent shadow-sm">
+                  {renderCategoryIcon(activeCat.icon, 24)}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[28px] font-bold text-text-primary leading-tight truncate tracking-tight">
+                    {activeCat.name}
+                  </p>
+                </div>
+              </div>
+            )}
 
-          {/* Mobile category display — name + counts */}
-          {activeCat && (
-            <div className="flex items-center gap-2.5 lg:hidden flex-1 min-w-0">
-              <div className="w-8 h-8 rounded-lg bg-brand-accent text-white flex items-center justify-center flex-shrink-0">
-                {renderCategoryIcon(activeCat.icon, 16)}
-              </div>
-              <div className="flex flex-col min-w-0">
-                <span className="b3 font-bold text-text-primary truncate leading-tight">
-                  {activeCat.name}
-                </span>
-                <span className="b5 text-text-secondary leading-tight">
-                  {totalCount} items · {availCount} available
-                </span>
-              </div>
-            </div>
-          )}
+            {/* Vertical divider */}
+            <div className="w-px h-10 bg-black/[0.08] mx-5 flex-shrink-0 hidden sm:block" />
 
-          {/* Desktop: full category header */}
-          {activeCat && (
-            <div className="hidden lg:flex items-center gap-3 flex-shrink-0">
-              <div className="w-10 h-10 rounded-xl bg-brand-accent text-white flex items-center justify-center shadow-sm flex-shrink-0">
-                {renderCategoryIcon(activeCat.icon, 20)}
-              </div>
-              <div>
-                <p className="b2 font-bold text-text-primary leading-tight">
-                  {activeCat.name}
-                </p>
-                <p className="b5 text-text-secondary">
-                  {totalCount} items · {availCount} available
-                </p>
-              </div>
-            </div>
-          )}
-
-          {activeCat && (
-            <div className="flex items-center gap-1 flex-shrink-0">
-              <button
-                onClick={() => openEditCatModal(activeCat)}
-                className="p-2 rounded-xl hover:bg-black/5 text-text-secondary hover:text-text-primary transition-colors"
-                title="Edit category"
+            {/* Action buttons */}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {activeCat && (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => openEditCatModal(activeCat)}
+                    title="Edit category"
+                    className="w-9 h-9 rounded-[11px] border border-black/[0.09] bg-white/80 hover:bg-white text-text-secondary hover:text-text-primary"
+                  >
+                    <Edit2 size={15} />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() =>
+                      setDeleteConfirm({
+                        isOpen: true,
+                        type: "category",
+                        categoryId: activeCat.id,
+                      })
+                    }
+                    title="Delete category"
+                    className="w-9 h-9 rounded-[11px] border border-black/[0.09] bg-white/80 hover:bg-red-50 hover:text-warning-primary hover:border-warning-primary/20 text-text-secondary"
+                  >
+                    <Trash2 size={15} />
+                  </Button>
+                </>
+              )}
+              <Button
+                variant="primary"
+                onClick={handleCreateNewItem}
+                className="h-9 px-4 rounded-[11px] bg-brand-accent hover:bg-brand-accent/90 border-brand-accent text-white flex-shrink-0"
+                leftIcon={<Plus size={15} />}
               >
-                <Edit2 size={15} />
-              </button>
-              <button
-                onClick={() =>
-                  setDeleteConfirm({
-                    isOpen: true,
-                    type: "category",
-                    categoryId: activeCat.id,
-                  })
-                }
-                className="p-2 rounded-xl hover:bg-[#E24B4A]/10 text-text-secondary hover:text-[#E24B4A] transition-colors"
-                title="Delete category"
-              >
-                <Trash2 size={15} />
-              </button>
+                Add Item
+              </Button>
             </div>
-          )}
-
-          {/* Search */}
-          <div className="flex-1 max-w-sm ml-auto hidden sm:block">
-            <SearchFilterBar
-              onSearch={(val) => setSearchQuery(val)}
-              placeholder="Search items…"
-              supportiveText=""
-              className="mb-0 [&_input]:!h-[41px] [&_input]:!text-sm [&_input]:!rounded-xl"
-            />
           </div>
-
-          {/* View toggle */}
-          <div className="flex items-center gap-0.5 bg-black/5 p-1 rounded-xl flex-shrink-0">
-            {(["grid", "list"] as const).map((mode) => (
-              <button
-                key={mode}
-                onClick={() => setViewMode(mode)}
-                className={cn(
-                  "p-2 rounded-lg transition-colors",
-                  viewMode === mode
-                    ? "bg-white text-text-primary shadow-sm"
-                    : "text-text-secondary hover:text-text-primary",
-                )}
-              >
-                {mode === "grid" ? (
-                  <LayoutGrid size={17} />
-                ) : (
-                  <ListIcon size={17} />
-                )}
-              </button>
-            ))}
-          </div>
-
-          {/* Add item */}
-          <Button
-            variant="primary"
-            onClick={handleCreateNewItem}
-            className="flex-shrink-0 b4 !py-2.5 !px-4 bg-brand-accent hover:bg-brand-accent/90 border-brand-accent"
-            leftIcon={<Plus size={16} />}
-          >
-            <span className="hidden sm:inline">Add Item</span>
-          </Button>
         </div>
 
-        {/* Mobile search */}
-        <div className="sm:hidden px-4 pt-3 flex-shrink-0">
-          <SearchFilterBar
-            onSearch={(val) => setSearchQuery(val)}
-            placeholder="Search items…"
-            supportiveText=""
-            className="mb-0 [&_input]:!h-[41px] [&_input]:!text-sm [&_input]:!rounded-xl"
-          />
-        </div>
+        {/* ── Toolbar ─────────────────────────────────────────────────────── */}
+        <div className="flex-shrink-0 px-4 lg:px-6 py-3 border-b border-black/[0.05] bg-white/30 flex flex-col gap-2">
+          <div className="flex items-center gap-3 flex-wrap">
+            {/* Search */}
+            <div className="w-80 flex-shrink-0">
+              <SearchFilterBar
+                onSearch={(val) => setSearchQuery(val)}
+                placeholder="Search items…"
+                supportiveText=""
+                className="mb-0 [&_input]:!h-[36px] [&_input]:!text-[13px] [&_input]:!rounded-xl"
+              />
+            </div>
 
-        {/* Filter chips + bulk bar */}
-        <div className="flex-shrink-0 px-4 lg:px-6 pt-3 pb-2 flex flex-col gap-2">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="b5 text-text-secondary flex-shrink-0">
-              Filter:
-            </span>
-            {(
-              [
-                { key: "all", label: `All (${totalCount})` },
-                { key: "avail", label: `Available (${availCount})` },
-                {
-                  key: "unavail",
-                  label: `Unavailable (${totalCount - availCount})`,
-                },
-              ] as { key: FilterAvail; label: string }[]
-            ).map(({ key, label }) => (
+            {/* Divider */}
+            <div className="w-px h-5 bg-black/[0.08] flex-shrink-0 hidden sm:block" />
+
+            {/* Filter chips */}
+            <div className="flex items-center gap-2 flex-wrap flex-1">
+              {(
+                [
+                  { key: "all", label: "All" },
+                  { key: "avail", label: "Available" },
+                  { key: "unavail", label: "Unavailable" },
+                ] as { key: FilterAvail; label: string }[]
+              ).map(({ key, label }) => (
+                <button
+                  key={key}
+                  onClick={() => setFilterAvail(key)}
+                  className={cn(
+                    "px-3.5 py-1.5 rounded-full b4 font-medium border transition-all",
+                    filterAvail === key
+                      ? "bg-brand-accent text-white border-brand-accent shadow-sm"
+                      : "bg-white/60 text-text-secondary border-black/12 hover:border-black/22 hover:text-text-primary",
+                  )}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {/* View toggle */}
+            <div className="flex items-center gap-1 border border-black/[0.09] rounded-[10px] overflow-hidden flex-shrink-0 ml-auto">
               <button
-                key={key}
-                onClick={() => setFilterAvail(key)}
+                onClick={() => setViewMode("grid")}
                 className={cn(
-                  "px-3 py-1.5 rounded-full b5 font-medium border transition-all",
-                  filterAvail === key
-                    ? key === "unavail"
-                      ? "bg-brand-accent text-white border-brand-accent"
-                      : "bg-brand-accent text-white border-brand-accent"
-                    : "bg-white/60 text-text-secondary border-black/10 hover:border-black/20 hover:text-text-primary",
+                  "w-8 h-[30px] flex items-center justify-center transition-all",
+                  viewMode === "grid"
+                    ? "bg-brand-accent/10 text-brand-accent"
+                    : "text-text-secondary hover:text-text-primary bg-transparent",
                 )}
+                title="Grid view"
               >
-                {label}
+                <LayoutGrid size={14} />
               </button>
-            ))}
+              <button
+                onClick={() => setViewMode("list")}
+                className={cn(
+                  "w-8 h-[30px] flex items-center justify-center transition-all",
+                  viewMode === "list"
+                    ? "bg-brand-accent/10 text-brand-accent"
+                    : "text-text-secondary hover:text-text-primary bg-transparent",
+                )}
+                title="List view"
+              >
+                <ListIcon size={14} />
+              </button>
+            </div>
           </div>
 
+          {/* Bulk action bar */}
           {selectedItems.length > 0 && (
-            <div className="flex items-center gap-3 px-4 py-2.5 bg-white rounded-2xl border border-black/5 shadow-sm animate-in slide-in-from-top-2 duration-200">
+            <div className="flex items-center gap-3 px-4 py-2.5 bg-white/60 rounded-2xl border border-black/5 animate-in slide-in-from-top-2 duration-200">
               <span className="b4 text-text-secondary flex-1">
                 <span className="font-bold text-text-primary">
                   {selectedItems.length}
@@ -949,7 +912,7 @@ const MenuCategoryManagement = () => {
         </div>
 
         {/* Item grid/list */}
-        <div className="flex-1 overflow-y-auto px-4 lg:px-6 pb-8 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto px-4 lg:px-6 py-6 custom-scrollbar bg-white/25">
           {isLoading ? (
             viewMode === "grid" ? (
               <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4">
@@ -958,7 +921,7 @@ const MenuCategoryManagement = () => {
                 ))}
               </div>
             ) : (
-              <div className="rounded-2xl border border-black/[0.07] overflow-hidden bg-white shadow-sm">
+              <div className="rounded-2xl border border-black/[0.07] overflow-hidden bg-transparent shadow-none">
                 {Array.from({ length: 8 }).map((_, i) => (
                   <ListRowSkeleton key={i} />
                 ))}
@@ -992,8 +955,8 @@ const MenuCategoryManagement = () => {
               ))}
             </div>
           ) : (
-            <div className="rounded-2xl border border-black/[0.07] overflow-hidden bg-white shadow-sm">
-              <div className="hidden sm:grid sm:grid-cols-[32px_56px_1fr_90px_90px_70px] gap-3 px-4 py-3 border-b border-black/[0.06] bg-black/[0.02]">
+            <div className="rounded-2xl border border-black/[0.07] overflow-hidden bg-transparent shadow-none">
+              <div className="hidden sm:grid sm:grid-cols-[32px_56px_1fr_90px_90px_70px] gap-3 px-4 py-3 border-b border-black/[0.06] bg-transparent">
                 <div />
                 <div />
                 {["Item", "Price", "Sizes", "Status"].map((h) => (
@@ -1024,8 +987,8 @@ const MenuCategoryManagement = () => {
 
       {/* ── Item modal ─────────────────────────────────────────────────────── */}
       {draftItem && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-bg-primary rounded-[28px] w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl border border-white/50 animate-in zoom-in-95 duration-300 overflow-hidden">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 modal-overlay">
+          <div className="bg-bg-primary rounded-[28px] w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl border border-white/50 overflow-hidden modal-panel">
             <div className="bg-white px-6 py-4 flex-shrink-0 flex items-center gap-3 border-b border-black/[0.06]">
               <div className="w-10 h-10 rounded-xl bg-brand-accent/10 border border-brand-accent/20 flex items-center justify-center flex-shrink-0">
                 <UtensilsCrossed size={18} className="text-brand-accent" />
@@ -1058,7 +1021,7 @@ const MenuCategoryManagement = () => {
                         "w-36 h-36 rounded-2xl flex flex-col items-center justify-center cursor-pointer overflow-hidden group relative shadow-inner transition-all",
                         draftItem.image
                           ? "border-0"
-                          : "border-2 border-dashed border-black/15 hover:border-brand-accent bg-white/60 hover:bg-white/80",
+                          : "border-2 border-dashed border-black/15 hover:border-brand-accent bg-transparent hover:bg-transparent",
                       )}
                       onClick={() => fileInputRef.current?.click()}
                     >
@@ -1178,7 +1141,7 @@ const MenuCategoryManagement = () => {
                   {draftItem.sizes.map((size, index) => (
                     <div
                       key={size.id}
-                      className="flex items-start gap-2 p-3.5 bg-white/80 rounded-2xl border border-black/5 shadow-sm"
+                      className="flex items-start gap-2 p-3.5 bg-transparent rounded-2xl border border-black/5 shadow-none"
                     >
                       <div className="flex-1 flex flex-col gap-2">
                         <Input
@@ -1280,7 +1243,7 @@ const MenuCategoryManagement = () => {
                     {draftItem.addons.map((addon, index) => (
                       <div
                         key={addon.id}
-                        className="flex items-start gap-2 p-3.5 bg-white/80 rounded-2xl border border-black/5 shadow-sm"
+                        className="flex items-start gap-2 p-3.5 bg-transparent rounded-2xl border border-black/5 shadow-none"
                       >
                         <div className="flex-1 flex flex-col gap-2">
                           <Input
@@ -1478,8 +1441,8 @@ const MenuCategoryManagement = () => {
 
       {/* ── Category modal ───────────────────────────────────────────────── */}
       {catModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-text-primary/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl md:rounded-[28px] w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-text-primary/40 backdrop-blur-sm p-4 modal-overlay">
+          <div className="bg-white rounded-2xl md:rounded-[28px] w-full max-w-md shadow-2xl overflow-hidden modal-panel flex flex-col max-h-[90vh]">
             <div className="px-6 py-4 flex items-center justify-between border-b border-black/[0.05] flex-shrink-0">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-brand-accent/10 flex items-center justify-center text-brand-accent">
@@ -1497,13 +1460,6 @@ const MenuCategoryManagement = () => {
               </button>
             </div>
 
-            {/*
-              ── Icon picker fix ───────────────────────────────────────────
-              Added overflow-hidden to the scroll container and px-0.5 inside
-              the grid so the selected icon's scale(1.05) isn't clipped.
-              Also gave the modal body overflow-y-auto with a min-height so
-              the picker grid is fully visible without the modal cropping it.
-            */}
             <div
               className="p-6 overflow-y-auto custom-scrollbar flex flex-col gap-5"
               style={{ minHeight: 0 }}
@@ -1534,16 +1490,13 @@ const MenuCategoryManagement = () => {
 
               <div>
                 <FieldLabel>Icon</FieldLabel>
-                {/* Wrapper: no overflow-hidden so the scale ring isn't clipped */}
-                <div className="rounded-2xl border border-black/[0.07] p-3 bg-bg-primary/60">
+                <div className="rounded-2xl border border-black/[0.07] p-3 bg-transparent">
                   <IconPicker
                     value={catDraft.icon ?? "flame"}
                     onChange={(icon) => setCatDraft({ ...catDraft, icon })}
                   />
                 </div>
               </div>
-
-              {/* Delete moved to main header */}
             </div>
 
             <div className="px-6 py-4 border-t border-black/[0.05] flex justify-end gap-2 flex-shrink-0 bg-black/[0.01]">
@@ -1573,8 +1526,8 @@ const MenuCategoryManagement = () => {
 
       {/* ── Crop modal ───────────────────────────────────────────────────── */}
       {cropModalImage && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200 select-none">
-          <div className="bg-bg-primary rounded-2xl md:rounded-[28px] w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 modal-overlay select-none">
+          <div className="bg-bg-primary rounded-2xl md:rounded-[28px] w-full max-w-md shadow-2xl overflow-hidden modal-panel flex flex-col max-h-[90vh]">
             <div className="px-6 py-4 flex items-center justify-between border-b border-black/[0.05] flex-shrink-0">
               <h2 className="b2 font-bold">Adjust Image</h2>
               <button
@@ -1614,7 +1567,7 @@ const MenuCategoryManagement = () => {
                   ))}
                 </div>
               </div>
-              <div className="flex items-center gap-3 bg-white/60 p-3 rounded-2xl border border-white max-w-[320px] mx-auto w-full">
+              <div className="flex items-center gap-3 bg-transparent p-3 rounded-2xl border border-white/40 max-w-[320px] mx-auto w-full">
                 <ZoomOut
                   size={16}
                   className="text-text-secondary flex-shrink-0"
@@ -1661,7 +1614,32 @@ const MenuCategoryManagement = () => {
           .custom-scrollbar::-webkit-scrollbar-track{background:transparent}
           .custom-scrollbar::-webkit-scrollbar-thumb{background-color:rgba(0,0,0,.08);border-radius:10px}
           .custom-scrollbar:hover::-webkit-scrollbar-thumb{background-color:rgba(0,0,0,.18)}
-          @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+
+          /* ── Modal overlay: soft fade ──────────────────────────────── */
+          @keyframes modal-overlay-in {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+          }
+
+          /* ── Modal panel: rise + scale from slightly below center ──── */
+          @keyframes modal-panel-in {
+            from {
+              opacity: 0;
+              transform: translateY(32px) scale(0.94);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0px) scale(1);
+            }
+          }
+
+          .modal-overlay {
+            animation: modal-overlay-in 0.2s ease forwards;
+          }
+
+          .modal-panel {
+            animation: modal-panel-in 0.35s cubic-bezier(0.22, 0.8, 0.4, 1) forwards;
+          }
         `,
         }}
       />
@@ -1712,14 +1690,14 @@ const GridCard: React.FC<CardProps> = ({
   <div
     onClick={onClick}
     className={cn(
-      "bg-white rounded-2xl border overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer group flex flex-col relative",
+      "bg-transparent rounded-2xl border overflow-hidden shadow-none hover:shadow-none transition-all cursor-pointer group flex flex-col relative",
       selected
-        ? "border-brand-accent/50 ring-2 ring-brand-accent/15"
-        : "border-black/5 hover:border-brand-accent/30",
+        ? "border-brand-accent/60 ring-2 ring-brand-accent/15"
+        : "border-black/[0.12] hover:border-brand-accent/40",
     )}
   >
     <div
-      className="absolute top-2.5 left-2.5 z-20 bg-white rounded-[6px] shadow-sm"
+      className="absolute top-2.5 left-2.5 z-20 bg-transparent rounded-[6px] shadow-none"
       onClick={(e) => {
         e.stopPropagation();
         onSelect();
