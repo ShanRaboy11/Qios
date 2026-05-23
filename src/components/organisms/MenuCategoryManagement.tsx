@@ -365,6 +365,8 @@ const MenuCategoryManagement = () => {
 
   const activeCat =
     categories.find((c) => c.id === activeCatId) ?? categories[0];
+  const isEmptyMenu =
+    !isLoading && categories.length === 0 && items.length === 0;
   const visibleItems = items.filter((i) => {
     if (i.categoryId !== activeCatId) return false;
     if (
@@ -451,6 +453,9 @@ const MenuCategoryManagement = () => {
     setLocalError(null);
     setCatDraft({ name: "", icon: "flame" });
     setCatModal("new");
+  };
+  const handleAddCategoryClick = () => {
+    openNewCatModal();
   };
   const openEditCatModal = (cat: Category) => {
     setLocalError(null);
@@ -652,340 +657,413 @@ const MenuCategoryManagement = () => {
     .map((i) => ({ label: `${i.name} (₱${i.price})`, value: i.id }));
 
   return (
-    <div className="font-inter relative flex w-full flex-col md:flex-row gap-6 min-h-[700px] bg-gradient-to-br from-[#FFF8EE] via-transparent to-[#FFF1F3] p-4 md:p-0">
-      {/* ── Sidebar ─────────────────────────────────────────────────────── */}
-      <aside className="w-full md:w-[290px] flex-shrink-0 flex flex-col gap-4 bg-white/70 backdrop-blur-sm rounded-[24px] border border-white/70 shadow-sm p-4 md:p-5">
-        <div className="flex flex-col gap-3">
-          <div>
-            <p className="b3 font-bold text-text-primary">Categories</p>
-            <p className="b5 text-text-secondary mt-0.5">
-              Organize menu groups and keep the active set in view.
-            </p>
-          </div>
-          <Button
-            variant="primary"
-            className="w-full bg-brand-accent hover:bg-brand-accent/90 border-brand-accent"
-            leftIcon={<Plus size={18} />}
-            onClick={openNewCatModal}
-          >
-            New
-          </Button>
-        </div>
+    <div className="w-full">
+      {/* ── Main View Toggle ────────────────────────────────────────────── */}
+      {isEmptyMenu ? (
+        <div className="font-inter relative flex w-full min-h-[700px] bg-gradient-to-br from-[#FFF8EE] via-transparent to-[#FFF1F3] p-4 md:p-0">
+          <div className="flex-1 flex items-center justify-center px-4 py-8 md:px-8 md:py-12">
+            <div className="w-full max-w-5xl rounded-[36px] border border-black/10 ring-1 ring-black/5 bg-gradient-to-br from-white/95 via-white/85 to-[#FFF7EC] shadow-[0_32px_100px_rgba(0,0,0,0.12)] overflow-hidden">
+              <div className="grid gap-0 lg:grid-cols-[1.05fr_0.95fr]">
+                <div className="p-8 md:p-12 lg:p-14 flex flex-col justify-center">
+                  <div className="inline-flex w-fit items-center gap-2 rounded-full border border-brand-accent/20 bg-brand-accent/8 px-3 py-1 text-brand-accent b5 font-bold mb-6">
+                    <FolderPlus size={14} />
+                    Your menu is empty
+                  </div>
+                  <h2 className="text-[34px] md:text-[46px] lg:text-[52px] font-bold leading-[1.05] tracking-tight text-text-primary max-w-2xl">
+                    Start by creating your first category.
+                  </h2>
+                  <p className="mt-5 b2 text-text-secondary max-w-xl leading-relaxed">
+                    Add categories like meals, drinks, or desserts first, then
+                    place items inside them to build your menu. Once you add
+                    your first category, the full management interface will
+                    appear here.
+                  </p>
 
-        <SearchFilterBar
-          onSearch={(val) => {}}
-          placeholder="Search categories"
-          supportiveText=""
-          className="mb-0 [&_input]:!h-[41px] [&_input]:!text-sm [&_input]:!rounded-xl"
-        />
-
-        <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-2 pr-1">
-          {isLoading
-            ? Array.from({ length: 5 }).map((_, idx) => (
-                <CategorySkeleton key={`skeleton-${idx}`} />
-              ))
-            : categories.map((cat) => {
-                const catCount = items.filter(
-                  (i) => i.categoryId === cat.id,
-                ).length;
-                const isActive = cat.id === activeCatId;
-                return (
-                  <div
-                    key={cat.id}
-                    draggable
-                    onDragStart={(e) => handleDragStartCategory(e, cat.id)}
-                    onDragOver={handleDragOverCategory}
-                    onDrop={(e) => handleDropCategory(e, cat.id)}
-                    onClick={() => handleCategoryChange(cat.id)}
-                    className={cn(
-                      "group flex items-center gap-3 p-3 rounded-2xl cursor-pointer transition-all duration-300 border bg-transparent",
-                      isActive
-                        ? "bg-white shadow-md border-white/60 scale-[1.02]"
-                        : "hover:bg-white/40 border-transparent",
-                      draggedCategoryId === cat.id &&
-                        "opacity-50 border-dashed border-brand-accent border-2",
-                    )}
-                  >
-                    <div className="cursor-grab text-text-secondary/65 hover:text-text-primary/80 active:cursor-grabbing flex-shrink-0">
-                      <GripVertical size={16} />
-                    </div>
-                    <div
-                      className={cn(
-                        "w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors",
-                        isActive
-                          ? "bg-brand-secondary/70 text-brand-accent shadow-sm"
-                          : "bg-black/6 text-text-secondary group-hover:bg-brand-secondary/60 group-hover:text-brand-accent",
-                      )}
+                  <div className="mt-8 flex flex-wrap gap-3">
+                    <Button
+                      variant="primary"
+                      onClick={handleAddCategoryClick}
+                      className="h-12 px-6 rounded-[16px] bg-brand-accent hover:bg-brand-accent/90 border-brand-accent text-white"
+                      leftIcon={<Plus size={16} />}
                     >
-                      {renderCategoryIcon(cat.icon, 17)}
-                    </div>
-                    <div className="flex flex-col min-w-0 flex-1">
-                      <span
-                        className={cn(
-                          "b2 font-bold transition-colors truncate",
-                          isActive
-                            ? "text-text-primary"
-                            : "text-text-primary/80",
-                        )}
-                      >
-                        {cat.name}
-                      </span>
-                      <span className="b5 text-text-secondary mt-0.5">
-                        {catCount} item{catCount !== 1 ? "s" : ""}
+                      Add Category
+                    </Button>
+                    <div className="flex items-center gap-2 rounded-[16px] border border-black/8 bg-white/75 px-4 py-3 text-text-secondary">
+                      <ImageIcon size={16} className="opacity-70" />
+                      <span className="b4">
+                        Categories and items appear here after setup.
                       </span>
                     </div>
                   </div>
-                );
-              })}
-        </div>
-      </aside>
-
-      {/* ── Main content ─────────────────────────────────────────────────── */}
-      <div className="flex-1 flex flex-col min-w-0 bg-white/50 backdrop-blur-sm rounded-[24px] overflow-hidden border border-white/60 shadow-sm">
-        {/* ── Header bar ─────────────────────────────────────────────────── */}
-        <div className="relative overflow-hidden flex-shrink-0 border-b border-[#ffd08a]/30">
-          {/* Decorative blobs */}
-          <div className="pointer-events-none absolute -top-16 -right-10 w-52 h-52 rounded-full bg-brand-accent/[0.06]" />
-          <div className="pointer-events-none absolute -bottom-10 right-28 w-40 h-40 rounded-full bg-brand-primary/[0.10]" />
-
-          {/* Main header row */}
-          <div
-            className="relative z-10 flex items-center gap-0 px-6 md:px-8 py-5"
-            style={{
-              background: "linear-gradient(135deg, #FFF3DA 0%, #FFE8EC 100%)",
-            }}
-          >
-            {/* Category identity */}
-            {activeCat && (
-              <div className="flex items-center gap-4 flex-1 min-w-0">
-                <div className="w-[54px] h-[54px] rounded-[18px] bg-brand-secondary/70 border border-brand-primary/30 flex items-center justify-center flex-shrink-0 text-brand-accent shadow-sm">
-                  {renderCategoryIcon(activeCat.icon, 24)}
                 </div>
-                <div className="min-w-0">
-                  <p className="text-[28px] font-bold text-text-primary leading-tight truncate tracking-tight">
-                    {activeCat.name}
-                  </p>
+
+                <div className="relative min-h-[320px] lg:min-h-full p-8 md:p-10 bg-gradient-to-br from-[#FFF0D6] via-[#FFE9EF] to-[#F7F0FF] flex items-center justify-center">
+                  <div className="absolute top-8 right-8 w-28 h-28 rounded-full bg-white/35 blur-2xl" />
+                  <div className="absolute bottom-10 left-10 w-36 h-36 rounded-full bg-brand-accent/10 blur-3xl" />
+                  <div className="relative w-full max-w-[360px] rounded-[30px] border border-white/80 bg-white/80 backdrop-blur-sm shadow-[0_18px_50px_rgba(0,0,0,0.08)] p-6 md:p-7">
+                    <div className="flex items-center gap-3">
+                      <div className="w-14 h-14 rounded-2xl bg-brand-accent/10 text-brand-accent flex items-center justify-center">
+                        <FolderPlus size={24} />
+                      </div>
+                      <div>
+                        <p className="b3 font-bold text-text-primary">
+                          Ready for your menu
+                        </p>
+                        <p className="b5 text-text-secondary">
+                          Your categories and items will live here.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-6 space-y-3">
+                      {[
+                        "Add a category",
+                        "Add menu items",
+                        "Organize and publish",
+                      ].map((step, idx) => (
+                        <div
+                          key={step}
+                          className="flex items-center gap-3 rounded-2xl border border-black/5 bg-white/70 px-4 py-3"
+                        >
+                          <div className="w-8 h-8 rounded-full bg-brand-accent/10 text-brand-accent flex items-center justify-center b5 font-bold">
+                            {idx + 1}
+                          </div>
+                          <span className="b4 text-text-primary font-medium">
+                            {step}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
-            )}
-
-            {/* Vertical divider */}
-            <div className="w-px h-10 bg-black/[0.08] mx-5 flex-shrink-0 hidden sm:block" />
-
-            {/* Action buttons */}
-            <div className="flex items-center gap-2 flex-shrink-0">
-              {activeCat && (
-                <>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => openEditCatModal(activeCat)}
-                    title="Edit category"
-                    className="w-9 h-9 rounded-[11px] border border-black/[0.09] bg-white/80 hover:bg-white text-text-secondary hover:text-text-primary"
-                  >
-                    <Edit2 size={15} />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() =>
-                      setDeleteConfirm({
-                        isOpen: true,
-                        type: "category",
-                        categoryId: activeCat.id,
-                      })
-                    }
-                    title="Delete category"
-                    className="w-9 h-9 rounded-[11px] border border-black/[0.09] bg-white/80 hover:bg-red-50 hover:text-warning-primary hover:border-warning-primary/20 text-text-secondary"
-                  >
-                    <Trash2 size={15} />
-                  </Button>
-                </>
-              )}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="font-inter relative flex w-full flex-col md:flex-row gap-6 min-h-[700px] bg-gradient-to-br from-[#FFF8EE] via-transparent to-[#FFF1F3] p-4 md:p-0">
+          {/* ── Sidebar ─────────────────────────────────────────────────── */}
+          <aside className="w-full md:w-[290px] flex-shrink-0 flex flex-col gap-4 bg-white/70 backdrop-blur-sm rounded-[24px] border border-white/70 shadow-sm p-4 md:p-5">
+            <div className="flex flex-col gap-3">
+              <div>
+                <p className="b3 font-bold text-text-primary">Categories</p>
+                <p className="b5 text-text-secondary mt-0.5">
+                  Organize menu groups and keep the active set in view.
+                </p>
+              </div>
               <Button
                 variant="primary"
-                onClick={handleCreateNewItem}
-                className="h-9 px-4 rounded-[11px] bg-brand-accent hover:bg-brand-accent/90 border-brand-accent text-white flex-shrink-0"
-                leftIcon={<Plus size={15} />}
+                className="w-full bg-brand-accent hover:bg-brand-accent/90 border-brand-accent"
+                leftIcon={<Plus size={18} />}
+                onClick={openNewCatModal}
               >
-                Add Item
+                New
               </Button>
             </div>
-          </div>
-        </div>
 
-        {/* ── Toolbar ─────────────────────────────────────────────────────── */}
-        <div className="flex-shrink-0 px-4 lg:px-6 py-3 border-b border-black/[0.05] bg-white/30 flex flex-col gap-2">
-          <div className="flex items-center gap-3 flex-wrap">
-            {/* Search */}
-            <div className="w-80 flex-shrink-0">
-              <SearchFilterBar
-                onSearch={(val) => setSearchQuery(val)}
-                placeholder="Search items…"
-                supportiveText=""
-                className="mb-0 [&_input]:!h-[36px] [&_input]:!text-[13px] [&_input]:!rounded-xl"
-              />
+            <SearchFilterBar
+              onSearch={(val) => {}}
+              placeholder="Search categories"
+              supportiveText=""
+              className="mb-0 [&_input]:!h-[41px] [&_input]:!text-sm [&_input]:!rounded-xl"
+            />
+
+            <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-2 pr-1">
+              {isLoading
+                ? Array.from({ length: 5 }).map((_, idx) => (
+                    <CategorySkeleton key={`skeleton-${idx}`} />
+                  ))
+                : categories.map((cat) => {
+                    const catCount = items.filter(
+                      (i) => i.categoryId === cat.id,
+                    ).length;
+                    const isActive = cat.id === activeCatId;
+                    return (
+                      <div
+                        key={cat.id}
+                        draggable
+                        onDragStart={(e) => handleDragStartCategory(e, cat.id)}
+                        onDragOver={handleDragOverCategory}
+                        onDrop={(e) => handleDropCategory(e, cat.id)}
+                        onClick={() => handleCategoryChange(cat.id)}
+                        className={cn(
+                          "group flex items-center gap-3 p-3 rounded-2xl cursor-pointer transition-all duration-300 border bg-transparent",
+                          isActive
+                            ? "bg-white shadow-md border-white/60 scale-[1.02]"
+                            : "hover:bg-white/40 border-transparent",
+                          draggedCategoryId === cat.id &&
+                            "opacity-50 border-dashed border-brand-accent border-2",
+                        )}
+                      >
+                        <div className="cursor-grab text-text-secondary/65 hover:text-text-primary/80 active:cursor-grabbing flex-shrink-0">
+                          <GripVertical size={16} />
+                        </div>
+                        <div
+                          className={cn(
+                            "w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors",
+                            isActive
+                              ? "bg-brand-secondary/70 text-brand-accent shadow-sm"
+                              : "bg-black/6 text-text-secondary group-hover:bg-brand-secondary/60 group-hover:text-brand-accent",
+                          )}
+                        >
+                          {renderCategoryIcon(cat.icon, 17)}
+                        </div>
+                        <div className="flex flex-col min-w-0 flex-1">
+                          <span
+                            className={cn(
+                              "b2 font-bold transition-colors truncate",
+                              isActive
+                                ? "text-text-primary"
+                                : "text-text-primary/80",
+                            )}
+                          >
+                            {cat.name}
+                          </span>
+                          <span className="b5 text-text-secondary mt-0.5">
+                            {catCount} item{catCount !== 1 ? "s" : ""}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
             </div>
+          </aside>
 
-            {/* Divider */}
-            <div className="w-px h-5 bg-black/[0.08] flex-shrink-0 hidden sm:block" />
-
-            {/* Filter chips */}
-            <div className="flex items-center gap-2 flex-wrap flex-1">
-              {(
-                [
-                  { key: "all", label: "All" },
-                  { key: "avail", label: "Available" },
-                  { key: "unavail", label: "Unavailable" },
-                ] as { key: FilterAvail; label: string }[]
-              ).map(({ key, label }) => (
-                <button
-                  key={key}
-                  onClick={() => setFilterAvail(key)}
-                  className={cn(
-                    "px-3.5 py-1.5 rounded-full b4 font-medium border transition-all",
-                    filterAvail === key
-                      ? "bg-brand-accent text-white border-brand-accent shadow-sm"
-                      : "bg-white/60 text-text-secondary border-black/12 hover:border-black/22 hover:text-text-primary",
-                  )}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-
-            {/* View toggle */}
-            <div className="flex items-center gap-1 border border-black/[0.09] rounded-[10px] overflow-hidden flex-shrink-0 ml-auto">
-              <button
-                onClick={() => setViewMode("grid")}
-                className={cn(
-                  "w-8 h-[30px] flex items-center justify-center transition-all",
-                  viewMode === "grid"
-                    ? "bg-brand-accent/10 text-brand-accent"
-                    : "text-text-secondary hover:text-text-primary bg-transparent",
-                )}
-                title="Grid view"
+          {/* ── Main content ─────────────────────────────────────────────── */}
+          <div className="flex-1 flex flex-col min-w-0 bg-white/50 backdrop-blur-sm rounded-[24px] overflow-hidden border border-white/60 shadow-sm">
+            {/* Header bar */}
+            <div className="relative overflow-hidden flex-shrink-0 border-b border-[#ffd08a]/30">
+              <div className="pointer-events-none absolute -top-16 -right-10 w-52 h-52 rounded-full bg-brand-accent/[0.06]" />
+              <div className="pointer-events-none absolute -bottom-10 right-28 w-40 h-40 rounded-full bg-brand-primary/[0.10]" />
+              <div
+                className="relative z-10 flex items-center gap-0 px-6 md:px-8 py-5"
+                style={{
+                  background:
+                    "linear-gradient(135deg, #FFF3DA 0%, #FFE8EC 100%)",
+                }}
               >
-                <LayoutGrid size={14} />
-              </button>
-              <button
-                onClick={() => setViewMode("list")}
-                className={cn(
-                  "w-8 h-[30px] flex items-center justify-center transition-all",
-                  viewMode === "list"
-                    ? "bg-brand-accent/10 text-brand-accent"
-                    : "text-text-secondary hover:text-text-primary bg-transparent",
-                )}
-                title="List view"
-              >
-                <ListIcon size={14} />
-              </button>
-            </div>
-          </div>
-
-          {/* Bulk action bar */}
-          {selectedItems.length > 0 && (
-            <div className="flex items-center gap-3 px-4 py-2.5 bg-white/60 rounded-2xl border border-black/5 animate-in slide-in-from-top-2 duration-200">
-              <span className="b4 text-text-secondary flex-1">
-                <span className="font-bold text-text-primary">
-                  {selectedItems.length}
-                </span>{" "}
-                item{selectedItems.length > 1 ? "s" : ""} selected
-              </span>
-              <button
-                onClick={() => setSelectedItems([])}
-                className="b4 text-text-secondary hover:text-text-primary transition-colors"
-              >
-                Deselect
-              </button>
-              <div className="w-px h-4 bg-black/10" />
-              <button
-                onClick={() =>
-                  setDeleteConfirm({ isOpen: true, type: "items" })
-                }
-                className="b4 font-medium text-brand-accent hover:text-brand-accent/80 flex items-center gap-1 transition-colors"
-              >
-                <Trash2 size={13} /> Delete
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Item grid/list */}
-        <div className="flex-1 overflow-y-auto px-4 lg:px-6 py-6 custom-scrollbar bg-white/25">
-          {isLoading ? (
-            viewMode === "grid" ? (
-              <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4">
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <GridCardSkeleton key={i} />
-                ))}
-              </div>
-            ) : (
-              <div className="rounded-2xl border border-black/[0.07] overflow-hidden bg-transparent shadow-none">
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <ListRowSkeleton key={i} />
-                ))}
-              </div>
-            )
-          ) : visibleItems.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-text-secondary/60">
-              <div className="w-16 h-16 rounded-2xl bg-black/4 flex items-center justify-center mb-3">
-                <ImageIcon size={28} className="opacity-40" />
-              </div>
-              <p className="b3 font-bold">
-                {searchQuery ? "No results found" : "No items yet"}
-              </p>
-              <p className="b5 mt-1">
-                {searchQuery
-                  ? "Try a different search term."
-                  : "Click 'Add Item' to get started."}
-              </p>
-            </div>
-          ) : viewMode === "grid" ? (
-            <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4">
-              {visibleItems.map((item) => (
-                <GridCard
-                  key={item.id}
-                  item={item}
-                  selected={selectedItems.includes(item.id)}
-                  onSelect={() => toggleSelection(item.id)}
-                  onClick={() => handleOpenModal(item)}
-                  onToggleAvail={() => toggleItemAvailability(item.id)}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="rounded-2xl border border-black/[0.07] overflow-hidden bg-transparent shadow-none">
-              <div className="hidden sm:grid sm:grid-cols-[32px_56px_1fr_90px_90px_70px] gap-3 px-4 py-3 border-b border-black/[0.06] bg-transparent">
-                <div />
-                <div />
-                {["Item", "Price", "Sizes", "Status"].map((h) => (
-                  <div
-                    key={h}
-                    className="b5 text-text-secondary uppercase tracking-wider font-bold"
-                  >
-                    {h}
+                {activeCat && (
+                  <div className="flex items-center gap-4 flex-1 min-w-0">
+                    <div className="w-[54px] h-[54px] rounded-[18px] bg-brand-secondary/70 border border-brand-primary/30 flex items-center justify-center flex-shrink-0 text-brand-accent shadow-sm">
+                      {renderCategoryIcon(activeCat.icon, 24)}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[28px] font-bold text-text-primary leading-tight truncate tracking-tight">
+                        {activeCat.name}
+                      </p>
+                    </div>
                   </div>
-                ))}
+                )}
+                <div className="w-px h-10 bg-black/[0.08] mx-5 flex-shrink-0 hidden sm:block" />
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  {activeCat && (
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => openEditCatModal(activeCat)}
+                        title="Edit category"
+                        className="w-9 h-9 rounded-[11px] border border-black/[0.09] bg-white/80 hover:bg-white text-text-secondary hover:text-text-primary"
+                      >
+                        <Edit2 size={15} />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() =>
+                          setDeleteConfirm({
+                            isOpen: true,
+                            type: "category",
+                            categoryId: activeCat.id,
+                          })
+                        }
+                        title="Delete category"
+                        className="w-9 h-9 rounded-[11px] border border-black/[0.09] bg-white/80 hover:bg-red-50 hover:text-warning-primary hover:border-warning-primary/20 text-text-secondary"
+                      >
+                        <Trash2 size={15} />
+                      </Button>
+                    </>
+                  )}
+                  <Button
+                    variant="primary"
+                    onClick={handleCreateNewItem}
+                    className="h-9 px-4 rounded-[11px] bg-brand-accent hover:bg-brand-accent/90 border-brand-accent text-white flex-shrink-0"
+                    leftIcon={<Plus size={15} />}
+                  >
+                    Add Item
+                  </Button>
+                </div>
               </div>
-              {visibleItems.map((item) => (
-                <CollapsibleTableRow
-                  key={item.id}
-                  item={item}
-                  selected={selectedItems.includes(item.id)}
-                  onSelect={() => toggleSelection(item.id)}
-                  onClick={() => handleOpenModal(item)}
-                  onToggleAvail={() => toggleItemAvailability(item.id)}
-                  expanded={expandedRows.includes(item.id)}
-                  onToggleExpand={() => toggleRowExpand(item.id)}
-                />
-              ))}
             </div>
-          )}
-        </div>
-      </div>
 
-      {/* ── Item modal ─────────────────────────────────────────────────────── */}
+            {/* Toolbar */}
+            <div className="flex-shrink-0 px-4 lg:px-6 py-3 border-b border-black/[0.05] bg-white/30 flex flex-col gap-2">
+              <div className="flex items-center gap-3 flex-wrap">
+                <div className="w-80 flex-shrink-0">
+                  <SearchFilterBar
+                    onSearch={(val) => setSearchQuery(val)}
+                    placeholder="Search items…"
+                    supportiveText=""
+                    className="mb-0 [&_input]:!h-[36px] [&_input]:!text-[13px] [&_input]:!rounded-xl"
+                  />
+                </div>
+                <div className="w-px h-5 bg-black/[0.08] flex-shrink-0 hidden sm:block" />
+                <div className="flex items-center gap-2 flex-wrap flex-1">
+                  {(
+                    [
+                      { key: "all", label: "All" },
+                      { key: "avail", label: "Available" },
+                      { key: "unavail", label: "Unavailable" },
+                    ] as { key: FilterAvail; label: string }[]
+                  ).map(({ key, label }) => (
+                    <button
+                      key={key}
+                      onClick={() => setFilterAvail(key)}
+                      className={cn(
+                        "px-3.5 py-1.5 rounded-full b4 font-medium border transition-all",
+                        filterAvail === key
+                          ? "bg-brand-accent text-white border-brand-accent shadow-sm"
+                          : "bg-white/60 text-text-secondary border-black/12 hover:border-black/22 hover:text-text-primary",
+                      )}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex items-center gap-1 border border-black/[0.09] rounded-[10px] overflow-hidden flex-shrink-0 ml-auto">
+                  <button
+                    onClick={() => setViewMode("grid")}
+                    className={cn(
+                      "w-8 h-[30px] flex items-center justify-center transition-all",
+                      viewMode === "grid"
+                        ? "bg-brand-accent/10 text-brand-accent"
+                        : "text-text-secondary hover:text-text-primary bg-transparent",
+                    )}
+                    title="Grid view"
+                  >
+                    <LayoutGrid size={14} />
+                  </button>
+                  <button
+                    onClick={() => setViewMode("list")}
+                    className={cn(
+                      "w-8 h-[30px] flex items-center justify-center transition-all",
+                      viewMode === "list"
+                        ? "bg-brand-accent/10 text-brand-accent"
+                        : "text-text-secondary hover:text-text-primary bg-transparent",
+                    )}
+                    title="List view"
+                  >
+                    <ListIcon size={14} />
+                  </button>
+                </div>
+              </div>
+
+              {selectedItems.length > 0 && (
+                <div className="flex items-center gap-3 px-4 py-2.5 bg-white/60 rounded-2xl border border-black/5 animate-in slide-in-from-top-2 duration-200">
+                  <span className="b4 text-text-secondary flex-1">
+                    <span className="font-bold text-text-primary">
+                      {selectedItems.length}
+                    </span>{" "}
+                    item{selectedItems.length > 1 ? "s" : ""} selected
+                  </span>
+                  <button
+                    onClick={() => setSelectedItems([])}
+                    className="b4 text-text-secondary hover:text-text-primary transition-colors"
+                  >
+                    Deselect
+                  </button>
+                  <div className="w-px h-4 bg-black/10" />
+                  <button
+                    onClick={() =>
+                      setDeleteConfirm({ isOpen: true, type: "items" })
+                    }
+                    className="b4 font-medium text-brand-accent hover:text-brand-accent/80 flex items-center gap-1 transition-colors"
+                  >
+                    <Trash2 size={13} /> Delete
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Item Area */}
+            <div className="flex-1 overflow-y-auto px-4 lg:px-6 py-6 custom-scrollbar bg-white/25">
+              {isLoading ? (
+                viewMode === "grid" ? (
+                  <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4">
+                    {Array.from({ length: 8 }).map((_, i) => (
+                      <GridCardSkeleton key={i} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-2xl border border-black/[0.07] overflow-hidden bg-transparent shadow-none">
+                    {Array.from({ length: 8 }).map((_, i) => (
+                      <ListRowSkeleton key={i} />
+                    ))}
+                  </div>
+                )
+              ) : visibleItems.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-20 text-text-secondary/60">
+                  <div className="w-16 h-16 rounded-2xl bg-black/4 flex items-center justify-center mb-3">
+                    <ImageIcon size={28} className="opacity-40" />
+                  </div>
+                  <p className="b3 font-bold">
+                    {searchQuery ? "No results found" : "No items yet"}
+                  </p>
+                  <p className="b5 mt-1">
+                    {searchQuery
+                      ? "Try a different search term."
+                      : "Click 'Add Item' to get started."}
+                  </p>
+                </div>
+              ) : viewMode === "grid" ? (
+                <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4">
+                  {visibleItems.map((item) => (
+                    <GridCard
+                      key={item.id}
+                      item={item}
+                      selected={selectedItems.includes(item.id)}
+                      onSelect={() => toggleSelection(item.id)}
+                      onClick={() => handleOpenModal(item)}
+                      onToggleAvail={() => toggleItemAvailability(item.id)}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-black/[0.07] overflow-hidden bg-transparent shadow-none">
+                  <div className="hidden sm:grid sm:grid-cols-[32px_56px_1fr_90px_90px_70px] gap-3 px-4 py-3 border-b border-black/[0.06] bg-transparent">
+                    <div />
+                    <div />
+                    {["Item", "Price", "Sizes", "Status"].map((h) => (
+                      <div
+                        key={h}
+                        className="b5 text-text-secondary uppercase tracking-wider font-bold"
+                      >
+                        {h}
+                      </div>
+                    ))}
+                  </div>
+                  {visibleItems.map((item) => (
+                    <CollapsibleTableRow
+                      key={item.id}
+                      item={item}
+                      selected={selectedItems.includes(item.id)}
+                      onSelect={() => toggleSelection(item.id)}
+                      onClick={() => handleOpenModal(item)}
+                      onToggleAvail={() => toggleItemAvailability(item.id)}
+                      expanded={expandedRows.includes(item.id)}
+                      onToggleExpand={() => toggleRowExpand(item.id)}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── GLOBAL MODALS (Always rendered to support animations) ───────── */}
+
+      {/* Item modal */}
       {draftItem && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 modal-overlay">
           <div className="bg-bg-primary rounded-[28px] w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl border border-white/50 overflow-hidden modal-panel">
@@ -1607,6 +1685,31 @@ const MenuCategoryManagement = () => {
         </div>
       )}
 
+      {/* ── Global Confirmation Modal ────────────────────────────────────── */}
+      <ActionConfirmationModal
+        isOpen={deleteConfirm.isOpen}
+        action="delete"
+        title={
+          deleteConfirm.type === "category" ? "Delete Category" : "Delete Items"
+        }
+        message={
+          deleteConfirm.type === "category"
+            ? "Are you sure you want to delete this category and all its items? This cannot be undone."
+            : `Are you sure you want to delete ${selectedItems.length} item(s)? This cannot be undone.`
+        }
+        onClose={() => setDeleteConfirm({ isOpen: false, type: null })}
+        onConfirm={async () => {
+          if (deleteConfirm.type === "category" && deleteConfirm.categoryId) {
+            await handleDeleteCategory(deleteConfirm.categoryId);
+          } else if (deleteConfirm.type === "items") {
+            await deleteSelectedItems();
+          }
+          setDeleteConfirm({ isOpen: false, type: null });
+        }}
+        saving={isLocalLoading}
+      />
+
+      {/* ── CSS Animations ─────────────────────────────────────────────── */}
       <style
         dangerouslySetInnerHTML={{
           __html: `
@@ -1642,29 +1745,6 @@ const MenuCategoryManagement = () => {
           }
         `,
         }}
-      />
-
-      <ActionConfirmationModal
-        isOpen={deleteConfirm.isOpen}
-        action="delete"
-        title={
-          deleteConfirm.type === "category" ? "Delete Category" : "Delete Items"
-        }
-        message={
-          deleteConfirm.type === "category"
-            ? "Are you sure you want to delete this category and all its items? This cannot be undone."
-            : `Are you sure you want to delete ${selectedItems.length} item(s)? This cannot be undone.`
-        }
-        onClose={() => setDeleteConfirm({ isOpen: false, type: null })}
-        onConfirm={async () => {
-          if (deleteConfirm.type === "category" && deleteConfirm.categoryId) {
-            await handleDeleteCategory(deleteConfirm.categoryId);
-          } else if (deleteConfirm.type === "items") {
-            await deleteSelectedItems();
-          }
-          setDeleteConfirm({ isOpen: false, type: null });
-        }}
-        saving={isLocalLoading}
       />
     </div>
   );
