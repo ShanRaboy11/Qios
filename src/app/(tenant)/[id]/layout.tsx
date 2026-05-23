@@ -60,7 +60,7 @@ export default function TenantLayout({
               repeatType: "reverse",
               ease: "easeInOut",
             }}
-            className="absolute top-[10%] left-[20%] w-[500px] h-[500px] bg-brand-primary rounded-full mix-blend-multiply filter blur-[80px] opacity-15"
+            className="absolute top-[10%] left-[-5%] w-[500px] h-[500px] bg-brand-primary rounded-full mix-blend-multiply filter blur-[80px] opacity-15"
           />
           <motion.div
             animate={{
@@ -74,7 +74,7 @@ export default function TenantLayout({
               repeatType: "reverse",
               ease: "easeInOut",
             }}
-            className="absolute top-[40%] right-[10%] w-[600px] h-[600px] bg-brand-secondary rounded-full mix-blend-multiply filter blur-[100px] opacity-20"
+            className="absolute top-[40%] right-[-5%] w-[600px] h-[600px] bg-brand-secondary rounded-full mix-blend-multiply filter blur-[100px] opacity-20"
           />
           <motion.div
             animate={{

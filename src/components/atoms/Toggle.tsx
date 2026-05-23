@@ -41,24 +41,14 @@ export const Toggle = ({
   };
 
   const trackColors = {
-    primary: "bg-brand-primary/20",
-    accent: "bg-brand-accent/20",
-  };
-
-  const thumbColors = {
     primary: {
       on: "bg-brand-primary",
-      off: "bg-brand-primary/50",
+      off: "bg-[#EAEAEA]",
     },
     accent: {
       on: "bg-brand-accent",
-      off: "bg-brand-accent/50",
+      off: "bg-[#EAEAEA]",
     },
-  };
-
-  const textColors = {
-    primary: "text-brand-primary",
-    accent: "text-brand-accent",
   };
 
   const ringColors = {
@@ -76,8 +66,8 @@ export const Toggle = ({
       disabled={disabled}
       onClick={handleToggle}
       className={cn(
-        "relative inline-flex h-8 w-16 items-center rounded-full outline-none ring-0 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 cursor-pointer hover:shadow-sm",
-        trackColors[variant],
+        "relative inline-flex h-8 w-16 items-center rounded-full outline-none ring-0 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 cursor-pointer hover:shadow-sm",
+        isOn ? trackColors[variant].on : trackColors[variant].off,
         ringColors[variant],
         disabled && "opacity-50 cursor-not-allowed",
         className,
@@ -90,7 +80,7 @@ export const Toggle = ({
         <span
           className={cn(
             "absolute flex w-full justify-between px-2 text-[10px] font-bold tracking-wider",
-            textColors[variant],
+            isOn ? "text-white" : "text-text-secondary",
           )}
         >
           <span
@@ -115,13 +105,15 @@ export const Toggle = ({
       {/* Thumb */}
       <span
         className={cn(
-          "absolute flex items-center justify-center h-6 w-6 rounded-full transition-all duration-300 transform shadow-sm",
-          isOn ? "translate-x-9" : "translate-x-1",
-          isOn ? thumbColors[variant].on : thumbColors[variant].off,
+          "absolute flex items-center justify-center h-6 w-6 rounded-full bg-white transition-transform duration-300 transform shadow-md",
+          isOn ? "translate-x-9" : "translate-x-1"
         )}
       >
         {icon && (
-          <span className="text-white flex items-center justify-center">
+          <span className={cn(
+            "flex items-center justify-center",
+            isOn ? (variant === "primary" ? "text-brand-primary" : "text-brand-accent") : "text-text-secondary"
+          )}>
             {icon}
           </span>
         )}

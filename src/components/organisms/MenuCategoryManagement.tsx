@@ -657,7 +657,7 @@ const MenuCategoryManagement = () => {
     .map((i) => ({ label: `${i.name} (₱${i.price})`, value: i.id }));
 
   return (
-    <div className="font-inter relative flex w-full h-full min-h-screen bg-bg-primary">
+    <div className="font-inter relative flex w-full h-full min-h-screen">
       {/* ── Mobile sidebar overlay ──────────────────────────────────────── */}
       {sidebarOpen && (
         <div
@@ -669,7 +669,7 @@ const MenuCategoryManagement = () => {
       {/* ── Sidebar ─────────────────────────────────────────────────────── */}
       <aside
         className={cn(
-          "fixed top-0 left-0 h-full w-[280px] z-40 flex flex-col bg-bg-primary transition-transform duration-300 border-r border-black/[0.06]",
+          "fixed top-0 left-0 h-full w-[280px] z-40 flex flex-col transition-transform duration-300 border-r border-black/[0.06]",
           "lg:relative lg:translate-x-0 lg:z-auto lg:flex-shrink-0",
           sidebarOpen ? "translate-x-0 shadow-xl" : "-translate-x-full",
         )}
