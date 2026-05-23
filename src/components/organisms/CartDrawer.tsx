@@ -6,13 +6,20 @@ import { ShoppingBag, X, Minus, Plus, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/atoms/Button";
 import { motion, AnimatePresence } from "framer-motion";
+import { useParams } from "next/navigation";
 import { OrderReceiptModal } from "./OrderReceiptModal";
+import { placeOrder } from "@/lib/actions/order";
 
 export const CartDrawer = () => {
-  const { cart, itemCount, cartTotal, updateQuantity, removeFromCart } = useCart();
+  const { cart, itemCount, cartTotal, updateQuantity, removeFromCart, clearCart } = useCart();
   const [isOpen, setIsOpen] = useState(false);
   const [isReceiptOpen, setIsReceiptOpen] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [placedOrderId, setPlacedOrderId] = useState<string | null>(null);
+  
+  const params = useParams();
+  const tenantId = typeof params?.id === "string" ? params.id : "";
 
   if (itemCount === 0 && !isReceiptOpen && !isConfirmOpen) return null;
 
@@ -205,13 +212,27 @@ export const CartDrawer = () => {
                   variant="accent" 
                   shape="rounded"
                   className="flex-1 font-bold text-white shadow-md h-12 justify-center"
-                  onClick={() => {
-                    setIsConfirmOpen(false);
-                    setIsOpen(false);
-                    setTimeout(() => setIsReceiptOpen(true), 200);
+                  disabled={isSubmitting}
+                  onClick={async () => {
+                    if (!tenantId) return;
+                    setIsSubmitting(true);
+                    
+                    const result = await placeOrder(tenantId, cart, cartTotal);
+                    setIsSubmitting(false);
+                    
+                    if (result.success && result.qrHash) {
+                      setPlacedOrderId(result.qrHash);
+                      setIsConfirmOpen(false);
+                      setIsOpen(false);
+                      clearCart(); // Clear the cart on success
+                      // Wait for animation before opening receipt
+                      setTimeout(() => setIsReceiptOpen(true), 200);
+                    } else {
+                      alert(result.error || "Failed to place order.");
+                    }
                   }}
                 >
-                  Confirm
+                  {isSubmitting ? "Processing..." : "Confirm"}
                 </Button>
               </div>
             </motion.div>
@@ -221,10 +242,10 @@ export const CartDrawer = () => {
 
       {/* Order Receipt Modal */}
       <AnimatePresence>
-        {isReceiptOpen && (
+        {isReceiptOpen && placedOrderId && (
           <OrderReceiptModal 
             onClose={() => setIsReceiptOpen(false)} 
-            orderId={`QIOS-${Math.floor(1000 + Math.random() * 9000)}`} 
+            orderId={placedOrderId} 
           />
         )}
       </AnimatePresence>

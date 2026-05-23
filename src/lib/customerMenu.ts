@@ -22,7 +22,7 @@ export async function fetchTenantCustomerMenu(tenantId: string) {
   const [categoriesResult, itemsResult] = await Promise.all([
     supabase
       .from("categories")
-      .select("id, name, display_order")
+      .select("id, name, display_order, icon")
       .eq("tenant_id", tenantId)
       .order("display_order", { ascending: true }),
     supabase
@@ -41,12 +41,18 @@ export async function fetchTenantCustomerMenu(tenantId: string) {
     throw new Error(itemsResult.error.message);
   }
 
-  const categories = (categoriesResult.data ?? []) as TenantCategoryRow[];
+  const dbCategories = categoriesResult.data ?? [];
+  const categories = dbCategories.map((c: any) => ({
+    id: c.id,
+    name: c.name,
+    icon: c.icon || "flame",
+  }));
+
   const categoryNameById = new Map(
-    categories.map((category) => [category.id, category.name]),
+    dbCategories.map((category: any) => [category.id, category.name]),
   );
 
-  return (itemsResult.data ?? []).map((item: TenantMenuItemRow) => ({
+  const items = (itemsResult.data ?? []).map((item: TenantMenuItemRow) => ({
     id: item.id,
     name: item.name,
     price: Number(item.price) || 0,
@@ -54,4 +60,6 @@ export async function fetchTenantCustomerMenu(tenantId: string) {
     category: categoryNameById.get(item.category_id) || "Meal",
     imageUrl: item.image_url || "/images/food-placeholder.png",
   })) satisfies MenuItemData[];
+
+  return { categories, items };
 }

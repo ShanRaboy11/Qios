@@ -16,31 +16,13 @@ import { GuestProfileDrawer } from "@/components/organisms/GuestProfileDrawer";
 import { CartProvider } from "@/contexts/CartContext";
 import { MenuItemData } from "@/components/organisms/MenuCatalog";
 
-const CATEGORY_ICON_BY_LABEL: Record<string, string> = {
-  Drinks: "/svg/drinks.svg",
-  Snacks: "/svg/snacks.svg",
-  Vegan: "/svg/vegan.svg",
-  Meal: "/svg/meal.svg",
-  Dessert: "/svg/dessert.svg",
-};
-
-const CATEGORY_ORDER = ["Drinks", "Snacks", "Vegan", "Meal", "Dessert"];
-
-const getCategoryIcon = (label: string) => CATEGORY_ICON_BY_LABEL[label] || "/svg/meal.svg";
-
-const buildCategoryList = (items: MenuItemData[]) => {
-  const uniqueLabels = Array.from(new Set(items.map((item) => item.category)));
-  const ordered = [
-    ...CATEGORY_ORDER.filter((label) => uniqueLabels.includes(label)),
-    ...uniqueLabels.filter((label) => !CATEGORY_ORDER.includes(label)),
-  ];
-
-  return ordered.length > 0 ? ordered : CATEGORY_ORDER;
-};
+import { renderCategoryIcon } from "@/lib/utils/categoryIcons";
 
 export default function CustomerOrderingHome({
+  initialCategories,
   initialItems,
 }: {
+  initialCategories: { id: string; name: string; icon: string }[];
   initialItems: MenuItemData[];
 }) {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -48,7 +30,7 @@ export default function CustomerOrderingHome({
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const categories = useMemo(() => buildCategoryList(initialItems), [initialItems]);
+  const categories = initialCategories;
   const isCategoryView = selectedCategory !== null;
   const isSearching = searchQuery.trim().length > 0;
 
@@ -103,9 +85,9 @@ export default function CustomerOrderingHome({
             <div className="w-full max-w-[500px] md:max-w-[1024px] relative z-50">
               <CategoryTabBar
                 categories={categories.map((category) => ({
-                  id: category,
-                  label: category,
-                  iconSrc: getCategoryIcon(category),
+                  id: category.name,
+                  label: category.name,
+                  icon: renderCategoryIcon(category.icon, 32),
                 }))}
                 activeCategory={selectedCategory}
                 onSelectCategory={setSelectedCategory}

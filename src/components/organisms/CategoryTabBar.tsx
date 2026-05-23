@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 export interface Category {
   id: string;
   label: string;
-  iconSrc: string;
+  icon: React.ReactNode;
 }
 
 export interface CategoryTabBarProps {
@@ -119,21 +119,21 @@ export const CategoryTabBar = ({
                   "w-20 h-24 p-2 flex items-center justify-center transition-all duration-300",
                   isCategoryView
                     ? isActive
-                      ? "bg-transparent scale-110" // The white background is provided by the sliding indicator
+                      ? "bg-transparent scale-110"
                       : "bg-[#FFF9EF] rounded-[30px] scale-90"
                     : isActive
                       ? "bg-[#FFDC72] rounded-[30px] shadow-sm transform scale-100"
                       : "bg-[#FEF5E7] rounded-[30px] group-hover:bg-[#FFDC72]/60 group-hover:scale-110",
                 )}
               >
-                <img
-                  src={cat.iconSrc}
-                  alt={cat.label}
+                <div
                   className={cn(
-                    "w-12 h-12 object-contain transition-transform duration-300",
-                    isActive ? "scale-110" : "group-hover:scale-110",
+                    "transition-transform duration-300 text-brand-accent flex items-center justify-center",
+                    isActive ? "scale-125" : "group-hover:scale-110",
                   )}
-                />
+                >
+                  {cat.icon}
+                </div>
               </div>
               <span
                 className={cn(
