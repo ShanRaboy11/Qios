@@ -173,11 +173,11 @@ const CategorySkeleton = () => (
 );
 
 const Shimmer = ({ className }: { className?: string }) => (
-  <div className={cn("animate-pulse bg-black/[0.07] rounded-xl", className)} />
+  <div className={cn("animate-pulse bg-transparent rounded-xl border border-black/5", className)} />
 );
 
 const GridCardSkeleton = () => (
-  <div className="bg-white rounded-2xl border border-black/5 overflow-hidden shadow-sm flex flex-col">
+  <div className="bg-transparent rounded-2xl border border-black/5 overflow-hidden shadow-none flex flex-col">
     <div className="aspect-[4/3] bg-black/[0.06] animate-pulse" />
     <div className="p-3.5 flex flex-col gap-2.5">
       <div className="flex items-center justify-between gap-2">
@@ -251,7 +251,7 @@ const IconPicker: React.FC<IconPickerProps> = ({ value, onChange }) => (
               "w-full aspect-square rounded-xl flex items-center justify-center transition-all border",
               value === opt.icon
                 ? "bg-brand-accent/10 border-brand-accent text-brand-accent shadow-sm scale-105"
-                : "bg-white/60 border-black/[0.08] text-text-secondary hover:bg-brand-secondary/50 hover:border-brand-primary hover:text-brand-accent",
+                : "bg-transparent border-black/[0.08] text-text-secondary hover:border-brand-primary hover:text-brand-accent",
             )}
           >
             {React.cloneElement(opt.component as React.ReactElement, {
@@ -657,53 +657,32 @@ const MenuCategoryManagement = () => {
     .map((i) => ({ label: `${i.name} (₱${i.price})`, value: i.id }));
 
   return (
-    <div className="font-inter relative flex w-full h-full min-h-screen bg-bg-primary">
-      {/* ── Mobile sidebar overlay ──────────────────────────────────────── */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 z-30 bg-black/30 backdrop-blur-sm lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
+    <div className="font-inter relative flex w-full flex-col md:flex-row gap-6 min-h-[700px] bg-gradient-to-br from-[#FFF8EE] via-transparent to-[#FFF1F3] p-4 md:p-0">
       {/* ── Sidebar ─────────────────────────────────────────────────────── */}
-      <aside
-        className={cn(
-          "fixed top-0 left-0 h-full w-[280px] z-40 flex flex-col bg-bg-primary transition-transform duration-300 border-r border-black/[0.06]",
-          "lg:relative lg:translate-x-0 lg:z-auto lg:flex-shrink-0",
-          sidebarOpen ? "translate-x-0 shadow-xl" : "-translate-x-full",
-        )}
-      >
-        <div className="lg:hidden p-3 border-b border-black/[0.06] flex items-center justify-between flex-shrink-0">
-          <p className="b3 font-bold text-text-primary">Categories</p>
-          <button
-            onClick={() => setSidebarOpen(false)}
-            className="p-1.5 rounded-lg hover:bg-black/5 text-text-secondary"
-          >
-            <X size={16} />
-          </button>
-        </div>
-
-        <div className="flex flex-col gap-3 p-4 flex-shrink-0">
+      <aside className="w-full md:w-[290px] flex-shrink-0 flex flex-col gap-4 bg-white/50 backdrop-blur-sm rounded-[24px] border border-white/60 shadow-sm p-4 md:p-5">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="b3 font-bold text-text-primary">Categories</p>
+            <p className="b5 text-text-secondary mt-0.5">Organize menu groups and keep the active set in view.</p>
+          </div>
           <Button
             variant="primary"
-            className="w-full bg-brand-accent hover:bg-brand-accent/90 border-brand-accent mb-1"
+            className="shrink-0 bg-brand-accent hover:bg-brand-accent/90 border-brand-accent"
             leftIcon={<Plus size={18} />}
             onClick={openNewCatModal}
           >
-            New Category
+            New
           </Button>
-          <SearchFilterBar
-            onSearch={(
-              val,
-            ) => {}} /* You can wire this up for category search */
-            placeholder="Search categories"
-            supportiveText=""
-            className="mb-0 [&_input]:!h-[41px] [&_input]:!text-sm [&_input]:!rounded-xl"
-          />
         </div>
 
-        <div className="flex-1 overflow-y-auto px-4 pb-4 custom-scrollbar flex flex-col gap-2">
+        <SearchFilterBar
+          onSearch={(val) => {}}
+          placeholder="Search categories"
+          supportiveText=""
+          className="mb-0 [&_input]:!h-[41px] [&_input]:!text-sm [&_input]:!rounded-xl"
+        />
+
+        <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-2 pr-1">
           {isLoading
             ? Array.from({ length: 5 }).map((_, idx) => (
                 <CategorySkeleton key={`skeleton-${idx}`} />
@@ -722,10 +701,10 @@ const MenuCategoryManagement = () => {
                     onDrop={(e) => handleDropCategory(e, cat.id)}
                     onClick={() => handleCategoryChange(cat.id)}
                     className={cn(
-                      "group flex items-center gap-3 p-3 rounded-2xl cursor-pointer transition-all duration-300 border",
+                      "group flex items-center gap-3 p-3 rounded-2xl cursor-pointer transition-all duration-300 border bg-transparent",
                       isActive
-                        ? "bg-white shadow-md border-white/60 scale-[1.02]"
-                        : "hover:bg-white/40 border-transparent",
+                        ? "border-brand-accent/30 bg-brand-accent/5 shadow-none"
+                        : "hover:border-black/10 border-transparent",
                       draggedCategoryId === cat.id &&
                         "opacity-50 border-dashed border-brand-accent border-2",
                     )}
@@ -765,118 +744,127 @@ const MenuCategoryManagement = () => {
       </aside>
 
       {/* ── Main content ─────────────────────────────────────────────────── */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* ── Header bar — glassmorphism ─────────────────────────────────── */}
-        <div className="flex-shrink-0 bg-white/80 backdrop-blur-sm border-b border-black/[0.06] px-4 lg:px-6 py-3.5 flex items-center gap-3">
-          {/* Mobile: sidebar toggle */}
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="lg:hidden p-2 rounded-xl hover:bg-black/5 text-text-secondary flex-shrink-0"
-          >
-            <Filter size={18} />
-          </button>
+      <div className="flex-1 flex flex-col min-w-0 bg-white/50 backdrop-blur-sm rounded-[24px] overflow-hidden border border-white/60 shadow-sm">
+        {/* ── Header bar ─────────────────────────────────────────────────── */}
+                        <div className="p-6 md:p-8 pb-5 border-b-2 border-white/50 flex-shrink-0 flex flex-col gap-5">
+                          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                            <div className="flex-1 w-full max-w-2xl flex gap-4 md:gap-6">
+                              {activeCat && (
+                                <div className="flex-1">
+                                  <label className="b4 font-bold text-text-secondary mb-2 block uppercase tracking-wider">
+                                    Active Category
+                                  </label>
+                                  <div className="flex items-center gap-3 p-3.5 rounded-2xl border border-black/5 bg-transparent">
+                                    <div className="w-10 h-10 rounded-xl bg-brand-accent text-white flex items-center justify-center flex-shrink-0 shadow-sm">
+                                      {renderCategoryIcon(activeCat.icon, 20)}
+                                    </div>
+                                    <div className="min-w-0">
+                                      <p className="b2 font-bold text-text-primary truncate leading-tight">
+                                        {activeCat.name}
+                                      </p>
+                                      <p className="b5 text-text-secondary">
+                                        {totalCount} items · {availCount} available
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                              <div className="flex-1">
+                                <label className="b4 font-bold text-text-secondary mb-2 block uppercase tracking-wider">
+                                  Search Items
+                                </label>
+                                <SearchFilterBar
+                                  onSearch={(val) => setSearchQuery(val)}
+                                  placeholder="Search items…"
+                                  supportiveText=""
+                                  className="mb-0 [&_input]:!h-[41px] [&_input]:!text-sm [&_input]:!rounded-xl"
+                                />
+                              </div>
+                            </div>
 
-          {/* Mobile category display — name + counts */}
-          {activeCat && (
-            <div className="flex items-center gap-2.5 lg:hidden flex-1 min-w-0">
-              <div className="w-8 h-8 rounded-lg bg-brand-accent text-white flex items-center justify-center flex-shrink-0">
-                {renderCategoryIcon(activeCat.icon, 16)}
-              </div>
-              <div className="flex flex-col min-w-0">
-                <span className="b3 font-bold text-text-primary truncate leading-tight">
-                  {activeCat.name}
-                </span>
-                <span className="b5 text-text-secondary leading-tight">
-                  {totalCount} items · {availCount} available
-                </span>
-              </div>
-            </div>
-          )}
+                            <div className="flex gap-2 self-end sm:self-auto">
+                              {activeCat && (
+                                <>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => openEditCatModal(activeCat)}
+                                    title="Edit category"
+                                  >
+                                    <Edit2 size={18} />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() =>
+                                      setDeleteConfirm({
+                                        isOpen: true,
+                                        type: "category",
+                                        categoryId: activeCat.id,
+                                      })
+                                    }
+                                    title="Delete category"
+                                    className="hover:bg-warning-secondary hover:text-warning-primary"
+                                  >
+                                    <Trash2 size={18} />
+                                  </Button>
+                                </>
+                              )}
+                              <Button
+                                variant="primary"
+                                onClick={handleCreateNewItem}
+                                className="flex-shrink-0 bg-brand-accent hover:bg-brand-accent/90 border-brand-accent"
+                                leftIcon={<Plus size={16} />}
+                              >
+                                Add Item
+                              </Button>
+                            </div>
+                          </div>
 
-          {/* Desktop: full category header */}
-          {activeCat && (
-            <div className="hidden lg:flex items-center gap-3 flex-shrink-0">
-              <div className="w-10 h-10 rounded-xl bg-brand-accent text-white flex items-center justify-center shadow-sm flex-shrink-0">
-                {renderCategoryIcon(activeCat.icon, 20)}
-              </div>
-              <div>
-                <p className="b2 font-bold text-text-primary leading-tight">
-                  {activeCat.name}
-                </p>
-                <p className="b5 text-text-secondary">
-                  {totalCount} items · {availCount} available
-                </p>
-              </div>
-            </div>
-          )}
-
-          {activeCat && (
-            <div className="flex items-center gap-1 flex-shrink-0">
-              <button
-                onClick={() => openEditCatModal(activeCat)}
-                className="p-2 rounded-xl hover:bg-black/5 text-text-secondary hover:text-text-primary transition-colors"
-                title="Edit category"
-              >
-                <Edit2 size={15} />
-              </button>
-              <button
-                onClick={() =>
-                  setDeleteConfirm({
-                    isOpen: true,
-                    type: "category",
-                    categoryId: activeCat.id,
-                  })
-                }
-                className="p-2 rounded-xl hover:bg-[#E24B4A]/10 text-text-secondary hover:text-[#E24B4A] transition-colors"
-                title="Delete category"
-              >
-                <Trash2 size={15} />
-              </button>
-            </div>
-          )}
-
-          {/* Search */}
-          <div className="flex-1 max-w-sm ml-auto hidden sm:block">
-            <SearchFilterBar
-              onSearch={(val) => setSearchQuery(val)}
-              placeholder="Search items…"
-              supportiveText=""
-              className="mb-0 [&_input]:!h-[41px] [&_input]:!text-sm [&_input]:!rounded-xl"
-            />
-          </div>
-
-          {/* View toggle */}
-          <div className="flex items-center gap-0.5 bg-black/5 p-1 rounded-xl flex-shrink-0">
-            {(["grid", "list"] as const).map((mode) => (
-              <button
-                key={mode}
-                onClick={() => setViewMode(mode)}
-                className={cn(
-                  "p-2 rounded-lg transition-colors",
-                  viewMode === mode
-                    ? "bg-white text-text-primary shadow-sm"
-                    : "text-text-secondary hover:text-text-primary",
-                )}
-              >
-                {mode === "grid" ? (
-                  <LayoutGrid size={17} />
-                ) : (
-                  <ListIcon size={17} />
-                )}
-              </button>
-            ))}
-          </div>
-
-          {/* Add item */}
-          <Button
-            variant="primary"
-            onClick={handleCreateNewItem}
-            className="flex-shrink-0 b4 !py-2.5 !px-4 bg-brand-accent hover:bg-brand-accent/90 border-brand-accent"
-            leftIcon={<Plus size={16} />}
-          >
-            <span className="hidden sm:inline">Add Item</span>
-          </Button>
-        </div>
+                          <div className="flex flex-col sm:flex-row gap-4 md:gap-6">
+                            <div className="flex-1">
+                              <label className="b4 font-bold text-text-secondary mb-2 block uppercase tracking-wider">
+                                View Mode
+                              </label>
+                              <div className="inline-flex items-center gap-0.5 rounded-xl border border-black/5 p-1 bg-transparent">
+                                {(["grid", "list"] as const).map((mode) => (
+                                  <button
+                                    key={mode}
+                                    onClick={() => setViewMode(mode)}
+                                    className={cn(
+                                      "p-2 rounded-lg transition-colors",
+                                      viewMode === mode
+                                        ? "bg-brand-accent text-white shadow-sm"
+                                        : "text-text-secondary hover:text-text-primary",
+                                    )}
+                                  >
+                                    {mode === "grid" ? (
+                                      <LayoutGrid size={17} />
+                                    ) : (
+                                      <ListIcon size={17} />
+                                    )}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                            <div className="flex-1">
+                              <label className="b4 font-bold text-text-secondary mb-2 block uppercase tracking-wider">
+                                Quick Actions
+                              </label>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="text-[11px] px-2.5 py-1 rounded-full border border-black/10 text-text-secondary bg-transparent">
+                                  {categories.length} categories
+                                </span>
+                                <span className="text-[11px] px-2.5 py-1 rounded-full border border-black/10 text-text-secondary bg-transparent">
+                                  {totalCount} items total
+                                </span>
+                                <span className="text-[11px] px-2.5 py-1 rounded-full border border-black/10 text-text-secondary bg-transparent">
+                                  {availCount} available
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
 
         {/* Mobile search */}
         <div className="sm:hidden px-4 pt-3 flex-shrink-0">
@@ -913,7 +901,7 @@ const MenuCategoryManagement = () => {
                     ? key === "unavail"
                       ? "bg-brand-accent text-white border-brand-accent"
                       : "bg-brand-accent text-white border-brand-accent"
-                    : "bg-white/60 text-text-secondary border-black/10 hover:border-black/20 hover:text-text-primary",
+                    : "bg-transparent text-text-secondary border-black/10 hover:border-black/20 hover:text-text-primary",
                 )}
               >
                 {label}
@@ -922,7 +910,7 @@ const MenuCategoryManagement = () => {
           </div>
 
           {selectedItems.length > 0 && (
-            <div className="flex items-center gap-3 px-4 py-2.5 bg-white rounded-2xl border border-black/5 shadow-sm animate-in slide-in-from-top-2 duration-200">
+            <div className="flex items-center gap-3 px-4 py-2.5 bg-transparent rounded-2xl border border-black/5 shadow-none animate-in slide-in-from-top-2 duration-200">
               <span className="b4 text-text-secondary flex-1">
                 <span className="font-bold text-text-primary">
                   {selectedItems.length}
@@ -958,7 +946,7 @@ const MenuCategoryManagement = () => {
                 ))}
               </div>
             ) : (
-              <div className="rounded-2xl border border-black/[0.07] overflow-hidden bg-white shadow-sm">
+              <div className="rounded-2xl border border-black/[0.07] overflow-hidden bg-transparent shadow-none">
                 {Array.from({ length: 8 }).map((_, i) => (
                   <ListRowSkeleton key={i} />
                 ))}
@@ -992,8 +980,8 @@ const MenuCategoryManagement = () => {
               ))}
             </div>
           ) : (
-            <div className="rounded-2xl border border-black/[0.07] overflow-hidden bg-white shadow-sm">
-              <div className="hidden sm:grid sm:grid-cols-[32px_56px_1fr_90px_90px_70px] gap-3 px-4 py-3 border-b border-black/[0.06] bg-black/[0.02]">
+            <div className="rounded-2xl border border-black/[0.07] overflow-hidden bg-transparent shadow-none">
+              <div className="hidden sm:grid sm:grid-cols-[32px_56px_1fr_90px_90px_70px] gap-3 px-4 py-3 border-b border-black/[0.06] bg-transparent">
                 <div />
                 <div />
                 {["Item", "Price", "Sizes", "Status"].map((h) => (
@@ -1058,7 +1046,7 @@ const MenuCategoryManagement = () => {
                         "w-36 h-36 rounded-2xl flex flex-col items-center justify-center cursor-pointer overflow-hidden group relative shadow-inner transition-all",
                         draftItem.image
                           ? "border-0"
-                          : "border-2 border-dashed border-black/15 hover:border-brand-accent bg-white/60 hover:bg-white/80",
+                          : "border-2 border-dashed border-black/15 hover:border-brand-accent bg-transparent hover:bg-transparent",
                       )}
                       onClick={() => fileInputRef.current?.click()}
                     >
@@ -1178,7 +1166,7 @@ const MenuCategoryManagement = () => {
                   {draftItem.sizes.map((size, index) => (
                     <div
                       key={size.id}
-                      className="flex items-start gap-2 p-3.5 bg-white/80 rounded-2xl border border-black/5 shadow-sm"
+                      className="flex items-start gap-2 p-3.5 bg-transparent rounded-2xl border border-black/5 shadow-none"
                     >
                       <div className="flex-1 flex flex-col gap-2">
                         <Input
@@ -1280,7 +1268,7 @@ const MenuCategoryManagement = () => {
                     {draftItem.addons.map((addon, index) => (
                       <div
                         key={addon.id}
-                        className="flex items-start gap-2 p-3.5 bg-white/80 rounded-2xl border border-black/5 shadow-sm"
+                        className="flex items-start gap-2 p-3.5 bg-transparent rounded-2xl border border-black/5 shadow-none"
                       >
                         <div className="flex-1 flex flex-col gap-2">
                           <Input
@@ -1535,7 +1523,7 @@ const MenuCategoryManagement = () => {
               <div>
                 <FieldLabel>Icon</FieldLabel>
                 {/* Wrapper: no overflow-hidden so the scale ring isn't clipped */}
-                <div className="rounded-2xl border border-black/[0.07] p-3 bg-bg-primary/60">
+                <div className="rounded-2xl border border-black/[0.07] p-3 bg-transparent">
                   <IconPicker
                     value={catDraft.icon ?? "flame"}
                     onChange={(icon) => setCatDraft({ ...catDraft, icon })}
@@ -1614,7 +1602,7 @@ const MenuCategoryManagement = () => {
                   ))}
                 </div>
               </div>
-              <div className="flex items-center gap-3 bg-white/60 p-3 rounded-2xl border border-white max-w-[320px] mx-auto w-full">
+              <div className="flex items-center gap-3 bg-transparent p-3 rounded-2xl border border-white/40 max-w-[320px] mx-auto w-full">
                 <ZoomOut
                   size={16}
                   className="text-text-secondary flex-shrink-0"
@@ -1712,14 +1700,14 @@ const GridCard: React.FC<CardProps> = ({
   <div
     onClick={onClick}
     className={cn(
-      "bg-white rounded-2xl border overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer group flex flex-col relative",
+      "bg-transparent rounded-2xl border overflow-hidden shadow-none hover:shadow-none transition-all cursor-pointer group flex flex-col relative",
       selected
         ? "border-brand-accent/50 ring-2 ring-brand-accent/15"
         : "border-black/5 hover:border-brand-accent/30",
     )}
   >
     <div
-      className="absolute top-2.5 left-2.5 z-20 bg-white rounded-[6px] shadow-sm"
+      className="absolute top-2.5 left-2.5 z-20 bg-transparent rounded-[6px] shadow-none"
       onClick={(e) => {
         e.stopPropagation();
         onSelect();
