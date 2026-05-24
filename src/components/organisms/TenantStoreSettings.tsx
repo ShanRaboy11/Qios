@@ -88,7 +88,7 @@ export const TenantStoreSettings = ({
   ];
   // --- END OF ORIGINAL CODE LOGIC ---
 
-  // --- UPDATED QR STATE & LOGIC ---
+  // --- NEW ADDITIONAL CODE (FANCY & FLEXIBLE QR LOGIC) ---
   const [storeUrl, setStoreUrl] = useState("");
   const [qrLabelPosition, setQrLabelPosition] = useState<"top" | "bottom">("bottom");
   const [showBusinessName, setShowBusinessName] = useState(true);
@@ -131,11 +131,13 @@ export const TenantStoreSettings = ({
   };
 
   const buildQrCanvas = async () => {
+    // Wait for fonts to be ready so they render correctly on Canvas
+    await document.fonts.ready;
+
     const qrImage = await getQrSvgImage();
     if (!qrImage) return null;
 
     const canvas = document.createElement("canvas");
-    // High res for printing
     const cardWidth = 1200;
     const cardHeight = 1600;
     canvas.width = cardWidth;
@@ -143,7 +145,6 @@ export const TenantStoreSettings = ({
     const ctx = canvas.getContext("2d");
     if (!ctx) return null;
 
-    // Helper for rounded corners
     const roundRect = (x: number, y: number, w: number, h: number, r: number) => {
       ctx.beginPath();
       ctx.moveTo(x + r, y);
@@ -158,83 +159,116 @@ export const TenantStoreSettings = ({
       ctx.closePath();
     };
 
+    const drawFancyBadge = (y: number) => {
+      const badgeW = 340;
+      const badgeH = 76;
+      const badgeX = (cardWidth - badgeW) / 2;
+      
+      ctx.shadowColor = "rgba(255, 82, 105, 0.2)";
+      ctx.shadowBlur = 30;
+      ctx.fillStyle = "#ff5269"; 
+      roundRect(badgeX, y - (badgeH / 2), badgeW, badgeH, 38);
+      ctx.fill();
+      ctx.shadowBlur = 0; 
+
+      ctx.fillStyle = "#FFFFFF";
+      ctx.font = "bold 26px Inter, sans-serif"; 
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      const text = "S C A N   H E R E";
+      ctx.fillText(text, cardWidth / 2, y + 2);
+    };
+
+    const qrBoxSize = 760;
+    const badgeSpace = 120;
+    const nameSpace = 110;
+    const gap = 45;
+    
+    let totalContentHeight = qrBoxSize + badgeSpace; 
+    if (showBusinessName) totalContentHeight += nameSpace + gap;
+
+    let currentY = (cardHeight - 240 - totalContentHeight) / 2;
+
     // 1. Background
     ctx.fillStyle = "#FFFFFF";
     roundRect(0, 0, cardWidth, cardHeight, 100);
     ctx.fill();
 
-    let currentY = 240;
-
-    // 2. Business Name
-    if (showBusinessName) {
-      ctx.fillStyle = "#1a1a1a";
-      ctx.font = "700 96px Figtree, sans-serif";
-      ctx.textAlign = "center";
-      ctx.fillText(storeNameLabel, cardWidth / 2, currentY);
-      currentY += 120;
+    // 2. Fancy Badge (Top)
+    if (qrLabelPosition === "top") {
+      drawFancyBadge(currentY + 45);
+      currentY += badgeSpace + gap;
     }
 
-    // 3. QR Outer Box (The light grey container from the image)
-    const qrBoxSize = 760;
+    // 3. Business Name (Using Figtree)
+    if (showBusinessName) {
+      ctx.fillStyle = "#2d2d2d"; 
+      ctx.font = "700 96px Figtree, sans-serif"; 
+      ctx.textAlign = "center";
+      ctx.fillText(storeNameLabel, cardWidth / 2, currentY + 80);
+      currentY += nameSpace + gap;
+    }
+
+    // 4. QR Container (Gray BG)
     const qrBoxX = (cardWidth - qrBoxSize) / 2;
-    const qrBoxY = currentY + 60;
-    
+    const qrBoxY = currentY;
     ctx.fillStyle = "#F9FAFB"; 
-    roundRect(qrBoxX, qrBoxY, qrBoxSize, qrBoxSize, 80);
+    roundRect(qrBoxX, qrBoxY, qrBoxSize, qrBoxSize, 90);
     ctx.fill();
 
-    // 4. Draw QR
-    const qrPadding = 100;
+    const qrPadding = 110;
     const qrSize = qrBoxSize - (qrPadding * 2);
     ctx.drawImage(qrImage, qrBoxX + qrPadding, qrBoxY + qrPadding, qrSize, qrSize);
 
     // 5. Logo Badge
     if (showLogoBadge) {
-      const badgeSize = 140;
+      const badgeSize = 145;
       const centerX = cardWidth / 2;
       const centerY = qrBoxY + (qrBoxSize / 2);
-
       ctx.fillStyle = "#FFFFFF";
       ctx.beginPath();
       ctx.arc(centerX, centerY, (badgeSize / 2) + 18, 0, Math.PI * 2);
       ctx.fill();
-
       ctx.fillStyle = "#ff5269";
       ctx.beginPath();
       ctx.arc(centerX, centerY, badgeSize / 2, 0, Math.PI * 2);
       ctx.fill();
-
       ctx.fillStyle = "#FFFFFF";
-      ctx.font = "bold 72px Inter, sans-serif";
+      ctx.font = "bold 70px Inter, sans-serif";
       ctx.textBaseline = "middle";
       ctx.fillText(storeNameLabel.charAt(0).toUpperCase(), centerX, centerY + 5);
     }
 
-    // 6. Label Text
-    const drawSpacedLabel = (text: string, y: number, color: string) => {
-      ctx.fillStyle = color;
-      ctx.font = "600 32px Inter, sans-serif";
-      ctx.textAlign = "center";
-      const spacedText = text.toUpperCase().split("").join("  ");
-      ctx.fillText(spacedText, cardWidth / 2, y);
-    };
-
-    if (qrLabelPosition === "top") {
-      drawSpacedLabel("SCAN HERE", qrBoxY - 70, "#ff5269");
-    } else {
-      drawSpacedLabel("SCAN HERE", qrBoxY + qrBoxSize + 110, "#ff5269");
+    // 6. Fancy Badge (Bottom)
+    if (qrLabelPosition === "bottom") {
+      drawFancyBadge(qrBoxY + qrBoxSize + 85);
     }
 
-    // 7. Footer Divider & Brand
-    const footerY = cardHeight - 200;
-    ctx.strokeStyle = "#F1F1F1";
-    ctx.lineWidth = 3;
+    // 7. Footer Divider & Text (INCREASED VISIBILITY)
+    const footerY = cardHeight - 160;
+    
+    // Increased visibility for the small dots
+    ctx.fillStyle = "#D1D5DB"; // Darker gray
+    ctx.beginPath();
+    ctx.arc(cardWidth / 2 - 190, footerY, 5, 0, Math.PI * 2);
+    ctx.arc(cardWidth / 2 + 190, footerY, 5, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Increased visibility for lines
+    ctx.strokeStyle = "#E5E7EB"; 
+    ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(150, footerY);
+    ctx.lineTo(cardWidth / 2 - 230, footerY);
+    ctx.moveTo(cardWidth / 2 + 230, footerY);
     ctx.lineTo(cardWidth - 150, footerY);
     ctx.stroke();
 
-    drawSpacedLabel("POWERED BY QIOS", footerY + 90, "#9CA3AF");
+    // Increased contrast for brand text
+    ctx.fillStyle = "#6B7280"; // Gray-500 for better visibility
+    ctx.font = "700 24px Inter, sans-serif"; 
+    ctx.textAlign = "center";
+    ctx.fillText("POWERED BY QIOS", cardWidth / 2, footerY + 8);
 
     return canvas;
   };
@@ -545,45 +579,33 @@ export const TenantStoreSettings = ({
         </div>
         {/* --- END OF ORIGINAL UI --- */}
 
-        {/* --- MODERN QR UI SECTION (UPDATED) --- */}
+        {/* --- FANCY & FLEXIBLE QR PREVIEW --- */}
         <div ref={qrSectionRef} className="space-y-4 w-full pt-6">
           <SectionHeader title="Store Access & QR Code" className="mb-0 py-2 border-gray-100" />
           <div className="grid grid-cols-1 lg:grid-cols-[440px_1fr] gap-8">
             
-            {/* LIVE PREVIEW CARD */}
             <div className="space-y-4">
               <div className="flex items-center gap-2 text-sm font-bold text-text-primary px-1">
                 <Layout size={18} className="text-brand-accent" />
                 Live Preview
               </div>
               
-              {/* Main Card */}
-              <div className="bg-white border border-gray-100 rounded-[3rem] p-10 shadow-[0_20px_50px_rgba(0,0,0,0.05)] flex flex-col items-center text-center relative overflow-hidden min-h-[620px]">
+              <div className="bg-white border border-gray-100 rounded-[3.5rem] p-10 shadow-[0_20px_60px_rgba(0,0,0,0.05)] flex flex-col items-center justify-center text-center relative overflow-hidden min-h-[580px] gap-y-8">
                 
-                {/* Header Section */}
-                <div className="w-full mb-8">
-                  {qrLabelPosition === "top" && (
-                    <div className="text-[11px] font-bold uppercase tracking-[0.5em] text-brand-accent mb-6">Scan here</div>
-                  )}
-                  {showBusinessName && (
-                    <div className="text-3xl font-bold text-text-primary tracking-tight px-2">{storeNameLabel}</div>
-                  )}
-                </div>
+                {qrLabelPosition === "top" && (
+                  <div className="bg-brand-accent px-8 py-2.5 rounded-full shadow-lg shadow-brand-accent/25 animate-in slide-in-from-top-2 duration-300">
+                    <div className="text-[11px] font-bold font-inter uppercase tracking-[0.5em] text-white leading-none">Scan here</div>
+                  </div>
+                )}
 
-                {/* QR Code Outer Soft Container */}
-                <div className="relative w-full flex items-center justify-center mb-8">
-                  <div className="bg-gray-50/80 p-10 rounded-[2.5rem] border border-gray-100/50 flex items-center justify-center w-full max-w-[320px] aspect-square">
+                {showBusinessName && (
+                  <div className="text-4xl font-bold font-figtree text-text-primary tracking-tight px-2 animate-in fade-in duration-500">{storeNameLabel}</div>
+                )}
+
+                <div className="relative w-full flex items-center justify-center">
+                  <div className="bg-gray-50/80 p-10 rounded-[2.5rem] border border-gray-100/50 flex items-center justify-center w-full max-w-[320px] aspect-square transition-all duration-500">
                     {storeUrl ? (
-                      <div className="bg-transparent">
-                        <QRCode 
-                          id="store-qr-code" 
-                          value={storeUrl} 
-                          size={200} 
-                          level="H" 
-                          fgColor="#1a1a1a" 
-                          bgColor="transparent" 
-                        />
-                      </div>
+                      <QRCode id="store-qr-code" value={storeUrl} size={200} level="H" fgColor="#1a1a1a" bgColor="transparent" />
                     ) : (
                       <div className="w-[200px] h-[200px] flex items-center justify-center rounded-2xl">
                         <QrCode className="text-gray-200" size={48} />
@@ -591,29 +613,31 @@ export const TenantStoreSettings = ({
                     )}
                   </div>
                   
-                  {/* Logo Badge Overlay */}
                   {showLogoBadge && (
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none scale-100 transition-transform">
                       <div className="h-16 w-16 items-center justify-center rounded-full bg-brand-accent text-white text-2xl font-bold shadow-xl border-[6px] border-white flex">
-                        {storeNameLabel.charAt(0).toUpperCase()}
+                        <span className="font-inter">{storeNameLabel.charAt(0).toUpperCase()}</span>
                       </div>
                     </div>
                   )}
                 </div>
 
-                {/* Footer Section */}
-                <div className="w-full mt-auto">
-                  {qrLabelPosition === "bottom" && (
-                    <div className="text-[11px] font-bold uppercase tracking-[0.5em] text-brand-accent mb-10">Scan here</div>
-                  )}
-                  <div className="pt-8 border-t border-gray-50 w-full">
-                    <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-[0.4em]">Powered by Qios</div>
+                {qrLabelPosition === "bottom" && (
+                  <div className="bg-brand-accent px-8 py-2.5 rounded-full shadow-lg shadow-brand-accent/25 animate-in slide-in-from-bottom-2 duration-300">
+                    <div className="text-[11px] font-bold font-inter uppercase tracking-[0.5em] text-white leading-none">Scan here</div>
                   </div>
+                )}
+
+                {/* VISIBILITY INCREASED: Footer lines and text */}
+                <div className="flex items-center gap-4 w-full mt-auto pt-10 px-4">
+                  <div className="h-[1.5px] flex-1 bg-gradient-to-r from-transparent to-gray-200" />
+                  <div className="text-[10px] font-bold font-inter text-gray-500 uppercase tracking-[0.4em] whitespace-nowrap">Powered by Qios</div>
+                  <div className="h-[1.5px] flex-1 bg-gradient-to-l from-transparent to-gray-200" />
                 </div>
               </div>
             </div>
 
-            {/* DOWNLOAD SETTINGS PANEL (UNCHANGED EXCEPT WIDTH SYNC) */}
+            {/* DOWNLOAD PANEL (UNCHANGED) */}
             <div className="space-y-6">
               <div className="bg-gray-50/50 border border-gray-100 rounded-[2rem] p-6 md:p-8 space-y-8">
                 <div>
