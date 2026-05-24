@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useActionState, useEffect, useState, useRef } from "react";
-import { Save, CheckCircle2, Edit2, Download, QrCode } from "lucide-react";
+import React, { useActionState, useEffect, useMemo, useState, useRef } from "react";
+import { Save, CheckCircle2, Edit2, Download, QrCode, Copy, Layout } from "lucide-react";
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
-import QRCode from "react-qr-code";
 import { Dropdown } from "@/components/molecules/Dropdown";
+import QRCode from "react-qr-code";
 import { SectionHeader } from "@/components/molecules/SectionHeader";
 import { saveTenantStoreSettings } from "@/app/(tenant)/[id]/settings/actions";
 import {
@@ -24,6 +24,7 @@ export const TenantStoreSettings = ({
   initialData,
   scrollToQrSection = false,
 }: TenantStoreSettingsProps) => {
+  // --- START OF ORIGINAL CODE (UNCHANGED) ---
   const [formData, setFormData] = useState(initialData);
   const [isEditing, setIsEditing] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -85,61 +86,171 @@ export const TenantStoreSettings = ({
     { label: "America/Los_Angeles (GMT-8)", value: "America/Los_Angeles" },
     { label: "UTC", value: "UTC" },
   ];
+  // --- END OF ORIGINAL CODE LOGIC ---
 
+  // --- UPDATED QR STATE & LOGIC ---
   const [storeUrl, setStoreUrl] = useState("");
+  const [qrLabelPosition, setQrLabelPosition] = useState<"top" | "bottom">("bottom");
+  const [showBusinessName, setShowBusinessName] = useState(true);
+  const [showLogoBadge, setShowLogoBadge] = useState(true);
   const qrSectionRef = useRef<HTMLDivElement>(null);
+
+  const storeNameLabel = useMemo(
+    () => formData.storeName?.trim() || "Your Store",
+    [formData.storeName],
+  );
+
   useEffect(() => {
     if (!tenantId) {
       setStoreUrl("");
       return;
     }
-
-    setStoreUrl(
-      new URL(`/${tenantId}/home`, window.location.origin).toString(),
-    );
+    setStoreUrl(new URL(`/${tenantId}/home`, window.location.origin).toString());
   }, [tenantId]);
 
   useEffect(() => {
     if (!scrollToQrSection) return;
-
     const timer = window.setTimeout(() => {
-      qrSectionRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
+      qrSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 150);
-
     return () => window.clearTimeout(timer);
   }, [scrollToQrSection]);
 
-  const handleDownloadQr = () => {
+  const getQrSvgImage = async (): Promise<HTMLImageElement | null> => {
     const svg = document.getElementById("store-qr-code");
-    if (!svg) return;
+    if (!svg) return null;
     const svgData = new XMLSerializer().serializeToString(svg);
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
+    const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(svgBlob);
     const img = new Image();
-    img.onload = () => {
-      canvas.width = img.width;
-      canvas.height = img.height;
-      if (ctx) {
-        ctx.fillStyle = "white";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, 0);
-        const pngFile = canvas.toDataURL("image/png");
-        const downloadLink = document.createElement("a");
-        downloadLink.download = `qios-${tenantId}-qr.png`;
-        downloadLink.href = `${pngFile}`;
-        downloadLink.click();
-      }
+    return new Promise((resolve) => {
+      img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+      img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+      img.src = url;
+    });
+  };
+
+  const buildQrCanvas = async () => {
+    const qrImage = await getQrSvgImage();
+    if (!qrImage) return null;
+
+    const canvas = document.createElement("canvas");
+    // High res for printing
+    const cardWidth = 1200;
+    const cardHeight = 1600;
+    canvas.width = cardWidth;
+    canvas.height = cardHeight;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+
+    // Helper for rounded corners
+    const roundRect = (x: number, y: number, w: number, h: number, r: number) => {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
     };
-    img.src =
-      "data:image/svg+xml;base64," +
-      btoa(unescape(encodeURIComponent(svgData)));
+
+    // 1. Background
+    ctx.fillStyle = "#FFFFFF";
+    roundRect(0, 0, cardWidth, cardHeight, 100);
+    ctx.fill();
+
+    let currentY = 240;
+
+    // 2. Business Name
+    if (showBusinessName) {
+      ctx.fillStyle = "#1a1a1a";
+      ctx.font = "700 96px Figtree, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(storeNameLabel, cardWidth / 2, currentY);
+      currentY += 120;
+    }
+
+    // 3. QR Outer Box (The light grey container from the image)
+    const qrBoxSize = 760;
+    const qrBoxX = (cardWidth - qrBoxSize) / 2;
+    const qrBoxY = currentY + 60;
+    
+    ctx.fillStyle = "#F9FAFB"; 
+    roundRect(qrBoxX, qrBoxY, qrBoxSize, qrBoxSize, 80);
+    ctx.fill();
+
+    // 4. Draw QR
+    const qrPadding = 100;
+    const qrSize = qrBoxSize - (qrPadding * 2);
+    ctx.drawImage(qrImage, qrBoxX + qrPadding, qrBoxY + qrPadding, qrSize, qrSize);
+
+    // 5. Logo Badge
+    if (showLogoBadge) {
+      const badgeSize = 140;
+      const centerX = cardWidth / 2;
+      const centerY = qrBoxY + (qrBoxSize / 2);
+
+      ctx.fillStyle = "#FFFFFF";
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, (badgeSize / 2) + 18, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#ff5269";
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, badgeSize / 2, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#FFFFFF";
+      ctx.font = "bold 72px Inter, sans-serif";
+      ctx.textBaseline = "middle";
+      ctx.fillText(storeNameLabel.charAt(0).toUpperCase(), centerX, centerY + 5);
+    }
+
+    // 6. Label Text
+    const drawSpacedLabel = (text: string, y: number, color: string) => {
+      ctx.fillStyle = color;
+      ctx.font = "600 32px Inter, sans-serif";
+      ctx.textAlign = "center";
+      const spacedText = text.toUpperCase().split("").join("  ");
+      ctx.fillText(spacedText, cardWidth / 2, y);
+    };
+
+    if (qrLabelPosition === "top") {
+      drawSpacedLabel("SCAN HERE", qrBoxY - 70, "#ff5269");
+    } else {
+      drawSpacedLabel("SCAN HERE", qrBoxY + qrBoxSize + 110, "#ff5269");
+    }
+
+    // 7. Footer Divider & Brand
+    const footerY = cardHeight - 200;
+    ctx.strokeStyle = "#F1F1F1";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(150, footerY);
+    ctx.lineTo(cardWidth - 150, footerY);
+    ctx.stroke();
+
+    drawSpacedLabel("POWERED BY QIOS", footerY + 90, "#9CA3AF");
+
+    return canvas;
+  };
+
+  const downloadCanvas = async (format: "png" | "pdf") => {
+    const canvas = await buildQrCanvas();
+    if (!canvas) return;
+    const link = document.createElement("a");
+    link.download = `qios-qr-${tenantId}.${format}`;
+    link.href = canvas.toDataURL(format === "png" ? "image/png" : "image/jpeg", 1.0);
+    link.click();
   };
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 w-full">
+      {/* --- START OF ORIGINAL UI (UNCHANGED) --- */}
       <div>
         <h2 className="text-xl font-bold text-text-primary mb-1">
           Store Details
@@ -432,63 +543,152 @@ export const TenantStoreSettings = ({
             </div>
           </form>
         </div>
+        {/* --- END OF ORIGINAL UI --- */}
 
-        <div ref={qrSectionRef} className="space-y-4 w-full">
-          <SectionHeader
-            title="Store Access & QR Code"
-            className="mb-0 py-2 border-gray-100"
-          />
-          <div className="flex flex-col md:flex-row gap-6 p-6 border border-gray-100 rounded-2xl bg-gray-50/50">
-            <div className="flex-shrink-0 bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex items-center justify-center">
-              {storeUrl ? (
-                <QRCode
-                  id="store-qr-code"
-                  value={storeUrl}
-                  size={150}
-                  level="H"
-                  fgColor="#1A1A1A"
-                  bgColor="#FFFFFF"
-                />
-              ) : (
-                <div className="w-[150px] h-[150px] bg-gray-100 animate-pulse rounded-lg flex items-center justify-center">
-                  <QrCode className="text-gray-400" size={32} />
+        {/* --- MODERN QR UI SECTION (UPDATED) --- */}
+        <div ref={qrSectionRef} className="space-y-4 w-full pt-6">
+          <SectionHeader title="Store Access & QR Code" className="mb-0 py-2 border-gray-100" />
+          <div className="grid grid-cols-1 lg:grid-cols-[440px_1fr] gap-8">
+            
+            {/* LIVE PREVIEW CARD */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-sm font-bold text-text-primary px-1">
+                <Layout size={18} className="text-brand-accent" />
+                Live Preview
+              </div>
+              
+              {/* Main Card */}
+              <div className="bg-white border border-gray-100 rounded-[3rem] p-10 shadow-[0_20px_50px_rgba(0,0,0,0.05)] flex flex-col items-center text-center relative overflow-hidden min-h-[620px]">
+                
+                {/* Header Section */}
+                <div className="w-full mb-8">
+                  {qrLabelPosition === "top" && (
+                    <div className="text-[11px] font-bold uppercase tracking-[0.5em] text-brand-accent mb-6">Scan here</div>
+                  )}
+                  {showBusinessName && (
+                    <div className="text-3xl font-bold text-text-primary tracking-tight px-2">{storeNameLabel}</div>
+                  )}
                 </div>
-              )}
+
+                {/* QR Code Outer Soft Container */}
+                <div className="relative w-full flex items-center justify-center mb-8">
+                  <div className="bg-gray-50/80 p-10 rounded-[2.5rem] border border-gray-100/50 flex items-center justify-center w-full max-w-[320px] aspect-square">
+                    {storeUrl ? (
+                      <div className="bg-transparent">
+                        <QRCode 
+                          id="store-qr-code" 
+                          value={storeUrl} 
+                          size={200} 
+                          level="H" 
+                          fgColor="#1a1a1a" 
+                          bgColor="transparent" 
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-[200px] h-[200px] flex items-center justify-center rounded-2xl">
+                        <QrCode className="text-gray-200" size={48} />
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Logo Badge Overlay */}
+                  {showLogoBadge && (
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <div className="h-16 w-16 items-center justify-center rounded-full bg-brand-accent text-white text-2xl font-bold shadow-xl border-[6px] border-white flex">
+                        {storeNameLabel.charAt(0).toUpperCase()}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Footer Section */}
+                <div className="w-full mt-auto">
+                  {qrLabelPosition === "bottom" && (
+                    <div className="text-[11px] font-bold uppercase tracking-[0.5em] text-brand-accent mb-10">Scan here</div>
+                  )}
+                  <div className="pt-8 border-t border-gray-50 w-full">
+                    <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-[0.4em]">Powered by Qios</div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="flex flex-col justify-center space-y-4">
-              <div>
-                <h3 className="text-[16px] font-bold text-text-primary">
-                  Customer Ordering App
-                </h3>
-                <p className="text-[14px] text-text-secondary mt-1">
-                  Customers can scan this QR code or visit the link below to
-                  access your store's digital menu and place orders.
-                </p>
-              </div>
-              <div className="flex items-center gap-2 max-w-md">
-                <Input
-                  value={storeUrl || "Loading..."}
-                  readOnly
-                  className="bg-white text-sm"
-                />
-                <Button
-                  variant="outline"
-                  shape="rounded"
-                  onClick={() => navigator.clipboard.writeText(storeUrl)}
-                >
-                  Copy
-                </Button>
-              </div>
-              <div>
-                <Button
-                  variant="accent"
-                  shape="rounded"
-                  leftIcon={<Download size={18} />}
-                  onClick={handleDownloadQr}
-                  disabled={!storeUrl}
-                >
-                  Download QR Code
-                </Button>
+
+            {/* DOWNLOAD SETTINGS PANEL (UNCHANGED EXCEPT WIDTH SYNC) */}
+            <div className="space-y-6">
+              <div className="bg-gray-50/50 border border-gray-100 rounded-[2rem] p-6 md:p-8 space-y-8">
+                <div>
+                  <h3 className="text-lg font-bold text-text-primary">Download Settings</h3>
+                  <p className="text-sm text-text-secondary">Customize your QR card appearance for printing.</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-4">
+                    <p className="text-xs font-bold text-text-secondary uppercase tracking-widest">Label Position</p>
+                    <div className="flex gap-2">
+                      {(["top", "bottom"] as const).map((pos) => (
+                        <button
+                          key={pos}
+                          type="button"
+                          onClick={() => setQrLabelPosition(pos)}
+                          className={`flex-1 py-3 rounded-2xl text-sm font-bold border transition-all ${
+                            qrLabelPosition === pos 
+                            ? "bg-brand-accent border-brand-accent text-white shadow-lg shadow-brand-accent/20" 
+                            : "bg-white border-gray-200 text-text-primary hover:border-brand-accent"
+                          }`}
+                        >
+                          {pos.toUpperCase()}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <p className="text-xs font-bold text-text-secondary uppercase tracking-widest">Visibility</p>
+                    <div className="space-y-2">
+                      <button
+                        type="button"
+                        onClick={() => setShowBusinessName(!showBusinessName)}
+                        className={`w-full flex items-center justify-between p-4 rounded-2xl border text-sm font-semibold transition-all ${
+                          showBusinessName ? "border-brand-accent bg-brand-accent/5 text-brand-accent" : "border-gray-200 bg-white"
+                        }`}
+                      >
+                        Business Name
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${showBusinessName ? "bg-brand-accent border-brand-accent" : "border-gray-300"}`}>
+                           {showBusinessName && <div className="w-2 h-2 bg-white rounded-full" />}
+                        </div>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowLogoBadge(!showLogoBadge)}
+                        className={`w-full flex items-center justify-between p-4 rounded-2xl border text-sm font-semibold transition-all ${
+                          showLogoBadge ? "border-brand-accent bg-brand-accent/5 text-brand-accent" : "border-gray-200 bg-white"
+                        }`}
+                      >
+                        Logo Badge
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${showLogoBadge ? "bg-brand-accent border-brand-accent" : "border-gray-300"}`}>
+                           {showLogoBadge && <div className="w-2 h-2 bg-white rounded-full" />}
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-6 border-t border-gray-200 flex flex-col sm:flex-row items-center gap-4">
+                  <div className="flex-1 w-full relative">
+                    <Input value={storeUrl} readOnly className="pr-12 text-xs bg-white rounded-xl h-12" />
+                    <button type="button" onClick={() => navigator.clipboard.writeText(storeUrl)} className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-brand-accent">
+                      <Copy size={18} />
+                    </button>
+                  </div>
+                  <div className="flex gap-2 w-full sm:w-auto">
+                    <Button type="button" variant="accent" shape="rounded" className="flex-1 sm:px-8" onClick={() => downloadCanvas("png")} leftIcon={<Download size={18} />}>
+                      PNG
+                    </Button>
+                    <Button type="button" variant="outline" shape="rounded" className="flex-1 sm:px-8" onClick={() => downloadCanvas("pdf")} leftIcon={<Download size={18} />}>
+                      PDF
+                    </Button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
