@@ -28,6 +28,8 @@ export interface TenantProfileData {
   joined: string;
   plan: string;
   billingCycle: string;
+  priceMonthly?: string;
+  priceAnnually?: string;
   totalLocations: number;
   totalStaff: number;
   features: string[];
@@ -52,9 +54,9 @@ type BillingCycle = "monthly" | "annually";
 // will be loaded from DB
 // const PACKAGE_OPTIONS kept for typing fallback
 const DEFAULT_PACKAGE_OPTIONS: { label: string; value: string }[] = [
-  { label: "Starter", value: "starter" },
-  { label: "Growth", value: "growth" },
-  { label: "Enterprises", value: "enterprises" },
+  { label: "Basic", value: "Basic" },
+  { label: "Business", value: "Business" },
+  { label: "Enterprise", value: "Enterprise" },
 ];
 
 const BILLING_CYCLE_OPTIONS: { label: string; value: BillingCycle }[] = [
@@ -133,6 +135,8 @@ export const TenantProfilePage = ({ tenantId }: TenantProfilePageProps) => {
           ...details,
           totalLocations: details.totalLocations ?? 0,
           totalStaff: details.totalStaff ?? 0,
+          priceMonthly: details.priceMonthly,
+          priceAnnually: details.priceAnnually,
         });
       } catch (error) {
         console.error("Failed to load tenant profile", error);
@@ -356,7 +360,7 @@ export const TenantProfilePage = ({ tenantId }: TenantProfilePageProps) => {
     setManagePlanError(null);
 
     try {
-      await updateTenantSubscription(
+      const result = await updateTenantSubscription(
         tenant.id,
         selectedPackageId,
         selectedBillingCycle,
@@ -373,6 +377,12 @@ export const TenantProfilePage = ({ tenantId }: TenantProfilePageProps) => {
               plan: planLabel,
               type: planLabel,
               billingCycle: billingLabelFromCycle(selectedBillingCycle),
+              priceMonthly: result.priceMonthly || prev.priceMonthly,
+              priceAnnually: result.priceAnnually || prev.priceAnnually,
+              features:
+                result.features && result.features.length > 0
+                  ? result.features
+                  : prev.features,
             }
           : null,
       );
