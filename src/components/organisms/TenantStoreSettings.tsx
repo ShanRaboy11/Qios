@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
+import { Radio } from "@/components/atoms/Radio";
 import { Dropdown } from "@/components/molecules/Dropdown";
 import QRCode from "react-qr-code";
 import { SectionHeader } from "@/components/molecules/SectionHeader";
@@ -38,7 +39,6 @@ export const TenantStoreSettings = ({
   brandingData,
   scrollToQrSection = false,
 }: TenantStoreSettingsProps) => {
-  // --- START OF ORIGINAL LOGIC (UNCHANGED) ---
   const [formData, setFormData] = useState(initialData);
   const [isEditing, setIsEditing] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -88,16 +88,54 @@ export const TenantStoreSettings = ({
     { label: "America/Los_Angeles (GMT-8)", value: "America/Los_Angeles" },
     { label: "UTC", value: "UTC" },
   ];
-  // --- END OF ORIGINAL LOGIC ---
 
-  // --- NEW ADDITIONAL QR LOGIC ---
   const [storeUrl, setStoreUrl] = useState("");
-  const [qrLabelPosition, setQrLabelPosition] = useState<"top" | "bottom">(
-    "top",
+  const [qrLabelPosition, setQrLabelPosition] = useState<"Top" | "Bottom">(
+    "Top",
   );
   const [showBusinessName, setShowBusinessName] = useState(true);
   const [showLogoBadge, setShowLogoBadge] = useState(true);
   const qrSectionRef = useRef<HTMLDivElement>(null);
+
+  const safeHex = (value: string | undefined, fallback: string) =>
+    /^#[0-9A-Fa-f]{6}$/.test(value ?? "") ? (value as string) : fallback;
+
+  const brandPalette = {
+    primary: safeHex(brandingData.primaryColor, "#ffc670"),
+    secondary: safeHex(brandingData.secondaryColor, "#fff9ef"),
+    accent: safeHex(brandingData.accentColor, "#ff5269"),
+  };
+
+  const dashboardLogoUrl = brandingData.dashboardLogoUrl?.trim() || "";
+
+  const loadImageFromUrl = async (url: string) => {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) return null;
+
+      const objectUrl = URL.createObjectURL(await response.blob());
+      return await new Promise<HTMLImageElement | null>((resolve) => {
+        const image = new Image();
+        image.onload = () => {
+          URL.revokeObjectURL(objectUrl);
+          resolve(image);
+        };
+        image.onerror = () => {
+          URL.revokeObjectURL(objectUrl);
+          resolve(null);
+        };
+        image.src = objectUrl;
+      });
+    } catch {
+      return await new Promise<HTMLImageElement | null>((resolve) => {
+        const image = new Image();
+        image.crossOrigin = "anonymous";
+        image.onload = () => resolve(image);
+        image.onerror = () => resolve(null);
+        image.src = url;
+      });
+    }
+  };
 
   const storeNameLabel = useMemo(
     () => formData.storeName?.trim() || "Your Store",
@@ -109,7 +147,7 @@ export const TenantStoreSettings = ({
       setStoreUrl("");
       return;
     }
-    // Hardcoded production URL instead of using window.location.origin
+    // hardcoded production url instead of using window.location.origin
     setStoreUrl(`https://qios-exc.vercel.app/${tenantId}/home`);
   }, [tenantId]);
 
@@ -146,6 +184,9 @@ export const TenantStoreSettings = ({
     await document.fonts.ready;
     const qrImage = await getQrSvgImage();
     if (!qrImage) return null;
+    const logoImage = dashboardLogoUrl
+      ? await loadImageFromUrl(dashboardLogoUrl)
+      : null;
 
     const canvas = document.createElement("canvas");
     const cardWidth = 1200;
@@ -182,7 +223,7 @@ export const TenantStoreSettings = ({
       const badgeW = 340;
       const badgeH = 76;
       const badgeX = (cardWidth - badgeW) / 2;
-      ctx.fillStyle = "#ff5269";
+      ctx.fillStyle = brandPalette.accent;
       roundRect(badgeX, y - badgeH / 2, badgeW, badgeH, 38);
       ctx.fill();
       ctx.fillStyle = "#FFFFFF";
@@ -192,34 +233,30 @@ export const TenantStoreSettings = ({
       ctx.fillText("S C A N   H E R E", cardWidth / 2, y + 2);
     };
 
-    // 1. Background
     ctx.fillStyle = "#FFFFFF";
     roundRect(0, 0, cardWidth, cardHeight, 100);
     ctx.fill();
 
     let currentY = 220;
 
-    // 2. Business Name (At the very top)
     if (showBusinessName) {
-      ctx.fillStyle = "#2d2d2d";
+      ctx.fillStyle = brandPalette.primary;
       ctx.font = "700 90px sans-serif";
       ctx.textAlign = "center";
       ctx.fillText(storeNameLabel, cardWidth / 2, currentY);
       currentY += 140;
     }
 
-    // 3. Scan Here Badge (If Position is Top)
-    if (qrLabelPosition === "top") {
+    if (qrLabelPosition === "Top") {
       drawFancyBadge(currentY);
       currentY += 130;
     } else {
       currentY += 40;
     }
 
-    // 4. QR Container
     const qrBoxSize = 760;
     const qrBoxX = (cardWidth - qrBoxSize) / 2;
-    ctx.fillStyle = "#F9FAFB";
+    ctx.fillStyle = brandPalette.secondary;
     roundRect(qrBoxX, currentY, qrBoxSize, qrBoxSize, 90);
     ctx.fill();
 
@@ -232,7 +269,6 @@ export const TenantStoreSettings = ({
       qrBoxSize - qrPadding * 2,
     );
 
-    // Logo Center Badge
     if (showLogoBadge) {
       const badgeSize = 145;
       const centerX = cardWidth / 2;
@@ -241,27 +277,32 @@ export const TenantStoreSettings = ({
       ctx.beginPath();
       ctx.arc(centerX, centerY, badgeSize / 2 + 18, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = "#ff5269";
+      ctx.fillStyle = brandPalette.accent;
       ctx.beginPath();
       ctx.arc(centerX, centerY, badgeSize / 2, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = "#FFFFFF";
-      ctx.font = "bold 80px sans-serif";
-      ctx.textAlign = "center"; // Centers horizontally
-      ctx.textBaseline = "middle"; // Centers vertically
-      ctx.fillText(
-        storeNameLabel.charAt(0).toUpperCase(),
-        centerX,
-        centerY + 6,
-      ); // +6 for perfect optical balance
+
+      if (logoImage) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, badgeSize / 2 - 8, 0, Math.PI * 2);
+        ctx.clip();
+        const logoSide = badgeSize - 24;
+        ctx.drawImage(
+          logoImage,
+          centerX - logoSide / 2,
+          centerY - logoSide / 2,
+          logoSide,
+          logoSide,
+        );
+        ctx.restore();
+      }
     }
 
-    // 5. Scan Here Badge (If Position is Bottom)
-    if (qrLabelPosition === "bottom") {
+    if (qrLabelPosition === "Bottom") {
       drawFancyBadge(currentY + qrBoxSize + 85);
     }
 
-    // 6. Powered by Qios Footer
     const footerY = cardHeight - 140;
     ctx.strokeStyle = "#E5E7EB";
     ctx.lineWidth = 2;
@@ -272,7 +313,7 @@ export const TenantStoreSettings = ({
     ctx.lineTo(1050, footerY);
     ctx.stroke();
 
-    ctx.fillStyle = "#6B7280";
+    ctx.fillStyle = brandPalette.primary;
     ctx.font = "700 24px sans-serif";
     ctx.textAlign = "center";
     ctx.fillText("POWERED BY QIOS", cardWidth / 2, footerY + 8);
@@ -285,21 +326,21 @@ export const TenantStoreSettings = ({
     if (!canvas) return;
 
     if (format === "pdf") {
-      // 1. Create a PDF with the same dimensions as our high-res canvas
+      // create a pdf with the same dimensions as our high-res canvas
       const pdf = new jsPDF({
         orientation: "portrait",
         unit: "px",
         format: [canvas.width, canvas.height],
       });
 
-      // 2. Convert canvas to Image Data
+      // convert canvas to image data
       const imgData = canvas.toDataURL("image/jpeg", 1.0);
 
-      // 3. Add to PDF and save
+      // add to pdf and save
       pdf.addImage(imgData, "JPEG", 0, 0, canvas.width, canvas.height);
       pdf.save(`qios-qr-${tenantId}.pdf`);
     } else {
-      // Original PNG logic
+      // original png logic
       const link = document.createElement("a");
       link.download = `qios-qr-${tenantId}.png`;
       link.href = canvas.toDataURL("image/png", 1.0);
@@ -557,38 +598,37 @@ export const TenantStoreSettings = ({
           </form>
         </div>
 
-        {/* --- UPDATED QR CUSTOMIZER SECTION --- */}
+        {/* updated qr customizer section */}
         <div ref={qrSectionRef} className="space-y-4 w-full pt-6">
           <SectionHeader
             title="Store Access & QR Code"
             className="mb-0 py-2 border-gray-100"
           />
           <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-8">
-            {/* Live Preview Column */}
             <div className="space-y-4">
-              <div className="flex items-center gap-2 text-sm font-bold text-text-primary px-1">
+              <h3 className="text-lg font-bold text-text-primary flex items-center gap-2 px-1">
                 <Layout size={18} className="text-brand-accent" /> Live Preview
-              </div>
+              </h3>
               <div className="bg-white border border-gray-100 rounded-[3rem] p-10 shadow-sm flex flex-col items-center justify-center text-center relative min-h-[550px] gap-y-6">
-                {/* SEQUENCE: 1. Business Name */}
                 {showBusinessName && (
                   <div className="text-3xl font-bold text-text-primary tracking-tight px-2">
                     {storeNameLabel}
                   </div>
                 )}
 
-                {/* SEQUENCE: 2. Badge (Top Position) */}
-                {qrLabelPosition === "top" && (
+                {qrLabelPosition === "Top" && (
                   <div
                     className="px-6 py-2 rounded-full text-[10px] font-bold text-white uppercase tracking-widest animate-in slide-in-from-top-1"
-                    style={{ backgroundColor: brandingData.accentColor }}
+                    style={{ backgroundColor: brandPalette.accent }}
                   >
                     Scan here
                   </div>
                 )}
 
-                {/* SEQUENCE: 3. QR Image Box */}
-                <div className="relative p-6 bg-gray-50 rounded-[2.5rem] border border-gray-100">
+                <div
+                  className="relative p-6 rounded-[2.5rem] border border-gray-100"
+                  style={{ backgroundColor: brandPalette.secondary }}
+                >
                   <QRCode
                     id="store-qr-code"
                     value={storeUrl || "https://qios.com"}
@@ -598,27 +638,33 @@ export const TenantStoreSettings = ({
                   />
                   {showLogoBadge && (
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <div
-                        className="h-12 w-12 rounded-full text-white text-lg font-bold shadow-xl border-4 border-white flex items-center justify-center"
-                        style={{ backgroundColor: brandingData.accentColor }}
-                      >
-                        {storeNameLabel.charAt(0).toUpperCase()}
+                      <div className="h-12 w-12 rounded-full bg-white text-lg font-bold shadow-xl border-4 border-white flex items-center justify-center overflow-hidden">
+                        {dashboardLogoUrl ? (
+                          <img
+                            src={dashboardLogoUrl}
+                            alt="Tenant logo"
+                            className="h-8 w-8 object-contain"
+                          />
+                        ) : (
+                          <div
+                            className="h-full w-full rounded-full"
+                            style={{ backgroundColor: brandPalette.accent }}
+                          />
+                        )}
                       </div>
                     </div>
                   )}
                 </div>
 
-                {/* SEQUENCE: 4. Badge (Bottom Position) */}
-                {qrLabelPosition === "bottom" && (
+                {qrLabelPosition === "Bottom" && (
                   <div
                     className="px-6 py-2 rounded-full text-[10px] font-bold text-white uppercase tracking-widest animate-in slide-in-from-bottom-1"
-                    style={{ backgroundColor: brandingData.accentColor }}
+                    style={{ backgroundColor: brandPalette.accent }}
                   >
                     Scan here
                   </div>
                 )}
 
-                {/* SEQUENCE: 5. Footer */}
                 <div className="flex items-center gap-3 w-full mt-4">
                   <div className="h-px flex-1 bg-gray-100" />
                   <span className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.3em]">
@@ -629,7 +675,6 @@ export const TenantStoreSettings = ({
               </div>
             </div>
 
-            {/* Controls Panel */}
             <div className="space-y-6">
               <div className="bg-gray-50/50 border border-gray-100 rounded-[2rem] p-8 space-y-8">
                 <div>
@@ -643,53 +688,44 @@ export const TenantStoreSettings = ({
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-4">
-                    <p className="text-xs font-bold text-text-secondary uppercase tracking-widest">
-                      Label Position
-                    </p>
+                    <label className="text-sm font-medium text-text-primary block">
+                      Label Position{" "}
+                      <span className="text-brand-accent">*</span>
+                    </label>
                     <div className="flex flex-col gap-2">
-                      {(["top", "bottom"] as const).map((pos) => (
-                        <label
+                      {(["Top", "Bottom"] as const).map((pos) => (
+                        <Radio
                           key={pos}
-                          className={`flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer ${
-                            qrLabelPosition === pos
-                              ? "border-brand-primary bg-brand-primary/5"
-                              : "border-gray-200 bg-white hover:border-brand-primary/50"
-                          }`}
-                        >
-                          <div
-                            className={`w-4 h-4 rounded-full border flex items-center justify-center ${qrLabelPosition === pos ? "border-brand-primary" : "border-gray-300"}`}
-                          >
-                            {qrLabelPosition === pos && (
-                              <div className="w-2 h-2 rounded-full bg-brand-primary" />
-                            )}
-                          </div>
-                          <span className="text-sm font-semibold text-text-primary capitalize">
-                            {pos}
-                          </span>
-                        </label>
+                          name="qrLabelPosition"
+                          label={pos}
+                          checked={qrLabelPosition === pos}
+                          onChange={() => setQrLabelPosition(pos)}
+                        />
                       ))}
                     </div>
                   </div>
 
                   <div className="space-y-4">
-                    <p className="text-xs font-bold text-text-secondary uppercase tracking-widest">
-                      Visibility
-                    </p>
+                    <label className="text-sm font-medium text-text-primary block">
+                      Visibility <span className="text-brand-accent">*</span>
+                    </label>
                     <div className="flex flex-col gap-2">
                       <div className="flex items-center justify-between p-3 rounded-xl border border-gray-200 bg-white">
-                        <span className="text-sm font-semibold text-text-primary">
+                        <span className="text-sm font-regular text-text-primary">
                           Business Name
                         </span>
                         <Toggle
+                          variant="accent"
                           isOn={showBusinessName}
                           onChange={(val) => setShowBusinessName(val)}
                         />
                       </div>
                       <div className="flex items-center justify-between p-3 rounded-xl border border-gray-200 bg-white">
-                        <span className="text-sm font-semibold text-text-primary">
+                        <span className="text-sm font-regular text-text-primary">
                           Logo Badge
                         </span>
                         <Toggle
+                          variant="accent"
                           isOn={showLogoBadge}
                           onChange={(val) => setShowLogoBadge(val)}
                         />
@@ -708,7 +744,7 @@ export const TenantStoreSettings = ({
                     <button
                       type="button"
                       onClick={() => navigator.clipboard.writeText(storeUrl)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-text-secondary hover:text-brand-accent transition-colors"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-text-secondary hover:text-brand-primary transition-colors"
                     >
                       <Copy size={18} />
                     </button>

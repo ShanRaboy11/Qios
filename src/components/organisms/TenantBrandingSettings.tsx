@@ -470,7 +470,7 @@ export const TenantBrandingSettings = ({
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-text-primary block mb-1">
+              <label className="text-sm font-medium text-text-primary block mb-3">
                 Primary Color <span className="text-brand-accent">*</span>
               </label>
               <div
@@ -546,7 +546,7 @@ export const TenantBrandingSettings = ({
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-text-primary block mb-1">
+              <label className="text-sm font-medium text-text-primary block mb-3">
                 Secondary Color <span className="text-brand-accent">*</span>
               </label>
               <div
@@ -627,7 +627,7 @@ export const TenantBrandingSettings = ({
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-text-primary block mb-1">
+              <label className="text-sm font-medium text-text-primary block mb-3">
                 Accent Color <span className="text-brand-accent">*</span>
               </label>
               <div

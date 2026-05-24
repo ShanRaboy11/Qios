@@ -8,6 +8,8 @@ import {
   Loader2,
   Plus,
   Shield,
+  Smartphone,
+  Wallet,
   Trash2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -61,27 +63,27 @@ const providerMeta: Record<
   visa: {
     label: "Visa",
     accent: "text-[#1A1F71]",
-    icon: <span className="text-[11px] font-bold tracking-[0.2em]">VISA</span>,
+    icon: <CreditCard className="w-4 h-4" />,
   },
   mastercard: {
     label: "Mastercard",
     accent: "text-[#EB001B]",
-    icon: <span className="text-[11px] font-bold tracking-[0.18em]">MC</span>,
+    icon: <CreditCard className="w-4 h-4" />,
   },
   paypal: {
     label: "PayPal",
     accent: "text-[#003087]",
-    icon: <span className="text-[11px] font-bold tracking-[0.18em]">PP</span>,
+    icon: <Wallet className="w-4 h-4" />,
   },
   stripe: {
     label: "Stripe",
     accent: "text-[#635BFF]",
-    icon: <span className="text-[11px] font-bold tracking-[0.18em]">S</span>,
+    icon: <Wallet className="w-4 h-4" />,
   },
   gcash: {
     label: "GCash",
     accent: "text-[#0070F3]",
-    icon: <span className="text-[11px] font-bold tracking-[0.18em]">GC</span>,
+    icon: <Smartphone className="w-4 h-4" />,
   },
   other: {
     label: "Other",
@@ -643,7 +645,7 @@ export const TenantBillingSettings = ({
                         shape="rounded"
                         className="text-xs"
                       >
-                        {isCurrent ? "Current method" : "Linked method"}
+                        {isCurrent ? "Current" : "Linked"}
                       </Badge>
                       <p className="text-xs text-text-secondary">
                         Added on {formatDateTime(method.addedAt)}
