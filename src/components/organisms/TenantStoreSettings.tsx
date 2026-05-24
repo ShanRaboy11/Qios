@@ -8,6 +8,7 @@ import { Dropdown } from "@/components/molecules/Dropdown";
 import QRCode from "react-qr-code";
 import { SectionHeader } from "@/components/molecules/SectionHeader";
 import { saveTenantStoreSettings } from "@/app/(tenant)/[id]/settings/actions";
+import { jsPDF } from "jspdf";
 import {
   emptySettingsActionState,
   type TenantStoreSettingsData,
@@ -143,6 +144,9 @@ export const TenantStoreSettings = ({
     const ctx = canvas.getContext("2d");
     if (!ctx) return null;
 
+    ctx.fillStyle = "#FFFFFF"; 
+    ctx.fillRect(0, 0, cardWidth, cardHeight); 
+
     const roundRect = (x: number, y: number, w: number, h: number, r: number) => {
       ctx.beginPath();
       ctx.moveTo(x + r, y);
@@ -215,8 +219,10 @@ export const TenantStoreSettings = ({
       ctx.fillStyle = "#ff5269";
       ctx.beginPath(); ctx.arc(centerX, centerY, badgeSize / 2, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = "#FFFFFF";
-      ctx.font = "bold 70px sans-serif";
-      ctx.fillText(storeNameLabel.charAt(0).toUpperCase(), centerX, centerY + 25);
+      ctx.font = "bold 80px sans-serif";
+      ctx.textAlign = "center";        // Centers horizontally
+      ctx.textBaseline = "middle";     // Centers vertically
+      ctx.fillText(storeNameLabel.charAt(0).toUpperCase(), centerX, centerY + 6); // +6 for perfect optical balance
     }
 
     // 5. Scan Here Badge (If Position is Bottom)
@@ -242,13 +248,31 @@ export const TenantStoreSettings = ({
   };
 
   const downloadCanvas = async (format: "png" | "pdf") => {
-    const canvas = await buildQrCanvas();
-    if (!canvas) return;
+  const canvas = await buildQrCanvas();
+  if (!canvas) return;
+
+  if (format === "pdf") {
+    // 1. Create a PDF with the same dimensions as our high-res canvas
+    const pdf = new jsPDF({
+      orientation: "portrait",
+      unit: "px",
+      format: [canvas.width, canvas.height],
+    });
+
+    // 2. Convert canvas to Image Data
+    const imgData = canvas.toDataURL("image/jpeg", 1.0);
+
+    // 3. Add to PDF and save
+    pdf.addImage(imgData, "JPEG", 0, 0, canvas.width, canvas.height);
+    pdf.save(`qios-qr-${tenantId}.pdf`);
+  } else {
+    // Original PNG logic
     const link = document.createElement("a");
-    link.download = `qios-qr-${tenantId}.${format}`;
-    link.href = canvas.toDataURL(format === "png" ? "image/png" : "image/jpeg", 1.0);
+    link.download = `qios-qr-${tenantId}.png`;
+    link.href = canvas.toDataURL("image/png", 1.0);
     link.click();
-  };
+  }
+};
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 w-full">
