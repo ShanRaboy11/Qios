@@ -1037,16 +1037,26 @@ export async function getTenantProfileDetails(
     subscriptionPlanFeatures.length > 0
       ? subscriptionPlanFeatures
       : resolveFeatureList(tenantRecord, ownerMetadata);
-  const totalStaff = profiles.filter(
+  // --- Total Staff: count all profiles (admin + employee) for this tenant ---
+  const { count: staffCount } = await supabase
+    .from("profiles")
+    .select("id", { count: "exact", head: true })
+    .eq("tenant_id", tenantId)
+    .in("role", ["admin", "employee"]);
+
+  const totalStaff = staffCount ?? profiles.filter(
     (profile: any) =>
       profile &&
       typeof profile.role === "string" &&
       ["admin", "employee"].includes(profile.role),
   ).length;
-  const totalLocations = resolveTenantLocationCount(
-    tenantRecord,
-    ownerMetadata,
-  );
+
+  // --- Total Locations: read from the tenant's location_count column ---
+  const locationCountValue = tenantRecord.location_count;
+  const totalLocations =
+    typeof locationCountValue === "number" && locationCountValue >= 1
+      ? locationCountValue
+      : resolveTenantLocationCount(tenantRecord, ownerMetadata);
 
   const profileDocuments: TenantProfileDocument[] = sortedDocuments.map(
     (document) => ({
@@ -1109,6 +1119,9 @@ export async function updateTenantSubscription(
     .select(
       `
       id,
+      business_name,
+      subscription_plan,
+      billing_cycle,
       profiles (
         id,
         role
@@ -1121,6 +1134,20 @@ export async function updateTenantSubscription(
   if (tenantError || !tenantData) {
     throw new Error(tenantError?.message || "Tenant not found");
   }
+
+  const tenantRecord = tenantData as Record<string, unknown>;
+  const previousPlan =
+    typeof tenantRecord.subscription_plan === "string"
+      ? tenantRecord.subscription_plan
+      : "None";
+  const previousCycle =
+    typeof tenantRecord.billing_cycle === "string"
+      ? tenantRecord.billing_cycle
+      : "monthly";
+  const tenantName =
+    typeof tenantRecord.business_name === "string"
+      ? tenantRecord.business_name
+      : tenantId;
 
   const profiles = normalizeProfiles(tenantData.profiles);
   const ownerProfile = selectOwnerProfile(profiles);
@@ -1190,12 +1217,31 @@ export async function updateTenantSubscription(
       revalidatePath("/admin/tenants");
       revalidatePath("/admin/dashboard");
 
+      const newFeatures = extractSubscriptionPlanFeatures(planData.features);
+
+      // --- Log to System Activity ---
+      await logActivity({
+        actorName: "Super Admin",
+        actorRole: "Super Admin",
+        actionType: "UPDATE",
+        description: `Updated subscription for '${tenantName}': ${previousPlan} (${previousCycle}) → ${planData.name} (${normalizedCycle})`,
+        targetTenantId: tenantId,
+        targetTenantName: tenantName,
+        metadata: {
+          previousPlan,
+          previousBillingCycle: previousCycle,
+          newPlan: planData.name,
+          newBillingCycle: normalizedCycle,
+        },
+      });
+
       return {
         success: true,
         packageId: planData.name,
         billingCycle: normalizedCycle,
         priceMonthly: toText(planData.price_monthly),
         priceAnnually: toText(planData.price_annually),
+        features: newFeatures,
       };
     }
   } catch (err) {
@@ -1248,12 +1294,31 @@ export async function updateTenantSubscription(
   revalidatePath("/admin/tenants");
   revalidatePath("/admin/dashboard");
 
+  const newFeatures = extractSubscriptionPlanFeatures(planData.features);
+
+  // --- Log to System Activity ---
+  await logActivity({
+    actorName: "Super Admin",
+    actorRole: "Super Admin",
+    actionType: "UPDATE",
+    description: `Updated subscription for '${tenantName}': ${previousPlan} (${previousCycle}) → ${planData.name} (${normalizedCycle})`,
+    targetTenantId: tenantId,
+    targetTenantName: tenantName,
+    metadata: {
+      previousPlan,
+      previousBillingCycle: previousCycle,
+      newPlan: planData.name,
+      newBillingCycle: normalizedCycle,
+    },
+  });
+
   return {
     success: true,
     packageId: planData.name,
     billingCycle: normalizedCycle,
     priceMonthly: toText(planData.price_monthly),
     priceAnnually: toText(planData.price_annually),
+    features: newFeatures,
   };
 }
 
