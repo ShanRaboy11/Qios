@@ -228,6 +228,26 @@ export const TenantBillingSettings = ({
         formData,
       );
       setPaymentState(result);
+
+      if (result.success) {
+        setShowSuccess(true);
+        setShowPaymentForm(false);
+        setEditingMethodId("");
+        setFormData({
+          methodId: "",
+          provider: "visa",
+          displayName: "",
+          last4: "",
+          expMonth: "",
+          expYear: "",
+          cardholderName: "",
+          mobileNumber: "",
+          email: "",
+          description: "",
+          isDefault: true,
+        });
+        router.refresh();
+      }
     } catch (error) {
       setPaymentState({
         ...emptySettingsActionState,

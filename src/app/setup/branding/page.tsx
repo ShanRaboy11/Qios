@@ -18,6 +18,11 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/atoms/Button";
 import { SectionHeader } from "@/components/molecules/SectionHeader";
+import { saveTenantBrandingSettings } from "@/app/(tenant)/[id]/settings/actions";
+import {
+  emptySettingsActionState,
+  type SettingsActionState,
+} from "@/app/(tenant)/[id]/settings/types";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -76,7 +81,7 @@ export default function BrandingSetupPage() {
     const url = URL.createObjectURL(file);
     setLogoUrl(url);
     setLogoFile(file);
-    // C=color extraction will happen in the onLoad handler of the image element
+    // color extraction will happen in the onLoad handler of the image element
   };
 
   const handleKioskUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -105,7 +110,7 @@ export default function BrandingSetupPage() {
         const ctx = canvas.getContext("2d");
         if (!ctx) return;
 
-        // Scale down to 64x64 for extremely fast processing
+        // scale down to 64x64 for extremely fast processing
         canvas.width = 64;
         canvas.height = 64;
         ctx.drawImage(img, 0, 0, 64, 64);
@@ -113,22 +118,22 @@ export default function BrandingSetupPage() {
         const data = ctx.getImageData(0, 0, 64, 64).data;
         const colorCounts: Record<string, number> = {};
 
-        // Loop through pixels and bucket them
+        // loop through pixels and bucket them
         for (let i = 0; i < data.length; i += 4) {
           const r = data[i];
           const g = data[i + 1];
           const b = data[i + 2];
           const a = data[i + 3];
 
-          // Ignore highly transparent pixels
+          // ignore highly transparent pixels
           if (a < 128) continue;
 
-          // Quantize the colors (bucket them into groups of 32 to find dominant areas)
+          // quantize the colors (bucket them into groups of 32 to find dominant areas)
           const qR = Math.round(r / 32) * 32;
           const qG = Math.round(g / 32) * 32;
           const qB = Math.round(b / 32) * 32;
 
-          // Convert to valid 0-255 range after rounding
+          // convert to valid 0-255 range after rounding
           const fR = Math.min(255, Math.max(0, qR));
           const fG = Math.min(255, Math.max(0, qG));
           const fB = Math.min(255, Math.max(0, qB));
@@ -137,13 +142,13 @@ export default function BrandingSetupPage() {
             "#" +
             [fR, fG, fB].map((x) => x.toString(16).padStart(2, "0")).join("");
 
-          // Try to skip pure white/black which are often just backgrounds
+          // try to skip pure white/black which are often just backgrounds
           if (hex !== "#ffffff" && hex !== "#000000") {
             colorCounts[hex] = (colorCounts[hex] || 0) + 1;
           }
         }
 
-        // Sort by frequency and get top 3
+        // sort by frequency and get top 3
         const sortedColors = Object.entries(colorCounts)
           .sort((a, b) => b[1] - a[1])
           .map(([hex]) => hex)
@@ -156,7 +161,7 @@ export default function BrandingSetupPage() {
           const c3 = sortedColors.length > 2 ? sortedColors[2] : null;
 
           if (c1 && c2 && c3) {
-            // Logo has 3 colors: generate permutations
+            // logo has 3 colors: generate permutations
             themes.push({
               primary: c1,
               secondary: chroma(c1).set("hsl.l", 0.95).hex(),
@@ -173,7 +178,7 @@ export default function BrandingSetupPage() {
               accent: c1,
             });
           } else if (c1 && c2) {
-            // Logo has 2 colors: generate theme variants based on these two
+            // logo has 2 colors: generate theme variants based on these two
             themes.push({
               primary: c1,
               secondary: chroma(c1).set("hsl.l", 0.95).hex(),
@@ -190,7 +195,7 @@ export default function BrandingSetupPage() {
               accent: chroma(c1).set("hsl.h", "+150").saturate(2).hex(),
             });
           } else {
-            // Logo has 1 color: generate monochromatic, analogous, and complementary themes
+            // logo has 1 color: generate monochromatic, analogous, and complementary themes
             themes.push({
               primary: c1,
               secondary: chroma(c1).set("hsl.l", 0.95).hex(),
@@ -294,30 +299,6 @@ export default function BrandingSetupPage() {
         throw new Error("Tenant context not found for current user.");
       }
 
-      // upload files (if any) to storage under tenant folder
-      const uploaded: Record<string, string> = {};
-      const uploads: Array<{ file?: File | null; key: string }> = [
-        { file: logoFile, key: "branding_logo_dashboard" },
-        { file: kioskFile, key: "branding_kiosk_splash" },
-        { file: faviconFile, key: "branding_favicon" },
-      ];
-
-      for (const item of uploads) {
-        if (item.file) {
-          const objectPath = `${tenantId}/${item.key}-${Date.now()}-${item.file.name}`;
-          const { error: uploadError } = await supabase.storage
-            .from("verification-docs")
-            .upload(objectPath, item.file, { upsert: true });
-          if (uploadError) throw uploadError;
-          const { data: publicUrlData } = supabase.storage
-            .from("verification-docs")
-            .getPublicUrl(objectPath);
-          if (publicUrlData?.publicUrl)
-            uploaded[item.key] = publicUrlData.publicUrl;
-        }
-      }
-
-      // post payload to server api to persist settings
       const customThemesToSave = customThemes.filter((customTheme) => {
         const matchesSuggested = suggestedThemes.some((suggestedTheme) =>
           isMatch(suggestedTheme, customTheme),
@@ -325,27 +306,34 @@ export default function BrandingSetupPage() {
         return !matchesSuggested || customTheme.id === activeThemeId;
       });
 
-      const payload = {
+      const formData = new FormData();
+      formData.set("primaryColor", theme.primary);
+      formData.set("secondaryColor", theme.secondary);
+      formData.set("accentColor", theme.accent);
+      formData.set("fontFamily", fontFamily);
+      formData.set("secondaryFont", secondaryFont);
+      formData.set("menuLayout", menuLayout);
+      formData.set("customThemes", JSON.stringify(customThemesToSave));
+
+      if (logoFile) {
+        formData.set("dashboardLogo", logoFile);
+      }
+      if (kioskFile) {
+        formData.set("kioskSplash", kioskFile);
+      }
+      if (faviconFile) {
+        formData.set("favicon", faviconFile);
+      }
+
+      const settingsState: SettingsActionState = emptySettingsActionState;
+      const result = await saveTenantBrandingSettings(
         tenantId,
-        primaryColor: theme.primary,
-        secondaryColor: theme.secondary,
-        accentColor: theme.accent,
-        fontFamily,
-        secondaryFont,
-        menuLayout,
-        customThemes: customThemesToSave,
-        uploaded,
-      };
+        settingsState,
+        formData,
+      );
 
-      const resp = await fetch("/api/branding/save", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (!resp.ok) {
-        const err = await resp.text();
-        throw new Error(err || "Failed to save branding settings.");
+      if (result.error) {
+        throw new Error(result.error);
       }
 
       setIsSaving(false);
@@ -353,7 +341,6 @@ export default function BrandingSetupPage() {
     } catch (err: any) {
       console.error(err);
       setIsSaving(false);
-      // eslint-disable-next-line no-alert
       alert(err?.message || "Unable to save branding.");
     }
   };
@@ -1083,7 +1070,14 @@ export default function BrandingSetupPage() {
             {/* app header */}
             <div className="bg-white px-6 pt-14 pb-4 shadow-sm z-10 flex justify-between items-center relative">
               <div>
-                <h4 className="font-bold text-xl text-gray-900">Your Menu</h4>
+                <h4
+                  className={cn(
+                    "font-bold text-xl text-gray-900",
+                    primaryFontClass,
+                  )}
+                >
+                  Your Menu
+                </h4>
                 <p
                   className={cn(
                     "text-xs text-gray-500 mt-0.5",
