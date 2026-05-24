@@ -100,7 +100,7 @@ export const FloatingOrderStatus = () => {
             initial={{ y: 50, opacity: 0, scale: 0.95 }}
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: 50, opacity: 0, scale: 0.95 }}
-            className="pointer-events-auto w-full max-w-md bg-white rounded-[32px] shadow-[0_20px_40px_rgb(0,0,0,0.15)] border border-gray-100 overflow-hidden font-figtree"
+            className="pointer-events-auto w-full max-w-md bg-white rounded-[32px] shadow-[0_20px_40px_rgb(0,0,0,0.15)] border border-gray-100 overflow-hidden font-brand-secondary"
           >
             {/* Header: Order & Total (Requested by User) */}
             <div className="bg-bg-primary p-6 pb-5 relative">
@@ -111,14 +111,14 @@ export const FloatingOrderStatus = () => {
                 <ChevronDown size={20} />
               </button>
               
-              <div className="flex items-end justify-between pr-8 mb-4">
+              <div className="flex items-end justify-between pr-8 mb-4 font-brand-secondary">
                 <div>
-                  <span className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1 block">Order Details</span>
-                  <h2 className="text-2xl font-black text-text-primary">#ORD-2847</h2>
+                  <span className="text-xs font-brand font-bold text-gray-500 uppercase tracking-widest mb-1 block">Order Details</span>
+                  <h2 className="text-2xl font-brand font-black text-text-primary">#ORD-2847</h2>
                 </div>
                 <div className="text-right">
-                  <span className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1 block">Total Paid</span>
-                  <span className="text-2xl font-black text-brand-accent">₱1,050.00</span>
+                  <span className="text-xs font-brand font-bold text-gray-500 uppercase tracking-widest mb-1 block">Total Paid</span>
+                  <span className="text-2xl font-brand font-black text-brand-accent">₱1,050.00</span>
                 </div>
               </div>
             </div>
@@ -146,8 +146,8 @@ export const FloatingOrderStatus = () => {
                     >
                       <ShoppingBag size={32} />
                     </motion.div>
-                    <h3 className="text-2xl font-black mb-1">It's Ready!</h3>
-                    <p className="text-white/90 text-sm">Please present your receipt at the counter.</p>
+                    <h3 className="text-2xl font-brand font-black mb-1">It's Ready!</h3>
+                    <p className="text-white/90 text-sm font-brand-secondary">Please present your receipt at the counter.</p>
                   </motion.div>
                 ) : (
                   // Horizontal StepperBar State
@@ -156,9 +156,9 @@ export const FloatingOrderStatus = () => {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="py-2"
+                    className="py-2 font-brand-secondary"
                   >
-                    <div className="flex items-center gap-2 mb-6 text-brand-accent bg-brand-accent/10 w-fit px-3 py-1 rounded-full text-xs font-bold">
+                    <div className="flex items-center gap-2 mb-6 text-brand-accent bg-brand-accent/10 w-fit px-3 py-1 rounded-full text-xs font-brand-secondary font-bold">
                       <Clock size={14} />
                       Est. Time: 12 min
                     </div>
