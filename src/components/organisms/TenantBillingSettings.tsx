@@ -1,12 +1,6 @@
 "use client";
 
-import React, {
-  useActionState,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   CheckCircle2,
   CreditCard,
@@ -33,6 +27,7 @@ import {
 } from "@/app/(tenant)/[id]/settings/actions";
 import {
   emptySettingsActionState,
+  type SettingsActionState,
   type TenantBillingSettingsData,
 } from "@/app/(tenant)/[id]/settings/types";
 
@@ -212,10 +207,37 @@ export const TenantBillingSettings = ({
     isDefault: true,
   });
 
-  const [paymentState, paymentAction, paymentPending] = useActionState(
-    saveTenantPaymentMethod.bind(null, tenantId),
+  const [paymentState, setPaymentState] = useState<SettingsActionState>(
     emptySettingsActionState,
   );
+  const [paymentPending, setPaymentPending] = useState(false);
+
+  const handlePaymentSubmit = async (
+    event: React.FormEvent<HTMLFormElement>,
+  ) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    setPaymentPending(true);
+
+    try {
+      const result = await saveTenantPaymentMethod(
+        tenantId,
+        paymentState,
+        formData,
+      );
+      setPaymentState(result);
+    } catch (error) {
+      setPaymentState({
+        ...emptySettingsActionState,
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to save payment method.",
+      });
+    } finally {
+      setPaymentPending(false);
+    }
+  };
 
   useEffect(() => {
     if (!paymentState.success) return;
@@ -662,7 +684,7 @@ export const TenantBillingSettings = ({
 
           {showPaymentForm && (
             <form
-              action={paymentAction}
+              onSubmit={handlePaymentSubmit}
               className="mt-4 p-5 rounded-2xl border border-gray-100 bg-white space-y-4"
             >
               <input type="hidden" name="methodId" value={formData.methodId} />

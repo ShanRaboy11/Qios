@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useActionState, useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Bell, Clock3, Save, ShieldAlert, TriangleAlert } from "lucide-react";
 import { Button } from "@/components/atoms/Button";
 import { Toggle } from "@/components/atoms/Toggle";
@@ -9,6 +9,7 @@ import { SectionHeader } from "@/components/molecules/SectionHeader";
 import { saveTenantNotificationSettings } from "@/app/(tenant)/[id]/settings/actions";
 import {
   emptySettingsActionState,
+  type SettingsActionState,
   type TenantNotificationSettingsData,
 } from "@/app/(tenant)/[id]/settings/types";
 
@@ -23,23 +24,14 @@ export const TenantNotificationSettings = ({
 }: TenantNotificationSettingsProps) => {
   const [formData, setFormData] = useState(initialData);
   const [showSuccess, setShowSuccess] = useState(false);
-  const wasPending = useRef(false);
-
-  const [state, formAction, isPending] = useActionState(
-    saveTenantNotificationSettings.bind(null, tenantId),
+  const [state, setState] = useState<SettingsActionState>(
     emptySettingsActionState,
   );
+  const [isPending, setIsPending] = useState(false);
 
   useEffect(() => {
     setFormData(initialData);
   }, [initialData]);
-
-  useEffect(() => {
-    if (wasPending.current && !isPending && state.success) {
-      setShowSuccess(true);
-    }
-    wasPending.current = isPending;
-  }, [isPending, state.success]);
 
   useEffect(() => {
     if (showSuccess) {
@@ -79,7 +71,34 @@ export const TenantNotificationSettings = ({
 
   return (
     <form
-      action={formAction}
+      onSubmit={async (event) => {
+        event.preventDefault();
+        const formData = new FormData(event.currentTarget);
+        setIsPending(true);
+
+        try {
+          const result = await saveTenantNotificationSettings(
+            tenantId,
+            state,
+            formData,
+          );
+          setState(result);
+
+          if (result.success) {
+            setShowSuccess(true);
+          }
+        } catch (error) {
+          setState({
+            ...emptySettingsActionState,
+            error:
+              error instanceof Error
+                ? error.message
+                : "Unable to save notification settings.",
+          });
+        } finally {
+          setIsPending(false);
+        }
+      }}
       className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 w-full"
     >
       <div>

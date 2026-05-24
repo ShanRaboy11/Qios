@@ -15,6 +15,7 @@ import {
   Smartphone,
   Menu,
   Sparkles,
+  Plus,
 } from "lucide-react";
 import { Button } from "@/components/atoms/Button";
 import { SectionHeader } from "@/components/molecules/SectionHeader";
@@ -24,11 +25,25 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export default function BrandingSetupPage() {
   const router = useRouter();
-  const [theme, setTheme] = useState({
-    primary: "#FFC670",
-    secondary: "#FFF9F0",
-    accent: "#F97316",
-  });
+  const presetThemes = [
+    { primary: "#FFC670", secondary: "#FFF9F0", accent: "#00FFFF" },
+    { primary: "#3B82F6", secondary: "#EFF6FF", accent: "#F59E0B" },
+    { primary: "#10B981", secondary: "#ECFDF5", accent: "#F43F5E" },
+    { primary: "#EF4444", secondary: "#FEF2F2", accent: "#3B82F6" },
+    { primary: "#8B5CF6", secondary: "#F5F3FF", accent: "#10B981" },
+    { primary: "#F97316", secondary: "#FFF7ED", accent: "#06B6D4" },
+  ];
+
+  const isMatch = (t1: any, t2: any) =>
+    t1.primary.toLowerCase() === t2.primary.toLowerCase() &&
+    t1.secondary.toLowerCase() === t2.secondary.toLowerCase() &&
+    t1.accent.toLowerCase() === t2.accent.toLowerCase();
+
+  const [theme, setTheme] = useState(presetThemes[0]);
+  const [customThemes, setCustomThemes] = useState<{ id: string; primary: string; secondary: string; accent: string }[]>([]);
+  const [activeThemeId, setActiveThemeId] = useState<string>("preset-0");
+
+  const isCustomSelected = activeThemeId.startsWith("custom-");
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [kioskFile, setKioskFile] = useState<File | null>(null);
   const [faviconFile, setFaviconFile] = useState<File | null>(null);
@@ -48,12 +63,9 @@ export default function BrandingSetupPage() {
   const faviconInputRef = useRef<HTMLInputElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
 
-  const handlePresetColor = (color: string) => {
-    setTheme({
-      primary: color,
-      secondary: chroma(color).set("hsl.l", 0.95).hex(),
-      accent: chroma(color).set("hsl.h", "+150").saturate(2).hex(),
-    });
+  const handleThemeSelection = (newTheme: any, sourceId: string) => {
+    setTheme(newTheme);
+    setActiveThemeId(sourceId);
   };
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -202,7 +214,11 @@ export default function BrandingSetupPage() {
           }
 
           setSuggestedThemes(themes);
-          setTheme(themes[0]);
+          // Auto-select the first suggested theme and add as custom theme
+          const newCustomId = `custom-${Date.now()}`;
+          const suggestedSelected = themes[0];
+          setCustomThemes(prev => [...prev, { id: newCustomId, ...suggestedSelected }]);
+          handleThemeSelection(suggestedSelected, newCustomId);
         }
       } catch (error) {
         console.error("Error extracting palette:", error);
@@ -210,14 +226,7 @@ export default function BrandingSetupPage() {
     }
   };
 
-  const presetColors = [
-    "#FFC670", // Qios default
-    "#3B82F6", // Blue
-    "#10B981", // Green
-    "#EF4444", // Red
-    "#8B5CF6", // Purple
-    "#F97316", // Orange
-  ];
+  const safeHex = (val: string) => (/^#[0-9A-Fa-f]{6}$/.test(val) ? val : "#000000");
 
   const fonts = [
     { id: "inter", name: "Inter", css: "font-sans", desc: "Modern & Clean" },
@@ -306,6 +315,7 @@ export default function BrandingSetupPage() {
         fontFamily,
         secondaryFont,
         menuLayout,
+        customThemes,
         uploaded,
       };
 
@@ -321,7 +331,7 @@ export default function BrandingSetupPage() {
       }
 
       setIsSaving(false);
-      router.push("/");
+      router.push(`/${tenantId}/home`);
     } catch (err: any) {
       console.error(err);
       setIsSaving(false);
@@ -368,51 +378,77 @@ export default function BrandingSetupPage() {
                   Quick Presets
                 </label>
                 <div className="flex flex-wrap items-center gap-3">
-                  {presetColors.map((color) => {
-                    const presetAccent = chroma(color)
-                      .set("hsl.h", "+150")
-                      .saturate(2)
-                      .hex();
-                    const isActive =
-                      theme.primary.toLowerCase() === color.toLowerCase();
+                  {presetThemes.map((preset, index) => {
+                    const id = `preset-${index}`;
+                    const isActive = activeThemeId === id;
                     return (
                       <button
-                        key={color}
-                        onClick={() => handlePresetColor(color)}
+                        key={id}
+                        type="button"
+                        onClick={() => handleThemeSelection(preset, id)}
                         className={cn(
                           "w-10 h-10 rounded-xl transition-all duration-200 shadow-sm relative overflow-hidden flex",
                           isActive
-                            ? "scale-[1.02] border-transparent"
-                            : "border-2 border-gray-200 hover:scale-105",
+                            ? "scale-110 border-transparent"
+                            : "border-2 border-gray-200 hover:scale-105"
                         )}
                         style={{
-                          boxShadow: isActive
-                            ? `0 0 0 2px white, 0 0 0 4px ${presetAccent}`
-                            : undefined,
+                          boxShadow: isActive ? `0 0 0 2px white, 0 0 0 4px ${safeHex(preset.accent)}` : undefined
                         }}
-                        title={`Preset ${color}`}
+                        title="Apply preset theme"
                       >
-                        <div
-                          className="w-1/2 h-full"
-                          style={{ backgroundColor: color }}
-                        />
+                        <div className="w-1/2 h-full" style={{ backgroundColor: safeHex(preset.primary) }} />
                         <div className="w-1/2 h-full flex flex-col">
-                          <div
-                            className="w-full h-1/2"
-                            style={{
-                              backgroundColor: chroma(color)
-                                .set("hsl.l", 0.95)
-                                .hex(),
-                            }}
-                          />
-                          <div
-                            className="w-full h-1/2"
-                            style={{ backgroundColor: presetAccent }}
-                          />
+                          <div className="w-full h-1/2" style={{ backgroundColor: safeHex(preset.secondary) }} />
+                          <div className="w-full h-1/2" style={{ backgroundColor: safeHex(preset.accent) }} />
                         </div>
                       </button>
                     );
                   })}
+                  {customThemes.map((custom) => {
+                    const isActive = activeThemeId === custom.id;
+                    const displayTheme = isActive ? theme : custom;
+                    return (
+                      <button
+                        key={custom.id}
+                        type="button"
+                        onClick={() => handleThemeSelection(custom, custom.id)}
+                        className={cn(
+                          "w-10 h-10 rounded-xl transition-all duration-200 shadow-sm relative overflow-hidden flex",
+                          isActive
+                            ? "scale-110 border-transparent"
+                            : "border-2 border-gray-200 hover:scale-105"
+                        )}
+                        style={{
+                          boxShadow: isActive ? `0 0 0 2px white, 0 0 0 4px ${safeHex(displayTheme.accent)}` : undefined
+                        }}
+                        title="Custom theme"
+                      >
+                        <div className="w-1/2 h-full" style={{ backgroundColor: safeHex(displayTheme.primary) }} />
+                        <div className="w-1/2 h-full flex flex-col">
+                          <div className="w-full h-1/2" style={{ backgroundColor: safeHex(displayTheme.secondary) }} />
+                          <div className="w-full h-1/2" style={{ backgroundColor: safeHex(displayTheme.accent) }} />
+                        </div>
+                      </button>
+                    );
+                  })}
+                  {/* custom theme plus button */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newId = `custom-${Date.now()}`;
+                      const newTheme = { primary: "#000000", secondary: "#000000", accent: "#000000" };
+                      setCustomThemes([...customThemes, { id: newId, ...newTheme }]);
+                      handleThemeSelection(newTheme, newId);
+                    }}
+                    className={cn(
+                      "w-10 h-10 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center transition-all duration-200",
+                      "hover:border-brand-primary hover:text-brand-primary text-gray-400 bg-gray-50"
+                    )}
+                    title="Add custom theme"
+                  >
+                    <Plus size={20} strokeWidth={2} />
+                  </button>
                 </div>
               </div>
 
@@ -421,35 +457,50 @@ export default function BrandingSetupPage() {
                 {/* Primary */}
                 <div className="space-y-2">
                   <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
-                    Primary
+                    Primary <span className="text-brand-accent">*</span>
                   </label>
-                  <div className="relative group border border-gray-200 rounded-xl p-2 flex items-center gap-3">
+                  <div className={cn(
+                    "relative group border rounded-xl p-2 flex items-center gap-3 transition-colors",
+                    !isCustomSelected && "opacity-70",
+                    isCustomSelected && "hover:border-brand-primary",
+                    "border-gray-200"
+                  )}>
                     <div
                       className="w-8 h-8 rounded-lg shadow-inner flex items-center justify-center overflow-hidden relative cursor-pointer"
-                      style={{ backgroundColor: theme.primary }}
+                      style={{ backgroundColor: safeHex(theme.primary) }}
                     >
                       <input
                         type="color"
-                        value={theme.primary}
-                        onChange={(e) =>
-                          setTheme((prev) => ({
-                            ...prev,
-                            primary: e.target.value,
-                          }))
-                        }
-                        className="absolute inset-0 opacity-0 cursor-pointer"
+                        value={safeHex(theme.primary)}
+                        onChange={(e) => {
+                          if (isCustomSelected) {
+                            const val = e.target.value.toUpperCase();
+                            const newTheme = { ...theme, primary: val };
+                            setTheme(newTheme);
+                            setCustomThemes(themes => themes.map(t => t.id === activeThemeId ? { ...t, primary: val } : t));
+                          }
+                        }}
+                        className={cn(
+                          "absolute inset-0 opacity-0",
+                          isCustomSelected ? "cursor-pointer" : "cursor-not-allowed"
+                        )}
+                        disabled={!isCustomSelected}
                       />
                     </div>
                     <input
                       type="text"
-                      value={theme.primary.toUpperCase()}
-                      onChange={(e) =>
-                        setTheme((prev) => ({
-                          ...prev,
-                          primary: e.target.value,
-                        }))
-                      }
+                      value={theme.primary}
+                      onChange={(e) => {
+                        if (isCustomSelected) {
+                          const val = e.target.value.toUpperCase();
+                          const newTheme = { ...theme, primary: val };
+                          setTheme(newTheme);
+                          setCustomThemes(themes => themes.map(t => t.id === activeThemeId ? { ...t, primary: val } : t));
+                        }
+                      }}
                       className="text-sm font-mono text-text-primary bg-transparent border-0 w-24 focus:outline-none"
+                      readOnly={!isCustomSelected}
+                      maxLength={7}
                     />
                   </div>
                 </div>
@@ -457,35 +508,50 @@ export default function BrandingSetupPage() {
                 {/* Secondary */}
                 <div className="space-y-2">
                   <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
-                    Secondary
+                    Secondary <span className="text-brand-accent">*</span>
                   </label>
-                  <div className="relative group border border-gray-200 rounded-xl p-2 flex items-center gap-3">
+                  <div className={cn(
+                    "relative group border rounded-xl p-2 flex items-center gap-3 transition-colors",
+                    !isCustomSelected && "opacity-70",
+                    isCustomSelected && "hover:border-brand-primary",
+                    "border-gray-200"
+                  )}>
                     <div
                       className="w-8 h-8 rounded-lg shadow-inner flex items-center justify-center overflow-hidden relative cursor-pointer"
-                      style={{ backgroundColor: theme.secondary }}
+                      style={{ backgroundColor: safeHex(theme.secondary) }}
                     >
                       <input
                         type="color"
-                        value={theme.secondary}
-                        onChange={(e) =>
-                          setTheme((prev) => ({
-                            ...prev,
-                            secondary: e.target.value,
-                          }))
-                        }
-                        className="absolute inset-0 opacity-0 cursor-pointer"
+                        value={safeHex(theme.secondary)}
+                        onChange={(e) => {
+                          if (isCustomSelected) {
+                            const val = e.target.value.toUpperCase();
+                            const newTheme = { ...theme, secondary: val };
+                            setTheme(newTheme);
+                            setCustomThemes(themes => themes.map(t => t.id === activeThemeId ? { ...t, secondary: val } : t));
+                          }
+                        }}
+                        className={cn(
+                          "absolute inset-0 opacity-0",
+                          isCustomSelected ? "cursor-pointer" : "cursor-not-allowed"
+                        )}
+                        disabled={!isCustomSelected}
                       />
                     </div>
                     <input
                       type="text"
-                      value={theme.secondary.toUpperCase()}
-                      onChange={(e) =>
-                        setTheme((prev) => ({
-                          ...prev,
-                          secondary: e.target.value,
-                        }))
-                      }
+                      value={theme.secondary}
+                      onChange={(e) => {
+                        if (isCustomSelected) {
+                          const val = e.target.value.toUpperCase();
+                          const newTheme = { ...theme, secondary: val };
+                          setTheme(newTheme);
+                          setCustomThemes(themes => themes.map(t => t.id === activeThemeId ? { ...t, secondary: val } : t));
+                        }
+                      }}
                       className="text-sm font-mono text-text-primary bg-transparent border-0 w-24 focus:outline-none"
+                      readOnly={!isCustomSelected}
+                      maxLength={7}
                     />
                   </div>
                 </div>
@@ -493,35 +559,50 @@ export default function BrandingSetupPage() {
                 {/* Accent */}
                 <div className="space-y-2">
                   <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
-                    Accent
+                    Accent <span className="text-brand-accent">*</span>
                   </label>
-                  <div className="relative group border border-gray-200 rounded-xl p-2 flex items-center gap-3">
+                  <div className={cn(
+                    "relative group border rounded-xl p-2 flex items-center gap-3 transition-colors",
+                    !isCustomSelected && "opacity-70",
+                    isCustomSelected && "hover:border-brand-primary",
+                    "border-gray-200"
+                  )}>
                     <div
                       className="w-8 h-8 rounded-lg shadow-inner flex items-center justify-center overflow-hidden relative cursor-pointer"
-                      style={{ backgroundColor: theme.accent }}
+                      style={{ backgroundColor: safeHex(theme.accent) }}
                     >
                       <input
                         type="color"
-                        value={theme.accent}
-                        onChange={(e) =>
-                          setTheme((prev) => ({
-                            ...prev,
-                            accent: e.target.value,
-                          }))
-                        }
-                        className="absolute inset-0 opacity-0 cursor-pointer"
+                        value={safeHex(theme.accent)}
+                        onChange={(e) => {
+                          if (isCustomSelected) {
+                            const val = e.target.value.toUpperCase();
+                            const newTheme = { ...theme, accent: val };
+                            setTheme(newTheme);
+                            setCustomThemes(themes => themes.map(t => t.id === activeThemeId ? { ...t, accent: val } : t));
+                          }
+                        }}
+                        className={cn(
+                          "absolute inset-0 opacity-0",
+                          isCustomSelected ? "cursor-pointer" : "cursor-not-allowed"
+                        )}
+                        disabled={!isCustomSelected}
                       />
                     </div>
                     <input
                       type="text"
-                      value={theme.accent.toUpperCase()}
-                      onChange={(e) =>
-                        setTheme((prev) => ({
-                          ...prev,
-                          accent: e.target.value,
-                        }))
-                      }
+                      value={theme.accent}
+                      onChange={(e) => {
+                        if (isCustomSelected) {
+                          const val = e.target.value.toUpperCase();
+                          const newTheme = { ...theme, accent: val };
+                          setTheme(newTheme);
+                          setCustomThemes(themes => themes.map(t => t.id === activeThemeId ? { ...t, accent: val } : t));
+                        }
+                      }}
                       className="text-sm font-mono text-text-primary bg-transparent border-0 w-24 focus:outline-none"
+                      readOnly={!isCustomSelected}
+                      maxLength={7}
                     />
                   </div>
                 </div>
@@ -535,36 +616,40 @@ export default function BrandingSetupPage() {
                     Suggested Themes from Logo
                   </label>
                   <div className="grid grid-cols-1 gap-3">
-                    {suggestedThemes.map((t, index) => (
+                    {suggestedThemes.map((t, index) => {
+                      const isActive = isMatch(t, theme);
+                      return (
                       <button
                         key={index}
-                        onClick={() => setTheme(t)}
+                        onClick={() => {
+                          const newCustomId = `custom-${Date.now()}`;
+                          setCustomThemes(prev => [...prev, { id: newCustomId, ...t }]);
+                          handleThemeSelection(t, newCustomId);
+                        }}
                         className={cn(
                           "w-full rounded-2xl border-2 p-3 flex items-center gap-3 transition-all",
-                          theme.primary === t.primary &&
-                            theme.secondary === t.secondary &&
-                            theme.accent === t.accent
-                            ? "border-text-primary bg-gray-50 scale-[1.02]"
+                          isActive
+                            ? "border-brand-primary bg-brand-primary/5 scale-[1.02]"
                             : "border-gray-100 hover:border-gray-200",
                         )}
                       >
                         <div
                           className="flex-1 h-10 rounded-lg shadow-sm"
-                          style={{ backgroundColor: t.primary }}
+                          style={{ backgroundColor: safeHex(t.primary) }}
                           title={`Primary: ${t.primary}`}
                         />
                         <div
                           className="flex-1 h-10 rounded-lg shadow-sm"
-                          style={{ backgroundColor: t.secondary }}
+                          style={{ backgroundColor: safeHex(t.secondary) }}
                           title={`Secondary: ${t.secondary}`}
                         />
                         <div
                           className="flex-1 h-10 rounded-lg shadow-sm"
-                          style={{ backgroundColor: t.accent }}
+                          style={{ backgroundColor: safeHex(t.accent) }}
                           title={`Accent: ${t.accent}`}
                         />
                       </button>
-                    ))}
+                    )})}
                   </div>
                   <p className="text-xs text-text-secondary mt-3">
                     Click a theme above to apply the extracted colors from your
@@ -583,7 +668,7 @@ export default function BrandingSetupPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                 <div>
                   <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
-                    Primary Font
+                    Primary Font <span className="text-brand-accent">*</span>
                   </label>
                   <div className="grid grid-cols-1 gap-3 mt-2">
                     {fonts.map((font) => (
@@ -593,7 +678,7 @@ export default function BrandingSetupPage() {
                         className={cn(
                           "p-3 rounded-2xl border-2 text-left transition-all flex items-center gap-3",
                           fontFamily === font.id
-                            ? "border-text-primary bg-gray-50"
+                            ? "border-brand-primary bg-brand-primary/5"
                             : "border-gray-100 hover:border-gray-200 bg-white",
                         )}
                       >
@@ -601,7 +686,7 @@ export default function BrandingSetupPage() {
                           size={18}
                           className={
                             fontFamily === font.id
-                              ? "text-text-primary"
+                              ? "text-brand-primary"
                               : "text-text-secondary"
                           }
                         />
@@ -620,7 +705,7 @@ export default function BrandingSetupPage() {
 
                 <div>
                   <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
-                    Secondary Font
+                    Secondary Font <span className="text-brand-accent">*</span>
                   </label>
                   <div className="grid grid-cols-1 gap-3 mt-2">
                     {fonts.map((font) => (
@@ -630,7 +715,7 @@ export default function BrandingSetupPage() {
                         className={cn(
                           "p-3 rounded-2xl border-2 text-left transition-all flex items-center gap-3",
                           secondaryFont === font.id
-                            ? "border-text-primary bg-gray-50"
+                            ? "border-brand-primary bg-brand-primary/5"
                             : "border-gray-100 hover:border-gray-200 bg-white",
                         )}
                       >
@@ -638,7 +723,7 @@ export default function BrandingSetupPage() {
                           size={18}
                           className={
                             secondaryFont === font.id
-                              ? "text-text-primary"
+                              ? "text-brand-primary"
                               : "text-text-secondary"
                           }
                         />
@@ -663,6 +748,9 @@ export default function BrandingSetupPage() {
                 title="Menu Layout"
                 className="mb-0 py-2 border-gray-100"
               />
+              <label className="text-sm font-medium text-text-primary block mb-3">
+                Layout Style <span className="text-brand-accent">*</span>
+              </label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                 {layouts.map((layout) => {
                   const Icon = layout.icon;
@@ -673,7 +761,7 @@ export default function BrandingSetupPage() {
                       className={cn(
                         "p-5 rounded-2xl border-2 text-left transition-all flex items-start gap-4",
                         menuLayout === layout.id
-                          ? "border-text-primary bg-gray-50"
+                          ? "border-brand-primary bg-brand-primary/5"
                           : "border-gray-100 hover:border-gray-200 bg-white",
                       )}
                     >
@@ -681,14 +769,9 @@ export default function BrandingSetupPage() {
                         className={cn(
                           "p-3 rounded-xl transition-colors",
                           menuLayout === layout.id
-                            ? "text-white"
+                            ? "text-white bg-brand-primary"
                             : "bg-gray-100 text-text-secondary",
                         )}
-                        style={
-                          menuLayout === layout.id
-                            ? { backgroundColor: theme.primary }
-                            : {}
-                        }
                       >
                         <Icon size={24} />
                       </div>
@@ -706,16 +789,15 @@ export default function BrandingSetupPage() {
               </div>
             </div>
 
-            {/* Logos & Media */}
             <div className="space-y-4">
               <SectionHeader
                 title="Logos & Media"
                 className="mb-0 py-2 border-gray-100"
               />
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
                 <div className="space-y-3">
                   <label className="text-sm font-medium text-text-primary block">
-                    Dashboard & Receipt Logo
+                    Dashboard & Receipt Logo <span className="text-brand-accent">*</span>
                   </label>
                   <div
                     onClick={() => fileInputRef.current?.click()}
@@ -734,7 +816,7 @@ export default function BrandingSetupPage() {
                         alt="Logo preview"
                         ref={imageRef}
                         onLoad={extractColors}
-                        className="w-full h-full object-contain"
+                        className="w-full h-full object-contain p-2"
                       />
                     ) : (
                       <>
@@ -752,51 +834,14 @@ export default function BrandingSetupPage() {
                     )}
                   </div>
                 </div>
-                <div className="space-y-3">
-                  <label className="text-sm font-medium text-text-primary block">
-                    Kiosk Splash Screen
-                  </label>
-                  <div
-                    onClick={() => kioskInputRef.current?.click()}
-                    className="border-2 border-dashed border-gray-200 rounded-2xl p-6 flex flex-col items-center justify-center bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer group h-40 relative overflow-hidden"
-                  >
-                    <input
-                      type="file"
-                      accept="image/*"
-                      ref={kioskInputRef}
-                      onChange={handleKioskUpload}
-                      className="hidden"
-                    />
-                    {kioskUrl ? (
-                      <img
-                        src={kioskUrl}
-                        alt="Splash preview"
-                        className="w-full h-full object-contain"
-                      />
-                    ) : (
-                      <>
-                        <ImageIcon
-                          size={24}
-                          className="text-gray-400 mb-3 group-hover:text-text-primary transition-colors"
-                        />
-                        <span className="text-sm font-medium text-text-primary">
-                          Upload Splash
-                        </span>
-                        <span className="text-xs text-text-secondary mt-1">
-                          PNG, JPG
-                        </span>
-                      </>
-                    )}
-                  </div>
-                </div>
 
                 <div className="space-y-3">
                   <label className="text-sm font-medium text-text-primary block">
-                    Favicon
+                    Favicon <span className="text-brand-accent">*</span>
                   </label>
                   <div
                     onClick={() => faviconInputRef.current?.click()}
-                    className="border-2 border-dashed border-gray-200 rounded-2xl p-6 flex flex-col items-center justify-center bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer group h-40"
+                    className="border-2 border-dashed border-gray-200 rounded-2xl p-6 flex flex-col items-center justify-center bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer group h-40 relative overflow-hidden"
                   >
                     <input
                       type="file"
@@ -819,6 +864,44 @@ export default function BrandingSetupPage() {
                         </span>
                         <span className="text-xs text-text-secondary mt-1">
                           32x32
+                        </span>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-3 col-span-1 md:col-span-2">
+                  <label className="text-sm font-medium text-text-primary block">
+                    Kiosk Splash Screen <span className="text-brand-accent">*</span>
+                  </label>
+                  <div
+                    onClick={() => kioskInputRef.current?.click()}
+                    className="border-2 border-dashed border-gray-200 rounded-2xl p-6 flex flex-col items-center justify-center bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer group h-40 relative overflow-hidden"
+                  >
+                    <input
+                      type="file"
+                      accept="image/*"
+                      ref={kioskInputRef}
+                      onChange={handleKioskUpload}
+                      className="hidden"
+                    />
+                    {kioskUrl ? (
+                      <img
+                        src={kioskUrl}
+                        alt="Splash preview"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <>
+                        <ImageIcon
+                          size={24}
+                          className="text-gray-400 mb-3 group-hover:text-text-primary transition-colors"
+                        />
+                        <span className="text-sm font-medium text-text-primary">
+                          Upload Splash
+                        </span>
+                        <span className="text-xs text-text-secondary mt-1">
+                          PNG, JPG
                         </span>
                       </>
                     )}
@@ -889,16 +972,16 @@ export default function BrandingSetupPage() {
             {/* App Body */}
             <div className="flex-1 overflow-y-auto bg-gray-50 p-6 space-y-8 no-scrollbar pb-32">
               {/* Category Pills */}
-              <div className="flex gap-3 overflow-x-hidden -mx-2 px-2 pb-2">
+              <div className="flex gap-3 overflow-x-hidden -mx-2 px-2 pb-2 font-sans">
                 <div
                   className="px-5 py-2.5 rounded-full text-white text-sm font-semibold shadow-sm transition-colors duration-300 whitespace-nowrap"
-                  style={{ backgroundColor: theme.primary }}
+                  style={{ backgroundColor: safeHex(theme.primary) }}
                 >
                   Popular
                 </div>
                 <div
                   className="px-5 py-2.5 rounded-full text-gray-800 text-sm font-semibold shadow-sm border border-gray-100 whitespace-nowrap transition-colors"
-                  style={{ backgroundColor: theme.secondary }}
+                  style={{ backgroundColor: safeHex(theme.secondary) }}
                 >
                   Mains
                 </div>
@@ -945,8 +1028,8 @@ export default function BrandingSetupPage() {
                       <div className="flex items-center justify-between mt-auto pt-2">
                         <span className="font-bold text-gray-900">$12.99</span>
                         <div
-                          className="w-8 h-8 rounded-full flex items-center justify-center text-white transition-colors duration-300 shadow-sm"
-                          style={{ backgroundColor: theme.accent }}
+                          className="w-8 h-8 rounded-full flex items-center justify-center text-white transition-colors duration-300 shadow-sm font-sans"
+                          style={{ backgroundColor: safeHex(theme.accent) }}
                         >
                           +
                         </div>
@@ -960,13 +1043,13 @@ export default function BrandingSetupPage() {
             {/* App Footer / Cart */}
             <div className="absolute bottom-0 left-0 right-0 bg-white p-5 border-t border-gray-100 shadow-[0_-20px_40px_-15px_rgba(0,0,0,0.05)] z-20">
               <button
-                className="w-full py-4 rounded-2xl flex items-center justify-between px-6 text-white font-bold transition-colors duration-300 shadow-lg"
-                style={{ backgroundColor: theme.primary }}
+                className="w-full py-4 rounded-2xl flex items-center justify-between px-6 text-white font-bold transition-colors duration-300 shadow-lg font-sans"
+                style={{ backgroundColor: safeHex(theme.primary) }}
               >
                 <div className="flex items-center gap-3">
                   <div
                     className="bg-white w-7 h-7 rounded-full flex items-center justify-center text-sm"
-                    style={{ color: theme.primary }}
+                    style={{ color: safeHex(theme.primary) }}
                   >
                     2
                   </div>

@@ -331,7 +331,8 @@ export async function getTenantSettings(
 
   const currentPlan = matchedPlan ?? availablePlans[0] ?? null;
 
-  const { data: paymentMethodRows } = await admin
+  let paymentMethodRows: any[] = [];
+  const pmRes = await admin
     .from("tenant_payment_methods")
     .select(
       "id, provider, display_name, last4, exp_month, exp_year, cardholder_name, is_default, created_at",
@@ -339,6 +340,12 @@ export async function getTenantSettings(
     .eq("tenant_id", tenantId)
     .order("is_default", { ascending: false })
     .order("created_at", { ascending: false });
+    
+  if (pmRes.error) {
+    console.error("Schema cache error (tenant_payment_methods):", pmRes.error.message);
+  } else if (pmRes.data) {
+    paymentMethodRows = pmRes.data;
+  }
 
   const paymentMethods: TenantPaymentMethodData[] = (
     paymentMethodRows ?? []
@@ -354,13 +361,20 @@ export async function getTenantSettings(
     addedAt: toText(method.created_at),
   }));
 
-  const { data: billingHistoryRows } = await admin
+  let billingHistoryRows: any[] = [];
+  const bhRes = await admin
     .from("tenant_billing_history")
     .select(
       "id, invoice_number, description, amount, currency, status, billing_date, invoice_url",
     )
     .eq("tenant_id", tenantId)
     .order("billing_date", { ascending: false });
+    
+  if (bhRes.error) {
+    console.error("Schema cache error (tenant_billing_history):", bhRes.error.message);
+  } else if (bhRes.data) {
+    billingHistoryRows = bhRes.data;
+  }
 
   const billingHistory: TenantBillingHistoryData[] = (
     billingHistoryRows ?? []

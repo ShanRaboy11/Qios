@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useActionState, useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   CheckCircle2,
   Laptop,
@@ -45,6 +45,7 @@ import {
 } from "@/app/(tenant)/[id]/settings/actions";
 import {
   emptySettingsActionState,
+  type SettingsActionState,
   type TenantSecuritySettingsData,
 } from "@/app/(tenant)/[id]/settings/types";
 
@@ -300,10 +301,10 @@ export const TenantSecuritySettings = ({
   );
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [loggingOutSessions, setLoggingOutSessions] = useState(false);
-  const [passwordState, passwordAction, passwordPending] = useActionState(
-    updateTenantPassword.bind(null, tenantId),
+  const [passwordState, setPasswordState] = useState<SettingsActionState>(
     emptySettingsActionState,
   );
+  const [passwordPending, setPasswordPending] = useState(false);
 
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const router = useRouter();
@@ -640,7 +641,30 @@ export const TenantSecuritySettings = ({
               className="mb-0 py-2 border-gray-100"
             />
             <form
-              action={passwordAction}
+              onSubmit={async (event) => {
+                event.preventDefault();
+                const formData = new FormData(event.currentTarget);
+                setPasswordPending(true);
+
+                try {
+                  const result = await updateTenantPassword(
+                    tenantId,
+                    passwordState,
+                    formData,
+                  );
+                  setPasswordState(result);
+                } catch (error) {
+                  setPasswordState({
+                    ...emptySettingsActionState,
+                    error:
+                      error instanceof Error
+                        ? error.message
+                        : "Unable to update password.",
+                  });
+                } finally {
+                  setPasswordPending(false);
+                }
+              }}
               className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2"
             >
               {passwordState.success && (

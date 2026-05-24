@@ -1,4 +1,4 @@
-import React, { useActionState, useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import chroma from "chroma-js";
 import {
   Save,
@@ -19,9 +19,13 @@ import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
 import { SectionHeader } from "@/components/molecules/SectionHeader";
 import { cn } from "@/lib/utils";
-import { saveTenantBrandingSettings, saveTenantCustomThemes } from "@/app/(tenant)/[id]/settings/actions";
+import {
+  saveTenantBrandingSettings,
+  saveTenantCustomThemes,
+} from "@/app/(tenant)/[id]/settings/actions";
 import {
   emptySettingsActionState,
+  type SettingsActionState,
   type TenantBrandingSettingsData,
 } from "@/app/(tenant)/[id]/settings/types";
 
@@ -30,7 +34,8 @@ interface TenantBrandingSettingsProps {
   initialData: TenantBrandingSettingsData;
 }
 
-const safeHex = (val: string) => (/^#[0-9A-Fa-f]{6}$/.test(val) ? val : "#000000");
+const safeHex = (val: string) =>
+  /^#[0-9A-Fa-f]{6}$/.test(val) ? val : "#000000";
 
 export const TenantBrandingSettings = ({
   tenantId,
@@ -50,10 +55,12 @@ export const TenantBrandingSettings = ({
     t1.secondary.toLowerCase() === t2.secondary.toLowerCase() &&
     t1.accent.toLowerCase() === t2.accent.toLowerCase();
 
-  const [customThemes, setCustomThemes] = useState<{ id: string; primary: string; secondary: string; accent: string }[]>(() => {
+  const [customThemes, setCustomThemes] = useState<
+    { id: string; primary: string; secondary: string; accent: string }[]
+  >(() => {
     // start with any themes from the database
     let themes = initialData.customThemes ? [...initialData.customThemes] : [];
-    
+
     // if the currently saved theme in the db doesn't match any preset and isn't already in customthemes,
     // we inject it as a "draft" custom theme
     const initTheme = {
@@ -77,12 +84,14 @@ export const TenantBrandingSettings = ({
     };
     const presetIndex = presetThemes.findIndex((p) => isMatch(p, initTheme));
     if (presetIndex !== -1) return `preset-${presetIndex}`;
-    
+
     // check if it matches any custom theme
-    const customMatch = customThemes.find(t => isMatch(t, initTheme));
+    const customMatch = customThemes.find((t) => isMatch(t, initTheme));
     if (customMatch) return customMatch.id;
-    
-    return customThemes.length > 0 ? customThemes[customThemes.length - 1].id : "custom-0";
+
+    return customThemes.length > 0
+      ? customThemes[customThemes.length - 1].id
+      : "custom-0";
   });
 
   const [theme, setTheme] = useState({
@@ -93,35 +102,52 @@ export const TenantBrandingSettings = ({
 
   const isCustomSelected = activeThemeId.startsWith("custom-");
 
-  const [fontFamily, setFontFamily] = useState(initialData.fontFamily || "inter");
-  const [secondaryFont, setSecondaryFont] = useState(initialData.secondaryFont || "inter");
-  const [menuLayout, setMenuLayout] = useState(initialData.menuLayout || "grid");
-  
-  const [qiosSubdomain, setQiosSubdomain] = useState(initialData.qiosSubdomain || "");
-  const [customDomain, setCustomDomain] = useState(initialData.customDomain || "");
-  const [instagramUrl, setInstagramUrl] = useState(initialData.instagramUrl || "");
+  const [fontFamily, setFontFamily] = useState(
+    initialData.fontFamily || "inter",
+  );
+  const [secondaryFont, setSecondaryFont] = useState(
+    initialData.secondaryFont || "inter",
+  );
+  const [menuLayout, setMenuLayout] = useState(
+    initialData.menuLayout || "grid",
+  );
+
+  const [qiosSubdomain, setQiosSubdomain] = useState(
+    initialData.qiosSubdomain || "",
+  );
+  const [customDomain, setCustomDomain] = useState(
+    initialData.customDomain || "",
+  );
+  const [instagramUrl, setInstagramUrl] = useState(
+    initialData.instagramUrl || "",
+  );
   const [facebookUrl, setFacebookUrl] = useState(initialData.facebookUrl || "");
   const [tiktokUrl, setTiktokUrl] = useState(initialData.tiktokUrl || "");
 
-  const [dashboardLogoPreview, setDashboardLogoPreview] = useState<string | null>(initialData.dashboardLogoUrl || null);
-  const [kioskSplashPreview, setKioskSplashPreview] = useState<string | null>(initialData.kioskSplashUrl || null);
-  const [faviconPreview, setFaviconPreview] = useState<string | null>(initialData.faviconUrl || null);
+  const [dashboardLogoPreview, setDashboardLogoPreview] = useState<
+    string | null
+  >(initialData.dashboardLogoUrl || null);
+  const [kioskSplashPreview, setKioskSplashPreview] = useState<string | null>(
+    initialData.kioskSplashUrl || null,
+  );
+  const [faviconPreview, setFaviconPreview] = useState<string | null>(
+    initialData.faviconUrl || null,
+  );
 
   const [isEditing, setIsEditing] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-  const wasPending = useRef(false);
   const formRef = useRef<HTMLFormElement>(null);
   const [isConnecting, setIsConnecting] = useState(false);
 
-  const [state, formAction, isPending] = useActionState(
-    saveTenantBrandingSettings.bind(null, tenantId),
+  const [state, setState] = useState<SettingsActionState>(
     emptySettingsActionState,
   );
+  const [isPending, setIsPending] = useState(false);
 
   useEffect(() => {
     if (isEditing) return; // prevent resetting while editing (e.g. after saving custom themes)
-    
+
     const initTheme = {
       primary: initialData.primaryColor || "#FFC670",
       secondary: initialData.secondaryColor || "#FFF9F0",
@@ -133,14 +159,16 @@ export const TenantBrandingSettings = ({
       setActiveThemeId(`preset-${presetIndex}`);
     } else {
       let activeCustomId = "custom-0";
-      const customMatch = (initialData.customThemes || []).find(t => isMatch(t, initTheme));
+      const customMatch = (initialData.customThemes || []).find((t) =>
+        isMatch(t, initTheme),
+      );
       if (customMatch) {
         activeCustomId = customMatch.id;
       } else {
         const fallbackId = `custom-${Date.now()}`;
-        setCustomThemes(prev => {
-          if (!prev.some(t => isMatch(t, initTheme))) {
-             return [...prev, { id: fallbackId, ...initTheme }];
+        setCustomThemes((prev) => {
+          if (!prev.some((t) => isMatch(t, initTheme))) {
+            return [...prev, { id: fallbackId, ...initTheme }];
           }
           return prev;
         });
@@ -171,16 +199,6 @@ export const TenantBrandingSettings = ({
   }, [state.fieldErrors]);
 
   useEffect(() => {
-    if (wasPending.current && !isPending) {
-      if (state.success) {
-        setIsEditing(false);
-        setShowSuccess(true);
-      }
-    }
-    wasPending.current = isPending;
-  }, [isPending, state.success]);
-
-  useEffect(() => {
     if (showSuccess) {
       const timer = setTimeout(() => {
         setShowSuccess(false);
@@ -188,8 +206,6 @@ export const TenantBrandingSettings = ({
       return () => clearTimeout(timer);
     }
   }, [showSuccess]);
-
-
 
   const fonts = [
     { id: "inter", name: "Inter", desc: "Modern & Clean" },
@@ -212,7 +228,8 @@ export const TenantBrandingSettings = ({
     },
   ];
 
-  const handleClientSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleClientSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     let hasError = false;
     const newErrors: Record<string, string> = {};
 
@@ -222,8 +239,39 @@ export const TenantBrandingSettings = ({
     }
 
     if (hasError) {
-      e.preventDefault();
       setFieldErrors((prev) => ({ ...prev, ...newErrors }));
+      return;
+    }
+
+    const formData = new FormData(e.currentTarget);
+    setIsPending(true);
+
+    try {
+      const result = await saveTenantBrandingSettings(
+        tenantId,
+        state,
+        formData,
+      );
+      setState(result);
+
+      if (result.fieldErrors) {
+        setFieldErrors(result.fieldErrors);
+      }
+
+      if (result.success) {
+        setIsEditing(false);
+        setShowSuccess(true);
+      }
+    } catch (error) {
+      setState({
+        ...emptySettingsActionState,
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to save branding settings.",
+      });
+    } finally {
+      setIsPending(false);
     }
   };
 
@@ -232,11 +280,11 @@ export const TenantBrandingSettings = ({
     setIsConnecting(true);
     await new Promise((resolve) => setTimeout(resolve, 1500));
     setIsConnecting(false);
-    
+
     if (formRef.current) {
       formRef.current.requestSubmit();
     }
-    
+
     window.open(`https://${customDomain}`, "_blank");
   };
 
@@ -252,7 +300,11 @@ export const TenantBrandingSettings = ({
         </p>
       </div>
 
-      <form ref={formRef} action={formAction} onSubmit={handleClientSubmit} className="space-y-8 w-full">
+      <form
+        ref={formRef}
+        onSubmit={handleClientSubmit}
+        className="space-y-8 w-full"
+      >
         {showSuccess && state.success && (
           <div className="mb-6 w-full">
             <div className="flex items-center gap-2 w-full text-green-700 bg-green-50 border border-green-100 rounded-xl px-4 py-3">
@@ -285,25 +337,41 @@ export const TenantBrandingSettings = ({
                       if (isEditing) {
                         setActiveThemeId(id);
                         setTheme(preset);
-                        setFieldErrors((prev) => ({ ...prev, primaryColor: "", secondaryColor: "", accentColor: "" }));
+                        setFieldErrors((prev) => ({
+                          ...prev,
+                          primaryColor: "",
+                          secondaryColor: "",
+                          accentColor: "",
+                        }));
                       }
                     }}
                     className={cn(
                       "w-10 h-10 rounded-xl transition-all duration-200 shadow-sm relative overflow-hidden flex",
                       isActive
                         ? "scale-110 border-transparent"
-                        : "border-2 border-gray-200 hover:scale-105"
+                        : "border-2 border-gray-200 hover:scale-105",
                     )}
                     style={{
-                      boxShadow: isActive ? `0 0 0 2px white, 0 0 0 4px ${safeHex(preset.accent)}` : undefined
+                      boxShadow: isActive
+                        ? `0 0 0 2px white, 0 0 0 4px ${safeHex(preset.accent)}`
+                        : undefined,
                     }}
                     title="Apply preset theme"
                     disabled={!isEditing}
                   >
-                    <div className="w-1/2 h-full" style={{ backgroundColor: safeHex(preset.primary) }} />
+                    <div
+                      className="w-1/2 h-full"
+                      style={{ backgroundColor: safeHex(preset.primary) }}
+                    />
                     <div className="w-1/2 h-full flex flex-col">
-                      <div className="w-full h-1/2" style={{ backgroundColor: safeHex(preset.secondary) }} />
-                      <div className="w-full h-1/2" style={{ backgroundColor: safeHex(preset.accent) }} />
+                      <div
+                        className="w-full h-1/2"
+                        style={{ backgroundColor: safeHex(preset.secondary) }}
+                      />
+                      <div
+                        className="w-full h-1/2"
+                        style={{ backgroundColor: safeHex(preset.accent) }}
+                      />
                     </div>
                   </button>
                 );
@@ -319,25 +387,45 @@ export const TenantBrandingSettings = ({
                       if (isEditing) {
                         setActiveThemeId(custom.id);
                         setTheme(custom);
-                        setFieldErrors((prev) => ({ ...prev, primaryColor: "", secondaryColor: "", accentColor: "" }));
+                        setFieldErrors((prev) => ({
+                          ...prev,
+                          primaryColor: "",
+                          secondaryColor: "",
+                          accentColor: "",
+                        }));
                       }
                     }}
                     className={cn(
                       "w-10 h-10 rounded-xl transition-all duration-200 shadow-sm relative overflow-hidden flex",
                       isActive
                         ? "scale-110 border-transparent"
-                        : "border-2 border-gray-200 hover:scale-105"
+                        : "border-2 border-gray-200 hover:scale-105",
                     )}
                     style={{
-                      boxShadow: isActive ? `0 0 0 2px white, 0 0 0 4px ${safeHex(displayTheme.accent)}` : undefined
+                      boxShadow: isActive
+                        ? `0 0 0 2px white, 0 0 0 4px ${safeHex(displayTheme.accent)}`
+                        : undefined,
                     }}
                     title="Custom theme"
                     disabled={!isEditing}
                   >
-                    <div className="w-1/2 h-full" style={{ backgroundColor: safeHex(displayTheme.primary) }} />
+                    <div
+                      className="w-1/2 h-full"
+                      style={{ backgroundColor: safeHex(displayTheme.primary) }}
+                    />
                     <div className="w-1/2 h-full flex flex-col">
-                      <div className="w-full h-1/2" style={{ backgroundColor: safeHex(displayTheme.secondary) }} />
-                      <div className="w-full h-1/2" style={{ backgroundColor: safeHex(displayTheme.accent) }} />
+                      <div
+                        className="w-full h-1/2"
+                        style={{
+                          backgroundColor: safeHex(displayTheme.secondary),
+                        }}
+                      />
+                      <div
+                        className="w-full h-1/2"
+                        style={{
+                          backgroundColor: safeHex(displayTheme.accent),
+                        }}
+                      />
                     </div>
                   </button>
                 );
@@ -348,17 +436,29 @@ export const TenantBrandingSettings = ({
                 onClick={() => {
                   if (isEditing) {
                     const newId = `custom-${Date.now()}`;
-                    const newTheme = { primary: "#000000", secondary: "#000000", accent: "#000000" };
-                    setCustomThemes([...customThemes, { id: newId, ...newTheme }]);
+                    const newTheme = {
+                      primary: "#000000",
+                      secondary: "#000000",
+                      accent: "#000000",
+                    };
+                    setCustomThemes([
+                      ...customThemes,
+                      { id: newId, ...newTheme },
+                    ]);
                     setActiveThemeId(newId);
                     setTheme(newTheme);
-                    setFieldErrors(prev => ({ ...prev, primaryColor: "", secondaryColor: "", accentColor: "" }));
+                    setFieldErrors((prev) => ({
+                      ...prev,
+                      primaryColor: "",
+                      secondaryColor: "",
+                      accentColor: "",
+                    }));
                   }
                 }}
                 className={cn(
                   "w-10 h-10 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center transition-all duration-200",
                   "hover:border-brand-primary hover:text-brand-primary text-gray-400 bg-gray-50",
-                  !isEditing && "opacity-70 cursor-not-allowed"
+                  !isEditing && "opacity-70 cursor-not-allowed",
                 )}
                 disabled={!isEditing}
                 title="Add custom theme"
@@ -373,12 +473,16 @@ export const TenantBrandingSettings = ({
               <label className="text-sm font-medium text-text-primary block mb-1">
                 Primary Color <span className="text-brand-accent">*</span>
               </label>
-              <div className={cn(
-                "relative border rounded-xl p-2 flex items-center gap-3 transition-colors",
-                (!isEditing || !isCustomSelected) && "opacity-70",
-                (isEditing && isCustomSelected) && "hover:border-brand-primary",
-                fieldErrors.primaryColor ? "border-warning-primary" : "border-gray-200"
-              )}>
+              <div
+                className={cn(
+                  "relative border rounded-xl p-2 flex items-center gap-3 transition-colors",
+                  (!isEditing || !isCustomSelected) && "opacity-70",
+                  isEditing && isCustomSelected && "hover:border-brand-primary",
+                  fieldErrors.primaryColor
+                    ? "border-warning-primary"
+                    : "border-gray-200",
+                )}
+              >
                 <div
                   className="w-8 h-8 shrink-0 rounded-md shadow-inner flex items-center justify-center overflow-hidden relative"
                   style={{ backgroundColor: safeHex(theme.primary) }}
@@ -391,13 +495,22 @@ export const TenantBrandingSettings = ({
                         const val = e.target.value.toUpperCase();
                         const newTheme = { ...theme, primary: val };
                         setTheme(newTheme);
-                        setCustomThemes(themes => themes.map(t => t.id === activeThemeId ? { ...t, primary: val } : t));
-                        setFieldErrors((prev) => ({ ...prev, primaryColor: "" }));
+                        setCustomThemes((themes) =>
+                          themes.map((t) =>
+                            t.id === activeThemeId ? { ...t, primary: val } : t,
+                          ),
+                        );
+                        setFieldErrors((prev) => ({
+                          ...prev,
+                          primaryColor: "",
+                        }));
                       }
                     }}
                     className={cn(
                       "absolute inset-0 opacity-0",
-                      (isEditing && isCustomSelected) ? "cursor-pointer" : "cursor-not-allowed"
+                      isEditing && isCustomSelected
+                        ? "cursor-pointer"
+                        : "cursor-not-allowed",
                     )}
                     disabled={!isEditing || !isCustomSelected}
                   />
@@ -411,7 +524,11 @@ export const TenantBrandingSettings = ({
                       const val = e.target.value.toUpperCase();
                       const newTheme = { ...theme, primary: val };
                       setTheme(newTheme);
-                      setCustomThemes(themes => themes.map(t => t.id === activeThemeId ? { ...t, primary: val } : t));
+                      setCustomThemes((themes) =>
+                        themes.map((t) =>
+                          t.id === activeThemeId ? { ...t, primary: val } : t,
+                        ),
+                      );
                       setFieldErrors((prev) => ({ ...prev, primaryColor: "" }));
                     }
                   }}
@@ -432,12 +549,16 @@ export const TenantBrandingSettings = ({
               <label className="text-sm font-medium text-text-primary block mb-1">
                 Secondary Color <span className="text-brand-accent">*</span>
               </label>
-              <div className={cn(
-                "relative border rounded-xl p-2 flex items-center gap-3 transition-colors",
-                (!isEditing || !isCustomSelected) && "opacity-70",
-                (isEditing && isCustomSelected) && "hover:border-brand-primary",
-                fieldErrors.secondaryColor ? "border-warning-primary" : "border-gray-200"
-              )}>
+              <div
+                className={cn(
+                  "relative border rounded-xl p-2 flex items-center gap-3 transition-colors",
+                  (!isEditing || !isCustomSelected) && "opacity-70",
+                  isEditing && isCustomSelected && "hover:border-brand-primary",
+                  fieldErrors.secondaryColor
+                    ? "border-warning-primary"
+                    : "border-gray-200",
+                )}
+              >
                 <div
                   className="w-8 h-8 shrink-0 rounded-md shadow-inner flex items-center justify-center overflow-hidden relative"
                   style={{ backgroundColor: safeHex(theme.secondary) }}
@@ -450,13 +571,24 @@ export const TenantBrandingSettings = ({
                         const val = e.target.value.toUpperCase();
                         const newTheme = { ...theme, secondary: val };
                         setTheme(newTheme);
-                        setCustomThemes(themes => themes.map(t => t.id === activeThemeId ? { ...t, secondary: val } : t));
-                        setFieldErrors((prev) => ({ ...prev, secondaryColor: "" }));
+                        setCustomThemes((themes) =>
+                          themes.map((t) =>
+                            t.id === activeThemeId
+                              ? { ...t, secondary: val }
+                              : t,
+                          ),
+                        );
+                        setFieldErrors((prev) => ({
+                          ...prev,
+                          secondaryColor: "",
+                        }));
                       }
                     }}
                     className={cn(
                       "absolute inset-0 opacity-0",
-                      (isEditing && isCustomSelected) ? "cursor-pointer" : "cursor-not-allowed"
+                      isEditing && isCustomSelected
+                        ? "cursor-pointer"
+                        : "cursor-not-allowed",
                     )}
                     disabled={!isEditing || !isCustomSelected}
                   />
@@ -470,8 +602,15 @@ export const TenantBrandingSettings = ({
                       const val = e.target.value.toUpperCase();
                       const newTheme = { ...theme, secondary: val };
                       setTheme(newTheme);
-                      setCustomThemes(themes => themes.map(t => t.id === activeThemeId ? { ...t, secondary: val } : t));
-                      setFieldErrors((prev) => ({ ...prev, secondaryColor: "" }));
+                      setCustomThemes((themes) =>
+                        themes.map((t) =>
+                          t.id === activeThemeId ? { ...t, secondary: val } : t,
+                        ),
+                      );
+                      setFieldErrors((prev) => ({
+                        ...prev,
+                        secondaryColor: "",
+                      }));
                     }
                   }}
                   className="text-sm font-medium text-text-primary font-mono bg-transparent w-full outline-none"
@@ -491,12 +630,16 @@ export const TenantBrandingSettings = ({
               <label className="text-sm font-medium text-text-primary block mb-1">
                 Accent Color <span className="text-brand-accent">*</span>
               </label>
-              <div className={cn(
-                "relative border rounded-xl p-2 flex items-center gap-3 transition-colors",
-                (!isEditing || !isCustomSelected) && "opacity-70",
-                (isEditing && isCustomSelected) && "hover:border-brand-primary",
-                fieldErrors.accentColor ? "border-warning-primary" : "border-gray-200"
-              )}>
+              <div
+                className={cn(
+                  "relative border rounded-xl p-2 flex items-center gap-3 transition-colors",
+                  (!isEditing || !isCustomSelected) && "opacity-70",
+                  isEditing && isCustomSelected && "hover:border-brand-primary",
+                  fieldErrors.accentColor
+                    ? "border-warning-primary"
+                    : "border-gray-200",
+                )}
+              >
                 <div
                   className="w-8 h-8 shrink-0 rounded-md shadow-inner flex items-center justify-center overflow-hidden relative"
                   style={{ backgroundColor: safeHex(theme.accent) }}
@@ -509,13 +652,22 @@ export const TenantBrandingSettings = ({
                         const val = e.target.value.toUpperCase();
                         const newTheme = { ...theme, accent: val };
                         setTheme(newTheme);
-                        setCustomThemes(themes => themes.map(t => t.id === activeThemeId ? { ...t, accent: val } : t));
-                        setFieldErrors((prev) => ({ ...prev, accentColor: "" }));
+                        setCustomThemes((themes) =>
+                          themes.map((t) =>
+                            t.id === activeThemeId ? { ...t, accent: val } : t,
+                          ),
+                        );
+                        setFieldErrors((prev) => ({
+                          ...prev,
+                          accentColor: "",
+                        }));
                       }
                     }}
                     className={cn(
                       "absolute inset-0 opacity-0",
-                      (isEditing && isCustomSelected) ? "cursor-pointer" : "cursor-not-allowed"
+                      isEditing && isCustomSelected
+                        ? "cursor-pointer"
+                        : "cursor-not-allowed",
                     )}
                     disabled={!isEditing || !isCustomSelected}
                   />
@@ -529,7 +681,11 @@ export const TenantBrandingSettings = ({
                       const val = e.target.value.toUpperCase();
                       const newTheme = { ...theme, accent: val };
                       setTheme(newTheme);
-                      setCustomThemes(themes => themes.map(t => t.id === activeThemeId ? { ...t, accent: val } : t));
+                      setCustomThemes((themes) =>
+                        themes.map((t) =>
+                          t.id === activeThemeId ? { ...t, accent: val } : t,
+                        ),
+                      );
                       setFieldErrors((prev) => ({ ...prev, accentColor: "" }));
                     }
                   }}
@@ -548,19 +704,31 @@ export const TenantBrandingSettings = ({
           </div>
           <div className="flex justify-between items-end mt-2">
             <p className="text-xs text-text-secondary max-w-xl">
-              Primary color is used for main buttons. Secondary is used for subtle
-              backgrounds and badges. Accent is used for notifications and
-              important actions.
+              Primary color is used for main buttons. Secondary is used for
+              subtle backgrounds and badges. Accent is used for notifications
+              and important actions.
             </p>
             {isCustomSelected && isEditing && (
               <div className="flex gap-2">
                 <button
                   type="button"
                   onClick={async () => {
-                    const btn = document.getElementById('save-custom-btn');
+                    const btn = document.getElementById("save-custom-btn");
                     if (btn) {
-                      btn.classList.add('text-green-600', 'bg-green-50', 'border-green-200');
-                      setTimeout(() => btn.classList.remove('text-green-600', 'bg-green-50', 'border-green-200'), 1000);
+                      btn.classList.add(
+                        "text-green-600",
+                        "bg-green-50",
+                        "border-green-200",
+                      );
+                      setTimeout(
+                        () =>
+                          btn.classList.remove(
+                            "text-green-600",
+                            "bg-green-50",
+                            "border-green-200",
+                          ),
+                        1000,
+                      );
                     }
                     try {
                       await saveTenantCustomThemes(tenantId, customThemes);
@@ -577,15 +745,20 @@ export const TenantBrandingSettings = ({
                 <button
                   type="button"
                   onClick={async () => {
-                    const newThemes = customThemes.filter(t => t.id !== activeThemeId);
+                    const newThemes = customThemes.filter(
+                      (t) => t.id !== activeThemeId,
+                    );
                     setCustomThemes(newThemes);
-                    const fallbackId = newThemes.length > 0 ? newThemes[newThemes.length - 1].id : "preset-0";
+                    const fallbackId =
+                      newThemes.length > 0
+                        ? newThemes[newThemes.length - 1].id
+                        : "preset-0";
                     setActiveThemeId(fallbackId);
                     if (fallbackId.startsWith("preset-")) {
                       const presetIdx = parseInt(fallbackId.split("-")[1], 10);
                       setTheme(presetThemes[presetIdx]);
                     } else {
-                      const t = newThemes.find(th => th.id === fallbackId);
+                      const t = newThemes.find((th) => th.id === fallbackId);
                       if (t) setTheme(t);
                     }
                     // persist delete
@@ -634,7 +807,7 @@ export const TenantBrandingSettings = ({
                       fontFamily === font.id
                         ? "border-brand-primary bg-brand-primary/5"
                         : "border-gray-100 hover:border-gray-200 bg-white",
-                      fieldErrors.fontFamily ? "border-warning-primary" : ""
+                      fieldErrors.fontFamily ? "border-warning-primary" : "",
                     )}
                     disabled={!isEditing}
                   >
@@ -682,7 +855,7 @@ export const TenantBrandingSettings = ({
                       !isEditing && "opacity-70 cursor-not-allowed",
                       secondaryFont === font.id
                         ? "border-brand-primary bg-brand-primary/5"
-                        : "border-gray-100 hover:border-gray-200 bg-white"
+                        : "border-gray-100 hover:border-gray-200 bg-white",
                     )}
                     disabled={!isEditing}
                   >
@@ -737,7 +910,7 @@ export const TenantBrandingSettings = ({
                       menuLayout === layout.id
                         ? "border-brand-primary bg-brand-primary/5"
                         : "border-gray-100 hover:border-gray-200 bg-white",
-                      fieldErrors.menuLayout ? "border-warning-primary" : ""
+                      fieldErrors.menuLayout ? "border-warning-primary" : "",
                     )}
                     disabled={!isEditing}
                   >
@@ -755,7 +928,9 @@ export const TenantBrandingSettings = ({
                       <span className="font-semibold text-text-primary block mb-1">
                         {layout.name}
                       </span>
-                      <p className="text-xs text-text-secondary">{layout.desc}</p>
+                      <p className="text-xs text-text-secondary">
+                        {layout.desc}
+                      </p>
                     </div>
                   </button>
                 );
@@ -778,20 +953,31 @@ export const TenantBrandingSettings = ({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
             <div className="space-y-3">
               <label className="text-sm font-medium text-text-primary block">
-                Dashboard & Receipt Logo <span className="text-brand-accent">*</span>
+                Dashboard & Receipt Logo{" "}
+                <span className="text-brand-accent">*</span>
               </label>
-              <div className={cn(
-                "relative border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center bg-gray-50 transition-colors h-40 overflow-hidden",
-                isEditing ? "hover:bg-gray-100 cursor-pointer group" : "opacity-70"
-              )}>
+              <div
+                className={cn(
+                  "relative border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center bg-gray-50 transition-colors h-40 overflow-hidden",
+                  isEditing
+                    ? "hover:bg-gray-100 cursor-pointer group"
+                    : "opacity-70",
+                )}
+              >
                 {dashboardLogoPreview ? (
-                  <img src={dashboardLogoPreview} alt="Dashboard Logo" className="w-full h-full object-contain p-2" />
+                  <img
+                    src={dashboardLogoPreview}
+                    alt="Dashboard Logo"
+                    className="w-full h-full object-contain p-2"
+                  />
                 ) : (
                   <>
-                    <div className={cn(
-                      "w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm mb-3 transition-transform",
-                      isEditing && "group-hover:scale-110"
-                    )}>
+                    <div
+                      className={cn(
+                        "w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm mb-3 transition-transform",
+                        isEditing && "group-hover:scale-110",
+                      )}
+                    >
                       <Upload size={20} className="text-brand-accent" />
                     </div>
                     <span className="text-sm font-medium text-text-primary">
@@ -803,10 +989,14 @@ export const TenantBrandingSettings = ({
                   </>
                 )}
                 {isEditing && (
-                  <label className={cn(
-                    "absolute inset-0 cursor-pointer w-full h-full transition-colors",
-                    dashboardLogoPreview ? "bg-black/0 hover:bg-black/10" : ""
-                  )}>
+                  <label
+                    className={cn(
+                      "absolute inset-0 cursor-pointer w-full h-full transition-colors",
+                      dashboardLogoPreview
+                        ? "bg-black/0 hover:bg-black/10"
+                        : "",
+                    )}
+                  >
                     <input
                       type="file"
                       name="dashboardLogo"
@@ -814,7 +1004,8 @@ export const TenantBrandingSettings = ({
                       className="hidden"
                       onChange={(e) => {
                         const file = e.target.files?.[0];
-                        if (file) setDashboardLogoPreview(URL.createObjectURL(file));
+                        if (file)
+                          setDashboardLogoPreview(URL.createObjectURL(file));
                       }}
                     />
                   </label>
@@ -826,18 +1017,28 @@ export const TenantBrandingSettings = ({
               <label className="text-sm font-medium text-text-primary block">
                 Kiosk Splash Screen <span className="text-brand-accent">*</span>
               </label>
-              <div className={cn(
-                "relative border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center bg-gray-50 transition-colors h-40 overflow-hidden",
-                isEditing ? "hover:bg-gray-100 cursor-pointer group" : "opacity-70"
-              )}>
+              <div
+                className={cn(
+                  "relative border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center bg-gray-50 transition-colors h-40 overflow-hidden",
+                  isEditing
+                    ? "hover:bg-gray-100 cursor-pointer group"
+                    : "opacity-70",
+                )}
+              >
                 {kioskSplashPreview ? (
-                  <img src={kioskSplashPreview} alt="Kiosk Splash" className="w-full h-full object-cover" />
+                  <img
+                    src={kioskSplashPreview}
+                    alt="Kiosk Splash"
+                    className="w-full h-full object-cover"
+                  />
                 ) : (
                   <>
-                    <div className={cn(
-                      "w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm mb-3 transition-transform",
-                      isEditing && "group-hover:scale-110"
-                    )}>
+                    <div
+                      className={cn(
+                        "w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm mb-3 transition-transform",
+                        isEditing && "group-hover:scale-110",
+                      )}
+                    >
                       <ImageIcon size={20} className="text-brand-accent" />
                     </div>
                     <span className="text-sm font-medium text-text-primary">
@@ -849,10 +1050,12 @@ export const TenantBrandingSettings = ({
                   </>
                 )}
                 {isEditing && (
-                  <label className={cn(
-                    "absolute inset-0 cursor-pointer w-full h-full transition-colors",
-                    kioskSplashPreview ? "bg-black/0 hover:bg-black/10" : ""
-                  )}>
+                  <label
+                    className={cn(
+                      "absolute inset-0 cursor-pointer w-full h-full transition-colors",
+                      kioskSplashPreview ? "bg-black/0 hover:bg-black/10" : "",
+                    )}
+                  >
                     <input
                       type="file"
                       name="kioskSplash"
@@ -860,7 +1063,8 @@ export const TenantBrandingSettings = ({
                       className="hidden"
                       onChange={(e) => {
                         const file = e.target.files?.[0];
-                        if (file) setKioskSplashPreview(URL.createObjectURL(file));
+                        if (file)
+                          setKioskSplashPreview(URL.createObjectURL(file));
                       }}
                     />
                   </label>
@@ -872,18 +1076,28 @@ export const TenantBrandingSettings = ({
               <label className="text-sm font-medium text-text-primary block">
                 Favicon <span className="text-brand-accent">*</span>
               </label>
-              <div className={cn(
-                "relative border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center bg-gray-50 transition-colors h-40 overflow-hidden",
-                isEditing ? "hover:bg-gray-100 cursor-pointer group" : "opacity-70"
-              )}>
+              <div
+                className={cn(
+                  "relative border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center bg-gray-50 transition-colors h-40 overflow-hidden",
+                  isEditing
+                    ? "hover:bg-gray-100 cursor-pointer group"
+                    : "opacity-70",
+                )}
+              >
                 {faviconPreview ? (
-                  <img src={faviconPreview} alt="Favicon" className="w-12 h-12 object-contain" />
+                  <img
+                    src={faviconPreview}
+                    alt="Favicon"
+                    className="w-12 h-12 object-contain"
+                  />
                 ) : (
                   <>
-                    <div className={cn(
-                      "w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm mb-3 transition-transform",
-                      isEditing && "group-hover:scale-110"
-                    )}>
+                    <div
+                      className={cn(
+                        "w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm mb-3 transition-transform",
+                        isEditing && "group-hover:scale-110",
+                      )}
+                    >
                       <Globe size={20} className="text-brand-accent" />
                     </div>
                     <span className="text-sm font-medium text-text-primary">
@@ -895,10 +1109,12 @@ export const TenantBrandingSettings = ({
                   </>
                 )}
                 {isEditing && (
-                  <label className={cn(
-                    "absolute inset-0 cursor-pointer w-full h-full transition-colors",
-                    faviconPreview ? "bg-black/0 hover:bg-black/10" : ""
-                  )}>
+                  <label
+                    className={cn(
+                      "absolute inset-0 cursor-pointer w-full h-full transition-colors",
+                      faviconPreview ? "bg-black/0 hover:bg-black/10" : "",
+                    )}
+                  >
                     <input
                       type="file"
                       name="favicon"
@@ -933,7 +1149,7 @@ export const TenantBrandingSettings = ({
                   value={qiosSubdomain}
                   onChange={(e) => {
                     setQiosSubdomain(e.target.value);
-                    setFieldErrors(prev => ({ ...prev, qiosSubdomain: "" }));
+                    setFieldErrors((prev) => ({ ...prev, qiosSubdomain: "" }));
                   }}
                   placeholder="yourbrand"
                   isError={!!fieldErrors.qiosSubdomain}
@@ -941,14 +1157,18 @@ export const TenantBrandingSettings = ({
                     "py-2.5 w-full rounded-xl focus:outline-none disabled:cursor-not-allowed pr-24",
                     !fieldErrors.qiosSubdomain
                       ? "focus:border-brand-primary focus:ring-brand-primary"
-                      : ""
+                      : "",
                   )}
                   disabled={!isEditing}
                 />
-                <span className={cn(
-                  "absolute right-3 text-sm",
-                  fieldErrors.qiosSubdomain ? "text-warning-primary" : "text-text-secondary"
-                )}>
+                <span
+                  className={cn(
+                    "absolute right-3 text-sm",
+                    fieldErrors.qiosSubdomain
+                      ? "text-warning-primary"
+                      : "text-text-secondary",
+                  )}
+                >
                   .qios.com
                 </span>
               </div>
@@ -961,7 +1181,7 @@ export const TenantBrandingSettings = ({
                 Your menu will be accessible at yourbrand.qios.com
               </p>
             </div>
-            
+
             <div className="w-full flex items-start gap-2">
               <div className="space-y-1.5 flex-1">
                 <label className="text-sm font-medium text-text-primary block">
@@ -980,9 +1200,9 @@ export const TenantBrandingSettings = ({
                 </p>
               </div>
               <div className="pt-7">
-                <Button 
-                  type="button" 
-                  variant="outline" 
+                <Button
+                  type="button"
+                  variant="outline"
                   shape="rounded"
                   disabled={!isEditing || !customDomain || isConnecting}
                   onClick={handleConnect}
@@ -1087,8 +1307,10 @@ export const TenantBrandingSettings = ({
                     secondary: initialData.secondaryColor || "#FFF9F0",
                     accent: initialData.accentColor || "#00FFFF",
                   };
-                  const presetIndex = presetThemes.findIndex((p) => isMatch(p, initTheme));
-              
+                  const presetIndex = presetThemes.findIndex((p) =>
+                    isMatch(p, initTheme),
+                  );
+
                   if (presetIndex !== -1) {
                     setActiveThemeId(`preset-${presetIndex}`);
                     setCustomThemes([]);
