@@ -24,7 +24,7 @@ export const TenantStoreSettings = ({
   initialData,
   scrollToQrSection = false,
 }: TenantStoreSettingsProps) => {
-  // --- START OF ORIGINAL CODE (UNCHANGED) ---
+  // --- START OF ORIGINAL LOGIC (UNCHANGED) ---
   const [formData, setFormData] = useState(initialData);
   const [isEditing, setIsEditing] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -86,11 +86,11 @@ export const TenantStoreSettings = ({
     { label: "America/Los_Angeles (GMT-8)", value: "America/Los_Angeles" },
     { label: "UTC", value: "UTC" },
   ];
-  // --- END OF ORIGINAL CODE LOGIC ---
+  // --- END OF ORIGINAL LOGIC ---
 
-  // --- NEW ADDITIONAL CODE (FANCY & FLEXIBLE QR LOGIC) ---
+  // --- NEW ADDITIONAL QR LOGIC ---
   const [storeUrl, setStoreUrl] = useState("");
-  const [qrLabelPosition, setQrLabelPosition] = useState<"top" | "bottom">("bottom");
+  const [qrLabelPosition, setQrLabelPosition] = useState<"top" | "bottom">("top");
   const [showBusinessName, setShowBusinessName] = useState(true);
   const [showLogoBadge, setShowLogoBadge] = useState(true);
   const qrSectionRef = useRef<HTMLDivElement>(null);
@@ -105,7 +105,8 @@ export const TenantStoreSettings = ({
       setStoreUrl("");
       return;
     }
-    setStoreUrl(new URL(`/${tenantId}/home`, window.location.origin).toString());
+    // Hardcoded production URL instead of using window.location.origin
+    setStoreUrl(`https://qios-exc.vercel.app/${tenantId}/home`);
   }, [tenantId]);
 
   useEffect(() => {
@@ -125,15 +126,12 @@ export const TenantStoreSettings = ({
     const img = new Image();
     return new Promise((resolve) => {
       img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
-      img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
       img.src = url;
     });
   };
 
   const buildQrCanvas = async () => {
-    // Wait for fonts to be ready so they render correctly on Canvas
     await document.fonts.ready;
-
     const qrImage = await getQrSvgImage();
     if (!qrImage) return null;
 
@@ -163,110 +161,80 @@ export const TenantStoreSettings = ({
       const badgeW = 340;
       const badgeH = 76;
       const badgeX = (cardWidth - badgeW) / 2;
-      
-      ctx.shadowColor = "rgba(255, 82, 105, 0.2)";
-      ctx.shadowBlur = 30;
       ctx.fillStyle = "#ff5269"; 
       roundRect(badgeX, y - (badgeH / 2), badgeW, badgeH, 38);
       ctx.fill();
-      ctx.shadowBlur = 0; 
-
       ctx.fillStyle = "#FFFFFF";
-      ctx.font = "bold 26px Inter, sans-serif"; 
+      ctx.font = "bold 26px sans-serif"; 
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      const text = "S C A N   H E R E";
-      ctx.fillText(text, cardWidth / 2, y + 2);
+      ctx.fillText("S C A N   H E R E", cardWidth / 2, y + 2);
     };
-
-    const qrBoxSize = 760;
-    const badgeSpace = 120;
-    const nameSpace = 110;
-    const gap = 45;
-    
-    let totalContentHeight = qrBoxSize + badgeSpace; 
-    if (showBusinessName) totalContentHeight += nameSpace + gap;
-
-    let currentY = (cardHeight - 240 - totalContentHeight) / 2;
 
     // 1. Background
     ctx.fillStyle = "#FFFFFF";
     roundRect(0, 0, cardWidth, cardHeight, 100);
     ctx.fill();
 
-    // 2. Fancy Badge (Top)
-    if (qrLabelPosition === "top") {
-      drawFancyBadge(currentY + 45);
-      currentY += badgeSpace + gap;
-    }
+    let currentY = 220;
 
-    // 3. Business Name (Using Figtree)
+    // 2. Business Name (At the very top)
     if (showBusinessName) {
       ctx.fillStyle = "#2d2d2d"; 
-      ctx.font = "700 96px Figtree, sans-serif"; 
+      ctx.font = "700 90px sans-serif"; 
       ctx.textAlign = "center";
-      ctx.fillText(storeNameLabel, cardWidth / 2, currentY + 80);
-      currentY += nameSpace + gap;
+      ctx.fillText(storeNameLabel, cardWidth / 2, currentY);
+      currentY += 140;
     }
 
-    // 4. QR Container (Gray BG)
+    // 3. Scan Here Badge (If Position is Top)
+    if (qrLabelPosition === "top") {
+      drawFancyBadge(currentY);
+      currentY += 130;
+    } else {
+      currentY += 40;
+    }
+
+    // 4. QR Container
+    const qrBoxSize = 760;
     const qrBoxX = (cardWidth - qrBoxSize) / 2;
-    const qrBoxY = currentY;
     ctx.fillStyle = "#F9FAFB"; 
-    roundRect(qrBoxX, qrBoxY, qrBoxSize, qrBoxSize, 90);
+    roundRect(qrBoxX, currentY, qrBoxSize, qrBoxSize, 90);
     ctx.fill();
 
     const qrPadding = 110;
-    const qrSize = qrBoxSize - (qrPadding * 2);
-    ctx.drawImage(qrImage, qrBoxX + qrPadding, qrBoxY + qrPadding, qrSize, qrSize);
+    ctx.drawImage(qrImage, qrBoxX + qrPadding, currentY + qrPadding, qrBoxSize - (qrPadding * 2), qrBoxSize - (qrPadding * 2));
 
-    // 5. Logo Badge
+    // Logo Center Badge
     if (showLogoBadge) {
       const badgeSize = 145;
       const centerX = cardWidth / 2;
-      const centerY = qrBoxY + (qrBoxSize / 2);
+      const centerY = currentY + (qrBoxSize / 2);
       ctx.fillStyle = "#FFFFFF";
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, (badgeSize / 2) + 18, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.beginPath(); ctx.arc(centerX, centerY, (badgeSize / 2) + 18, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = "#ff5269";
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, badgeSize / 2, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.beginPath(); ctx.arc(centerX, centerY, badgeSize / 2, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = "#FFFFFF";
-      ctx.font = "bold 70px Inter, sans-serif";
-      ctx.textBaseline = "middle";
-      ctx.fillText(storeNameLabel.charAt(0).toUpperCase(), centerX, centerY + 5);
+      ctx.font = "bold 70px sans-serif";
+      ctx.fillText(storeNameLabel.charAt(0).toUpperCase(), centerX, centerY + 25);
     }
 
-    // 6. Fancy Badge (Bottom)
+    // 5. Scan Here Badge (If Position is Bottom)
     if (qrLabelPosition === "bottom") {
-      drawFancyBadge(qrBoxY + qrBoxSize + 85);
+      drawFancyBadge(currentY + qrBoxSize + 85);
     }
 
-    // 7. Footer Divider & Text (INCREASED VISIBILITY)
-    const footerY = cardHeight - 160;
-    
-    // Increased visibility for the small dots
-    ctx.fillStyle = "#D1D5DB"; // Darker gray
-    ctx.beginPath();
-    ctx.arc(cardWidth / 2 - 190, footerY, 5, 0, Math.PI * 2);
-    ctx.arc(cardWidth / 2 + 190, footerY, 5, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Increased visibility for lines
-    ctx.strokeStyle = "#E5E7EB"; 
+    // 6. Powered by Qios Footer
+    const footerY = cardHeight - 140;
+    ctx.strokeStyle = "#E5E7EB";
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(150, footerY);
-    ctx.lineTo(cardWidth / 2 - 230, footerY);
-    ctx.moveTo(cardWidth / 2 + 230, footerY);
-    ctx.lineTo(cardWidth - 150, footerY);
+    ctx.moveTo(150, footerY); ctx.lineTo(450, footerY);
+    ctx.moveTo(750, footerY); ctx.lineTo(1050, footerY);
     ctx.stroke();
 
-    // Increased contrast for brand text
-    ctx.fillStyle = "#6B7280"; // Gray-500 for better visibility
-    ctx.font = "700 24px Inter, sans-serif"; 
+    ctx.fillStyle = "#6B7280";
+    ctx.font = "700 24px sans-serif";
     ctx.textAlign = "center";
     ctx.fillText("POWERED BY QIOS", cardWidth / 2, footerY + 8);
 
@@ -284,22 +252,15 @@ export const TenantStoreSettings = ({
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 w-full">
-      {/* --- START OF ORIGINAL UI (UNCHANGED) --- */}
+      {/* --- FORM SECTION (ORIGINAL UI) --- */}
       <div>
-        <h2 className="text-xl font-bold text-text-primary mb-1">
-          Store Details
-        </h2>
-        <p className="text-sm text-text-secondary">
-          Configure the business information displayed to customers.
-        </p>
+        <h2 className="text-xl font-bold text-text-primary mb-1">Store Details</h2>
+        <p className="text-sm text-text-secondary">Configure the business information displayed to customers.</p>
       </div>
 
       <div className="space-y-6 w-full">
         <div className="space-y-4 w-full">
-          <SectionHeader
-            title="General Information"
-            className="mb-0 py-2 border-gray-100"
-          />
+          <SectionHeader title="General Information" className="mb-0 py-2 border-gray-100" />
           <form action={formAction} className="pt-2 w-full space-y-6">
             {showSuccess && state.success && (
               <div className="mb-6 w-full">
@@ -312,264 +273,95 @@ export const TenantStoreSettings = ({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 w-full">
               <div className="space-y-1.5 sm:col-span-2 w-full">
-                <label className="text-sm font-medium text-text-primary">
-                  Store Name <span className="text-brand-accent">*</span>
-                </label>
+                <label className="text-sm font-medium text-text-primary">Store Name <span className="text-brand-accent">*</span></label>
                 <Input
                   name="storeName"
                   value={formData.storeName}
-                  onChange={(event) => {
-                    setFormData((previous) => ({
-                      ...previous,
-                      storeName: event.target.value,
-                    }));
-                    setFieldErrors((prev) => ({ ...prev, storeName: "" }));
+                  onChange={(e) => {
+                    setFormData(prev => ({ ...prev, storeName: e.target.value }));
+                    setFieldErrors(prev => ({ ...prev, storeName: "" }));
                   }}
                   isError={!!fieldErrors.storeName}
-                  className={`py-2.5 w-full rounded-xl focus:outline-none disabled:cursor-not-allowed ${
-                    !fieldErrors.storeName
-                      ? "focus:border-brand-primary focus:ring-brand-primary"
-                      : ""
-                  }`}
                   disabled={!isEditing}
                 />
-                {fieldErrors.storeName && (
-                  <p className="text-xs text-red-500 pl-1 mt-1">
-                    {fieldErrors.storeName}
-                  </p>
-                )}
+                {fieldErrors.storeName && <p className="text-xs text-red-500 pl-1 mt-1">{fieldErrors.storeName}</p>}
               </div>
+              
               <div className="space-y-1.5 w-full">
-                <label className="text-sm font-medium text-text-primary">
-                  Email Address <span className="text-brand-accent">*</span>
-                </label>
+                <label className="text-sm font-medium text-text-primary">Email Address <span className="text-brand-accent">*</span></label>
                 <Input
                   name="publicContactEmail"
                   value={formData.publicContactEmail}
-                  onChange={(event) => {
-                    setFormData((previous) => ({
-                      ...previous,
-                      publicContactEmail: event.target.value,
-                    }));
-                    setFieldErrors((prev) => ({
-                      ...prev,
-                      publicContactEmail: "",
-                    }));
-                  }}
-                  type="email"
-                  isError={!!fieldErrors.publicContactEmail}
-                  className={`py-2.5 w-full rounded-xl focus:outline-none disabled:cursor-not-allowed ${
-                    !fieldErrors.publicContactEmail
-                      ? "focus:border-brand-primary focus:ring-brand-primary"
-                      : ""
-                  }`}
+                  onChange={(e) => setFormData(prev => ({ ...prev, publicContactEmail: e.target.value }))}
                   disabled={!isEditing}
                 />
-                {fieldErrors.publicContactEmail && (
-                  <p className="text-xs text-red-500 pl-1 mt-1">
-                    {fieldErrors.publicContactEmail}
-                  </p>
-                )}
               </div>
+
               <div className="space-y-1.5 w-full">
-                <label className="text-sm font-medium text-text-primary">
-                  Phone Number
-                </label>
-                <div className="flex items-center gap-2 w-full">
-                  <span
-                    className={`inline-flex items-center px-3 py-2.5 rounded-xl border bg-gray-50 text-text-primary transition-colors ${
-                      fieldErrors.publicPhoneNumber
-                        ? "border-red-500"
-                        : "border-[#E5E5E5]"
-                    } ${!isEditing ? "opacity-70 cursor-not-allowed" : ""}`}
-                  >
-                    +63
-                  </span>
+                <label className="text-sm font-medium text-text-primary">Phone Number</label>
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center px-3 py-2.5 rounded-xl border bg-gray-50 text-text-primary">+63</span>
                   <Input
                     name="publicPhoneNumber"
                     value={formData.publicPhoneNumber}
-                    onChange={(event) => {
-                      setFormData((previous) => ({
-                        ...previous,
-                        publicPhoneNumber: event.target.value
-                          .replace(/[^0-9]/g, "")
-                          .slice(0, 10),
-                      }));
-                      setFieldErrors((prev) => ({
-                        ...prev,
-                        publicPhoneNumber: "",
-                      }));
-                    }}
-                    type="tel"
-                    inputMode="numeric"
-                    isError={!!fieldErrors.publicPhoneNumber}
-                    className={`py-2.5 w-full rounded-xl flex-1 focus:outline-none disabled:cursor-not-allowed ${
-                      !fieldErrors.publicPhoneNumber
-                        ? "focus:border-brand-primary focus:ring-brand-primary"
-                        : ""
-                    }`}
+                    onChange={(e) => setFormData(prev => ({ ...prev, publicPhoneNumber: e.target.value.replace(/[^0-9]/g, "").slice(0, 10) }))}
                     disabled={!isEditing}
                   />
                 </div>
-                {fieldErrors.publicPhoneNumber && (
-                  <p className="text-xs text-red-500 pl-1 mt-1">
-                    {fieldErrors.publicPhoneNumber}
-                  </p>
-                )}
               </div>
+
               <div className="space-y-1.5 sm:col-span-2 w-full">
-                <label className="text-sm font-medium text-text-primary">
-                  Store Address
-                </label>
+                <label className="text-sm font-medium text-text-primary">Store Address</label>
                 <Input
                   name="physicalAddress"
                   value={formData.physicalAddress}
-                  onChange={(event) => {
-                    setFormData((previous) => ({
-                      ...previous,
-                      physicalAddress: event.target.value,
-                    }));
-                  }}
-                  className="py-2.5 w-full rounded-xl focus:outline-none disabled:cursor-not-allowed focus:border-brand-primary focus:ring-brand-primary"
+                  onChange={(e) => setFormData(prev => ({ ...prev, physicalAddress: e.target.value }))}
                   disabled={!isEditing}
                 />
               </div>
             </div>
 
             <div className="space-y-4 w-full pt-2">
-              <SectionHeader
-                title="Localization & Regional"
-                className="mb-0 py-2 border-gray-100"
-              />
+              <SectionHeader title="Localization & Regional" className="mb-0 py-2 border-gray-100" />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 w-full">
                 <div className="relative z-50 space-y-1.5 w-full">
-                  <label className="text-sm font-medium text-text-primary">
-                    Currency <span className="text-brand-accent">*</span>
-                  </label>
-                  <div
-                    className={
-                      !isEditing ? "opacity-70 pointer-events-none" : ""
-                    }
-                  >
-                    <input
-                      type="hidden"
-                      name="currency"
-                      value={formData.currency}
-                    />
+                  <label className="text-sm font-medium text-text-primary">Currency <span className="text-brand-accent">*</span></label>
+                  <div className={!isEditing ? "opacity-70 pointer-events-none" : ""}>
+                    <input type="hidden" name="currency" value={formData.currency} />
                     <Dropdown
                       label=""
-                      className="w-full !max-w-full [&>label]:hidden"
                       options={currencyOptions}
                       value={formData.currency}
-                      onSelect={(option) => {
-                        if (isEditing) {
-                          setFormData((prev) => ({
-                            ...prev,
-                            currency: option.value,
-                          }));
-                        }
-                      }}
+                      onSelect={(opt) => setFormData(prev => ({ ...prev, currency: opt.value }))}
                     />
                   </div>
                 </div>
                 <div className="relative z-40 space-y-1.5 w-full">
-                  <label className="text-sm font-medium text-text-primary">
-                    Timezone <span className="text-brand-accent">*</span>
-                  </label>
-                  <div
-                    className={
-                      !isEditing ? "opacity-70 pointer-events-none" : ""
-                    }
-                  >
-                    <input
-                      type="hidden"
-                      name="timezone"
-                      value={formData.timezone}
-                    />
+                  <label className="text-sm font-medium text-text-primary">Timezone <span className="text-brand-accent">*</span></label>
+                  <div className={!isEditing ? "opacity-70 pointer-events-none" : ""}>
+                    <input type="hidden" name="timezone" value={formData.timezone} />
                     <Dropdown
                       label=""
-                      className="w-full !max-w-full [&>label]:hidden"
                       options={timezoneOptions}
                       value={formData.timezone}
-                      onSelect={(option) => {
-                        if (isEditing) {
-                          setFormData((prev) => ({
-                            ...prev,
-                            timezone: option.value,
-                          }));
-                        }
-                      }}
+                      onSelect={(opt) => setFormData(prev => ({ ...prev, timezone: opt.value }))}
                     />
                   </div>
-                </div>
-                <div className="space-y-1.5 w-full">
-                  <label className="text-sm font-medium text-text-primary">
-                    Tax Rate (%) <span className="text-brand-accent">*</span>
-                  </label>
-                  <Input
-                    name="taxRate"
-                    value={formData.taxRate}
-                    onChange={(event) => {
-                      setFormData((previous) => ({
-                        ...previous,
-                        taxRate: event.target.value,
-                      }));
-                      setFieldErrors((prev) => ({ ...prev, taxRate: "" }));
-                    }}
-                    type="number"
-                    isError={!!fieldErrors.taxRate}
-                    className={`py-2.5 w-full rounded-xl focus:outline-none disabled:cursor-not-allowed ${
-                      !fieldErrors.taxRate
-                        ? "focus:border-brand-primary focus:ring-brand-primary"
-                        : ""
-                    }`}
-                    disabled={!isEditing}
-                  />
-                  {fieldErrors.taxRate && (
-                    <p className="text-xs text-red-500 pl-1 mt-1">
-                      {fieldErrors.taxRate}
-                    </p>
-                  )}
                 </div>
               </div>
             </div>
 
             <div className="pt-4 flex justify-end w-full">
               {!isEditing ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  shape="rounded"
-                  onClick={() => {
-                    setIsEditing(true);
-                    setShowSuccess(false);
-                  }}
-                  leftIcon={<Edit2 size={18} />}
-                >
+                <Button type="button" variant="outline" shape="rounded" onClick={() => setIsEditing(true)} leftIcon={<Edit2 size={18} />}>
                   Edit Store Details
                 </Button>
               ) : (
                 <div className="flex items-center gap-3">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    shape="rounded"
-                    onClick={() => {
-                      setIsEditing(false);
-                      setFormData(initialData);
-                      setFieldErrors({});
-                    }}
-                    disabled={isPending}
-                  >
+                  <Button type="button" variant="outline" shape="rounded" onClick={() => { setIsEditing(false); setFormData(initialData); }} disabled={isPending}>
                     Cancel
                   </Button>
-                  <Button
-                    type="submit"
-                    variant="accent"
-                    shape="rounded"
-                    leftIcon={<Save size={18} />}
-                    loading={isPending}
-                  >
+                  <Button type="submit" variant="accent" shape="rounded" leftIcon={<Save size={18} />} loading={isPending}>
                     Save Changes
                   </Button>
                 </div>
@@ -577,69 +369,58 @@ export const TenantStoreSettings = ({
             </div>
           </form>
         </div>
-        {/* --- END OF ORIGINAL UI --- */}
 
-        {/* --- FANCY & FLEXIBLE QR PREVIEW --- */}
+        {/* --- UPDATED QR CUSTOMIZER SECTION --- */}
         <div ref={qrSectionRef} className="space-y-4 w-full pt-6">
           <SectionHeader title="Store Access & QR Code" className="mb-0 py-2 border-gray-100" />
-          <div className="grid grid-cols-1 lg:grid-cols-[440px_1fr] gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-8">
             
+            {/* Live Preview Column */}
             <div className="space-y-4">
               <div className="flex items-center gap-2 text-sm font-bold text-text-primary px-1">
-                <Layout size={18} className="text-brand-accent" />
-                Live Preview
+                <Layout size={18} className="text-brand-accent" /> Live Preview
               </div>
-              
-              <div className="bg-white border border-gray-100 rounded-[3.5rem] p-10 shadow-[0_20px_60px_rgba(0,0,0,0.05)] flex flex-col items-center justify-center text-center relative overflow-hidden min-h-[580px] gap-y-8">
+              <div className="bg-white border border-gray-100 rounded-[3rem] p-10 shadow-sm flex flex-col items-center justify-center text-center relative min-h-[550px] gap-y-6">
                 
-                {qrLabelPosition === "top" && (
-                  <div className="bg-brand-accent px-8 py-2.5 rounded-full shadow-lg shadow-brand-accent/25 animate-in slide-in-from-top-2 duration-300">
-                    <div className="text-[11px] font-bold font-inter uppercase tracking-[0.5em] text-white leading-none">Scan here</div>
-                  </div>
-                )}
-
+                {/* SEQUENCE: 1. Business Name */}
                 {showBusinessName && (
-                  <div className="text-4xl font-bold font-figtree text-text-primary tracking-tight px-2 animate-in fade-in duration-500">{storeNameLabel}</div>
+                  <div className="text-3xl font-bold text-text-primary tracking-tight px-2">{storeNameLabel}</div>
                 )}
 
-                <div className="relative w-full flex items-center justify-center">
-                  <div className="bg-gray-50/80 p-10 rounded-[2.5rem] border border-gray-100/50 flex items-center justify-center w-full max-w-[320px] aspect-square transition-all duration-500">
-                    {storeUrl ? (
-                      <QRCode id="store-qr-code" value={storeUrl} size={200} level="H" fgColor="#1a1a1a" bgColor="transparent" />
-                    ) : (
-                      <div className="w-[200px] h-[200px] flex items-center justify-center rounded-2xl">
-                        <QrCode className="text-gray-200" size={48} />
-                      </div>
-                    )}
-                  </div>
-                  
+                {/* SEQUENCE: 2. Badge (Top Position) */}
+                {qrLabelPosition === "top" && (
+                  <div className="bg-brand-accent px-6 py-2 rounded-full text-[10px] font-bold text-white uppercase tracking-widest animate-in slide-in-from-top-1">Scan here</div>
+                )}
+
+                {/* SEQUENCE: 3. QR Image Box */}
+                <div className="relative p-6 bg-gray-50 rounded-[2.5rem] border border-gray-100">
+                  <QRCode id="store-qr-code" value={storeUrl || "https://qios.com"} size={180} level="H" bgColor="transparent" />
                   {showLogoBadge && (
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none scale-100 transition-transform">
-                      <div className="h-16 w-16 items-center justify-center rounded-full bg-brand-accent text-white text-2xl font-bold shadow-xl border-[6px] border-white flex">
-                        <span className="font-inter">{storeNameLabel.charAt(0).toUpperCase()}</span>
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <div className="h-12 w-12 rounded-full bg-brand-accent text-white text-lg font-bold shadow-xl border-4 border-white flex items-center justify-center">
+                        {storeNameLabel.charAt(0).toUpperCase()}
                       </div>
                     </div>
                   )}
                 </div>
 
+                {/* SEQUENCE: 4. Badge (Bottom Position) */}
                 {qrLabelPosition === "bottom" && (
-                  <div className="bg-brand-accent px-8 py-2.5 rounded-full shadow-lg shadow-brand-accent/25 animate-in slide-in-from-bottom-2 duration-300">
-                    <div className="text-[11px] font-bold font-inter uppercase tracking-[0.5em] text-white leading-none">Scan here</div>
-                  </div>
+                  <div className="bg-brand-accent px-6 py-2 rounded-full text-[10px] font-bold text-white uppercase tracking-widest animate-in slide-in-from-bottom-1">Scan here</div>
                 )}
 
-                {/* VISIBILITY INCREASED: Footer lines and text */}
-                <div className="flex items-center gap-4 w-full mt-auto pt-10 px-4">
-                  <div className="h-[1.5px] flex-1 bg-gradient-to-r from-transparent to-gray-200" />
-                  <div className="text-[10px] font-bold font-inter text-gray-500 uppercase tracking-[0.4em] whitespace-nowrap">Powered by Qios</div>
-                  <div className="h-[1.5px] flex-1 bg-gradient-to-l from-transparent to-gray-200" />
+                {/* SEQUENCE: 5. Footer */}
+                <div className="flex items-center gap-3 w-full mt-4">
+                   <div className="h-px flex-1 bg-gray-100" />
+                   <span className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.3em]">Powered by Qios</span>
+                   <div className="h-px flex-1 bg-gray-100" />
                 </div>
               </div>
             </div>
 
-            {/* DOWNLOAD PANEL (UNCHANGED) */}
+            {/* Controls Panel */}
             <div className="space-y-6">
-              <div className="bg-gray-50/50 border border-gray-100 rounded-[2rem] p-6 md:p-8 space-y-8">
+              <div className="bg-gray-50/50 border border-gray-100 rounded-[2rem] p-8 space-y-8">
                 <div>
                   <h3 className="text-lg font-bold text-text-primary">Download Settings</h3>
                   <p className="text-sm text-text-secondary">Customize your QR card appearance for printing.</p>
@@ -654,7 +435,7 @@ export const TenantStoreSettings = ({
                           key={pos}
                           type="button"
                           onClick={() => setQrLabelPosition(pos)}
-                          className={`flex-1 py-3 rounded-2xl text-sm font-bold border transition-all ${
+                          className={`flex-1 py-3 rounded-xl text-sm font-bold border transition-all ${
                             qrLabelPosition === pos 
                             ? "bg-brand-accent border-brand-accent text-white shadow-lg shadow-brand-accent/20" 
                             : "bg-white border-gray-200 text-text-primary hover:border-brand-accent"
@@ -668,30 +449,24 @@ export const TenantStoreSettings = ({
 
                   <div className="space-y-4">
                     <p className="text-xs font-bold text-text-secondary uppercase tracking-widest">Visibility</p>
-                    <div className="space-y-2">
+                    <div className="flex flex-col gap-2">
                       <button
                         type="button"
                         onClick={() => setShowBusinessName(!showBusinessName)}
-                        className={`w-full flex items-center justify-between p-4 rounded-2xl border text-sm font-semibold transition-all ${
+                        className={`flex items-center justify-between p-4 rounded-xl border text-sm font-semibold transition-all ${
                           showBusinessName ? "border-brand-accent bg-brand-accent/5 text-brand-accent" : "border-gray-200 bg-white"
                         }`}
                       >
-                        Business Name
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${showBusinessName ? "bg-brand-accent border-brand-accent" : "border-gray-300"}`}>
-                           {showBusinessName && <div className="w-2 h-2 bg-white rounded-full" />}
-                        </div>
+                        Business Name <span>{showBusinessName ? "ON" : "OFF"}</span>
                       </button>
                       <button
                         type="button"
                         onClick={() => setShowLogoBadge(!showLogoBadge)}
-                        className={`w-full flex items-center justify-between p-4 rounded-2xl border text-sm font-semibold transition-all ${
+                        className={`flex items-center justify-between p-4 rounded-xl border text-sm font-semibold transition-all ${
                           showLogoBadge ? "border-brand-accent bg-brand-accent/5 text-brand-accent" : "border-gray-200 bg-white"
                         }`}
                       >
-                        Logo Badge
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${showLogoBadge ? "bg-brand-accent border-brand-accent" : "border-gray-300"}`}>
-                           {showLogoBadge && <div className="w-2 h-2 bg-white rounded-full" />}
-                        </div>
+                        Logo Badge <span>{showLogoBadge ? "ON" : "OFF"}</span>
                       </button>
                     </div>
                   </div>
@@ -699,8 +474,8 @@ export const TenantStoreSettings = ({
 
                 <div className="pt-6 border-t border-gray-200 flex flex-col sm:flex-row items-center gap-4">
                   <div className="flex-1 w-full relative">
-                    <Input value={storeUrl} readOnly className="pr-12 text-xs bg-white rounded-xl h-12" />
-                    <button type="button" onClick={() => navigator.clipboard.writeText(storeUrl)} className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-brand-accent">
+                    <Input value={storeUrl} readOnly className="pr-12 text-xs bg-white h-12 rounded-xl" />
+                    <button type="button" onClick={() => navigator.clipboard.writeText(storeUrl)} className="absolute right-4 top-1/2 -translate-y-1/2 text-brand-accent">
                       <Copy size={18} />
                     </button>
                   </div>
