@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, User, Edit2, BellRing, MessageSquare, History, Check } from "lucide-react";
 import { Button } from "@/components/atoms/Button";
