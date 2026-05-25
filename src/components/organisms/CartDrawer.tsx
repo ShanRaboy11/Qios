@@ -279,7 +279,9 @@ export const CartDrawer = () => {
                       // Demo fallback when no tenant scope
                       setCartSnapshot([...cart]);
                       setCartTotalSnapshot(cartTotal);
-                      setPlacedOrderId(`DEMO-${Math.floor(1000 + Math.random() * 9000)}`);
+                      setPlacedOrderId(
+                        `DEMO-${Math.floor(1000 + Math.random() * 9000)}`,
+                      );
                       setIsConfirmOpen(false);
                       setIsCartOpen(false);
                       setIsOrderPlaced(true); // <--- Add this
