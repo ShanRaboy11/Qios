@@ -259,14 +259,9 @@ function HomePageContent() {
                           availability="20 Bowls available"
                           imageSrc="/images/noodles.png"
                           onAdd={() =>
-                            setSelectedItem({
-                              id: "6",
-                              name: "Spicy seasoned seafood noodles",
-                              price: 2.29,
-                              available: true,
-                              category: "Meal",
-                              imageUrl: "/images/noodles.png",
-                            })
+                            setSelectedItem(
+                              mockItem("6", "Spicy seasoned seafood noodles", 2.29, "Meal", "/images/noodles.png")
+                            )
                           }
                         />
                         <MenuItemCard
@@ -276,14 +271,9 @@ function HomePageContent() {
                           availability="15 Meals available"
                           imageSrc="/images/food-placeholder.png"
                           onAdd={() =>
-                            setSelectedItem({
-                              id: "7",
-                              name: "Classic Burger with Fries",
-                              price: 5.99,
-                              available: true,
-                              category: "Meal",
-                              imageUrl: "/images/food-placeholder.png",
-                            })
+                            setSelectedItem(
+                              mockItem("7", "Classic Burger with Fries", 5.99, "Meal", "/images/food-placeholder.png")
+                            )
                           }
                         />
                       </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useCart } from "@/contexts/CartContext";
+import { useCart, CartItem } from "@/contexts/CartContext";
 import { ShoppingBag, X, Minus, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/atoms/Button";
 import { motion, AnimatePresence } from "framer-motion";
@@ -16,6 +16,7 @@ export const CartDrawer = () => {
     cartTotal,
     updateQuantity,
     removeFromCart,
+    clearCart,
     isCartOpen,
     setIsCartOpen,
   } = useCart();
@@ -24,8 +25,8 @@ export const CartDrawer = () => {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [placedOrderId, setPlacedOrderId] = useState<string | null>(null);
-  const [cartSnapshot, setCartSnapshot] = useState(cart);
-  const [cartTotalSnapshot, setCartTotalSnapshot] = useState(cartTotal);
+  const [cartSnapshot, setCartSnapshot] = useState<CartItem[]>([]);
+  const [cartTotalSnapshot, setCartTotalSnapshot] = useState(0);
 
   const params = useParams();
   const tenantId = typeof params?.id === "string" ? params.id : "";
@@ -119,18 +120,23 @@ export const CartDrawer = () => {
                               <h3 className="font-bold text-text-primary line-clamp-1 font-figtree">
                                 {item.menuItem.name}
                               </h3>
-                              <div className="flex flex-wrap gap-1">
-                                {item.selectedModifiers.length > 0 && (
-                                  <span className="inline-block bg-brand-secondary/30 text-brand-primary text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                                    + {item.selectedModifiers.length} Add-ons
-                                  </span>
-                                )}
-                                {item.selectedSize !== "s1" && (
-                                  <span className="inline-block bg-info-secondary/30 text-info-primary text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                                    Large
-                                  </span>
-                                )}
-                              </div>
+                              {item.selectedOptions.length > 0 && (
+                                <div className="flex flex-wrap gap-1">
+                                  {item.selectedOptions.map((o) => (
+                                    <span
+                                      key={o.id}
+                                      className="inline-block bg-brand-secondary/30 text-brand-primary text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider"
+                                    >
+                                      {o.name}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                              {item.specialInstructions && (
+                                <p className="text-[11px] text-text-secondary/60 line-clamp-1 italic">
+                                  &ldquo;{item.specialInstructions}&rdquo;
+                                </p>
+                              )}
                             </div>
                             <button
                               onClick={() => removeFromCart(item.id)}
@@ -265,27 +271,32 @@ export const CartDrawer = () => {
                   variant="accent"
                   shape="rounded"
                   className="flex-1 font-bold text-white shadow-md h-12 justify-center"
-                  onClick={() => {
-                    setIsConfirmOpen(false);
-                    setIsCartOpen(false); // Fixed: Changed from setIsOpen to matches your prop values
-                    setTimeout(() => setIsReceiptOpen(true), 250);
                   disabled={isSubmitting}
                   onClick={async () => {
-                    if (!tenantId) return;
-                    setIsSubmitting(true);
+                    if (!tenantId) {
+                      // Demo fallback when no tenant scope
+                      setCartSnapshot([...cart]);
+                      setCartTotalSnapshot(cartTotal);
+                      setPlacedOrderId(`DEMO-${Math.floor(1000 + Math.random() * 9000)}`);
+                      setIsConfirmOpen(false);
+                      setIsCartOpen(false);
+                      clearCart();
+                      setTimeout(() => setIsReceiptOpen(true), 250);
+                      return;
+                    }
 
+                    setIsSubmitting(true);
                     const result = await placeOrder(tenantId, cart, cartTotal);
                     setIsSubmitting(false);
 
                     if (result.success && result.qrHash) {
-                      // Capture snapshot BEFORE clearing the cart
                       setCartSnapshot([...cart]);
                       setCartTotalSnapshot(cartTotal);
                       setPlacedOrderId(result.qrHash);
                       setIsConfirmOpen(false);
-                      setIsOpen(false);
+                      setIsCartOpen(false);
                       clearCart();
-                      setTimeout(() => setIsReceiptOpen(true), 200);
+                      setTimeout(() => setIsReceiptOpen(true), 250);
                     } else {
                       alert(result.error || "Failed to place order.");
                     }

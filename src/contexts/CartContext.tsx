@@ -41,23 +41,24 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   const addToCart = (newItemInput: Omit<CartItem, "id">) => {
     setCart((prevCart) => {
-      // Find out if an identical item configuration already exists in the bucket arrays
+      // Find if an identical item configuration already exists
       const existingItemIndex = prevCart.findIndex(
         (item) =>
           item.menuItem.id === newItemInput.menuItem.id &&
-          item.selectedSize === newItemInput.selectedSize &&
-          JSON.stringify(item.selectedModifiers.sort()) ===
-            JSON.stringify(newItemInput.selectedModifiers.sort()) &&
+          JSON.stringify(
+            item.selectedOptions.map((o) => o.id).sort(),
+          ) ===
+            JSON.stringify(
+              newItemInput.selectedOptions.map((o) => o.id).sort(),
+            ) &&
           item.specialInstructions.trim() ===
             newItemInput.specialInstructions.trim(),
       );
 
       if (existingItemIndex > -1) {
-        // Safe duplication aggregation route
         return prevCart.map((item, idx) => {
           if (idx === existingItemIndex) {
             const updatedQuantity = item.quantity + newItemInput.quantity;
-            // Deriving unit price directly using safe immutability to bypass fractional division bugs
             const unitPrice = newItemInput.totalPrice / newItemInput.quantity;
             return {
               ...item,
@@ -69,7 +70,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         });
       }
 
-      // Fresh unique entry instantiation route
       const cleanUniqueId = `${newItemInput.menuItem.id}-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
       return [...prevCart, { ...newItemInput, id: cleanUniqueId }];
     });
@@ -80,12 +80,11 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const updateQuantity = (id: string, newQuantity: number) => {
-    if (newQuantity < 1) return; // Core structural guard block
+    if (newQuantity < 1) return;
 
     setCart((prev) =>
       prev.map((item) => {
         if (item.id === id) {
-          // Recalculate price: (base + modifiers) * new quantity
           const basePerUnit = item.menuItem.price;
           const modifiersPerUnit = item.selectedOptions.reduce(
             (sum, o) => sum + o.additionalPrice,
@@ -93,8 +92,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
           );
           return {
             ...item,
-            quantity,
-            totalPrice: (basePerUnit + modifiersPerUnit) * quantity,
+            quantity: newQuantity,
+            totalPrice: Number(
+              ((basePerUnit + modifiersPerUnit) * newQuantity).toFixed(2),
+            ),
           };
         }
         return item;
@@ -104,7 +105,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   const clearCart = () => setCart([]);
 
-  // Compute derived state summaries cleanly
   const cartTotal = cart.reduce((sum, item) => sum + item.totalPrice, 0);
   const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
