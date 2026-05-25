@@ -8,13 +8,15 @@ export default async function CustomerHomePage({
   params: Promise<{ id: string }>;
 }) {
   const { id: tenantId } = await params;
-  const { categories, items: initialItems } =
+  const { categories, items: initialItems, currency, guestNumber } =
     await fetchTenantCustomerMenu(tenantId);
 
   return (
     <CustomerOrderingHome
       initialCategories={categories}
       initialItems={initialItems}
+      currency={currency}
+      guestNumber={guestNumber}
     />
   );
 }

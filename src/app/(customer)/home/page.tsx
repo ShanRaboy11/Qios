@@ -103,9 +103,19 @@ function HomePageContent() {
   const isCategoryView = selectedCategory !== null;
   const isSearching = searchQuery.trim().length > 0;
 
-  const searchResults = MOCK_MENU_CATALOG.filter((item) =>
-    item.name.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
+  const filteredItems = React.useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+
+    return MOCK_MENU_CATALOG.filter((item) => {
+      const matchesSearch =
+        normalizedQuery.length === 0 ||
+        item.name.toLowerCase().includes(normalizedQuery);
+      const matchesCategory =
+        selectedCategory === null || item.category === selectedCategory;
+
+      return matchesSearch && matchesCategory;
+    });
+  }, [searchQuery, selectedCategory]);
 
   return (
     <motion.main
@@ -168,7 +178,7 @@ function HomePageContent() {
                     <h2 className="h3 font-bold mb-6 -mt-2 text-[#2D2D2D]">
                       Search Results
                     </h2>
-                    {searchResults.length > 0 ? (
+                    {filteredItems.length > 0 ? (
                       <motion.div
                         initial="hidden"
                         animate="show"
@@ -181,7 +191,7 @@ function HomePageContent() {
                         }}
                         className="grid grid-cols-2 gap-4 md:gap-6 md:grid-cols-3 lg:grid-cols-4"
                       >
-                        {searchResults.map((item) => (
+                        {filteredItems.map((item) => (
                           <motion.div
                             key={`search-${item.id}`}
                             variants={{

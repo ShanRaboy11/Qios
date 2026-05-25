@@ -1,23 +1,33 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, User, Edit2, BellRing, MessageSquare, History, Check } from "lucide-react";
 import { Button } from "@/components/atoms/Button";
 import { cn } from "@/lib/utils";
 
+import { useCart } from "@/contexts/CartContext";
+
 interface GuestProfileDrawerProps {
   isOpen: boolean;
   onClose: () => void;
+  guestNumber?: number;
 }
 
-export const GuestProfileDrawer = ({ isOpen, onClose }: GuestProfileDrawerProps) => {
-  const [displayName, setDisplayName] = useState("Name");
+export const GuestProfileDrawer = ({ isOpen, onClose, guestNumber = 1 }: GuestProfileDrawerProps) => {
+  const { isOrderPlaced, cartTotal, currency } = useCart();
+  const [displayName, setDisplayName] = useState(`Guest #${guestNumber}`);
   const [isEditingName, setIsEditingName] = useState(false);
   const [tempName, setTempName] = useState(displayName);
 
+  // Update if guestNumber changes from upstream
+  useEffect(() => {
+    setDisplayName(`Guest #${guestNumber}`);
+    setTempName(`Guest #${guestNumber}`);
+  }, [guestNumber]);
+
   const handleSaveName = () => {
-    setDisplayName(tempName || "Guest");
+    setDisplayName(tempName || `Guest #${guestNumber}`);
     setIsEditingName(false);
   };
 
@@ -108,20 +118,19 @@ export const GuestProfileDrawer = ({ isOpen, onClose }: GuestProfileDrawerProps)
                   <h3 className="text-lg font-bold text-text-primary">Recent Orders</h3>
                 </div>
                 <div className="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm">
-                  <div className="flex items-center justify-between border-b border-gray-100 pb-3 mb-3">
-                    <div>
-                      <p className="font-bold text-text-primary">#ORD-2847</p>
-                      <p className="text-sm text-gray-500">Today, 10:42 AM</p>
+                  {isOrderPlaced && cartTotal > 0 ? (
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-bold text-text-primary">Active Order</p>
+                        <p className="text-sm text-gray-500">Just now</p>
+                      </div>
+                      <span className="font-bold text-brand-accent">{currency} {(cartTotal * 1.12).toFixed(2)}</span>
                     </div>
-                    <span className="font-bold text-brand-accent">₱1,050.00</span>
-                  </div>
-                  <div className="flex items-center justify-between pb-1">
-                    <div>
-                      <p className="font-bold text-text-primary">#ORD-2840</p>
-                      <p className="text-sm text-gray-500">Today, 9:15 AM</p>
+                  ) : (
+                    <div className="text-sm text-gray-500 text-center py-2">
+                      No recent orders found.
                     </div>
-                    <span className="font-bold text-brand-accent">₱320.00</span>
-                  </div>
+                  )}
                 </div>
               </section>
 

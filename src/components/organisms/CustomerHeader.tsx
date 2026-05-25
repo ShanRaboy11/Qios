@@ -33,6 +33,23 @@ export const CustomerHeader = ({
   const { branding } = useTenantBranding();
   const { itemCount } = useCart(); // Read the real-time calculated context counter
 
+  const [greeting, setGreeting] = React.useState("Good Morning!");
+  const [subGreeting, setSubGreeting] = React.useState("Rise and Shine! It's Breakfast Time");
+
+  React.useEffect(() => {
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour < 12) {
+      setGreeting("Good Morning!");
+      setSubGreeting("Rise and Shine! It's Breakfast Time");
+    } else if (hour >= 12 && hour < 17) {
+      setGreeting("Good Afternoon!");
+      setSubGreeting("Time for a delicious lunch!");
+    } else {
+      setGreeting("Good Evening!");
+      setSubGreeting("Unwind with a great dinner!");
+    }
+  }, []);
+
   return (
     <motion.div
       layout
@@ -137,10 +154,10 @@ export const CustomerHeader = ({
               />
             )}
             <h1 className="text-[40px] font-brand font-medium text-[#2D2D2D] leading-tight">
-              Good Morning, Name!
+              {greeting}
             </h1>
             <p className="text-[#2D2D2D]/80 font-brand-secondary text-[20px]">
-              Rise and Shine! It's Breakfast Time
+              {subGreeting}
             </p>
           </motion.div>
         )}

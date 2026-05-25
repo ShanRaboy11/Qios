@@ -127,22 +127,33 @@ export const CategoryTabBar = ({
                       : "bg-white/30 rounded-[30px] group-hover:bg-brand-primary/80 group-hover:scale-110",
                 )}
               >
-                <div
-                  className={cn(
-                    "w-12 h-12 transition-transform duration-300 bg-brand-accent",
-                    isActive ? "scale-110" : "group-hover:scale-110",
-                  )}
-                  style={{
-                    maskImage: `url(${cat.iconSrc})`,
-                    WebkitMaskImage: `url(${cat.iconSrc})`,
-                    maskSize: "contain",
-                    WebkitMaskSize: "contain",
-                    maskRepeat: "no-repeat",
-                    WebkitMaskRepeat: "no-repeat",
-                    maskPosition: "center",
-                    WebkitMaskPosition: "center",
-                  }}
-                />
+                {cat.icon ? (
+                  <div
+                    className={cn(
+                      "flex items-center justify-center transition-transform duration-300 text-brand-accent",
+                      isActive ? "scale-110" : "group-hover:scale-110",
+                    )}
+                  >
+                    {cat.icon}
+                  </div>
+                ) : (
+                  <div
+                    className={cn(
+                      "w-12 h-12 transition-transform duration-300 bg-brand-accent",
+                      isActive ? "scale-110" : "group-hover:scale-110",
+                    )}
+                    style={{
+                      maskImage: `url(${cat.iconSrc})`,
+                      WebkitMaskImage: `url(${cat.iconSrc})`,
+                      maskSize: "contain",
+                      WebkitMaskSize: "contain",
+                      maskRepeat: "no-repeat",
+                      WebkitMaskRepeat: "no-repeat",
+                      maskPosition: "center",
+                      WebkitMaskPosition: "center",
+                    }}
+                  />
+                )}
               </div>
               <span
                 className={cn(

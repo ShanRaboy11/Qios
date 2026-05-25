@@ -21,9 +21,13 @@ import { renderCategoryIcon } from "@/lib/utils/categoryIcons";
 export default function CustomerOrderingHome({
   initialCategories,
   initialItems,
+  currency = "PHP",
+  guestNumber = 1,
 }: {
   initialCategories: { id: string; name: string; icon: string }[];
   initialItems: MenuItemData[];
+  currency?: string;
+  guestNumber?: number;
 }) {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<MenuItemData | null>(null);
@@ -66,7 +70,7 @@ export default function CustomerOrderingHome({
   );
 
   return (
-    <CartProvider>
+    <CartProvider currency={currency}>
       <motion.main
         layout
         animate={{ backgroundColor: isCategoryView ? "#FF5269" : "#FFDC72" }}
@@ -121,7 +125,7 @@ export default function CustomerOrderingHome({
                       <h2 className="h3 font-bold mb-6 -mt-2 text-[#2D2D2D]">
                         Search Results
                       </h2>
-                      {searchResults.length > 0 ? (
+                      {filteredItems.length > 0 ? (
                         <motion.div
                           initial="hidden"
                           animate="show"
@@ -134,7 +138,7 @@ export default function CustomerOrderingHome({
                           }}
                           className="grid grid-cols-2 gap-4 md:gap-6 md:grid-cols-3 lg:grid-cols-4"
                         >
-                          {searchResults.map((item) => (
+                          {filteredItems.map((item) => (
                             <motion.div
                               key={`search-${item.id}`}
                               variants={{
@@ -319,6 +323,7 @@ export default function CustomerOrderingHome({
         <GuestProfileDrawer
           isOpen={isProfileOpen}
           onClose={() => setIsProfileOpen(false)}
+          guestNumber={guestNumber}
         />
       </motion.main>
     </CartProvider>

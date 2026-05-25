@@ -4,6 +4,8 @@ import { Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 // import Image from 'next/image'; // Can be added later if needed
 
+import { useCart } from "@/contexts/CartContext";
+
 export interface MenuItemCardProps {
   title?: string;
   price?: string | number;
@@ -23,6 +25,8 @@ export const MenuItemCard = ({
   onAdd,
   className,
 }: MenuItemCardProps) => {
+  const { currency } = useCart();
+
   if (variant === "bestseller") {
     return (
       <div
@@ -43,7 +47,7 @@ export const MenuItemCard = ({
         {/* Price Tag Overlay */}
         <div className="absolute bottom-4 right-0 bg-brand-primary py-1.5 pl-3 pr-2 rounded-l-[16px] shadow-sm transform translate-x-1 group-hover:translate-x-0 transition-transform z-20">
           <span className="text-[#2D2D2D] font-brand-secondary font-bold text-[12px] sm:text-[14px] md:text-[16px] tracking-tight">
-            {typeof price === "number" ? `$${price.toFixed(2)}` : price}
+            {typeof price === "number" ? `${currency} ${price.toFixed(2)}` : price}
           </span>
         </div>
       </div>
@@ -83,7 +87,7 @@ export const MenuItemCard = ({
           {/* Price & Availability - Right Aligned block below */}
           <div className="-mt-1 sm:mt-5 text-right w-full">
             <p className="text-brand-accent font-brand-secondary font-bold text-[22px] sm:text-[26px]">
-              {typeof price === "number" ? `Php ${price.toFixed(2)}` : price}
+              {typeof price === "number" ? `${currency} ${price.toFixed(2)}` : price}
             </p>
             {availability && (
               <p className="text-text-secondary font-brand-secondary text-[14px] sm:text-[16px] mt-1 font-medium">
@@ -118,7 +122,7 @@ export const MenuItemCard = ({
             {title}
           </h3>
           <p className="b2 text-brand-accent font-brand-secondary text-left font-semibold text-[17px] mt-2.5">
-            {typeof price === "number" ? `Php ${price.toFixed(2)}` : price}
+            {typeof price === "number" ? `${currency} ${price.toFixed(2)}` : price}
           </p>
           {availability && (
             <p className="text-text-secondary font-brand-secondary text-left text-[12px] mt-1 font-medium">

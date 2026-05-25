@@ -1,7 +1,14 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { Send, RotateCcw, ChevronDown, X, MessageCircle, Sparkles } from "lucide-react";
+import {
+  Send,
+  RotateCcw,
+  ChevronDown,
+  X,
+  MessageCircle,
+  Sparkles,
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ChatBubble,
@@ -149,7 +156,7 @@ function ChatPanel({
         timestamp: getTimestamp(),
       },
     ]);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Auto-focus input when panel opens
@@ -281,7 +288,14 @@ function ChatPanel({
                 d="M-10,118 C-10,118 22,36 122.5,36 C223,36 255,118 255,118 C255,118 223,200 122.5,200 C22,200 -10,118 -10,118 Z"
                 fill="white"
               />
-              <rect x="65" y="99" width="115" height="38" rx="19" fill="#1a1a1a" />
+              <rect
+                x="65"
+                y="99"
+                width="115"
+                height="38"
+                rx="19"
+                fill="#1a1a1a"
+              />
               <ellipse cx="95" cy="118" rx="9" ry="9" fill="#e8405a" />
               <ellipse cx="150" cy="118" rx="9" ry="9" fill="#e8405a" />
               <g transform="translate(12,190) scale(0.898)">
