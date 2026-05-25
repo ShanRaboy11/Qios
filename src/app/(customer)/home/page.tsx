@@ -4,11 +4,12 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
+import { ChatbotLogo } from "@/components/molecules/ChatbotLogo";
 import { CustomerHeader } from "@/components/organisms/CustomerHeader";
 import { CategoryTabBar } from "@/components/organisms/CategoryTabBar";
 import { MenuItemCard } from "@/components/molecules/MenuItemCard";
 import { PromoBanner } from "@/components/organisms/PromoBanner";
-import { ChevronRight, Search } from "lucide-react";
+import { ChevronRight, Search, MessageCircle, X } from "lucide-react"; // Added chat icons
 import OrderEditor from "@/components/organisms/OrderEditor";
 import { CartDrawer } from "@/components/organisms/CartDrawer";
 import { FloatingOrderStatus } from "@/components/organisms/FloatingOrderStatus";
@@ -86,15 +87,20 @@ const MOCK_BRANDING = {
   dashboardLogoUrl: "/images/starbucks-logo.png",
 };
 
-// Isolated core view logic to correctly consume the useCart context safely down-tree
+const smoothTransition = {
+  type: "spring",
+  stiffness: 300,
+  damping: 30,
+} as const;
+
 function HomePageContent() {
   const isGridView = MOCK_BRANDING.menuLayout === "grid";
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<MenuItemData | null>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false); // Chat window visibility toggle
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Consume cart action handler context safely now
   const { setIsCartOpen } = useCart();
 
   const isCategoryView = selectedCategory !== null;
@@ -351,11 +357,82 @@ function HomePageContent() {
         isOpen={isProfileOpen}
         onClose={() => setIsProfileOpen(false)}
       />
+
+      {/* FLOATING CHATBOT CONTAINER */}
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-4">
+        <AnimatePresence>
+          {isChatOpen && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.85, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.85, y: 20 }}
+              transition={smoothTransition}
+              className="w-[360px] h-[450px] bg-white rounded-2xl shadow-2xl border border-black/5 overflow-hidden flex flex-col"
+            >
+              {/* Chat Header */}
+              <div className="bg-brand-accent p-4 text-white flex items-center justify-between shadow-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="font-inter font-semibold text-sm">
+                    Store Concierge
+                  </span>
+                </div>
+                <button
+                  onClick={() => setIsChatOpen(false)}
+                  className="p-1 hover:bg-white/10 rounded-full transition-colors cursor-pointer"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Chat Body messages area */}
+              <div className="flex-grow p-4 overflow-y-auto bg-neutral-50/50 flex flex-col gap-3 font-inter text-sm">
+                <div className="bg-brand-secondary/40 text-text-primary self-start p-3 rounded-2xl rounded-tl-none max-w-[80%] shadow-sm">
+                  Hello! 👋 How can I assist you with your order today?
+                </div>
+              </div>
+
+              {/* Chat Input row */}
+              <div className="p-3 bg-white border-t border-black/5 flex items-center gap-2">
+                <input
+                  type="text"
+                  placeholder="Ask about ingredients, status..."
+                  className="flex-grow px-4 py-2 border border-black/5 bg-neutral-50 rounded-full focus:outline-none text-sm font-inter"
+                />
+                <button className="bg-brand-accent text-white px-4 py-2 rounded-full text-xs font-semibold hover:opacity-90 transition-opacity cursor-pointer">
+                  Send
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Solid Branded Action Trigger Circle */}
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={() => setIsChatOpen((prev) => !prev)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              setIsChatOpen((prev) => !prev);
+            }
+          }}
+          className="w-16 h-16 bg-brand-primary rounded-full flex items-center justify-center shadow-xl hover:shadow-2xl hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer select-none overflow-hidden outline-none group"
+          aria-label="Toggle live helper assistant chat window"
+        >
+          {/* - Background is now 100% solid bg-brand-secondary to match the tenant theme color scheme.
+            - Filter removed completely so ChatbotLogo keeps its native style.
+            - translate-y-[7px] remains intact to lock the logo into the precise visual center.
+          */}
+          <div className="transform translate-y-[15px] transition-transform duration-200">
+            <ChatbotLogo size={42} />
+          </div>
+        </div>
+      </div>
     </motion.main>
   );
 }
 
-// Global Orchestration Page Wrapper Component
 export default function CustomerHomePage() {
   return (
     <TenantBrandingProvider branding={MOCK_BRANDING as any}>
