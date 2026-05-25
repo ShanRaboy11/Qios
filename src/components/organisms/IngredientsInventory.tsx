@@ -14,7 +14,8 @@ import {
   Package,
   Scale,
   FolderPlus,
-  X
+  X,
+  ChevronDown
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -47,6 +48,12 @@ export default function IngredientsInventory() {
   const [draftItem, setDraftItem] = useState<Partial<InventoryItem> | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
+  
+  const [isUnitDropdownOpen, setIsUnitDropdownOpen] = useState(false);
+  const [unitSearch, setUnitSearch] = useState("");
+
+  const MEASUREMENT_UNITS = ["kg", "g", "mg", "lb", "oz", "L", "ml", "gal", "pt"];
+  const PIECE_UNITS = ["pcs", "boxes", "bottles", "cans", "packs", "slices", "dozens"];
   
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
@@ -81,6 +88,8 @@ export default function IngredientsInventory() {
     setModalMode(null);
     setDraftItem(null);
     setModalError(null);
+    setIsUnitDropdownOpen(false);
+    setUnitSearch("");
   };
 
   const handleSaveItem = async () => {
@@ -325,15 +334,78 @@ export default function IngredientsInventory() {
                     onChange={(e) => setDraftItem({ ...draftItem, current_stock: parseFloat(e.target.value) || 0 })}
                   />
                 </div>
-                <div>
+                <div className="relative" onClick={(e) => e.stopPropagation()}>
                   <label className="block b5 font-bold text-text-secondary uppercase tracking-widest mb-1.5">
                     Unit Type
                   </label>
-                  <Input
-                    value={draftItem.unit_type || ""}
-                    onChange={(e) => setDraftItem({ ...draftItem, unit_type: e.target.value })}
-                    placeholder={activeTab === "measurement" ? "kg, L, g..." : "pcs, box..."}
-                  />
+                  <div className="relative">
+                    <Input
+                      value={isUnitDropdownOpen ? unitSearch : (draftItem.unit_type || "")}
+                      onChange={(e) => {
+                        setUnitSearch(e.target.value);
+                        setDraftItem({ ...draftItem, unit_type: e.target.value });
+                        setIsUnitDropdownOpen(true);
+                      }}
+                      onFocus={() => {
+                        setUnitSearch(draftItem.unit_type || "");
+                        setIsUnitDropdownOpen(true);
+                      }}
+                      placeholder={activeTab === "measurement" ? "Search or enter unit..." : "Search or enter unit..."}
+                      className={cn(
+                        "cursor-text pr-12",
+                        isUnitDropdownOpen && "border-brand-primary shadow-[0_0_0_2px_rgba(255,198,112,0.15)]"
+                      )}
+                    />
+                    <button
+                      type="button"
+                      className="absolute right-0 top-0 h-full px-4 flex items-center justify-center text-text-secondary"
+                      onClick={() => setIsUnitDropdownOpen(!isUnitDropdownOpen)}
+                    >
+                      <ChevronDown
+                        size={16}
+                        className={cn(
+                          "transition-transform duration-300",
+                          isUnitDropdownOpen && "rotate-180 text-brand-primary"
+                        )}
+                      />
+                    </button>
+                  </div>
+                  
+                  {isUnitDropdownOpen && (
+                    <div className="absolute top-[calc(100%+6px)] left-0 z-50 bg-white border-2 border-[#E5E5E5] rounded-2xl shadow-xl overflow-hidden w-full animate-in zoom-in-95 duration-200">
+                      <ul className="max-h-[200px] overflow-y-auto custom-scrollbar py-1">
+                        {(() => {
+                          const availableUnits = activeTab === "measurement" ? MEASUREMENT_UNITS : PIECE_UNITS;
+                          const filtered = availableUnits.filter(u => u.toLowerCase().includes(unitSearch.toLowerCase()));
+                          
+                          if (unitSearch.trim() && !filtered.find(u => u.toLowerCase() === unitSearch.toLowerCase().trim())) {
+                             filtered.unshift(unitSearch.trim());
+                          }
+                          
+                          if (filtered.length === 0) {
+                            return <li className="px-4 py-3 b4 text-text-secondary text-center">No matches</li>;
+                          }
+                          
+                          return filtered.map((u, i) => (
+                            <li
+                              key={i}
+                              onClick={() => {
+                                setDraftItem({ ...draftItem, unit_type: u });
+                                setUnitSearch("");
+                                setIsUnitDropdownOpen(false);
+                              }}
+                              className={cn(
+                                "cursor-pointer transition-colors px-4 py-2.5 b4 hover:bg-slate-50 text-text-primary",
+                                draftItem.unit_type === u && "text-brand-primary bg-orange-50/50 font-semibold"
+                              )}
+                            >
+                              {u}
+                            </li>
+                          ));
+                        })()}
+                      </ul>
+                    </div>
+                  )}
                 </div>
               </div>
 
