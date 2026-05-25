@@ -1,9 +1,19 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { useParams } from "next/navigation";
 import { Button } from "@/components/atoms/Button";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { updateOrderStatus } from "@/app/(employee)/[id]/employee/queue/actions";
 
-type OrderStatus = "pending" | "preparing" | "ready" | "completed";
+type OrderStatus =
+  | "pending"
+  | "preparing"
+  | "ready"
+  | "completed"
+  | "served"
+  | "cancelled"
+  | "voided";
 
 interface OrderItem {
   id: string;
@@ -14,105 +24,164 @@ interface OrderItem {
 
 interface Order {
   id: string;
+  order_number: string;
   status: OrderStatus;
-  time: string;
-  counter: string;
-  type: string;
-  targetTimePercentage: number;
+  created_at: string;
+  table_number: string | null;
+  order_type: string;
   items: OrderItem[];
 }
 
-const initialOrders: Order[] = [
-  {
-    id: "#R-4821",
-    status: "preparing",
-    time: "10:22",
-    counter: "Counter 3",
-    type: "Dine-in",
-    targetTimePercentage: 86,
-    items: [
-      {
-        id: "1",
-        name: "Garlic Fried Rice",
-        notes: "Extra crispy",
-        quantity: 1,
-      },
-      { id: "2", name: "Soy Chicken", notes: "Extra crispy", quantity: 1 },
-      { id: "3", name: "Mango Shake", notes: "Medium", quantity: 1 },
-    ],
-  },
-  {
-    id: "#R-4822",
-    status: "preparing",
-    time: "5:22",
-    counter: "Counter 2",
-    type: "Takeout",
-    targetTimePercentage: 53,
-    items: [
-      {
-        id: "4",
-        name: "Kare-Kare Meal",
-        notes: "Mild to peanut sauce",
-        quantity: 1,
-      },
-      { id: "5", name: "Lumpia Shanghai", notes: "10 pieces", quantity: 2 },
-    ],
-  },
-  {
-    id: "#R-4823",
-    status: "pending",
-    time: "3:22",
-    counter: "Counter 1",
-    type: "Dine-in",
-    targetTimePercentage: 28,
-    items: [
-      { id: "6", name: "Beef Tapa", notes: "Well done", quantity: 1 },
-      { id: "7", name: "Garlic Rice", notes: "Medium serving", quantity: 1 },
-      { id: "8", name: "Fried Egg", notes: "Over easy", quantity: 2 },
-    ],
-  },
-  {
-    id: "#R-4824",
-    status: "ready",
-    time: "17:22",
-    counter: "Counter 4",
-    type: "Dine-in",
-    targetTimePercentage: 144,
-    items: [
-      { id: "9", name: "Sisig Rice Bowl", notes: "Medium spice", quantity: 1 },
-      { id: "10", name: "Calamansi Juice", notes: "Less sugar", quantity: 2 },
-    ],
-  },
-  {
-    id: "#R-4825",
-    status: "preparing",
-    time: "8:15",
-    counter: "Counter 1",
-    type: "Dine-in",
-    targetTimePercentage: 62,
-    items: [
-      { id: "11", name: "Chicken Adobo", notes: "Extra sauce", quantity: 1 },
-      { id: "12", name: "Pancit Canton", notes: "No liver", quantity: 1 },
-    ],
-  },
-];
+interface OrderWithPercentage extends Order {
+  timeDisplay: string;
+  targetTimePercentage: number;
+}
 
 export default function KitchenPreparationDashboard() {
-  const [orders, setOrders] = useState<Order[]>(initialOrders);
+  const params = useParams();
+  const tenantId = params.id as string;
 
-  const updateOrderStatus = (orderId: string, newStatus: OrderStatus) => {
-    setOrders((prev) =>
-      prev.map((order) =>
-        order.id === orderId ? { ...order, status: newStatus } : order,
-      ),
-    );
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [now, setNow] = useState(Date.now());
+  const supabase = createSupabaseBrowserClient();
+
+  const fetchOrders = useCallback(async () => {
+    if (!tenantId) return;
+    const { data, error } = await supabase
+      .from("orders")
+      .select(
+        `
+        id,
+        order_number,
+        status,
+        created_at,
+        table_number,
+        order_type,
+        order_items (
+          id,
+          quantity,
+          customization_notes,
+          menu_items (
+            name
+          )
+        )
+      `,
+      )
+      .eq("tenant_id", tenantId)
+      .in("status", ["pending", "preparing", "ready"])
+      .order("created_at", { ascending: true });
+
+    if (error) {
+      console.error("Error fetching orders:", error);
+      return;
+    }
+
+    if (data) {
+      const mappedOrders: Order[] = data.map((d: any) => ({
+        id: d.id,
+        order_number: d.order_number,
+        status: d.status,
+        created_at: d.created_at,
+        table_number: d.table_number,
+        order_type: d.order_type,
+        items: d.order_items
+          ? d.order_items.map((i: any) => ({
+              id: i.id,
+              quantity: i.quantity,
+              notes: i.customization_notes || "",
+              name: i.menu_items?.name || "Unknown Item",
+            }))
+          : [],
+      }));
+      setOrders(mappedOrders);
+    }
+  }, [tenantId, supabase]);
+
+  useEffect(() => {
+    if (!tenantId) return;
+
+    fetchOrders();
+
+    const channel = supabase
+      .channel("kitchen_orders")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "orders",
+          filter: `tenant_id=eq.${tenantId}`,
+        },
+        () => {
+          fetchOrders();
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [tenantId, fetchOrders, supabase]);
+
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 15000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleUpdateStatus = async (
+    orderId: string,
+    newStatus: OrderStatus,
+  ) => {
+    try {
+      // Optimistic update
+      setOrders((prev) =>
+        prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o)),
+      );
+      await updateOrderStatus(orderId, tenantId, newStatus);
+    } catch (err) {
+      console.error("Failed to update status:", err);
+      fetchOrders(); // Revert on failure
+    }
   };
 
   const pendingOrders = orders.filter((o) => o.status === "pending");
   const preparingOrders = orders.filter((o) => o.status === "preparing");
   const readyOrders = orders.filter((o) => o.status === "ready");
 
-  const renderOrderCard = (order: Order) => (
+  const activeCount = pendingOrders.length + preparingOrders.length;
+
+  const mappedOrdersWithPercent = useMemo(() => {
+    const baseWaitTimeMs = 10 * 60 * 1000; // 10 minutes
+    const delayMultiplier = Math.max(1, activeCount);
+    const targetTimeMs = baseWaitTimeMs * delayMultiplier;
+
+    return orders.map((order) => {
+      const createdTime = new Date(order.created_at).getTime();
+      const timeElapsedMs = Math.max(0, now - createdTime);
+      const targetTimePercentage = Math.floor(
+        (timeElapsedMs / targetTimeMs) * 100,
+      );
+
+      const elapsedMinutes = Math.floor(timeElapsedMs / 60000);
+      const hours = Math.floor(elapsedMinutes / 60);
+      const mins = elapsedMinutes % 60;
+      const timeDisplay = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+
+      return {
+        ...order,
+        timeDisplay,
+        targetTimePercentage,
+      };
+    });
+  }, [orders, now, activeCount]);
+
+  const pOrders = mappedOrdersWithPercent.filter((o) => o.status === "pending");
+  const prepOrders = mappedOrdersWithPercent.filter(
+    (o) => o.status === "preparing",
+  );
+  const rOrders = mappedOrdersWithPercent.filter((o) => o.status === "ready");
+
+  const renderOrderCard = (order: OrderWithPercentage) => (
     <div
       key={order.id}
       className="bg-white rounded-[24px] overflow-hidden shadow-sm border-[1.5px] border-[#ffc670]/40 p-4 flex flex-col gap-4 transition-all hover:shadow-md hover:border-[#ffc670]/80"
@@ -120,23 +189,23 @@ export default function KitchenPreparationDashboard() {
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-2">
           <span className="font-bold text-lg text-text-primary">
-            {order.id}
+            #{order.order_number}
           </span>
         </div>
         <div
           className={`px-2.5 py-1 rounded-lg text-xs font-bold ${order.targetTimePercentage > 100 ? "bg-red-100 text-red-600" : "bg-gray-100 text-text-secondary"}`}
         >
-          {order.time}
+          {order.timeDisplay}
         </div>
       </div>
 
       <div className="flex items-center gap-2 text-xs text-text-secondary font-medium">
         <span className="px-2 py-0.5 bg-gray-100 rounded-md shrink-0">
-          {order.counter}
+          Table {order.table_number || "N/A"}
         </span>
-        <span>•</span>
-        <span className="truncate">{order.type}</span>
-        <span>•</span>
+        <span>�</span>
+        <span className="truncate">{order.order_type.replace("_", "-")}</span>
+        <span>�</span>
         <span
           className={`${order.targetTimePercentage > 100 ? "text-red-500 font-bold" : ""} shrink-0`}
         >
@@ -172,7 +241,7 @@ export default function KitchenPreparationDashboard() {
       <div className="mt-auto pt-2 flex">
         {order.status === "pending" && (
           <button
-            onClick={() => updateOrderStatus(order.id, "preparing")}
+            onClick={() => handleUpdateStatus(order.id, "preparing")}
             className="w-full py-2.5 rounded-xl text-sm font-bold transition-all bg-white text-text-primary hover:bg-bg-primary active:bg-gray-100 border border-brand-primary shadow-sm"
           >
             Start Preparing
@@ -180,7 +249,7 @@ export default function KitchenPreparationDashboard() {
         )}
         {order.status === "preparing" && (
           <button
-            onClick={() => updateOrderStatus(order.id, "ready")}
+            onClick={() => handleUpdateStatus(order.id, "ready")}
             className="w-full py-2.5 rounded-xl text-sm font-bold transition-all bg-success-primary text-text-tertiary hover:bg-success-primary/90 active:bg-success-primary/80 shadow-sm"
           >
             Mark Ready
@@ -188,7 +257,7 @@ export default function KitchenPreparationDashboard() {
         )}
         {order.status === "ready" && (
           <Button
-            onClick={() => updateOrderStatus(order.id, "completed")}
+            onClick={() => handleUpdateStatus(order.id, "completed")}
             variant="primary"
             className="w-full py-2.5 rounded-xl text-sm font-bold shadow-sm flex items-center justify-center gap-2"
           >
@@ -201,29 +270,11 @@ export default function KitchenPreparationDashboard() {
 
   return (
     <div className="flex flex-col w-full p-4 md:p-6 lg:p-8 gap-6 md:gap-8 font-inter bg-transparent">
-      {/* dashboard header element */}
-      <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4 bg-white p-6 rounded-2xl shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-100">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-text-primary font-figtree tracking-tight">
-            Kitchen Operations
-          </h1>
-          <p className="text-text-secondary mt-1 text-sm md:text-base font-medium">
-            Real-time active order management system
-          </p>
-        </div>
-        <div className="flex items-center gap-3 bg-success-primary/10 px-4 py-2.5 rounded-xl border border-success-primary/20 shadow-sm self-start md:self-auto">
-          <span className="w-2.5 h-2.5 rounded-full bg-success-primary animate-pulse"></span>
-          <span className="text-sm font-bold text-success-primary tracking-wide">
-            SYSTEM LIVE
-          </span>
-        </div>
-      </div>
-
       {/* top stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         <div className="bg-white p-3 md:p-5 rounded-[20px] shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-100 flex items-center gap-3 md:gap-4 transition-transform hover:-translate-y-0.5">
           <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center text-text-primary font-bold text-lg md:text-2xl shadow-sm shrink-0">
-            {pendingOrders.length}
+            {pOrders.length}
           </div>
           <div className="flex flex-col justify-center min-w-0">
             <p className="text-[9px] md:text-[11px] text-text-secondary font-bold uppercase tracking-widest mb-0.5 truncate">
@@ -237,7 +288,7 @@ export default function KitchenPreparationDashboard() {
 
         <div className="bg-white p-3 md:p-5 rounded-[20px] shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-100 flex items-center gap-3 md:gap-4 transition-transform hover:-translate-y-0.5">
           <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl bg-brand-accent/10 border border-brand-accent/20 flex items-center justify-center text-brand-accent font-bold text-lg md:text-2xl shadow-sm shrink-0">
-            {preparingOrders.length}
+            {prepOrders.length}
           </div>
           <div className="flex flex-col justify-center min-w-0">
             <p className="text-[9px] md:text-[11px] text-brand-accent/80 font-bold uppercase tracking-widest mb-0.5 truncate">
@@ -251,7 +302,7 @@ export default function KitchenPreparationDashboard() {
 
         <div className="bg-white p-3 md:p-5 rounded-[20px] shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-100 flex items-center gap-3 md:gap-4 transition-transform hover:-translate-y-0.5">
           <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl bg-success-primary/10 border border-success-primary/20 flex items-center justify-center text-success-primary font-bold text-lg md:text-2xl shadow-sm shrink-0">
-            {readyOrders.length}
+            {rOrders.length}
           </div>
           <div className="flex flex-col justify-center min-w-0">
             <p className="text-[9px] md:text-[11px] text-success-primary/80 font-bold uppercase tracking-widest mb-0.5 truncate">
@@ -288,14 +339,34 @@ export default function KitchenPreparationDashboard() {
               Pending Orders
             </h2>
             <span className="ml-auto bg-gray-50 border border-gray-200 text-text-secondary px-2.5 py-0.5 rounded-full text-xs font-bold shadow-sm">
-              {pendingOrders.length}
+              {pOrders.length}
             </span>
           </div>
           <div className="flex flex-col gap-4 overflow-y-auto">
-            {pendingOrders.map(renderOrderCard)}
-            {pendingOrders.length === 0 && (
-              <div className="text-center p-10 text-text-secondary border-2 border-dashed border-gray-200 rounded-xl font-medium">
-                No pending orders
+            {pOrders.length === 0 && (
+              <div className="flex flex-col items-center gap-3 text-center p-7 rounded-[14px] bg-[#F1EFE8] border border-dashed border-[#B4B2A9]">
+                <div className="w-12 h-12 rounded-xl bg-[#D3D1C7] flex items-center justify-center">
+                  {/* inbox icon */}
+                  <svg
+                    width="22"
+                    height="22"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#5F5E5A"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M4 4h16v10H4z" />
+                    <path d="M4 14h4l2 3h4l2-3h4" />
+                  </svg>
+                </div>
+                <p className="text-sm font-semibold text-[#444441]">
+                  Queue is clear
+                </p>
+                <p className="text-xs text-[#5F5E5A] leading-relaxed max-w-[180px]">
+                  New orders will appear here as they come in.
+                </p>
               </div>
             )}
           </div>
@@ -309,14 +380,35 @@ export default function KitchenPreparationDashboard() {
               Preparing Now
             </h2>
             <span className="ml-auto bg-brand-accent/5 border border-brand-accent/20 text-brand-accent px-2.5 py-0.5 rounded-full text-xs font-bold shadow-sm">
-              {preparingOrders.length}
+              {prepOrders.length}
             </span>
           </div>
           <div className="flex flex-col gap-4 overflow-y-auto">
-            {preparingOrders.map(renderOrderCard)}
-            {preparingOrders.length === 0 && (
-              <div className="text-center p-10 text-text-secondary border-2 border-dashed border-gray-200 rounded-xl font-medium">
-                No preparing orders
+            {prepOrders.map(renderOrderCard)}
+            {prepOrders.length === 0 && (
+              <div className="flex flex-col items-center gap-3 text-center p-7 rounded-[14px] bg-[#FAEEDA] border border-dashed border-[#FAC775]">
+                <div className="w-12 h-12 rounded-xl bg-[#FAC775] flex items-center justify-center">
+                  {/* chef hat icon */}
+                  <svg
+                    width="22"
+                    height="22"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#854F0B"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M6 19h12M8 19v-6h8v6M12 7a4 4 0 0 1 4 4H8a4 4 0 0 1 4-4z" />
+                    <circle cx="12" cy="4" r="1.5" />
+                  </svg>
+                </div>
+                <p className="text-sm font-semibold text-[#633806]">
+                  Kithcen's idle
+                </p>
+                <p className="text-xs text-[#854F0B] leading-relaxed max-w-[180px]">
+                  Start a pending order to move it here.
+                </p>
               </div>
             )}
           </div>
@@ -330,14 +422,35 @@ export default function KitchenPreparationDashboard() {
               Ready for Pickup
             </h2>
             <span className="ml-auto bg-success-primary/5 border border-success-primary/20 text-success-primary px-2.5 py-0.5 rounded-full text-xs font-bold shadow-sm">
-              {readyOrders.length}
+              {rOrders.length}
             </span>
           </div>
           <div className="flex flex-col gap-4 overflow-y-auto">
-            {readyOrders.map(renderOrderCard)}
-            {readyOrders.length === 0 && (
-              <div className="text-center p-10 text-text-secondary border-2 border-dashed border-gray-200 rounded-xl font-medium">
-                No orders ready
+            {rOrders.map(renderOrderCard)}
+            {rOrders.length === 0 && (
+              <div className="flex flex-col items-center gap-3 text-center p-7 rounded-[14px] bg-[#EAF3DE] border border-dashed border-[#C0DD97]">
+                <div className="w-12 h-12 rounded-xl bg-[#C0DD97] flex items-center justify-center">
+                  {/* check circle icon */}
+                  <svg
+                    width="22"
+                    height="22"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#3B6D11"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="m8.5 12.5 2.5 2.5 4-5" />
+                  </svg>
+                </div>
+                <p className="text-sm font-semibold text-[#27500A]">
+                  All caught up
+                </p>
+                <p className="text-xs text-[#3B6D11] leading-relaxed max-w-[180px]">
+                  Completed orders will appear here when ready.
+                </p>
               </div>
             )}
           </div>
