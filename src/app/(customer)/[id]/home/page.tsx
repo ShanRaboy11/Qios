@@ -1,6 +1,7 @@
 import React from "react";
 import { fetchTenantCustomerMenu } from "@/lib/customerMenu";
 import CustomerOrderingHome from "@/components/organisms/CustomerOrderingHome";
+import { TenantBrandingProvider } from "@/components/providers/TenantBrandingProvider";
 
 export default async function CustomerHomePage({
   params,
@@ -8,15 +9,17 @@ export default async function CustomerHomePage({
   params: Promise<{ id: string }>;
 }) {
   const { id: tenantId } = await params;
-  const { categories, items: initialItems, currency, guestNumber } =
+  const { categories, items: initialItems, currency, guestNumber, branding } =
     await fetchTenantCustomerMenu(tenantId);
 
   return (
-    <CustomerOrderingHome
-      initialCategories={categories}
-      initialItems={initialItems}
-      currency={currency}
-      guestNumber={guestNumber}
-    />
+    <TenantBrandingProvider branding={branding}>
+      <CustomerOrderingHome
+        initialCategories={categories}
+        initialItems={initialItems}
+        currency={currency}
+        guestNumber={guestNumber}
+      />
+    </TenantBrandingProvider>
   );
 }

@@ -153,10 +153,10 @@ export const CustomerHeader = ({
                 className="h-10 w-auto object-contain mb-2 origin-left"
               />
             )}
-            <h1 className="text-[40px] font-brand font-medium text-[#2D2D2D] leading-tight">
+            <h1 className="text-[28px] sm:text-[36px] md:text-[40px] font-brand font-medium text-[#2D2D2D] leading-tight">
               {greeting}
             </h1>
-            <p className="text-[#2D2D2D]/80 font-brand-secondary text-[20px]">
+            <p className="text-[#2D2D2D]/80 font-brand-secondary text-[15px] sm:text-[18px] md:text-[20px]">
               {subGreeting}
             </p>
           </motion.div>
