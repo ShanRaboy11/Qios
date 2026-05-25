@@ -26,9 +26,9 @@ interface StaffAnalyticsChartProps {
 
 export const StaffAnalyticsChart = ({ data }: StaffAnalyticsChartProps) => {
   return (
-    <div className="bg-white rounded-[24px] shadow-sm border border-gray-100 overflow-hidden">
+    <div className="bg-white rounded-[24px] shadow-sm border border-gray-100 overflow-hidden font-brand-secondary">
       <div className="p-6 border-b border-gray-50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <h3 className="font-bold text-xl text-text-primary">
+        <h3 className="font-brand font-bold text-xl text-text-primary">
           Prep Time Trends vs. Order Volume
         </h3>
         <DateRangePicker startDate="01 Jan 2026" endDate="07 Jan 2026" />
@@ -48,19 +48,19 @@ export const StaffAnalyticsChart = ({ data }: StaffAnalyticsChartProps) => {
               dataKey="time"
               axisLine={false}
               tickLine={false}
-              tick={{ fontSize: 11, fill: "#9CA3AF" }}
+              tick={{ fontSize: 11, fill: "#9CA3AF", fontFamily: "var(--font-brand-secondary, sans-serif)" }}
               dy={10}
             />
             <YAxis
               yAxisId="left"
               axisLine={false}
               tickLine={false}
-              tick={{ fontSize: 11, fill: "#9CA3AF" }}
+              tick={{ fontSize: 11, fill: "#9CA3AF", fontFamily: "var(--font-brand-secondary, sans-serif)" }}
               label={{
                 value: "Prep Time (mins)",
                 angle: -90,
                 position: "insideLeft",
-                style: { fill: "#9CA3AF", fontSize: 11 },
+                style: { fill: "#9CA3AF", fontSize: 11, fontFamily: "var(--font-brand-secondary, sans-serif)" },
               }}
             />
             <YAxis
@@ -68,17 +68,18 @@ export const StaffAnalyticsChart = ({ data }: StaffAnalyticsChartProps) => {
               orientation="right"
               axisLine={false}
               tickLine={false}
-              tick={{ fontSize: 11, fill: "#9CA3AF" }}
+              tick={{ fontSize: 11, fill: "#9CA3AF", fontFamily: "var(--font-brand-secondary, sans-serif)" }}
               label={{
                 value: "Order Count",
                 angle: 90,
                 position: "insideRight",
-                style: { fill: "#9CA3AF", fontSize: 11 },
+                style: { fill: "#9CA3AF", fontSize: 11, fontFamily: "var(--font-brand-secondary, sans-serif)" },
               }}
             />
             <Tooltip
               contentStyle={{
                 borderRadius: "12px",
+                fontFamily: "var(--font-brand-secondary, sans-serif)",
                 border: "1px solid #F3F4F6",
                 boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
               }}
@@ -87,7 +88,7 @@ export const StaffAnalyticsChart = ({ data }: StaffAnalyticsChartProps) => {
               verticalAlign="bottom"
               height={36}
               iconType="circle"
-              wrapperStyle={{ fontSize: 12, paddingTop: 20 }}
+              wrapperStyle={{ fontSize: 12, paddingTop: 20, fontFamily: "var(--font-brand-secondary, sans-serif)" }}
             />
 
             {/* The active area highlighted in the image */}
@@ -95,10 +96,10 @@ export const StaffAnalyticsChart = ({ data }: StaffAnalyticsChartProps) => {
               yAxisId="left"
               x1="11:30"
               x2="13:00"
-              fill="#FEF3C7"
+              fill="var(--brand-secondary, #FEF3C7)"
               fillOpacity={0.3}
               strokeDasharray="3 3"
-              stroke="#FBBF24"
+              stroke="var(--brand-primary, #FBBF24)"
             />
 
             <Line
@@ -106,9 +107,9 @@ export const StaffAnalyticsChart = ({ data }: StaffAnalyticsChartProps) => {
               type="monotone"
               dataKey="prepTime"
               name="Avg Prep Time (mins)"
-              stroke="#FF5269"
+              stroke="var(--brand-accent, #FF5269)"
               strokeWidth={2}
-              dot={{ r: 3, fill: "#FF5269", strokeWidth: 0 }}
+              dot={{ r: 3, fill: "var(--brand-accent, #FF5269)", strokeWidth: 0 }}
               activeDot={{ r: 6 }}
             />
             <Line
@@ -116,9 +117,9 @@ export const StaffAnalyticsChart = ({ data }: StaffAnalyticsChartProps) => {
               type="monotone"
               dataKey="orderVolume"
               name="Order Volume"
-              stroke="#3B82F6"
+              stroke="var(--brand-primary, #3B82F6)"
               strokeWidth={2}
-              dot={{ r: 3, fill: "#3B82F6", strokeWidth: 0 }}
+              dot={{ r: 3, fill: "var(--brand-primary, #3B82F6)", strokeWidth: 0 }}
               activeDot={{ r: 6 }}
             />
           </LineChart>

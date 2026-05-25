@@ -9,7 +9,7 @@ const donutData = [
   { name: "First Time", value: 5500 },
   { name: "Return", value: 3500 },
 ];
-const COLORS = ["#FF5269", "#FFD77A"];
+const COLORS = ["var(--brand-accent, #FF5269)", "var(--brand-primary, #FFD77A)"];
 
 export const OverallInformation = () => {
   const [customerFilter, setCustomerFilter] = useState("Today");
@@ -18,7 +18,7 @@ export const OverallInformation = () => {
     <div className="bg-white rounded-[24px] p-6 shadow-[0px_4px_20px_rgba(0,0,0,0.03)] border border-gray-100 flex flex-col h-full w-full">
       <div className="flex items-center gap-3 mb-6">
         <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center">
-          <Info className="w-5 h-5 text-[#ffc670]" />
+          <Info className="w-5 h-5 text-brand-primary" />
         </div>
         <h2 className="text-[18px] font-bold text-text-primary">
           Overall Information
@@ -28,21 +28,21 @@ export const OverallInformation = () => {
       {/* Top 3 Stat Cards */}
       <div className="grid grid-cols-3 gap-3 mb-8">
         <div className="flex flex-col bg-gray-50 items-center justify-center border border-gray-100 rounded-2xl py-4 hover:border-orange-100 transition-colors">
-          <User className="w-6 h-6 text-[#FFDC72] mb-2" />
+          <User className="w-6 h-6 text-brand-primary mb-2" />
           <span className="text-[14px] text-text-secondary">Suppliers</span>
           <span className="text-[18px] font-bold text-text-primary mt-1">
             6987
           </span>
         </div>
         <div className="flex flex-col bg-gray-50 items-center justify-center border border-gray-100 rounded-2xl py-4 hover:border-orange-100 transition-colors">
-          <Users className="w-6 h-6 text-[#FF6B7F] mb-2" />
+          <Users className="w-6 h-6 text-brand-accent mb-2" />
           <span className="text-[14px] text-text-secondary">Customer</span>
           <span className="text-[18px] font-bold text-text-primary mt-1">
             4896
           </span>
         </div>
         <div className="flex flex-col bg-gray-50 items-center justify-center border border-gray-100 rounded-2xl py-4 hover:border-orange-100 transition-colors">
-          <ShoppingCart className="w-6 h-6 text-[#FFDC72] mb-2" />
+          <ShoppingCart className="w-6 h-6 text-brand-primary mb-2" />
           <span className="text-[14px] text-text-secondary">Orders</span>
           <span className="text-[18px] font-bold text-text-primary mt-1">
             487
@@ -104,7 +104,7 @@ export const OverallInformation = () => {
               <span className="text-[20px] font-bold text-text-primary leading-none">
                 5.5K
               </span>
-              <span className="text-[13px] text-[#FF5269] font-medium">
+              <span className="text-[13px] text-brand-accent font-medium">
                 First Time
               </span>
               <div className="bg-[#22C55E] text-white text-[10px] font-bold px-2 py-0.5 rounded flex items-center gap-1 w-fit mt-1">
@@ -131,7 +131,7 @@ export const OverallInformation = () => {
               <span className="text-[20px] font-bold text-text-primary leading-none">
                 3.5K
               </span>
-              <span className="text-[13px] text-[#FFD77A] font-medium">
+              <span className="text-[13px] text-brand-primary font-medium">
                 Return
               </span>
               <div className="bg-[#22C55E] text-white text-[10px] font-bold px-2 py-0.5 rounded flex items-center gap-1 w-fit mt-1">

@@ -10,9 +10,9 @@ const config: Config = {
     extend: {
       colors: {
         brand: {
-          primary: "#FFC670",
-          secondary: "#FFD77A",
-          accent: "#FF5269",
+          primary: "var(--brand-primary, #FFC670)",
+          secondary: "var(--brand-secondary, #FFD77A)",
+          accent: "var(--brand-accent, #FF5269)",
         },
         bg: {
           primary: "#FFF9EF",
@@ -35,6 +35,8 @@ const config: Config = {
         figtree: ["var(--font-figtree)", "sans-serif"],
         inter: ["var(--font-inter)", "sans-serif"],
         ibrand: ["var(--font-ibrand)", "serif"],
+        brand: ["var(--font-brand-primary, var(--font-inter))", "sans-serif"],
+        "brand-secondary": ["var(--font-brand-secondary, var(--font-figtree))", "sans-serif"],
       },
       keyframes: {
         marquee: {

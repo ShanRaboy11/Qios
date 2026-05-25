@@ -5,6 +5,17 @@ import { Navbar } from "@/components/organisms/navbar";
 import { Footer } from "@/components/organisms/footer";
 import { motion } from "framer-motion";
 import { usePathname, useRouter, useParams } from "next/navigation";
+import { TenantBrandingProvider } from "@/components/providers/TenantBrandingProvider";
+
+const MOCK_BRANDING = {
+  primaryColor: "#00704A",
+  secondaryColor: "#D4E9E2",
+  accentColor: "#1E3932",
+  fontFamily: "playfair",
+  secondaryFont: "inter",
+  menuLayout: "grid",
+  dashboardLogoUrl: "/images/starbucks-logo.png",
+};
 
 export default function EmployeeLayout({
   children,
@@ -23,6 +34,7 @@ export default function EmployeeLayout({
   if (pathname.includes("/stock_audit")) currentView = "stock_audit";
   if (pathname.includes("/transactions")) currentView = "transactions";
   if (pathname.includes("/kitchen")) currentView = "kitchen";
+  if (pathname.includes("/settings")) currentView = "settings";
 
   const handleNavigation = (view: string) => {
     if (view === currentView) return;
@@ -31,7 +43,8 @@ export default function EmployeeLayout({
   };
 
   return (
-    <div className="min-h-screen bg-bg-primary overflow-x-hidden relative flex flex-col">
+    <TenantBrandingProvider branding={MOCK_BRANDING as any}>
+      <div className="min-h-screen bg-bg-primary overflow-x-hidden relative flex flex-col">
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
         <motion.div
           animate={{
@@ -93,5 +106,6 @@ export default function EmployeeLayout({
       <div className="relative bottom-0 inset-x-0 h-40 bg-gradient-to-t from-white via-white/50 to-transparent z-[2] pointer-events-none" />
       <Footer hideSocials />
     </div>
+    </TenantBrandingProvider>
   );
 }

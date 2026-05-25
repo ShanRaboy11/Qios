@@ -60,7 +60,7 @@ export const KPICard = ({
   return (
     <div
       className={cn(
-        "w-full rounded-2xl transition-all duration-200 ",
+        "w-full rounded-2xl transition-all duration-200 font-brand-secondary",
         isFilled
           ? [
               colorStyles[color],
