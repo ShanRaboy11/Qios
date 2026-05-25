@@ -89,8 +89,11 @@ export const TenantProfileBentoGrid = ({
         <KPICard
           title="Total Locations"
           value={String(tenant.totalLocations ?? 0)}
-          percentageChange={33}
-          description="+1 this month"
+          description={
+            (tenant.totalLocations ?? 0) === 1
+              ? "Single location"
+              : `${tenant.totalLocations} active branches`
+          }
           variant="outlined"
           className="shadow-sm border-gray-100 h-full flex-1 justify-center bg-white rounded-[24px]"
           icon={<MapPin size={24} className="text-brand-primary" />}
@@ -98,7 +101,11 @@ export const TenantProfileBentoGrid = ({
         <KPICard
           title="Total Staff"
           value={String(tenant.totalStaff ?? 0)}
-          description="Active now"
+          description={
+            (tenant.totalStaff ?? 0) === 1
+              ? "1 registered member"
+              : `${tenant.totalStaff} registered members`
+          }
           variant="outlined"
           className="shadow-sm border-gray-100 h-full flex-1 justify-center bg-white rounded-[24px]"
           icon={<Users size={24} className="text-[#FF5269]" />}
@@ -139,7 +146,21 @@ export const TenantProfileBentoGrid = ({
                   Next Billing
                 </span>
                 <span className="text-sm font-bold text-text-primary">
-                  May 15, 2026
+                  {(() => {
+                    const now = new Date();
+                    const isAnnual = tenant.billingCycle?.toLowerCase().includes("annual");
+                    const next = new Date(now);
+                    if (isAnnual) {
+                      next.setFullYear(next.getFullYear() + 1);
+                    } else {
+                      next.setMonth(next.getMonth() + 1);
+                    }
+                    return next.toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                    });
+                  })()}
                 </span>
               </div>
               <div className="flex justify-between items-center">
@@ -147,7 +168,20 @@ export const TenantProfileBentoGrid = ({
                   Est. Amount
                 </span>
                 <span className="text-sm font-bold text-text-primary">
-                  ₱1,499.00
+                  {(() => {
+                    const isAnnual = tenant.billingCycle?.toLowerCase().includes("annual");
+                    const rawPrice = isAnnual
+                      ? tenant.priceAnnually
+                      : tenant.priceMonthly;
+                    if (!rawPrice) return "—";
+                    const numericStr = rawPrice.replace(/[^0-9.]/g, "");
+                    const numericVal = parseFloat(numericStr);
+                    if (isNaN(numericVal)) return `₱${rawPrice}`;
+                    return `₱${numericVal.toLocaleString("en-US", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}`;
+                  })()}
                 </span>
               </div>
             </div>

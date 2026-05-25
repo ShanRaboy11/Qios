@@ -46,6 +46,8 @@ export interface TenantProfileDetails {
   joined: string;
   plan: string;
   billingCycle: string;
+  priceMonthly?: string;
+  priceAnnually?: string;
   totalLocations: number;
   totalStaff: number;
   features: string[];
@@ -480,23 +482,6 @@ function isMissingColumnError(errorMessage: string | undefined) {
   return normalized.includes("column") && normalized.includes("does not exist");
 }
 
-function normalizePackageId(packageId: string) {
-  const normalized = packageId.trim().toLowerCase();
-  if (normalized === "starter" || normalized === "growth") {
-    return normalized;
-  }
-
-  if (
-    normalized === "enterprise" ||
-    normalized === "enterprises" ||
-    normalized === "business"
-  ) {
-    return "enterprises";
-  }
-
-  return "starter";
-}
-
 function normalizeBillingCycle(cycle: string) {
   const normalized = cycle.trim().toLowerCase();
   return normalized === "annually" ? "annually" : "monthly";
@@ -726,6 +711,48 @@ async function buildTenantDocuments(
   });
 }
 
+function normalizePlanName(rawPlan: unknown) {
+  if (typeof rawPlan !== "string" || rawPlan.trim() === "") {
+    return "";
+  }
+
+  const normalized = rawPlan.trim().toLowerCase();
+
+  if (normalized === "starter" || normalized === "basic") {
+    return "Basic";
+  }
+
+  if (
+    normalized === "growth" ||
+    normalized === "business" ||
+    normalized === "professional" ||
+    normalized === "pro"
+  ) {
+    return "Business";
+  }
+
+  if (normalized === "enterprise" || normalized === "enterprises") {
+    return "Enterprise";
+  }
+
+  const title = rawPlan.trim();
+  if (["Basic", "Business", "Enterprise"].includes(title)) {
+    return title;
+  }
+
+  return title
+    .replace(/[_-]/g, " ")
+    .split(" ")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function toText(value: unknown) {
+  if (value === null || value === undefined) return "";
+  return String(value);
+}
+
 function formatPlanLabel(rawPlan: unknown) {
   if (typeof rawPlan !== "string" || rawPlan.trim() === "") {
     return "Professional";
@@ -737,6 +764,64 @@ function formatPlanLabel(rawPlan: unknown) {
     .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
+}
+
+async function getSubscriptionPlanByName(
+  supabase: ReturnType<typeof createSupabaseAdminClient>,
+  rawPlanName: unknown,
+) {
+  if (typeof rawPlanName !== "string" || rawPlanName.trim() === "") {
+    return null;
+  }
+
+  const canonicalName = normalizePlanName(rawPlanName);
+
+  const { data: exactPlan, error: exactError } = await supabase
+    .from("subscription_plans")
+    .select("name, features, price_monthly, price_annually")
+    .eq("name", canonicalName)
+    .maybeSingle();
+
+  if (!exactError && exactPlan) {
+    return exactPlan;
+  }
+
+  const { data: loosePlan, error: looseError } = await supabase
+    .from("subscription_plans")
+    .select("name, features, price_monthly, price_annually")
+    .ilike("name", rawPlanName.trim())
+    .maybeSingle();
+
+  if (!looseError && loosePlan) {
+    return loosePlan;
+  }
+
+  return null;
+}
+
+// Extract enabled features from subscription_plans JSONB features column
+function extractSubscriptionPlanFeatures(featuresJsonb: unknown): string[] {
+  if (!featuresJsonb || typeof featuresJsonb !== "object") {
+    return [];
+  }
+
+  const features: string[] = [];
+  const categories = featuresJsonb as Record<string, unknown>;
+
+  // Iterate through each category (customer, employee_ops, inventory, analytics, admin_controls)
+  for (const [, categoryValue] of Object.entries(categories)) {
+    if (categoryValue && typeof categoryValue === "object") {
+      const categoryFeatures = categoryValue as Record<string, unknown>;
+      // Extract feature names where value is true
+      for (const [featureName, isEnabled] of Object.entries(categoryFeatures)) {
+        if (isEnabled === true) {
+          features.push(featureName);
+        }
+      }
+    }
+  }
+
+  return features;
 }
 
 function extractFeatureList(rawFeatures: unknown): string[] {
@@ -909,18 +994,69 @@ export async function getTenantProfileDetails(
     tenant.verification_doc_urls,
   );
 
-  const planLabel = resolveTenantPlanLabel(tenantRecord, ownerMetadata);
-  const featureList = resolveFeatureList(tenantRecord, ownerMetadata);
-  const totalStaff = profiles.filter(
+  // subscription_plan is stored as text in the tenants table.
+  // Use it to resolve the matching row from subscription_plans by name.
+  const tenantPlanName =
+    pickFirstString(tenantRecord, [
+      "subscription_plan",
+      "plan",
+      "plan_name",
+      "package",
+      "package_id",
+      "tier",
+    ]) ??
+    pickFirstString(ownerMetadata, [
+      "subscription_plan",
+      "plan",
+      "plan_name",
+      "package",
+      "package_id",
+      "tier",
+    ]);
+
+  const subscriptionPlanData = await getSubscriptionPlanByName(
+    supabase,
+    tenantPlanName,
+  );
+
+  const subscriptionPlanFeatures = subscriptionPlanData
+    ? extractSubscriptionPlanFeatures(subscriptionPlanData.features)
+    : [];
+  const subscriptionPlanLabel = subscriptionPlanData
+    ? formatPlanLabel(subscriptionPlanData.name)
+    : resolveTenantPlanLabel(tenantRecord, ownerMetadata);
+  const subscriptionBillingCycle =
+    tenant.billing_cycle && typeof tenant.billing_cycle === "string"
+      ? tenant.billing_cycle.toLowerCase() === "annually"
+        ? "Annually"
+        : "Monthly"
+      : "Monthly";
+
+  const planLabel = subscriptionPlanLabel;
+  const featureList =
+    subscriptionPlanFeatures.length > 0
+      ? subscriptionPlanFeatures
+      : resolveFeatureList(tenantRecord, ownerMetadata);
+  // --- Total Staff: count all profiles (admin + employee) for this tenant ---
+  const { count: staffCount } = await supabase
+    .from("profiles")
+    .select("id", { count: "exact", head: true })
+    .eq("tenant_id", tenantId)
+    .in("role", ["admin", "employee"]);
+
+  const totalStaff = staffCount ?? profiles.filter(
     (profile: any) =>
       profile &&
       typeof profile.role === "string" &&
       ["admin", "employee"].includes(profile.role),
   ).length;
-  const totalLocations = resolveTenantLocationCount(
-    tenantRecord,
-    ownerMetadata,
-  );
+
+  // --- Total Locations: read from the tenant's location_count column ---
+  const locationCountValue = tenantRecord.location_count;
+  const totalLocations =
+    typeof locationCountValue === "number" && locationCountValue >= 1
+      ? locationCountValue
+      : resolveTenantLocationCount(tenantRecord, ownerMetadata);
 
   const profileDocuments: TenantProfileDocument[] = sortedDocuments.map(
     (document) => ({
@@ -937,7 +1073,7 @@ export async function getTenantProfileDetails(
   return {
     id: tenant.id,
     business_name: resolveTenantName(tenantRecord),
-    type: planLabel,
+    type: subscriptionPlanLabel,
     status: mapTenantStatus(
       typeof tenant.status === "string" ? tenant.status : null,
     ),
@@ -945,8 +1081,14 @@ export async function getTenantProfileDetails(
     email: resolveOwnerEmail(tenantRecord, ownerIdentity.email, ownerMetadata),
     phone: resolveOwnerPhone(tenantRecord, ownerIdentity.phone, ownerMetadata),
     joined: formatJoinedDate(tenant.created_at),
-    plan: planLabel,
-    billingCycle: resolveBillingCycle(tenantRecord, ownerMetadata),
+    plan: subscriptionPlanLabel,
+    billingCycle: subscriptionBillingCycle,
+    priceMonthly: subscriptionPlanData
+      ? toText(subscriptionPlanData.price_monthly)
+      : undefined,
+    priceAnnually: subscriptionPlanData
+      ? toText(subscriptionPlanData.price_annually)
+      : undefined,
     totalLocations,
     totalStaff,
     features: featureList,
@@ -964,14 +1106,22 @@ export async function updateTenantSubscription(
   billingCycle: string,
 ) {
   const supabase = createSupabaseAdminClient();
-  const normalizedPackage = normalizePackageId(packageId);
+  const normalizedPackage = normalizePlanName(packageId);
   const normalizedCycle = normalizeBillingCycle(billingCycle);
+
+  const planData = await getSubscriptionPlanByName(supabase, normalizedPackage);
+  if (!planData) {
+    throw new Error(`Subscription plan '${packageId}' is not available.`);
+  }
 
   const { data: tenantData, error: tenantError } = await supabase
     .from("tenants")
     .select(
       `
       id,
+      business_name,
+      subscription_plan,
+      billing_cycle,
       profiles (
         id,
         role
@@ -984,6 +1134,20 @@ export async function updateTenantSubscription(
   if (tenantError || !tenantData) {
     throw new Error(tenantError?.message || "Tenant not found");
   }
+
+  const tenantRecord = tenantData as Record<string, unknown>;
+  const previousPlan =
+    typeof tenantRecord.subscription_plan === "string"
+      ? tenantRecord.subscription_plan
+      : "None";
+  const previousCycle =
+    typeof tenantRecord.billing_cycle === "string"
+      ? tenantRecord.billing_cycle
+      : "monthly";
+  const tenantName =
+    typeof tenantRecord.business_name === "string"
+      ? tenantRecord.business_name
+      : tenantId;
 
   const profiles = normalizeProfiles(tenantData.profiles);
   const ownerProfile = selectOwnerProfile(profiles);
@@ -1008,9 +1172,9 @@ export async function updateTenantSubscription(
     await supabase.auth.admin.updateUserById(ownerProfile.id, {
       user_metadata: {
         ...currentMetadata,
-        subscription_plan: normalizedPackage,
-        plan: normalizedPackage,
-        package_id: normalizedPackage,
+        subscription_plan: planData.name,
+        plan: planData.name,
+        package_id: planData.name,
         billing_cycle: normalizedCycle,
         billingCycle: normalizedCycle,
       },
@@ -1020,11 +1184,79 @@ export async function updateTenantSubscription(
     throw new Error(metadataUpdateError.message);
   }
 
+  // Try a single, explicit update of the canonical columns first.
+  // This keeps the operation atomic and is the expected schema for recent deployments.
+  try {
+    const { data: updatedRows, error: updateError } = await supabase
+      .from("tenants")
+      .update({
+        subscription_plan: planData.name,
+        billing_cycle: normalizedCycle,
+      })
+      .eq("id", tenantId)
+      .select("id");
+
+    if (updateError) {
+      // If the error is because the columns don't exist, fall back to permissive updates
+      if (!isMissingColumnError(updateError.message)) {
+        throw new Error(updateError.message);
+      }
+      // else fall through to legacy fallback behavior below
+    } else {
+      if (
+        !updatedRows ||
+        (Array.isArray(updatedRows) && updatedRows.length === 0)
+      ) {
+        // No rows updated — treat as an unexpected failure
+        throw new Error(
+          "Failed to update tenant subscription (no rows affected).",
+        );
+      }
+      // succeeded — skip legacy fallback
+      revalidatePath(`/admin/tenants/${tenantId}`);
+      revalidatePath("/admin/tenants");
+      revalidatePath("/admin/dashboard");
+
+      const newFeatures = extractSubscriptionPlanFeatures(planData.features);
+
+      // --- Log to System Activity ---
+      await logActivity({
+        actorName: "Super Admin",
+        actorRole: "Super Admin",
+        actionType: "UPDATE",
+        description: `Updated subscription for '${tenantName}': ${previousPlan} (${previousCycle}) → ${planData.name} (${normalizedCycle})`,
+        targetTenantId: tenantId,
+        targetTenantName: tenantName,
+        metadata: {
+          previousPlan,
+          previousBillingCycle: previousCycle,
+          newPlan: planData.name,
+          newBillingCycle: normalizedCycle,
+        },
+      });
+
+      return {
+        success: true,
+        packageId: planData.name,
+        billingCycle: normalizedCycle,
+        priceMonthly: toText(planData.price_monthly),
+        priceAnnually: toText(planData.price_annually),
+        features: newFeatures,
+      };
+    }
+  } catch (err) {
+    // If this is a missing-column situation, we'll attempt legacy fallbacks below.
+    if (err instanceof Error && !isMissingColumnError(err.message)) {
+      throw err;
+    }
+  }
+
+  // Legacy fallback: try older column names one-by-one if the canonical columns are not present.
   const planColumns = ["subscription_plan", "plan", "plan_name", "package_id"];
   for (const column of planColumns) {
     const { error } = await supabase
       .from("tenants")
-      .update({ [column]: normalizedPackage } as Record<string, string>)
+      .update({ [column]: planData.name } as Record<string, string>)
       .eq("id", tenantId);
 
     if (!error) {
@@ -1062,10 +1294,31 @@ export async function updateTenantSubscription(
   revalidatePath("/admin/tenants");
   revalidatePath("/admin/dashboard");
 
+  const newFeatures = extractSubscriptionPlanFeatures(planData.features);
+
+  // --- Log to System Activity ---
+  await logActivity({
+    actorName: "Super Admin",
+    actorRole: "Super Admin",
+    actionType: "UPDATE",
+    description: `Updated subscription for '${tenantName}': ${previousPlan} (${previousCycle}) → ${planData.name} (${normalizedCycle})`,
+    targetTenantId: tenantId,
+    targetTenantName: tenantName,
+    metadata: {
+      previousPlan,
+      previousBillingCycle: previousCycle,
+      newPlan: planData.name,
+      newBillingCycle: normalizedCycle,
+    },
+  });
+
   return {
     success: true,
-    packageId: normalizedPackage,
+    packageId: planData.name,
     billingCycle: normalizedCycle,
+    priceMonthly: toText(planData.price_monthly),
+    priceAnnually: toText(planData.price_annually),
+    features: newFeatures,
   };
 }
 
