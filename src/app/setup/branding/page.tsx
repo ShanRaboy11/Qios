@@ -24,13 +24,11 @@ import {
   type SettingsActionState,
 } from "@/app/(tenant)/[id]/settings/types";
 import { cn } from "@/lib/utils";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export default function BrandingSetupPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const requestedTenantId = searchParams.get("tenantId")?.trim() || "";
   const presetThemes = [
     { primary: "#FFC670", secondary: "#FFF9F0", accent: "#00FFFF" },
     { primary: "#3B82F6", secondary: "#EFF6FF", accent: "#F59E0B" },
@@ -297,17 +295,8 @@ export default function BrandingSetupPage() {
         .maybeSingle();
 
       const profileTenantId = profile?.tenant_id ?? "";
-      if (
-        requestedTenantId &&
-        profileTenantId &&
-        requestedTenantId !== profileTenantId
-      ) {
-        throw new Error(
-          "This setup link does not match the current tenant account.",
-        );
-      }
 
-      const tenantId = requestedTenantId || profileTenantId;
+      const tenantId = profileTenantId;
       if (!tenantId) {
         throw new Error("Tenant context not found for current user.");
       }
