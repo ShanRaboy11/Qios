@@ -4,6 +4,8 @@ import { Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 // import Image from 'next/image'; // Can be added later if needed
 
+import { useCart } from "@/contexts/CartContext";
+
 export interface MenuItemCardProps {
   title?: string;
   price?: string | number;
@@ -23,6 +25,8 @@ export const MenuItemCard = ({
   onAdd,
   className,
 }: MenuItemCardProps) => {
+  const { currency } = useCart();
+
   if (variant === "bestseller") {
     return (
       <div
@@ -41,9 +45,9 @@ export const MenuItemCard = ({
         />
 
         {/* Price Tag Overlay */}
-        <div className="absolute bottom-4 right-0 bg-[#FFDC72] py-1.5 pl-3 pr-2 rounded-l-[16px] shadow-sm transform translate-x-1 group-hover:translate-x-0 transition-transform z-20">
-          <span className="text-[#2D2D2D] font-inter font-bold text-[12px] sm:text-[14px] md:text-[16px] tracking-tight">
-            {typeof price === "number" ? `$${price.toFixed(2)}` : price}
+        <div className="absolute bottom-4 right-0 bg-brand-primary py-1.5 pl-3 pr-2 rounded-l-[16px] shadow-sm transform translate-x-1 group-hover:translate-x-0 transition-transform z-20">
+          <span className="text-[#2D2D2D] font-brand-secondary font-bold text-[12px] sm:text-[14px] md:text-[16px] tracking-tight">
+            {typeof price === "number" ? `${currency} ${price.toFixed(2)}` : price}
           </span>
         </div>
       </div>
@@ -60,7 +64,7 @@ export const MenuItemCard = ({
         onClick={onAdd}
       >
         {/* Card Background Shifted Right */}
-        <div className="absolute top-0 bottom-0 right-0 left-12 sm:left-16 bg-[#FFDC72] rounded-[32px] shadow-sm transition-all duration-300 group-hover:shadow-md z-0" />
+        <div className="absolute top-0 bottom-0 right-0 left-12 sm:left-16 bg-brand-primary/20 rounded-[32px] shadow-sm transition-all duration-300 group-hover:shadow-md z-0" />
 
         {/* Protruding Image on the Left */}
         <div className="relative z-10 flex-shrink-0 transition-transform duration-300 group-hover:-translate-x-1 ml-2 sm:ml-0">
@@ -76,17 +80,17 @@ export const MenuItemCard = ({
         {/* Content Area */}
         <div className="relative z-10 flex flex-col justify-center flex-grow py-5 pr-6 sm:pr-8 pl-4 sm:pl-5">
           {/* Title - Left Aligned */}
-          <h3 className="text-text-primary font-figtree font-medium text-[20px] sm:text-[22px] leading-[1.25] tracking-tight text-left">
+          <h3 className="text-text-primary font-brand font-medium text-[20px] sm:text-[22px] leading-[1.25] tracking-tight text-left">
             {title}
           </h3>
 
           {/* Price & Availability - Right Aligned block below */}
           <div className="-mt-1 sm:mt-5 text-right w-full">
-            <p className="text-[#FF5269] font-inter font-bold text-[22px] sm:text-[26px]">
-              {typeof price === "number" ? `Php ${price.toFixed(2)}` : price}
+            <p className="text-brand-accent font-brand-secondary font-bold text-[22px] sm:text-[26px]">
+              {typeof price === "number" ? `${currency} ${price.toFixed(2)}` : price}
             </p>
             {availability && (
-              <p className="text-text-secondary font-inter text-[14px] sm:text-[16px] mt-1 font-medium">
+              <p className="text-text-secondary font-brand-secondary text-[14px] sm:text-[16px] mt-1 font-medium">
                 {availability}
               </p>
             )}
@@ -99,7 +103,7 @@ export const MenuItemCard = ({
   return (
     <div className={cn("relative pt-16 w-full max-w-[220px] group", className)}>
       {/* Card Background */}
-      <div className="bg-[#FFDC72] rounded-[32px] px-5 pb-5 pt-[76px] h-full flex flex-col justify-between shadow-sm hover:shadow-md transition-all duration-300">
+      <div className="bg-brand-primary/20 rounded-[32px] px-5 pb-5 pt-[76px] h-full flex flex-col justify-between shadow-sm hover:shadow-md transition-all duration-300">
         {/* Protruding Image */}
         <div className="absolute top-0 left-1/2 transform -translate-x-1/2 transition-transform duration-300 group-hover:-translate-y-2 z-10">
           <div className="w-[140px] h-[140px] rounded-full overflow-hidden shadow-lg border-[4px] border-white/5">
@@ -114,14 +118,14 @@ export const MenuItemCard = ({
 
         {/* Content Area */}
         <div className="text-center mt-2 flex-grow flex flex-col justify-end z-0 pb-4">
-          <h3 className="b3 text-[#2D2D2D] font-inter text-left font-bold text-[18px] sm:text-[20px] leading-[1.25] tracking-tight line-clamp-2">
+          <h3 className="b3 text-[#2D2D2D] font-brand text-left font-bold text-[18px] sm:text-[20px] leading-[1.25] tracking-tight line-clamp-2">
             {title}
           </h3>
-          <p className="b2 text-[#FF4D6D] font-inter text-left font-semibold text-[17px] mt-2.5">
-            {typeof price === "number" ? `Php ${price.toFixed(2)}` : price}
+          <p className="b2 text-brand-accent font-brand-secondary text-left font-semibold text-[17px] mt-2.5">
+            {typeof price === "number" ? `${currency} ${price.toFixed(2)}` : price}
           </p>
           {availability && (
-            <p className="text-text-secondary font-inter text-left text-[12px] mt-1 font-medium">
+            <p className="text-text-secondary font-brand-secondary text-left text-[12px] mt-1 font-medium">
               {availability}
             </p>
           )}
@@ -137,7 +141,7 @@ export const MenuItemCard = ({
               e.stopPropagation();
               onAdd?.();
             }}
-            className="w-8 h-8 !rounded-[8px] !p-0 shadow-md hover:scale-105 transition-transform bg-[#FF4D6D]"
+            className="w-8 h-8 !rounded-[8px] !p-0 shadow-md hover:scale-105 transition-transform bg-brand-accent"
           >
             <Plus className="text-white" size={18} strokeWidth={3} />
           </Button>

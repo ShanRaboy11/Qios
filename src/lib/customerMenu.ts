@@ -103,5 +103,26 @@ export async function fetchTenantCustomerMenu(tenantId: string) {
     modifierGroups: modifierGroupsByItemId.get(item.id) ?? [],
   })) satisfies MenuItemData[];
 
-  return { categories, items };
+  // Fetch currency
+  const { data: platformSettings } = await supabase
+    .from("platform_settings")
+    .select("default_currency")
+    .eq("id", 1)
+    .single();
+
+  const currency = platformSettings?.default_currency || "PHP";
+
+  // Calculate guest number (orders today + 1)
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const { count: ordersCount } = await supabase
+    .from("orders")
+    .select("id", { count: "exact", head: true })
+    .eq("tenant_id", tenantId)
+    .gte("created_at", today.toISOString());
+
+  const guestNumber = (ordersCount || 0) + 1;
+
+  return { categories, items, currency, guestNumber };
 }
