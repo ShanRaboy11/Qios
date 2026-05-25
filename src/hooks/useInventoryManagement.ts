@@ -1,11 +1,14 @@
 import { useState, useEffect } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
+type InventoryModeUI = "unit" | "measurement";
+type InventoryModeDb = "unit" | "recipe" | "measurement";
+
 export interface InventoryItem {
   id: string;
   name: string;
   unit_type: string;
-  inventory_mode: "unit" | "measurement";
+  inventory_mode: InventoryModeUI;
   current_stock: number;
   low_stock_threshold: number;
   critical_stock_threshold: number;
@@ -13,11 +16,34 @@ export interface InventoryItem {
   updated_at: string;
 }
 
+interface InventoryItemRow extends Omit<InventoryItem, "inventory_mode"> {
+  inventory_mode: InventoryModeDb;
+}
+
 export const useInventoryManagement = () => {
   const supabase = createSupabaseBrowserClient();
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [actionError, setActionError] = useState<string | null>(null);
+
+  const toUiInventoryMode = (mode: InventoryModeDb): InventoryModeUI =>
+    mode === "unit" ? "unit" : "measurement";
+
+  const toDbInventoryMode = (mode: InventoryModeUI): InventoryModeDb =>
+    mode === "measurement" ? "recipe" : "unit";
+
+  const mapRowToItem = (row: InventoryItemRow): InventoryItem => ({
+    ...row,
+    inventory_mode: toUiInventoryMode(row.inventory_mode),
+  });
+
+  const isInventoryModeEnumError = (error: unknown, value: string) => {
+    const message = getErrorMessage(error, "").toLowerCase();
+    return (
+      message.includes("inventory_mode_enum") &&
+      message.includes(`\"${value.toLowerCase()}\"`)
+    );
+  };
 
   const getErrorMessage = (error: unknown, fallback: string) => {
     if (error && typeof error === "object" && "message" in error) {
@@ -69,7 +95,7 @@ export const useInventoryManagement = () => {
           .order("name");
 
         if (error) throw error;
-        setItems(data as InventoryItem[]);
+        setItems(((data ?? []) as InventoryItemRow[]).map(mapRowToItem));
       } catch (err) {
         console.error("Error fetching inventory data:", err);
         setActionError(getErrorMessage(err, "Failed to fetch inventory"));
@@ -84,18 +110,20 @@ export const useInventoryManagement = () => {
     setActionError(null);
     try {
       const tenantId = await getCurrentTenantId();
-      
+
       const payload = {
         name: draft.name,
         unit_type: draft.unit_type,
-        inventory_mode: draft.inventory_mode,
+        inventory_mode: draft.inventory_mode
+          ? toDbInventoryMode(draft.inventory_mode)
+          : undefined,
         current_stock: draft.current_stock,
         low_stock_threshold: draft.low_stock_threshold,
         critical_stock_threshold: draft.critical_stock_threshold,
       };
 
       if (isNew) {
-        const { data, error } = await supabase
+        let { data, error } = await supabase
           .from("inventory_items")
           .insert({
             ...payload,
@@ -103,13 +131,33 @@ export const useInventoryManagement = () => {
           })
           .select()
           .single();
-          
+
+        // Backward compatibility: older DBs may still use 'measurement' instead of 'recipe'.
+        if (
+          error &&
+          draft.inventory_mode === "measurement" &&
+          isInventoryModeEnumError(error, "recipe")
+        ) {
+          const retryResult = await supabase
+            .from("inventory_items")
+            .insert({
+              ...payload,
+              inventory_mode: "measurement",
+              tenant_id: tenantId,
+            })
+            .select()
+            .single();
+          data = retryResult.data;
+          error = retryResult.error;
+        }
+
         if (error) throw error;
-        setItems((prev) => [...prev, data as InventoryItem]);
-        return data as InventoryItem;
+        const mapped = mapRowToItem(data as InventoryItemRow);
+        setItems((prev) => [...prev, mapped]);
+        return { item: mapped, error: null as string | null };
       } else {
         if (!draft.id) throw new Error("Missing id for update");
-        const { data, error } = await supabase
+        let { data, error } = await supabase
           .from("inventory_items")
           .update(payload)
           .eq("tenant_id", tenantId)
@@ -117,14 +165,35 @@ export const useInventoryManagement = () => {
           .select()
           .single();
 
+        if (
+          error &&
+          draft.inventory_mode === "measurement" &&
+          isInventoryModeEnumError(error, "recipe")
+        ) {
+          const retryResult = await supabase
+            .from("inventory_items")
+            .update({
+              ...payload,
+              inventory_mode: "measurement",
+            })
+            .eq("tenant_id", tenantId)
+            .eq("id", draft.id)
+            .select()
+            .single();
+          data = retryResult.data;
+          error = retryResult.error;
+        }
+
         if (error) throw error;
-        setItems((prev) => prev.map((i) => (i.id === draft.id ? (data as InventoryItem) : i)));
-        return data as InventoryItem;
+        const mapped = mapRowToItem(data as InventoryItemRow);
+        setItems((prev) => prev.map((i) => (i.id === draft.id ? mapped : i)));
+        return { item: mapped, error: null as string | null };
       }
     } catch (e) {
-      setActionError(getErrorMessage(e, "Failed to save inventory item."));
+      const message = getErrorMessage(e, "Failed to save inventory item.");
+      setActionError(message);
       console.error(e);
-      return null;
+      return { item: null, error: message };
     }
   };
 
@@ -137,7 +206,7 @@ export const useInventoryManagement = () => {
         .delete()
         .eq("tenant_id", tenantId)
         .eq("id", id);
-        
+
       if (error) throw error;
       setItems((prev) => prev.filter((i) => i.id !== id));
       return true;
