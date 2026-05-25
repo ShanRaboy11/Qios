@@ -34,11 +34,19 @@ function buildConversationPrompt({
   prompt,
   context,
   messages,
+  storeName,
 }: {
   prompt: string;
   context?: string;
   messages?: ChatMessage[];
+  storeName?: string;
 }) {
+  const store = storeName ? `Store name: ${storeName}.` : "";
+
+  const menuBlock = context
+    ? `Current menu items available:\n${context}\n\nUse this menu information to answer customer questions accurately. If an item is not on the menu, say so politely.`
+    : "No menu data was provided. If a customer asks about specific items, let them know you don't have live menu data right now and suggest they check the menu board.";
+
   const conversation = messages
     ?.filter((message) => message.message.trim())
     .map((message) => {
@@ -48,16 +56,21 @@ function buildConversationPrompt({
     .join("\n");
 
   return [
-    "You are Qios AI, a friendly F&B kiosk ordering assistant.",
-    "Help customers with menu questions, payment options, opening hours, allergies, order changes, and general ordering support.",
-    "Keep replies concise, warm, and practical. If you do not know restaurant-specific information, say so and suggest asking staff.",
-    context ? `Extra context: ${context}` : "",
+    `You are Qios AI, a friendly and helpful F&B kiosk ordering assistant. ${store}`,
+    "Your role: help customers with menu questions, item recommendations, payment methods, opening hours, allergen information, and order changes.",
+    "Tone: warm, concise, and practical. Keep responses under 3 short paragraphs. Use bullet points for lists.",
+    "Format: Use **bold** for item names and prices. Use bullet points (- item) for lists. Do not use markdown headers (##).",
+    "If you genuinely don't know restaurant-specific information (e.g. exact hours), say so and suggest asking a staff member.",
+    "",
+    menuBlock,
+    "",
+    store,
     conversation
       ? `Conversation so far:\n${conversation}`
       : `Customer: ${prompt}`,
   ]
     .filter(Boolean)
-    .join("\n\n");
+    .join("\n");
 }
 
 export async function POST(request: NextRequest) {
@@ -71,10 +84,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { prompt, context, messages } = (await request.json()) as {
+    const { prompt, context, messages, storeName } = (await request.json()) as {
       prompt?: string;
       context?: string;
       messages?: ChatMessage[];
+      storeName?: string;
     };
 
     const latestPrompt = prompt?.trim() || messages?.at(-1)?.message.trim();
@@ -90,6 +104,7 @@ export async function POST(request: NextRequest) {
       prompt: latestPrompt,
       context,
       messages,
+      storeName,
     });
 
     const response = await fetch(
@@ -109,8 +124,8 @@ export async function POST(request: NextRequest) {
             },
           ],
           generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 500,
+            temperature: 0.65,
+            maxOutputTokens: 800,
           },
         }),
       },
