@@ -28,6 +28,10 @@ export interface TenantProfileData {
   joined: string;
   plan: string;
   billingCycle: string;
+  priceMonthly?: string;
+  priceAnnually?: string;
+  totalLocations: number;
+  totalStaff: number;
   features: string[];
   documents: {
     id: string;
@@ -50,9 +54,9 @@ type BillingCycle = "monthly" | "annually";
 // will be loaded from DB
 // const PACKAGE_OPTIONS kept for typing fallback
 const DEFAULT_PACKAGE_OPTIONS: { label: string; value: string }[] = [
-  { label: "Starter", value: "starter" },
-  { label: "Growth", value: "growth" },
-  { label: "Enterprises", value: "enterprises" },
+  { label: "Basic", value: "Basic" },
+  { label: "Business", value: "Business" },
+  { label: "Enterprise", value: "Enterprise" },
 ];
 
 const BILLING_CYCLE_OPTIONS: { label: string; value: BillingCycle }[] = [
@@ -61,6 +65,9 @@ const BILLING_CYCLE_OPTIONS: { label: string; value: BillingCycle }[] = [
 ];
 
 // plan label/id helpers are handled dynamically via `subscriptionOptions` fetched from DB
+
+const formatPlanLabel = (name: string) =>
+  name ? name.charAt(0).toUpperCase() + name.slice(1).toLowerCase() : name;
 
 function billingCycleFromLabel(label: string): BillingCycle {
   return label.trim().toLowerCase().includes("annual") ? "annually" : "monthly";
@@ -99,13 +106,12 @@ export const TenantProfilePage = ({ tenantId }: TenantProfilePageProps) => {
   });
   const [reason, setReason] = useState("");
   const [isManagePlanOpen, setIsManagePlanOpen] = useState(false);
-  const [selectedPackageId, setSelectedPackageId] = useState<string>(
-    "starter",
-  );
+  const [selectedPackageId, setSelectedPackageId] = useState<string>("starter");
   const [selectedBillingCycle, setSelectedBillingCycle] =
     useState<BillingCycle>("monthly");
-  const [subscriptionOptions, setSubscriptionOptions] =
-    useState<{ label: string; value: string }[]>(DEFAULT_PACKAGE_OPTIONS);
+  const [subscriptionOptions, setSubscriptionOptions] = useState<
+    { label: string; value: string }[]
+  >(DEFAULT_PACKAGE_OPTIONS);
 
   const supabase = createSupabaseBrowserClient();
   const [isUpdatingPlan, setIsUpdatingPlan] = useState(false);
@@ -125,7 +131,13 @@ export const TenantProfilePage = ({ tenantId }: TenantProfilePageProps) => {
       try {
         const details = await getTenantProfileDetails(tenantId);
         if (!isMounted) return;
-        setTenant(details);
+        setTenant({
+          ...details,
+          totalLocations: details.totalLocations ?? 0,
+          totalStaff: details.totalStaff ?? 0,
+          priceMonthly: details.priceMonthly,
+          priceAnnually: details.priceAnnually,
+        });
       } catch (error) {
         console.error("Failed to load tenant profile", error);
         if (!isMounted) return;
@@ -164,7 +176,7 @@ export const TenantProfilePage = ({ tenantId }: TenantProfilePageProps) => {
 
         const data = resp.data ?? [];
         const opts = data.map((d: any) => ({
-          label: d.name ? d.name.charAt(0).toUpperCase() + d.name.slice(1) : d.name,
+          label: formatPlanLabel(d.name),
           value: d.name,
         }));
         if (mounted && opts.length > 0) setSubscriptionOptions(opts);
@@ -180,13 +192,6 @@ export const TenantProfilePage = ({ tenantId }: TenantProfilePageProps) => {
   const handleStatusChange = (newStatus: TenantProfileData["status"]) => {
     if (!tenant) return;
     setStatusActionError(null);
-
-    if (
-      tenant.status === "Onboarding" &&
-      (newStatus === "Active" || newStatus === "Rejected")
-    ) {
-      return;
-    }
 
     if (newStatus === "Active") {
       const isReactivating = tenant.status === "Suspended";
@@ -271,6 +276,8 @@ export const TenantProfilePage = ({ tenantId }: TenantProfilePageProps) => {
         await updateTenantStatus(tenant.id, "rejected", adminComment);
         setTenant((prev) => (prev ? { ...prev, status: "Rejected" } : null));
       } else if (modal.type === "suspend_tenant") {
+        const adminComment = reason.trim() || undefined;
+        await updateTenantStatus(tenant.id, "suspended", adminComment);
         setTenant((prev) => (prev ? { ...prev, status: "Suspended" } : null));
       } else if (modal.type === "approve_doc" && modal.targetId) {
         setTenant((prev) =>
@@ -346,7 +353,7 @@ export const TenantProfilePage = ({ tenantId }: TenantProfilePageProps) => {
     setManagePlanError(null);
 
     try {
-      await updateTenantSubscription(
+      const result = await updateTenantSubscription(
         tenant.id,
         selectedPackageId,
         selectedBillingCycle,
@@ -354,9 +361,7 @@ export const TenantProfilePage = ({ tenantId }: TenantProfilePageProps) => {
 
       const planLabel =
         subscriptionOptions.find((o) => o.value === selectedPackageId)?.label ??
-        (selectedPackageId
-          ? selectedPackageId.charAt(0).toUpperCase() + selectedPackageId.slice(1)
-          : "");
+        (selectedPackageId ? formatPlanLabel(selectedPackageId) : "");
 
       setTenant((prev) =>
         prev
@@ -365,6 +370,12 @@ export const TenantProfilePage = ({ tenantId }: TenantProfilePageProps) => {
               plan: planLabel,
               type: planLabel,
               billingCycle: billingLabelFromCycle(selectedBillingCycle),
+              priceMonthly: result.priceMonthly || prev.priceMonthly,
+              priceAnnually: result.priceAnnually || prev.priceAnnually,
+              features:
+                result.features && result.features.length > 0
+                  ? result.features
+                  : prev.features,
             }
           : null,
       );
@@ -423,27 +434,31 @@ export const TenantProfilePage = ({ tenantId }: TenantProfilePageProps) => {
       {/* Approve / Reactivate / Reject use shared confirmation modal (keeps Cancel ghost variant). */}
       {(modal.type === "approve_tenant" ||
         modal.type === "reactivate_tenant" ||
-        modal.type === "reject_tenant") && tenant && (
-        <ActionConfirmationModal
-          isOpen={modal.isOpen}
-          action={
-            modal.type === "reject_tenant" ? "reject" : "approve"
-          }
-          activePlanName={tenant.business_name}
-          title={modal.title}
-          message={modal.description}
-          confirmLabel={
-            modal.type === "reject_tenant" ? "Reject" : "Confirm"
-          }
-          confirmVariant={modal.type === "reject_tenant" ? "outline" : "primary"}
-          requireReason={modal.requireReason}
-          reasonValue={reason}
-          onReasonChange={(v) => setReason(v)}
-          saving={isUpdatingStatus}
-          onClose={closeModal}
-          onConfirm={confirmAction}
-        />
-      )}
+        modal.type === "reject_tenant" ||
+        modal.type === "suspend_tenant") &&
+        tenant && (
+          <ActionConfirmationModal
+            isOpen={modal.isOpen}
+            action={
+              modal.type === "reject_tenant" || modal.type === "suspend_tenant"
+                ? "reject"
+                : "approve"
+            }
+            activePlanName={tenant.business_name}
+            title={modal.title}
+            message={modal.description}
+            confirmLabel={modal.type === "reject_tenant" ? "Reject" : "Confirm"}
+            confirmVariant={
+              modal.type === "reject_tenant" ? "outline" : "primary"
+            }
+            requireReason={modal.requireReason}
+            reasonValue={reason}
+            onReasonChange={(v) => setReason(v)}
+            saving={isUpdatingStatus}
+            onClose={closeModal}
+            onConfirm={confirmAction}
+          />
+        )}
 
       <Modal
         isOpen={isManagePlanOpen}

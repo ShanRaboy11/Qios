@@ -9,11 +9,44 @@ import {
   RotateCcw,
   ArrowRight,
   Loader2,
+  Info,
+  AlertCircle,
 } from "lucide-react";
 import jsQR from "jsqr";
 import { Button } from "@/components/atoms/Button";
+import OrderDetails from "@/components/molecules/OrderDetails";
 
 type ScanState = "idle" | "requesting" | "scanning" | "success" | "error";
+
+interface OrderData {
+  id: string;
+  table_number?: number;
+  status: "pending" | "preparing" | "ready" | "cancelled" | "voided" | "served";
+  total_price: number;
+  payment_status: "unpaid" | "paid";
+  payment_method?: "cash" | "gcash" | "card" | "other";
+  created_at: string;
+  updated_at: string;
+  qr_hash?: string;
+  order_items: Array<{
+    id: string;
+    quantity: number;
+    unit_price: number;
+    customization_notes?: string;
+    menu_items: {
+      id: string;
+      name: string;
+      description?: string;
+    };
+    order_item_modifiers: Array<{
+      id: string;
+      modifier_options: {
+        name: string;
+        additional_price: number;
+      };
+    }>;
+  }>;
+}
 
 // ── Corner brackets ────────────────────────────────────────────────────────────
 const ScanBrackets = ({ active }: { active: boolean }) => {
@@ -185,6 +218,9 @@ export const QrScanner = (): JSX.Element => {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [torchOn, setTorchOn] = useState(false);
   const [torchSupported, setTorchSupported] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [foundOrder, setFoundOrder] = useState<OrderData | null>(null);
+  const [searchError, setSearchError] = useState<string>("");
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -208,6 +244,13 @@ export const QrScanner = (): JSX.Element => {
   }, []);
 
   useEffect(() => () => stopCamera(), [stopCamera]);
+
+  // Automatically search order when QR scan succeeds
+  useEffect(() => {
+    if (scanState === "success" && orderId.trim()) {
+      handleSearchOrder();
+    }
+  }, [scanState, orderId]);
 
   const scanFrame = useCallback(() => {
     const video = videoRef.current;
@@ -307,14 +350,137 @@ export const QrScanner = (): JSX.Element => {
     setOrderId("");
     setScanState("idle");
   };
-  const handleSearchOrder = () => {
-    /* Connect to routing / order lookup */
+
+  const handleSearchOrder = async () => {
+    if (!orderId.trim()) return;
+
+    setSearchLoading(true);
+    setSearchError("");
+    setFoundOrder(null);
+
+    // Simulate a delay for loading effect
+    await new Promise((resolve) => setTimeout(resolve, 600));
+
+    // Determine order status based on order ID for demo purposes
+    const orderIdLower = orderId.trim().toLowerCase();
+
+    // Check for invalid reading
+    if (orderIdLower.includes("invalid") || orderId.trim().length < 3) {
+      setSearchError(
+        "❌ Invalid Reading: No active order was found matching this code/ID. Please verify and try again.",
+      );
+      setSearchLoading(false);
+      return;
+    }
+
+    let orderStatus: OrderData["status"] = "preparing";
+
+    // Special cases for testing different scenarios
+    if (orderIdLower.includes("served") || orderIdLower.includes("done")) {
+      orderStatus = "served";
+    } else if (orderIdLower.includes("cancel")) {
+      orderStatus = "cancelled";
+    } else if (orderIdLower.includes("void")) {
+      orderStatus = "voided";
+    }
+
+    // Set detailed warnings for already done/completed/cancelled orders
+    if (orderStatus === "served") {
+      setSearchError(
+        "ℹ️ Order Already Done: This order has already been completed and served. Opening read-only details.",
+      );
+    } else if (orderStatus === "cancelled" || orderStatus === "voided") {
+      setSearchError(
+        `ℹ️ Order ${
+          orderStatus.charAt(0).toUpperCase() + orderStatus.slice(1)
+        }: This order is marked as ${orderStatus.toUpperCase()} and cannot be updated. Opening read-only details.`,
+      );
+    }
+
+    // Mock data - replace with real API call later
+    const mockOrder: OrderData = {
+      id: orderId.trim(),
+      table_number: Math.floor(Math.random() * 15) + 1,
+      status: orderStatus,
+      total_price: 450.75,
+      payment_status: orderStatus === "served" ? "paid" : "unpaid",
+      payment_method: orderStatus === "served" ? "cash" : undefined,
+      created_at: new Date(Date.now() - 15 * 60000).toISOString(),
+      updated_at: new Date().toISOString(),
+      qr_hash: "QR_" + orderId.trim(),
+      order_items: [
+        {
+          id: "item-1",
+          quantity: 2,
+          unit_price: 125.0,
+          customization_notes: "Extra crispy",
+          menu_items: {
+            id: "menu-1",
+            name: "Fried Chicken",
+            description: "Crispy fried chicken",
+          },
+          order_item_modifiers: [
+            {
+              id: "mod-1",
+              modifier_options: {
+                name: "Extra spicy",
+                additional_price: 15.0,
+              },
+            },
+          ],
+        },
+        {
+          id: "item-2",
+          quantity: 1,
+          unit_price: 65.0,
+          customization_notes: undefined,
+          menu_items: {
+            id: "menu-2",
+            name: "Rice",
+            description: "Garlic fried rice",
+          },
+          order_item_modifiers: [],
+        },
+        {
+          id: "item-3",
+          quantity: 2,
+          unit_price: 55.0,
+          customization_notes: "Lightly sweet",
+          menu_items: {
+            id: "menu-3",
+            name: "Mango Shake",
+            description: "Fresh mango shake",
+          },
+          order_item_modifiers: [
+            {
+              id: "mod-2",
+              modifier_options: {
+                name: "Extra ice",
+                additional_price: 0,
+              },
+            },
+          ],
+        },
+      ],
+    };
+
+    setFoundOrder(mockOrder);
+    setSearchLoading(false);
   };
+
+  const handleCloseOrderDetails = () => {
+    setFoundOrder(null);
+    setOrderId("");
+    setSearchError("");
+  };
+
   const handleClose = () => {
     stopCamera();
     setScanState("idle");
     setOrderId("");
     setErrorMessage("");
+    setFoundOrder(null);
+    setSearchError("");
   };
   const handleInputKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && orderId.trim()) handleSearchOrder();
@@ -679,15 +845,6 @@ export const QrScanner = (): JSX.Element => {
               {/* Title — "QR" same color as the rest, no accent emphasis */}
               <h2 className="qrs-title">Scan QR Code</h2>
             </div>
-            {/* Close — no background blob, plain icon button */}
-            <button
-              className="qrs-close"
-              type="button"
-              onClick={handleClose}
-              aria-label="Close scanner"
-            >
-              <X size={16} />
-            </button>
           </div>
 
           {/* ── Viewport — blobs live inside here ── */}
@@ -889,17 +1046,79 @@ export const QrScanner = (): JSX.Element => {
             <Button
               type="button"
               onClick={handleSearchOrder}
+              disabled={!orderId.trim() || searchLoading}
               variant="outline"
               shape="pill"
-              disabled={!orderId.trim()}
-              className="flex-1 h-[58px] text-base font-semibold font-figtree bg-white hover:!bg-brand-accent hover:!border-brand-accent hover:!text-white transition-all duration-300"
-              rightIcon={<ArrowRight size={18} className="opacity-90" />}
+              className="flex-1 h-[58px] text-base font-semibold font-figtree bg-white hover:!bg-brand-accent hover:!border-brand-accent hover:!text-white transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              rightIcon={
+                searchLoading ? (
+                  <Loader2 size={18} className="opacity-90 animate-spin" />
+                ) : (
+                  <ArrowRight size={18} className="opacity-90" />
+                )
+              }
             >
-              Search Order
+              {searchLoading ? "Searching..." : "Search Order"}
             </Button>
           </div>
+
+          {/* Search Error Message */}
+          {searchError &&
+            (() => {
+              const isInfo = searchError.startsWith("ℹ️");
+              const isWarning = searchError.startsWith("⚠️");
+
+              let bgClass =
+                "bg-warning-primary/10 border-warning-primary/30 text-warning-primary";
+              let icon = (
+                <XCircle
+                  size={18}
+                  className="text-warning-primary flex-shrink-0 mt-0.5"
+                />
+              );
+              let textClass =
+                "text-sm text-warning-primary font-medium font-inter";
+
+              if (isInfo) {
+                bgClass = "bg-[#3B82F6]/10 border-[#3B82F6]/30 text-[#1D4ED8]";
+                icon = (
+                  <Info
+                    size={18}
+                    className="text-[#1D4ED8] flex-shrink-0 mt-0.5"
+                  />
+                );
+                textClass = "text-sm text-[#1D4ED8] font-medium font-inter";
+              } else if (isWarning) {
+                bgClass = "bg-[#F59E0B]/10 border-[#F59E0B]/30 text-[#D97706]";
+                icon = (
+                  <AlertCircle
+                    size={18}
+                    className="text-[#D97706] flex-shrink-0 mt-0.5"
+                  />
+                );
+                textClass = "text-sm text-[#D97706] font-medium font-inter";
+              }
+
+              return (
+                <div
+                  className={`mt-4 p-4 border rounded-[14px] flex items-start gap-3 ${bgClass}`}
+                >
+                  {icon}
+                  <p className={textClass}>{searchError}</p>
+                </div>
+              );
+            })()}
         </div>
       </div>
+
+      {/* Order Details Modal */}
+      {foundOrder && (
+        <OrderDetails
+          order={foundOrder}
+          onClose={handleCloseOrderDetails}
+          onUpdateOrder={setFoundOrder}
+        />
+      )}
     </>
   );
 };

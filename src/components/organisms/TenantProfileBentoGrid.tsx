@@ -7,7 +7,6 @@ import {
   Settings,
   CreditCard,
   Check,
-  AlertCircle,
   FileImage,
   Eye,
   ShieldCheck,
@@ -22,6 +21,9 @@ import { KPICard } from "@/components/molecules/KPICard";
 import { Modal } from "@/components/molecules/Modal";
 
 import { cn } from "@/lib/utils";
+
+const formatPlanName = (name: string) =>
+  name ? name.charAt(0).toUpperCase() + name.slice(1).toLowerCase() : name;
 
 interface TenantProfileBentoGridProps {
   tenant: TenantProfileData;
@@ -86,17 +88,24 @@ export const TenantProfileBentoGrid = ({
       <div className="col-span-1 row-span-1 h-full flex flex-col sm:flex-row xl:flex-col gap-4">
         <KPICard
           title="Total Locations"
-          value="3"
-          percentageChange={33}
-          description="+1 this month"
+          value={String(tenant.totalLocations ?? 0)}
+          description={
+            (tenant.totalLocations ?? 0) === 1
+              ? "Single location"
+              : `${tenant.totalLocations} active branches`
+          }
           variant="outlined"
           className="shadow-sm border-gray-100 h-full flex-1 justify-center bg-white rounded-[24px]"
           icon={<MapPin size={24} className="text-brand-primary" />}
         />
         <KPICard
           title="Total Staff"
-          value="18"
-          description="Active now"
+          value={String(tenant.totalStaff ?? 0)}
+          description={
+            (tenant.totalStaff ?? 0) === 1
+              ? "1 registered member"
+              : `${tenant.totalStaff} registered members`
+          }
           variant="outlined"
           className="shadow-sm border-gray-100 h-full flex-1 justify-center bg-white rounded-[24px]"
           icon={<Users size={24} className="text-[#FF5269]" />}
@@ -113,32 +122,75 @@ export const TenantProfileBentoGrid = ({
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-3 mb-2">
               <span className="text-4xl font-black text-text-primary uppercase tracking-tight">
-                {tenant.plan}
+                {formatPlanName(tenant.plan)}
               </span>
-              <Badge color={subscriptionStatusColor} variant="solid" className="px-3 shadow-sm">
+              <Badge
+                color={subscriptionStatusColor}
+                variant="solid"
+                className="px-3 shadow-sm"
+              >
                 {tenant.status}
               </Badge>
             </div>
             <div className="flex flex-col gap-3 p-4 bg-gray-50 rounded-[16px] border border-gray-100">
               <div className="flex justify-between items-center border-b border-gray-200/60 pb-3">
-                <span className="text-sm font-medium text-text-secondary">Billing Cycle</span>
-                <span className="text-sm font-bold text-text-primary capitalize">{tenant.billingCycle}</span>
+                <span className="text-sm font-medium text-text-secondary">
+                  Billing Cycle
+                </span>
+                <span className="text-sm font-bold text-text-primary capitalize">
+                  {tenant.billingCycle}
+                </span>
               </div>
               <div className="flex justify-between items-center border-b border-gray-200/60 pb-3">
-                <span className="text-sm font-medium text-text-secondary">Next Billing</span>
-                <span className="text-sm font-bold text-text-primary">May 15, 2026</span>
+                <span className="text-sm font-medium text-text-secondary">
+                  Next Billing
+                </span>
+                <span className="text-sm font-bold text-text-primary">
+                  {(() => {
+                    const now = new Date();
+                    const isAnnual = tenant.billingCycle?.toLowerCase().includes("annual");
+                    const next = new Date(now);
+                    if (isAnnual) {
+                      next.setFullYear(next.getFullYear() + 1);
+                    } else {
+                      next.setMonth(next.getMonth() + 1);
+                    }
+                    return next.toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                    });
+                  })()}
+                </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm font-medium text-text-secondary">Est. Amount</span>
-                <span className="text-sm font-bold text-text-primary">₱1,499.00</span>
+                <span className="text-sm font-medium text-text-secondary">
+                  Est. Amount
+                </span>
+                <span className="text-sm font-bold text-text-primary">
+                  {(() => {
+                    const isAnnual = tenant.billingCycle?.toLowerCase().includes("annual");
+                    const rawPrice = isAnnual
+                      ? tenant.priceAnnually
+                      : tenant.priceMonthly;
+                    if (!rawPrice) return "—";
+                    const numericStr = rawPrice.replace(/[^0-9.]/g, "");
+                    const numericVal = parseFloat(numericStr);
+                    if (isNaN(numericVal)) return `₱${rawPrice}`;
+                    return `₱${numericVal.toLocaleString("en-US", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}`;
+                  })()}
+                </span>
               </div>
             </div>
-            
+
             <div className="mt-2">
               <Button
                 variant="outline"
                 shape="pill"
-                className="w-full justify-center border-gray-200 text-text-primary hover:bg-gray-50 font-bold shadow-sm"
+                className="w-full justify-center border-gray-200 text-text-primary hover:bg-brand-primary hover:text-white hover:border-brand-primary font-bold shadow-sm"
                 onClick={onManagePlan}
               >
                 Manage Plan
@@ -161,7 +213,9 @@ export const TenantProfileBentoGrid = ({
                 if (title.includes("DTI") || title.includes("SEC"))
                   return <Building2 className="w-4 h-4 text-text-secondary" />;
                 if (title.includes("Mayor"))
-                  return <ShieldCheck className="w-4 h-4 text-text-secondary" />;
+                  return (
+                    <ShieldCheck className="w-4 h-4 text-text-secondary" />
+                  );
                 if (title.includes("BIR"))
                   return <Receipt className="w-4 h-4 text-text-secondary" />;
                 return <FileText className="w-4 h-4 text-text-secondary" />;
@@ -209,44 +263,6 @@ export const TenantProfileBentoGrid = ({
                           >
                             <Eye className="w-3.5 h-3.5" /> View
                           </button>
-                        )}
-                        <Badge
-                          color={
-                            doc.status === "Approved"
-                              ? "success"
-                              : doc.status === "Revision Requested"
-                                ? "error"
-                                : "warning"
-                          }
-                          variant="solid"
-                          className="font-bold shadow-sm"
-                        >
-                          {doc.status}
-                        </Badge>
-                        {doc.status === "Pending" && (
-                          <div className="flex items-center gap-1.5">
-                            <button
-                              onClick={() =>
-                                onUpdateDocumentStatus(
-                                  doc.id,
-                                  "Revision Requested",
-                                )
-                              }
-                              className="p-1.5 text-red-500 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors border border-transparent hover:border-red-100"
-                              title="Request Revision"
-                            >
-                              <AlertCircle className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() =>
-                                onUpdateDocumentStatus(doc.id, "Approved")
-                              }
-                              className="p-1.5 text-success-primary hover:bg-success-secondary hover:text-success-primary rounded-lg transition-colors border border-transparent hover:border-green-200"
-                              title="Approve"
-                            >
-                              <Check className="w-4 h-4" />
-                            </button>
-                          </div>
                         )}
                       </>
                     ) : (

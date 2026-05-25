@@ -98,6 +98,7 @@ export interface TenantSettingsPageData {
   billing: TenantBillingSettingsData;
   notifications: TenantNotificationSettingsData;
   security: TenantSecuritySettingsData;
+  isDeactivated: boolean;
 }
 
 export interface TenantBillingSettingsData {

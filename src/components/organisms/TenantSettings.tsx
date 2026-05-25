@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   User,
   Store,
@@ -38,13 +38,21 @@ type SettingsTab =
 interface TenantSettingsProps {
   tenantId: string;
   initialData: TenantSettingsPageData;
+  initialTab?: SettingsTab;
+  scrollToQrSection?: boolean;
 }
 
 export const TenantSettings = ({
   tenantId,
   initialData,
+  initialTab = "profile",
+  scrollToQrSection = false,
 }: TenantSettingsProps) => {
-  const [activeTab, setActiveTab] = useState<SettingsTab>("profile");
+  const [activeTab, setActiveTab] = useState<SettingsTab>(initialTab);
+
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
 
   const tabs = [
     { id: "profile", label: "Profile Settings", icon: User },
@@ -125,6 +133,8 @@ export const TenantSettings = ({
               <TenantStoreSettings
                 tenantId={tenantId}
                 initialData={initialData.store}
+                brandingData={initialData.branding}
+                scrollToQrSection={scrollToQrSection}
               />
             </motion.div>
           )}
@@ -192,7 +202,10 @@ export const TenantSettings = ({
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
             >
-              <TenantDangerZone />
+              <TenantDangerZone
+                tenantId={tenantId}
+                isDeactivated={initialData.isDeactivated}
+              />
             </motion.div>
           )}
         </AnimatePresence>

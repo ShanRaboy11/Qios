@@ -1,35 +1,20 @@
 import React from "react";
-import MenuCatalog, { MenuItemData } from "@/components/organisms/MenuCatalog";
+import MenuCatalog from "@/components/organisms/MenuCatalog";
 import { CartProvider } from "@/contexts/CartContext";
+import { fetchTenantCustomerMenu } from "@/lib/customerMenu";
 
-const dummyMenu: MenuItemData[] = [
-  {
-    id: "1",
-    name: "Classic Burger",
-    price: 8.99,
-    available: true,
-    category: "Meal",
-    imageUrl: "/images/food-placeholder.png",
-  },
-  {
-    id: "2",
-    name: "Fries",
-    price: 3.99,
-    available: true,
-    category: "Snacks",
-    imageUrl: "/images/food-placeholder.png",
-  },
-];
-
-export default function CustomerMenuPage({
+export default async function CustomerMenuPage({
   params,
 }: {
-  params: Promise<{ tenantId: string }>;
+  params: Promise<{ id: string }>;
 }) {
+  const { id: tenantId } = await params;
+  const { items: initialItems } = await fetchTenantCustomerMenu(tenantId);
+
   return (
     <main className="min-h-screen bg-bg-primary">
       <CartProvider>
-        <MenuCatalog initialItems={dummyMenu} />
+        <MenuCatalog initialItems={initialItems} />
       </CartProvider>
     </main>
   );

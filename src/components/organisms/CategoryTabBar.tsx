@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 export interface Category {
   id: string;
   label: string;
-  iconSrc: string;
+  icon: React.ReactNode;
 }
 
 export interface CategoryTabBarProps {

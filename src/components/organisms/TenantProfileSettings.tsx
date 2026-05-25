@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useActionState, useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { Upload, Save, CheckCircle2, Edit2 } from "lucide-react";
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
@@ -8,6 +8,7 @@ import { SectionHeader } from "@/components/molecules/SectionHeader";
 import { saveTenantProfileSettings } from "@/app/(tenant)/[id]/settings/actions";
 import {
   emptySettingsActionState,
+  type SettingsActionState,
   type TenantProfileSettingsData,
 } from "@/app/(tenant)/[id]/settings/types";
 
@@ -25,12 +26,10 @@ export const TenantProfileSettings = ({
   const [showSuccess, setShowSuccess] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-  const wasPending = useRef(false);
-
-  const [state, formAction, isPending] = useActionState(
-    saveTenantProfileSettings.bind(null, tenantId),
+  const [state, setState] = useState<SettingsActionState>(
     emptySettingsActionState,
   );
+  const [isPending, setIsPending] = useState(false);
 
   useEffect(() => {
     setFormData(initialData);
@@ -41,16 +40,6 @@ export const TenantProfileSettings = ({
       setFieldErrors(state.fieldErrors);
     }
   }, [state.fieldErrors]);
-
-  useEffect(() => {
-    if (wasPending.current && !isPending) {
-      if (state.success) {
-        setIsEditing(false);
-        setShowSuccess(true);
-      }
-    }
-    wasPending.current = isPending;
-  }, [isPending, state.success]);
 
   useEffect(() => {
     if (showSuccess) {
@@ -86,7 +75,42 @@ export const TenantProfileSettings = ({
             title="Personal Information"
             className="mb-0 py-2 border-gray-100"
           />
-          <form action={formAction} className="pt-2 w-full">
+          <form
+            onSubmit={async (event) => {
+              event.preventDefault();
+              const formData = new FormData(event.currentTarget);
+              setIsPending(true);
+
+              try {
+                const result = await saveTenantProfileSettings(
+                  tenantId,
+                  state,
+                  formData,
+                );
+                setState(result);
+
+                if (result.fieldErrors) {
+                  setFieldErrors(result.fieldErrors);
+                }
+
+                if (result.success) {
+                  setIsEditing(false);
+                  setShowSuccess(true);
+                }
+              } catch (error) {
+                setState({
+                  ...emptySettingsActionState,
+                  error:
+                    error instanceof Error
+                      ? error.message
+                      : "Unable to save profile settings.",
+                });
+              } finally {
+                setIsPending(false);
+              }
+            }}
+            className="pt-2 w-full"
+          >
             {showSuccess && state.success && (
               <div className="mb-6 w-full">
                 <div className="flex items-center gap-2 w-full text-green-700 bg-green-50 border border-green-100 rounded-xl px-4 py-3">

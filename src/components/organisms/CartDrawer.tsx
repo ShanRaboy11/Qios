@@ -5,7 +5,9 @@ import { useCart } from "@/contexts/CartContext";
 import { ShoppingBag, X, Minus, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/atoms/Button";
 import { motion, AnimatePresence } from "framer-motion";
+import { useParams } from "next/navigation";
 import { OrderReceiptModal } from "./OrderReceiptModal";
+import { placeOrder } from "@/lib/actions/order";
 
 export const CartDrawer = () => {
   const {
@@ -20,6 +22,13 @@ export const CartDrawer = () => {
 
   const [isReceiptOpen, setIsReceiptOpen] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [placedOrderId, setPlacedOrderId] = useState<string | null>(null);
+  const [cartSnapshot, setCartSnapshot] = useState(cart);
+  const [cartTotalSnapshot, setCartTotalSnapshot] = useState(cartTotal);
+
+  const params = useParams();
+  const tenantId = typeof params?.id === "string" ? params.id : "";
 
   // Prevent background body scroll when the drawer layout is fully visible
   useEffect(() => {
@@ -260,9 +269,29 @@ export const CartDrawer = () => {
                     setIsConfirmOpen(false);
                     setIsCartOpen(false); // Fixed: Changed from setIsOpen to matches your prop values
                     setTimeout(() => setIsReceiptOpen(true), 250);
+                  disabled={isSubmitting}
+                  onClick={async () => {
+                    if (!tenantId) return;
+                    setIsSubmitting(true);
+
+                    const result = await placeOrder(tenantId, cart, cartTotal);
+                    setIsSubmitting(false);
+
+                    if (result.success && result.qrHash) {
+                      // Capture snapshot BEFORE clearing the cart
+                      setCartSnapshot([...cart]);
+                      setCartTotalSnapshot(cartTotal);
+                      setPlacedOrderId(result.qrHash);
+                      setIsConfirmOpen(false);
+                      setIsOpen(false);
+                      clearCart();
+                      setTimeout(() => setIsReceiptOpen(true), 200);
+                    } else {
+                      alert(result.error || "Failed to place order.");
+                    }
                   }}
                 >
-                  Confirm
+                  {isSubmitting ? "Processing..." : "Confirm"}
                 </Button>
               </div>
             </motion.div>
@@ -272,10 +301,12 @@ export const CartDrawer = () => {
 
       {/* Order Receipt Modal View */}
       <AnimatePresence>
-        {isReceiptOpen && (
+        {isReceiptOpen && placedOrderId && (
           <OrderReceiptModal
             onClose={() => setIsReceiptOpen(false)}
-            orderId={`SIBAT-${Math.floor(1000 + Math.random() * 9000)}`} // Configured with consistent order prefix string references
+            orderId={placedOrderId}
+            cartSnapshot={cartSnapshot}
+            cartTotal={cartTotalSnapshot}
           />
         )}
       </AnimatePresence>

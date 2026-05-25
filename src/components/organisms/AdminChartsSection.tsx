@@ -2,6 +2,9 @@
 
 import React, { useEffect, useState } from "react";
 import { ChartCard } from "@/components/molecules/ChartCard";
+
+const formatPlanName = (name: string) =>
+  name ? name.charAt(0).toUpperCase() + name.slice(1).toLowerCase() : name;
 import {
   BarChart,
   Bar,
@@ -209,7 +212,7 @@ export const AdminChartsSection = () => {
                     className="w-2.5 h-2.5 rounded-full"
                     style={{ backgroundColor: plan.color }}
                   />
-                  {plan.name}
+                  {formatPlanName(plan.name)}
                 </div>
                 <span className="font-bold text-[#2D2D2D]">{plan.value}%</span>
               </div>

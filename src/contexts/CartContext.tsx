@@ -3,14 +3,22 @@
 import React, { createContext, useContext, useState, ReactNode } from "react";
 import { MenuItemData } from "@/components/organisms/MenuCatalog";
 
+// Snapshot of a selected modifier option stored inside a cart item
+export interface SelectedModifierOption {
+  id: string;
+  modifierGroupId: string;
+  modifierGroupName: string;
+  name: string;
+  additionalPrice: number;
+}
+
 export interface CartItem {
-  id: string; // unique cart item instance hash string
+  id: string; // unique cart item id (client-side)
   menuItem: MenuItemData;
   quantity: number;
-  selectedSize: string;
-  selectedModifiers: string[];
+  selectedOptions: SelectedModifierOption[];
   specialInstructions: string;
-  totalPrice: number; // Total price for this line item (quantity * item unit price)
+  totalPrice: number; // (basePrice + sum of additionalPrices) * quantity
 }
 
 interface CartContextType {
@@ -77,11 +85,16 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     setCart((prev) =>
       prev.map((item) => {
         if (item.id === id) {
-          const unitPrice = item.totalPrice / item.quantity;
+          // Recalculate price: (base + modifiers) * new quantity
+          const basePerUnit = item.menuItem.price;
+          const modifiersPerUnit = item.selectedOptions.reduce(
+            (sum, o) => sum + o.additionalPrice,
+            0,
+          );
           return {
             ...item,
-            quantity: newQuantity,
-            totalPrice: Number((unitPrice * newQuantity).toFixed(2)), // Coerces back cleanly to eliminate floating point issues
+            quantity,
+            totalPrice: (basePerUnit + modifiersPerUnit) * quantity,
           };
         }
         return item;

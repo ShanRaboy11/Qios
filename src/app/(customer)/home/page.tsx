@@ -17,63 +17,60 @@ import { GuestProfileDrawer } from "@/components/organisms/GuestProfileDrawer";
 import { TenantBrandingProvider } from "@/components/providers/TenantBrandingProvider";
 import { CartProvider, useCart } from "@/contexts/CartContext";
 import { MenuItemData } from "@/components/organisms/MenuCatalog";
+import { renderCategoryIcon } from "@/lib/utils/categoryIcons";
+
+// Helper to create a mock MenuItemData with empty modifierGroups
+const mockItem = (
+  id: string,
+  name: string,
+  price: number,
+  category: string,
+  imageUrl: string,
+): MenuItemData => ({
+  id,
+  name,
+  price,
+  available: true,
+  category,
+  imageUrl,
+  modifierGroups: [],
+});
 
 const MOCK_MENU_CATALOG: MenuItemData[] = [
+  mockItem("1", "Sushi", 105.5, "Meal", "/images/sushi.png"),
+  mockItem("2", "Steak", 250.5, "Meal", "/images/steak.png"),
+  mockItem("3", "Pasta", 80.5, "Meal", "/images/pasta.png"),
+  mockItem("4", "Cupcake", 100.5, "Dessert", "/images/cupcake.png"),
+  mockItem("5", "Noodles", 120.0, "Meal", "/images/noodles.png"),
+  mockItem(
+    "6",
+    "Spicy seasoned seafood noodles",
+    2.29,
+    "Meal",
+    "/images/noodles.png",
+  ),
+  mockItem(
+    "7",
+    "Classic Burger with Fries",
+    5.99,
+    "Meal",
+    "/images/food-placeholder.png",
+  ),
+];
+
+const DEMO_CATEGORIES = [
+  { id: "Drinks", label: "Drinks", icon: renderCategoryIcon("coffee", 28) },
+  { id: "Snacks", label: "Snacks", icon: renderCategoryIcon("cookie", 28) },
+  { id: "Vegan", label: "Vegan", icon: renderCategoryIcon("leaf", 28) },
   {
-    id: "1",
-    name: "Sushi",
-    price: 105.5,
-    available: true,
-    category: "Meal",
-    imageUrl: "/images/sushi.png",
+    id: "Meal",
+    label: "Meal",
+    icon: renderCategoryIcon("utensils-crossed", 28),
   },
   {
-    id: "2",
-    name: "Steak",
-    price: 250.5,
-    available: true,
-    category: "Meal",
-    imageUrl: "/images/steak.png",
-  },
-  {
-    id: "3",
-    name: "Pasta",
-    price: 80.5,
-    available: true,
-    category: "Meal",
-    imageUrl: "/images/pasta.png",
-  },
-  {
-    id: "4",
-    name: "Cupcake",
-    price: 100.5,
-    available: true,
-    category: "Dessert",
-    imageUrl: "/images/cupcake.png",
-  },
-  {
-    id: "5",
-    name: "Noodles",
-    price: 120.0,
-    available: true,
-    category: "Meal",
-    imageUrl: "/images/noodles.png",
-  },
-  {
-    id: "6",
-    name: "Spicy seasoned seafood noodles",
-    price: 2.29,
-    available: true,
-    category: "Meal",
-    imageUrl: "/images/noodles.png",
-  },
-  {
-    id: "7",
-    name: "Classic Burger with Fries",
-    price: 5.99,
-    available: true,
-    category: "Meal",
-    imageUrl: "/images/food-placeholder.png",
+    id: "Dessert",
+    label: "Dessert",
+    icon: renderCategoryIcon("ice-cream", 28),
   },
 ];
 

@@ -24,6 +24,74 @@ interface ChatBubbleProps {
   onDislike?: () => void;
 }
 
+// ---------------------------------------------------------------------------
+// Lightweight markdown renderer
+// Supports: **bold**, *italic*, `code`, bullet lists (- / *), line breaks
+// ---------------------------------------------------------------------------
+function renderMarkdown(text: string): React.ReactNode[] {
+  const lines = text.split(/\r?\n/);
+  const nodes: React.ReactNode[] = [];
+
+  lines.forEach((line, li) => {
+    const trimmed = line.trimStart();
+    const isBullet = /^[-*•]\s+/.test(trimmed);
+
+    if (isBullet) {
+      const content = trimmed.replace(/^[-*•]\s+/, "");
+      nodes.push(
+        <div key={`b-${li}`} className="flex items-start gap-1.5 mb-0.5">
+          <span className="mt-[5px] w-1.5 h-1.5 rounded-full bg-[#FFC670] flex-shrink-0" />
+          <span>{inlineMarkdown(content)}</span>
+        </div>,
+      );
+    } else if (trimmed === "") {
+      if (li > 0 && li < lines.length - 1) {
+        nodes.push(<div key={`sp-${li}`} className="h-2" />);
+      }
+    } else {
+      nodes.push(
+        <p key={`p-${li}`} className="mb-0.5 last:mb-0">
+          {inlineMarkdown(line)}
+        </p>,
+      );
+    }
+  });
+
+  return nodes;
+}
+
+/** Handle inline **bold**, *italic*, `code` */
+function inlineMarkdown(text: string): React.ReactNode[] {
+  // Combined regex: **bold**, *italic*, `code`
+  const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return (
+        <strong key={i} className="font-semibold">
+          {part.slice(2, -2)}
+        </strong>
+      );
+    }
+    if (part.startsWith("*") && part.endsWith("*")) {
+      return <em key={i}>{part.slice(1, -1)}</em>;
+    }
+    if (part.startsWith("`") && part.endsWith("`")) {
+      return (
+        <code
+          key={i}
+          className="bg-white/20 rounded px-1 py-0.5 text-[0.85em] font-mono"
+        >
+          {part.slice(1, -1)}
+        </code>
+      );
+    }
+    return part;
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Logo SVG (Qios mascot)
+// ---------------------------------------------------------------------------
 const LogoSVG = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -51,6 +119,9 @@ const LogoSVG = () => (
   </svg>
 );
 
+// ---------------------------------------------------------------------------
+// ChatBubble
+// ---------------------------------------------------------------------------
 export const ChatBubble = ({
   message,
   timestamp,
@@ -73,7 +144,10 @@ export const ChatBubble = ({
         <div className="group relative">
           {/* Dark bubble */}
           <div className="relative bg-[#2D2D2D] rounded-[12px_12px_12px_0px] pl-5 pr-4 pt-4 pb-8 shadow-[0px_2px_1px_rgba(0,0,0,0.05)] max-w-[312px]">
-            <p className="text-white text-base leading-[19px]">{message}</p>
+            <div className="text-white text-sm leading-[1.55] space-y-0.5">
+              {renderMarkdown(message)}
+            </div>
+
             {/* Copy / Like / Dislike — shown on hover or when reacted */}
             <div
               className={cn(
@@ -89,7 +163,7 @@ export const ChatBubble = ({
                   title="Copy"
                   className="text-white hover:opacity-75 transition-opacity active:scale-90"
                 >
-                  <ClipboardList size={16} />
+                  <ClipboardList size={15} />
                 </button>
                 <button
                   onClick={onLike}
@@ -101,7 +175,7 @@ export const ChatBubble = ({
                       : "text-white hover:opacity-75",
                   )}
                 >
-                  <ThumbsUp size={16} />
+                  <ThumbsUp size={15} />
                 </button>
                 <button
                   onClick={onDislike}
@@ -113,11 +187,12 @@ export const ChatBubble = ({
                       : "text-white hover:opacity-75",
                   )}
                 >
-                  <ThumbsDown size={16} />
+                  <ThumbsDown size={15} />
                 </button>
               </div>
             </div>
           </div>
+
           {/* Timestamp below bubble */}
           <span
             className="absolute left-14 text-[10px] leading-3 text-[#888888]"
@@ -125,11 +200,12 @@ export const ChatBubble = ({
           >
             {timestamp}
           </span>
+
           {/* Logo avatar at bottom-left */}
           <div
-            className="absolute left-0 w-12 h-12 rounded-full bg-[#FFC670] flex items-center justify-center overflow-hidden"
+            className="absolute left-0 w-11 h-11 rounded-full bg-[#FFC670] flex items-center justify-center overflow-hidden"
             style={{
-              bottom: "-29.5px",
+              bottom: "-26px",
               filter: "drop-shadow(0px 2px 3px rgba(0,0,0,0.25))",
             }}
           >
@@ -144,9 +220,10 @@ export const ChatBubble = ({
     <div className={cn("flex flex-col items-end pb-8", className)}>
       <div className="group relative">
         {/* Light bubble */}
-        <div className="relative bg-[#DEE2E6] rounded-[12px_12px_0px_12px] pl-5 pr-4 pt-4 pb-8 shadow-[0px_1px_1px_rgba(0,0,0,0.2)] max-w-[289px]">
-          <p className="text-[#2D2D2D] text-base leading-[19px]">{message}</p>
+        <div className="relative bg-[#DEE2E6] rounded-[12px_12px_0px_12px] pl-5 pr-4 pt-4 pb-5 shadow-[0px_1px_1px_rgba(0,0,0,0.2)] max-w-[289px]">
+          <p className="text-[#2D2D2D] text-sm leading-[1.55]">{message}</p>
         </div>
+
         {/* Timestamp + read status */}
         <div
           className="absolute left-0 flex items-center gap-1"
@@ -156,16 +233,17 @@ export const ChatBubble = ({
             {timestamp}
           </span>
           <CheckCheck
-            size={14}
+            size={13}
             className={cn(isRead ? "text-[#FFC670]" : "text-[#888888]")}
           />
         </div>
+
         {/* User avatar at bottom-right */}
         <div
-          className="absolute right-[-1px] w-12 h-12 rounded-full bg-[#FFC670] flex items-center justify-center"
-          style={{ bottom: "-18px", boxShadow: "0px 2px 3px rgba(0,0,0,0.25)" }}
+          className="absolute right-[-1px] w-11 h-11 rounded-full bg-[#FFC670] flex items-center justify-center"
+          style={{ bottom: "-16px", boxShadow: "0px 2px 3px rgba(0,0,0,0.25)" }}
         >
-          <User size={24} className="text-[#FFF9EF]" />
+          <User size={22} className="text-[#FFF9EF]" />
         </div>
       </div>
     </div>

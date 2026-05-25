@@ -236,7 +236,7 @@ export function ActionConfirmationModal({
   const isSuccess = action === "success";
 
   const formatName = (s?: string) =>
-    s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+    s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : s;
 
   const resolvedTitle =
     title ??
@@ -311,113 +311,140 @@ export function ActionConfirmationModal({
   const resolvedConfirmVariant = confirmVariant ?? cfg.confirmVariant;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-text-primary/40 backdrop-blur-sm p-4">
-      <div
-        className={cn(
-          "bg-[var(--color-bg-primary)] rounded-[20px] w-full shadow-xl overflow-hidden",
-          "animate-in fade-in zoom-in-95 duration-200",
-          requireReason ? "max-w-md" : "max-w-sm",
-        )}
-      >
-        {/* ── Header ── */}
-        <div className="px-7 pt-8 pb-5 flex flex-col items-center text-center">
-          {/* Icon */}
-          <div
-            className={cn(
-              "w-14 h-14 rounded-2xl flex items-center justify-center mb-4",
-              cfg.iconBg,
+    <>
+      {/* ── Keyframe styles ─────────────────────────────────────────────── */}
+      <style>{`
+        @keyframes confirmation-overlay-in {
+          from { opacity: 0; }
+          to   { opacity: 1; }
+        }
+        @keyframes confirmation-panel-in {
+          from {
+            opacity: 0;
+            transform: translateY(32px) scale(0.94);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0px) scale(1);
+          }
+        }
+        .confirmation-overlay {
+          animation: confirmation-overlay-in 0.2s ease forwards;
+        }
+        .confirmation-panel {
+          animation: confirmation-panel-in 0.35s cubic-bezier(0.22, 0.8, 0.4, 1) forwards;
+        }
+      `}</style>
+
+      {/* ── Backdrop ────────────────────────────────────────────────────── */}
+      <div className="fixed inset-0 z-[60] flex items-center justify-center bg-text-primary/40 backdrop-blur-sm p-4 confirmation-overlay">
+        {/* ── Panel ───────────────────────────────────────────────────── */}
+        <div
+          className={cn(
+            "bg-[var(--color-bg-primary)] rounded-[20px] w-full shadow-xl overflow-hidden confirmation-panel",
+            requireReason ? "max-w-md" : "max-w-sm",
+          )}
+        >
+          {/* ── Header ── */}
+          <div className="px-7 pt-8 pb-5 flex flex-col items-center text-center">
+            {/* Icon */}
+            <div
+              className={cn(
+                "w-14 h-14 rounded-2xl flex items-center justify-center mb-4",
+                cfg.iconBg,
+              )}
+            >
+              {cfg.icon}
+            </div>
+
+            {/* Badge */}
+            {cfg.tag && (
+              <div className="mb-3">
+                <Badge
+                  color={cfg.tag.color}
+                  variant={cfg.tag.variant}
+                  shape="pill"
+                >
+                  {cfg.tag.text}
+                </Badge>
+              </div>
             )}
-          >
-            {cfg.icon}
+
+            {/* Kicker */}
+            <p
+              className={cn(
+                "text-[10px] font-bold uppercase tracking-[0.1em] mb-1.5",
+                cfg.kickerColor,
+              )}
+            >
+              {cfg.kicker}
+            </p>
+
+            {/* Title */}
+            <h3 className="text-[17px] font-semibold leading-snug text-text-primary mb-2">
+              {resolvedTitle}
+            </h3>
+
+            {/* Description */}
+            <p className="text-[12.5px] leading-relaxed text-text-secondary">
+              {resolvedMessage}
+            </p>
           </div>
 
-          {/* Badge */}
-          {cfg.tag && (
-            <div className="mb-3">
-              <Badge
-                color={cfg.tag.color}
-                variant={cfg.tag.variant}
-                shape="pill"
-              >
-                {cfg.tag.text}
-              </Badge>
+          {/* ── Reason textarea ── */}
+          {requireReason && (
+            <div className="px-7 pb-5">
+              <label className="block text-[10px] font-bold uppercase tracking-[0.06em] text-text-secondary mb-1.5">
+                Reason <span className="text-[#A32D2D]">*</span>
+              </label>
+              <textarea
+                placeholder="e.g. The submitted registration appears expired. Please resubmit with a valid, up-to-date copy."
+                value={reasonValue ?? ""}
+                onChange={(e) => onReasonChange?.(e.target.value)}
+                rows={4}
+                className={cn(
+                  "w-full bg-white text-[12.5px] px-3.5 py-2.5",
+                  "rounded-xl border border-black/10 outline-none resize-y",
+                  "placeholder:text-text-secondary text-text-primary leading-relaxed",
+                  "transition-colors duration-150",
+                  "focus:border-[#378ADD]",
+                )}
+              />
             </div>
           )}
 
-          {/* Kicker */}
-          <p
-            className={cn(
-              "text-[10px] font-bold uppercase tracking-[0.1em] mb-1.5",
-              cfg.kickerColor,
+          {/* ── Divider ── */}
+          <div className="h-px bg-black/[0.05] mx-7" />
+
+          {/* ── Actions ── */}
+          <div className="px-7 py-4 flex items-center gap-2.5">
+            {!isSuccess && (
+              <Button
+                variant="ghost"
+                size="md"
+                shape="pill"
+                onClick={onClose}
+                disabled={saving}
+                className="flex-1 h-10 text-[13px] text-text-secondary border border-black/10 hover:bg-black/[0.04] hover:text-text-primary"
+              >
+                {cancelLabel}
+              </Button>
             )}
-          >
-            {cfg.kicker}
-          </p>
 
-          {/* Title */}
-          <h3 className="text-[17px] font-semibold leading-snug text-text-primary mb-2">
-            {resolvedTitle}
-          </h3>
-
-          {/* Description */}
-          <p className="text-[12.5px] leading-relaxed text-text-secondary">
-            {resolvedMessage}
-          </p>
-        </div>
-
-        {/* ── Reason textarea ── */}
-        {requireReason && (
-          <div className="px-7 pb-5">
-            <label className="block text-[10px] font-bold uppercase tracking-[0.06em] text-text-secondary mb-1.5">
-              Reason <span className="text-[#A32D2D]">*</span>
-            </label>
-            <textarea
-              placeholder="e.g. The submitted registration appears expired. Please resubmit with a valid, up-to-date copy."
-              value={reasonValue ?? ""}
-              onChange={(e) => onReasonChange?.(e.target.value)}
-              rows={4}
-              className={cn(
-                "w-full bg-white text-[12.5px] px-3.5 py-2.5",
-                "rounded-xl border border-black/10 outline-none resize-y",
-                "placeholder:text-text-secondary text-text-primary leading-relaxed",
-                "transition-colors duration-150",
-                "focus:border-[#378ADD]",
-              )}
-            />
-          </div>
-        )}
-
-        {/* ── Divider ── */}
-        <div className="h-px bg-black/[0.05] mx-7" />
-
-        {/* ── Actions ── */}
-        <div className="px-7 py-4 flex items-center gap-2.5">
-          {!isSuccess && (
             <Button
-              variant="ghost"
+              variant={resolvedConfirmVariant}
               size="md"
               shape="pill"
-              onClick={onClose}
+              onClick={onConfirm}
+              loading={saving}
               disabled={saving}
-              className="flex-1 h-10 text-[13px] text-text-secondary border border-black/10 hover:bg-black/[0.04] hover:text-text-primary"
+              className={cn("flex-1 h-10 text-[13px]", cfg.confirmClass)}
             >
-              {cancelLabel}
+              {resolvedConfirmLabel}
             </Button>
-          )}
-
-          <Button
-            variant={resolvedConfirmVariant}
-            size="md"
-            shape="pill"
-            onClick={onConfirm}
-            loading={saving}
-            disabled={saving}
-            className={cn("flex-1 h-10 text-[13px]", cfg.confirmClass)}
-          >
-            {resolvedConfirmLabel}
-          </Button>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
