@@ -113,11 +113,11 @@ export const CategoryTabBar = ({
               key={cat.id}
               data-tab-id={cat.id}
               onClick={() => onSelectCategory(isActive ? null : cat.id)}
-              className="flex flex-col items-center justify-center group outline-none z-10 w-20 relative"
+              className="flex flex-col items-center justify-center group outline-none z-10 flex-1 min-w-0 relative"
             >
               <div
                 className={cn(
-                  "w-20 h-24 p-2 flex items-center justify-center transition-all duration-300",
+                  "w-full h-20 sm:h-24 p-2 flex items-center justify-center transition-all duration-300",
                   isCategoryView
                     ? isActive
                       ? "bg-transparent scale-110" // the white background is provided by the sliding indicator

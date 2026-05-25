@@ -58,7 +58,7 @@ export const MenuItemCard = ({
     return (
       <div
         className={cn(
-          "relative flex items-center w-full max-w-[450px] min-h-[150px] sm:min-h-[170px] group cursor-pointer",
+          "relative flex items-center w-full max-w-full min-h-[130px] sm:min-h-[150px] group cursor-pointer",
           className,
         )}
         onClick={onAdd}
@@ -90,7 +90,7 @@ export const MenuItemCard = ({
               {typeof price === "number" ? `${currency} ${price.toFixed(2)}` : price}
             </p>
             {availability && (
-              <p className="text-text-secondary font-brand-secondary text-[14px] sm:text-[16px] mt-1 font-medium">
+              <p className="text-text-secondary font-brand-secondary text-[12px] sm:text-[14px] mt-1 font-medium">
                 {availability}
               </p>
             )}
