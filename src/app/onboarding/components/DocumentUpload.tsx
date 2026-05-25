@@ -225,7 +225,7 @@ export function DocumentUpload({
 
                 <div className="mt-auto">
                   {selectedFile ? (
-                    /* Newly Uploaded Bar - Matches Textbox.png gaps */
+                    /* newly Uploaded Bar - Matches Textbox.png gaps */
                     <div className="flex items-center justify-between rounded-xl border border-neutral-100 bg-neutral-50 p-4">
                       <div className="flex items-center gap-4 min-w-0">
                         <Eye
@@ -248,7 +248,7 @@ export function DocumentUpload({
                       </button>
                     </div>
                   ) : existingUrl ? (
-                    /* Already Uploaded - Text on top, buttons below */
+                    /* already Uploaded - Text on top, buttons below */
                     <div className="rounded-xl border border-[var(--color-success-primary)]/20 bg-[var(--color-success-secondary)]/40 p-4 flex flex-col gap-4">
                       <div>
                         <p className="text-xs font-bold uppercase tracking-wider text-[var(--color-success-primary)]">

@@ -15,14 +15,15 @@ def process_file(filepath):
 
     new_content = re.sub(r'(//\s*)([A-Z])(.*?)$', replace_slash, content, flags=re.MULTILINE)
 
-    # Regex for {/* comments */}
+    # Regex for /* comments */ and {/* comments */}
     def replace_jsx(match):
-        prefix = match.group(1) # {/*\s*
+        prefix = match.group(1) 
         first_letter = match.group(2)
         rest = match.group(3)
         return prefix + first_letter.lower() + rest
 
-    new_content = re.sub(r'({\/\*\s*)([A-Z])(.*?\*\/})', replace_jsx, new_content, flags=re.DOTALL)
+    # Match /* or {/* optionally followed by spaces, then a capital letter
+    new_content = re.sub(r'((?:\{?\/\*)\s*)([A-Z])(.*?\*\/\}?)', replace_jsx, new_content, flags=re.DOTALL)
 
     if new_content != content:
         with open(filepath, 'w', encoding='utf-8') as f:

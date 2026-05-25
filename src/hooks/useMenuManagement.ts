@@ -279,7 +279,9 @@ export const useMenuManagement = () => {
         const itemId = data.id;
         
         if (draftItem.recipe !== undefined) {
-          await supabase.from("recipe_matrix").delete().eq("tenant_id", tenant_id).eq("menu_item_id", itemId);
+          const { error: deleteError } = await supabase.from("recipe_matrix").delete().eq("tenant_id", tenant_id).eq("menu_item_id", itemId);
+          if (deleteError) throw deleteError;
+          
           if (draftItem.recipe.length > 0) {
             const recipePayload = draftItem.recipe.map(r => ({
               tenant_id,
@@ -287,7 +289,8 @@ export const useMenuManagement = () => {
               inventory_item_id: r.inventory_item_id,
               quantity_required: r.quantity_required,
             }));
-            await supabase.from("recipe_matrix").insert(recipePayload);
+            const { error: insertError } = await supabase.from("recipe_matrix").insert(recipePayload);
+            if (insertError) throw insertError;
           }
         }
 
@@ -308,7 +311,9 @@ export const useMenuManagement = () => {
         
         const itemId = data.id;
         if (draftItem.recipe !== undefined) {
-          await supabase.from("recipe_matrix").delete().eq("tenant_id", tenant_id).eq("menu_item_id", itemId);
+          const { error: deleteError } = await supabase.from("recipe_matrix").delete().eq("tenant_id", tenant_id).eq("menu_item_id", itemId);
+          if (deleteError) throw deleteError;
+          
           if (draftItem.recipe.length > 0) {
             const recipePayload = draftItem.recipe.map(r => ({
               tenant_id,
@@ -316,7 +321,8 @@ export const useMenuManagement = () => {
               inventory_item_id: r.inventory_item_id,
               quantity_required: r.quantity_required,
             }));
-            await supabase.from("recipe_matrix").insert(recipePayload);
+            const { error: insertError } = await supabase.from("recipe_matrix").insert(recipePayload);
+            if (insertError) throw insertError;
           }
         }
 

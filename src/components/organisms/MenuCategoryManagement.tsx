@@ -332,6 +332,7 @@ const MenuCategoryManagement = () => {
   const [originalItem, setOriginalItem] = useState<MenuItem | null>(null);
   const [draftItem, setDraftItem] = useState<MenuItem | null>(null);
   const [isLinkDropdownOpen, setIsLinkDropdownOpen] = useState(false);
+  const [isRecipeDropdownOpen, setIsRecipeDropdownOpen] = useState(false);
 
   const [draggedCategoryId, setDraggedCategoryId] = useState<string | null>(
     null,
@@ -1524,34 +1525,64 @@ const MenuCategoryManagement = () => {
                     </div>
                   ))}
 
-                  <div className="relative">
-                    <select
-                      className="w-full bg-white border border-dashed border-black/15 rounded-2xl p-3 b4 text-text-secondary hover:border-brand-accent focus:border-brand-accent outline-none appearance-none"
-                      onChange={(e) => {
-                        if (!e.target.value) return;
-                        const invItem = inventoryItems.find((i) => i.id === e.target.value);
-                        if (invItem && !draftItem.recipe?.find((r) => r.inventory_item_id === invItem.id)) {
-                          updateDraft("recipe", [
-                            ...(draftItem.recipe || []),
-                            {
-                              inventory_item_id: invItem.id,
-                              quantity_required: 1,
-                              name: invItem.name,
-                              unit_type: invItem.unit_type,
-                            },
-                          ]);
-                        }
-                        e.target.value = "";
-                      }}
+                  <div className="relative" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      onClick={() => setIsRecipeDropdownOpen(!isRecipeDropdownOpen)}
+                      className={cn(
+                        "w-full flex items-center justify-between py-3 px-4 border border-dashed rounded-2xl transition-all b4 font-medium",
+                        isRecipeDropdownOpen
+                          ? "border-brand-accent text-brand-accent bg-brand-accent/5"
+                          : "border-black/15 text-text-secondary hover:border-brand-accent hover:text-brand-accent hover:bg-brand-accent/5"
+                      )}
                     >
-                      <option value="">+ Add Ingredient...</option>
-                      {inventoryItems.map((inv) => (
-                        <option key={inv.id} value={inv.id} disabled={!!draftItem.recipe?.find((r) => r.inventory_item_id === inv.id)}>
-                          {inv.name} ({inv.unit_type})
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none" />
+                      <span>+ Add Ingredient...</span>
+                      <ChevronDown
+                        size={14}
+                        className={cn("transition-transform", isRecipeDropdownOpen && "rotate-180")}
+                      />
+                    </button>
+                    {isRecipeDropdownOpen && (
+                      <div className="absolute bottom-[calc(100%+6px)] left-0 z-50 bg-white border-2 border-[#E5E5E5] rounded-2xl shadow-xl overflow-hidden w-full animate-in fade-in zoom-in-95 duration-200">
+                        <ul className="max-h-[200px] overflow-y-auto custom-scrollbar">
+                          {inventoryItems.length === 0 ? (
+                            <li className="px-4 py-3 b4 text-text-secondary text-center">
+                              No ingredients available
+                            </li>
+                          ) : (
+                            inventoryItems.map((inv) => {
+                              const isSelected = !!draftItem.recipe?.find((r) => r.inventory_item_id === inv.id);
+                              return (
+                                <li
+                                  key={inv.id}
+                                  onClick={() => {
+                                    if (!isSelected) {
+                                      updateDraft("recipe", [
+                                        ...(draftItem.recipe || []),
+                                        {
+                                          inventory_item_id: inv.id,
+                                          quantity_required: 1,
+                                          name: inv.name,
+                                          unit_type: inv.unit_type,
+                                        },
+                                      ]);
+                                    }
+                                    setIsRecipeDropdownOpen(false);
+                                  }}
+                                  className={cn(
+                                    "px-4 py-2.5 b4 border-b border-black/5 last:border-0 transition-colors",
+                                    isSelected 
+                                      ? "text-text-secondary/50 cursor-not-allowed bg-black/5" 
+                                      : "cursor-pointer hover:bg-brand-secondary/30 text-text-primary"
+                                  )}
+                                >
+                                  {inv.name} ({inv.unit_type})
+                                </li>
+                              );
+                            })
+                          )}
+                        </ul>
+                      </div>
+                    )}
                   </div>
                 </div>
               </section>

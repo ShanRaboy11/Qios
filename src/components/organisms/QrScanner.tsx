@@ -499,7 +499,7 @@ export const QrScanner = (): JSX.Element => {
           width: 100%;
           position: relative;
           border: 1px solid rgba(255, 255, 255, 0.4);
-          /* Added outer glow behind the card */
+          /* added outer glow behind the card */
           box-shadow:
             0 24px 64px -12px rgba(0, 0, 0, 0.08),
             0 0 0 1px rgba(255, 198, 112, 0.3),
@@ -507,7 +507,7 @@ export const QrScanner = (): JSX.Element => {
             inset 0 2px 0 rgba(255, 255, 255, 1);
         }
         
-        /* Inner container that contains hiding overflow so the outer glow remains visible */
+        /* inner container that contains hiding overflow so the outer glow remains visible */
         .qrs-wrap-inner {
           position: absolute; inset: 0;
           border-radius: 32px;
@@ -515,7 +515,7 @@ export const QrScanner = (): JSX.Element => {
           pointer-events: none;
         }
 
-        /* Techy animated dot texture on the outer card */
+        /* techy animated dot texture on the outer card */
         .qrs-dots {
           position: absolute; inset: 0; pointer-events: none; border-radius: 32px;
           background-image: 
@@ -526,7 +526,7 @@ export const QrScanner = (): JSX.Element => {
           opacity: 0.8;
         }
 
-        /* Ambient floating glow behind the card content */
+        /* ambient floating glow behind the card content */
         .qrs-ambient-glow {
           position: absolute;
           top: -30%; left: -20%;
@@ -572,7 +572,7 @@ export const QrScanner = (): JSX.Element => {
           margin: 0; letter-spacing: -0.015em;
         }
 
-        /* Close button — modernized */
+        /* close button — modernized */
         .qrs-close {
           background: rgba(255,255,255,0.8);
           border: 1px solid rgba(112,112,112,0.1);
@@ -603,7 +603,7 @@ export const QrScanner = (): JSX.Element => {
             0 12px 32px -12px rgba(255,198,112,0.2);
         }
 
-        /* Ambient floating shapes inside viewport */
+        /* ambient floating shapes inside viewport */
         .qrs-vp-blob-amber {
           position: absolute; pointer-events: none; border-radius: 50%;
           top: -20%; right: -20%;
@@ -635,7 +635,7 @@ export const QrScanner = (): JSX.Element => {
           100% { transform: translate(-2%, 2%) scale(0.98); }
         }
 
-        /* Techy Grid overlay inside viewport */
+        /* techy Grid overlay inside viewport */
         .qrs-vp-grid {
           position: absolute; inset: 0; pointer-events: none;
           background-image:
@@ -653,7 +653,7 @@ export const QrScanner = (): JSX.Element => {
         }
         .qrs-video.live { opacity: 1; }
 
-        /* Scan line */
+        /* scan line */
         @keyframes qrsScanDown {
           0%   { top: 12px; opacity: 0; }
           8%   { opacity: 1; }
@@ -670,7 +670,7 @@ export const QrScanner = (): JSX.Element => {
           pointer-events: none;
         }
 
-        /* Scanning status pill */
+        /* scanning status pill */
         .qrs-pill {
           position: absolute; top: 18px; left: 50%; transform: translateX(-50%);
           background: rgba(255,255,255,0.85);
@@ -690,7 +690,7 @@ export const QrScanner = (): JSX.Element => {
           animation: qrsDotPulse 1s ease-in-out infinite;
         }
 
-        /* Torch */
+        /* torch */
         .qrs-torch {
           position: absolute; bottom: 14px; right: 14px;
           width: 38px; height: 38px; border-radius: 50%;
@@ -711,7 +711,7 @@ export const QrScanner = (): JSX.Element => {
           border-color: var(--color-brand-primary);
         }
 
-        /* State overlays */
+        /* state overlays */
         .qrs-state {
           position: absolute; inset: 0;
           display: flex; flex-direction: column;

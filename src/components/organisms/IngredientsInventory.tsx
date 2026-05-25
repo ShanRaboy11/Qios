@@ -18,8 +18,6 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// ─── Modal Components ───────────────────────────────────────────────────────
-
 function ModalOverlay({
   onClose,
   children,
@@ -39,8 +37,6 @@ function ModalOverlay({
   );
 }
 
-// ─── Main Component ─────────────────────────────────────────────────────────
-
 export default function IngredientsInventory() {
   const { items, isLoading, actionError, saveItem, deleteItem } = useInventoryManagement();
   
@@ -50,6 +46,7 @@ export default function IngredientsInventory() {
   const [modalMode, setModalMode] = useState<"add" | "edit" | null>(null);
   const [draftItem, setDraftItem] = useState<Partial<InventoryItem> | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [modalError, setModalError] = useState<string | null>(null);
   
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
@@ -71,24 +68,57 @@ export default function IngredientsInventory() {
       critical_stock_threshold: 0,
     });
     setModalMode("add");
+    setModalError(null);
   };
 
   const handleOpenEditModal = (item: InventoryItem) => {
     setDraftItem({ ...item });
     setModalMode("edit");
+    setModalError(null);
   };
 
   const handleCloseModal = () => {
     setModalMode(null);
     setDraftItem(null);
+    setModalError(null);
   };
 
   const handleSaveItem = async () => {
-    if (!draftItem || !draftItem.name?.trim()) return;
+    if (!draftItem) return;
+    
+    // validation
+    if (!draftItem.name?.trim()) {
+      setModalError("Ingredient name is required.");
+      return;
+    }
+    if (!draftItem.unit_type?.trim()) {
+      setModalError("Unit type is required.");
+      return;
+    }
+    
+    const currentStock = draftItem.current_stock ?? 0;
+    const lowStock = draftItem.low_stock_threshold ?? 0;
+    const criticalStock = draftItem.critical_stock_threshold ?? 0;
+
+    if (currentStock < 0 || lowStock < 0 || criticalStock < 0) {
+      setModalError("Stock numbers must be 0 or greater.");
+      return;
+    }
+    if (criticalStock > lowStock) {
+      setModalError("Critical threshold cannot be greater than low stock threshold.");
+      return;
+    }
+
+    setModalError(null);
     setIsSaving(true);
-    await saveItem(draftItem, modalMode === "add");
+    const saved = await saveItem(draftItem, modalMode === "add");
     setIsSaving(false);
-    handleCloseModal();
+    
+    if (saved) {
+      handleCloseModal();
+    } else {
+      setModalError("Failed to save item. It might already exist or you lack permission.");
+    }
   };
 
   const handleDelete = async () => {
@@ -114,7 +144,7 @@ export default function IngredientsInventory() {
 
   return (
     <div className="w-full flex flex-col gap-6 font-inter">
-      {/* ── Tabs ── */}
+      {/* ── tabs ── */}
       <div className="flex bg-white/70 backdrop-blur-sm border border-black/5 rounded-2xl p-1.5 w-max">
         <button
           onClick={() => setActiveTab("measurement")}
@@ -142,7 +172,7 @@ export default function IngredientsInventory() {
         </button>
       </div>
 
-      {/* ── Search & Filter ── */}
+      {/* ── search & filter ── */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
         <SearchFilterBar
           onSearch={setSearchQuery}
@@ -160,7 +190,7 @@ export default function IngredientsInventory() {
         </Button>
       </div>
 
-      {/* ── Error Banner ── */}
+      {/* ── error banner ── */}
       {actionError && (
         <div className="bg-red-50 text-red-600 p-4 rounded-xl border border-red-100 flex items-center gap-2">
           <AlertCircle size={18} />
@@ -168,7 +198,7 @@ export default function IngredientsInventory() {
         </div>
       )}
 
-      {/* ── Grid ── */}
+      {/* ── grid ── */}
       {filteredItems.length === 0 ? (
         <div className="flex flex-col items-center justify-center p-12 bg-white/50 border border-black/5 rounded-3xl min-h-[300px]">
           <div className="w-16 h-16 rounded-2xl bg-brand-accent/10 text-brand-accent flex items-center justify-center mb-4">
@@ -198,7 +228,7 @@ export default function IngredientsInventory() {
                     </p>
                   </div>
                   
-                  {/* Status Badge */}
+                  {/* status badge */}
                   <div
                     className={cn(
                       "px-3 py-1 rounded-full b5 font-bold uppercase whitespace-nowrap",
@@ -228,7 +258,7 @@ export default function IngredientsInventory() {
                   </div>
                 </div>
 
-                {/* Actions overlay */}
+                {/* actions overlay */}
                 <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 bg-white/90 backdrop-blur-sm rounded-lg p-1 shadow-sm border border-black/5">
                   <button
                     onClick={() => handleOpenEditModal(item)}
@@ -249,7 +279,7 @@ export default function IngredientsInventory() {
         </div>
       )}
 
-      {/* ── Modals ── */}
+      {/* ── modals ── */}
       {modalMode && draftItem && (
         <ModalOverlay onClose={handleCloseModal}>
           <div className="bg-white rounded-[24px] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
@@ -266,6 +296,13 @@ export default function IngredientsInventory() {
             </div>
             
             <div className="p-5 flex flex-col gap-5">
+              {modalError && (
+                <div className="bg-red-50 text-red-600 p-3 rounded-xl border border-red-100 flex items-start gap-2">
+                  <AlertCircle size={16} className="mt-0.5 flex-shrink-0" />
+                  <span className="b4">{modalError}</span>
+                </div>
+              )}
+              
               <div>
                 <label className="block b5 font-bold text-text-secondary uppercase tracking-widest mb-1.5">
                   Ingredient Name
@@ -341,7 +378,7 @@ export default function IngredientsInventory() {
         </ModalOverlay>
       )}
 
-      {/* ── Delete Confirmation ── */}
+      {/* ── delete confirmation ── */}
       {deleteConfirmId && (
         <ActionConfirmationModal
           isOpen={true}
