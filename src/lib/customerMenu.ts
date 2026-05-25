@@ -1,10 +1,20 @@
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { MenuItemData, MenuItemModifierGroup } from "@/components/organisms/MenuCatalog";
+import type { TenantBrandingSettingsData } from "@/app/(tenant)/[id]/settings/types";
+
+function readStr(settings: Record<string, unknown> | null, keys: string[]): string {
+  if (!settings) return "";
+  for (const key of keys) {
+    const v = settings[key];
+    if (typeof v === "string" && v.trim()) return v.trim();
+  }
+  return "";
+}
 
 export async function fetchTenantCustomerMenu(tenantId: string) {
   const supabase = createSupabaseAdminClient();
 
-  const [categoriesResult, itemsResult] = await Promise.all([
+  const [categoriesResult, itemsResult, tenantResult] = await Promise.all([
     supabase
       .from("categories")
       .select("id, name, display_order, icon")
@@ -16,6 +26,11 @@ export async function fetchTenantCustomerMenu(tenantId: string) {
       .eq("tenant_id", tenantId)
       .eq("is_available", true)
       .order("created_at", { ascending: true }),
+    supabase
+      .from("tenants")
+      .select("settings")
+      .eq("id", tenantId)
+      .maybeSingle(),
   ]);
 
   if (categoriesResult.error) throw new Error(categoriesResult.error.message);
@@ -115,7 +130,7 @@ export async function fetchTenantCustomerMenu(tenantId: string) {
   // Calculate guest number (orders today + 1)
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  
+
   const { count: ordersCount } = await supabase
     .from("orders")
     .select("id", { count: "exact", head: true })
@@ -124,5 +139,33 @@ export async function fetchTenantCustomerMenu(tenantId: string) {
 
   const guestNumber = (ordersCount || 0) + 1;
 
-  return { categories, items, currency, guestNumber };
+  // Extract branding from tenant settings JSON
+  const tenantSettings =
+    tenantResult.data?.settings &&
+    typeof tenantResult.data.settings === "object"
+      ? (tenantResult.data.settings as Record<string, unknown>)
+      : null;
+
+  const branding: Partial<TenantBrandingSettingsData> = {
+    primaryColor:
+      readStr(tenantSettings, ["branding_primary_color", "primary_color", "primaryColor"]) ||
+      "#FFC670",
+    secondaryColor:
+      readStr(tenantSettings, ["branding_secondary_color", "secondary_color", "secondaryColor"]) ||
+      "#FFF9F0",
+    accentColor:
+      readStr(tenantSettings, ["branding_accent_color", "accent_color", "accentColor"]) ||
+      "#1E3932",
+    fontFamily:
+      readStr(tenantSettings, ["branding_font_family", "font_family", "fontFamily"]) || "inter",
+    secondaryFont:
+      readStr(tenantSettings, ["branding_secondary_font", "secondary_font", "secondaryFont"]) ||
+      "inter",
+    menuLayout:
+      readStr(tenantSettings, ["branding_menu_layout", "menu_layout", "menuLayout"]) || "grid",
+    dashboardLogoUrl:
+      readStr(tenantSettings, ["branding_logo_dashboard"]) || undefined,
+  };
+
+  return { categories, items, currency, guestNumber, branding };
 }

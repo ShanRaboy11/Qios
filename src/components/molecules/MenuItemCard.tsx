@@ -58,17 +58,17 @@ export const MenuItemCard = ({
     return (
       <div
         className={cn(
-          "relative flex items-center w-full max-w-[450px] min-h-[150px] sm:min-h-[170px] group cursor-pointer",
+          "relative flex items-center w-full max-w-full min-h-[130px] sm:min-h-[150px] group cursor-pointer",
           className,
         )}
         onClick={onAdd}
       >
         {/* Card Background Shifted Right */}
-        <div className="absolute top-0 bottom-0 right-0 left-12 sm:left-16 bg-brand-primary/20 rounded-[32px] shadow-sm transition-all duration-300 group-hover:shadow-md z-0" />
+        <div className="absolute top-0 bottom-0 right-0 left-10 sm:left-14 bg-brand-primary/20 rounded-[32px] shadow-sm transition-all duration-300 group-hover:shadow-md z-0" />
 
         {/* Protruding Image on the Left */}
-        <div className="relative z-10 flex-shrink-0 transition-transform duration-300 group-hover:-translate-x-1 ml-2 sm:ml-0">
-          <div className="w-[130px] h-[130px] sm:w-[160px] sm:h-[160px] rounded-full overflow-hidden shadow-lg border-[3px] border-white/10">
+        <div className="relative z-10 flex-shrink-0 transition-transform duration-300 group-hover:-translate-x-1 ml-1 sm:ml-2">
+          <div className="w-[100px] h-[100px] sm:w-[120px] sm:h-[120px] md:w-[145px] md:h-[145px] rounded-full overflow-hidden shadow-lg border-[3px] border-white/10">
             <img
               src={imageSrc}
               alt={title}
@@ -78,19 +78,19 @@ export const MenuItemCard = ({
         </div>
 
         {/* Content Area */}
-        <div className="relative z-10 flex flex-col justify-center flex-grow py-5 pr-6 sm:pr-8 pl-4 sm:pl-5">
-          {/* Title - Left Aligned */}
-          <h3 className="text-text-primary font-brand font-medium text-[20px] sm:text-[22px] leading-[1.25] tracking-tight text-left">
+        <div className="relative z-10 flex flex-col justify-center flex-grow py-4 pr-5 sm:pr-8 pl-3 sm:pl-5">
+          {/* Title */}
+          <h3 className="text-text-primary font-brand font-medium text-[15px] sm:text-[19px] md:text-[22px] leading-[1.25] tracking-tight text-left line-clamp-2">
             {title}
           </h3>
 
-          {/* Price & Availability - Right Aligned block below */}
-          <div className="-mt-1 sm:mt-5 text-right w-full">
-            <p className="text-brand-accent font-brand-secondary font-bold text-[22px] sm:text-[26px]">
+          {/* Price & Availability */}
+          <div className="mt-2 sm:mt-4 text-right w-full">
+            <p className="text-brand-accent font-brand-secondary font-bold text-[20px] sm:text-[24px]">
               {typeof price === "number" ? `${currency} ${price.toFixed(2)}` : price}
             </p>
             {availability && (
-              <p className="text-text-secondary font-brand-secondary text-[14px] sm:text-[16px] mt-1 font-medium">
+              <p className="text-text-secondary font-brand-secondary text-[12px] sm:text-[14px] mt-1 font-medium">
                 {availability}
               </p>
             )}

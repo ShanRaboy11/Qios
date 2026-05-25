@@ -85,16 +85,13 @@ export const CategoryTabBar = ({
   );
 
   return (
-    <div
-      className="relative w-full overflow-x-auto no-scrollbar pb-4 pt-10"
-      ref={containerRef}
-    >
-      <div className="flex justify-between items-end gap-2 w-max min-w-full px-6 relative">
+    <div className="relative w-full pb-4 pt-8" ref={containerRef}>
+      <div className="flex items-end gap-1 w-full px-3 relative">
         {/* The sliding white background indicator with inverted corners */}
         <div
           ref={indicatorRef}
           className={cn(
-            "absolute -mb-3 h-[140px] bg-white rounded-t-[30px] z-0 pointer-events-none opacity-0",
+            "absolute -mb-5 h-[140px] bg-white rounded-t-[30px] z-0 pointer-events-none opacity-0",
             // Inverted border-radius pseudo-elements
             "before:content-[''] before:absolute before:-bottom-[1px] before:-left-[20px] before:w-[20px] before:h-[20px] before:bg-transparent before:rounded-br-[20px] before:shadow-[10px_0_0_0_white]",
             "after:content-[''] after:absolute after:-bottom-[1px] after:-right-[20px] after:w-[20px] after:h-[20px] after:bg-transparent after:rounded-bl-[20px] after:shadow-[-10px_0_0_0_white]",
@@ -113,11 +110,11 @@ export const CategoryTabBar = ({
               key={cat.id}
               data-tab-id={cat.id}
               onClick={() => onSelectCategory(isActive ? null : cat.id)}
-              className="flex flex-col items-center justify-center group outline-none z-10 w-20 relative"
+              className="flex flex-col items-center justify-center group outline-none z-10 flex-1 min-w-0 relative"
             >
               <div
                 className={cn(
-                  "w-20 h-24 p-2 flex items-center justify-center transition-all duration-300",
+                  "w-full h-20 sm:h-24 p-2 flex items-center justify-center transition-all duration-300",
                   isCategoryView
                     ? isActive
                       ? "bg-transparent scale-110" // The white background is provided by the sliding indicator
