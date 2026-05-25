@@ -189,13 +189,6 @@ export const TenantProfilePage = ({ tenantId }: TenantProfilePageProps) => {
     if (!tenant) return;
     setStatusActionError(null);
 
-    if (
-      tenant.status === "Onboarding" &&
-      (newStatus === "Active" || newStatus === "Rejected")
-    ) {
-      return;
-    }
-
     if (newStatus === "Active") {
       const isReactivating = tenant.status === "Suspended";
       setModal({

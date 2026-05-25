@@ -561,10 +561,12 @@ export const sendBusinessVerificationEmail = async ({
   to,
   status,
   comments,
+  tenantId,
 }: {
   to: string;
   status: "approved" | "rejected";
   comments?: string | null;
+  tenantId?: string;
 }) => {
   const smtp = readSmtpConfig();
   if (!smtp) {
@@ -649,11 +651,15 @@ export const sendBusinessVerificationEmail = async ({
       : "";
 
   // ── CTA button ──
+  const setupBrandingUrl = tenantId
+    ? `${publicBaseUrl}/setup/branding?tenantId=${encodeURIComponent(tenantId)}`
+    : `${publicBaseUrl}/setup/branding`;
+
   const ctaButton = isApproved
     ? `<table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom:24px;">
         <tr>
           <td align="center">
-            <a href="${publicBaseUrl}/setup/branding" style="display:inline-block;padding:14px 32px;
+            <a href="${setupBrandingUrl}" style="display:inline-block;padding:14px 32px;
                                background:linear-gradient(135deg,${B.gold} 0%,${B.primary} 100%);
                                color:${B.brownDark};font-size:14px;font-weight:700;
                                border-radius:10px;text-decoration:none;
