@@ -82,7 +82,8 @@ export const OrderReceiptModal = ({
                 minute: "2-digit",
               })}
             </div>
-            <div className="bg-[#FF5269] text-white px-6 py-2.5 rounded-full font-inter font-bold text-[16px] shadow-sm">
+            
+            <div className="bg-brand-accent text-white px-6 py-2.5 rounded-full font-inter font-bold text-[16px] shadow-sm">
               Order #{orderId}
             </div>
           </div>
@@ -116,7 +117,7 @@ export const OrderReceiptModal = ({
                     </div>
                   )}
                 </div>
-                <div className="b2 font-bold text-[#2D2D2D] shrink-0">
+                <div className="b2 font-bold text-text-primary shrink-0">
                   ₱{item.totalPrice.toFixed(2)}
                 </div>
               </div>
@@ -136,10 +137,11 @@ export const OrderReceiptModal = ({
           <Button
             variant="primary"
             shape="rounded"
-            className="w-full bg-[#FF5269] hover:bg-[#FF3B55] text-white h-[56px] text-[16px] font-bold justify-center gap-2 shadow-[0_8px_20px_rgba(255,82,105,0.2)] active:scale-[0.98] transition-transform"
-            onClick={() =>
-              alert("Receipt download functionality to be implemented.")
-            }
+            className="w-full bg-brand-accent hover:opacity-90 text-white h-[56px] text-[16px] font-bold justify-center gap-2 shadow-sm active:scale-[0.98] transition-all"
+            onClick={() => {
+              // Stub for download functionality. Could use html2canvas in future.
+              alert("Receipt download functionality to be implemented.");
+            }}
           >
             <Download size={20} />
             Download Receipt

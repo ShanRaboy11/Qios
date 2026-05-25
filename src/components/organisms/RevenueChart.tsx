@@ -26,15 +26,15 @@ export const RevenueChart = () => {
   const [filter, setFilter] = useState("Today");
 
   return (
-    <div className="bg-white rounded-[24px] shadow-sm border border-gray-100 p-6 flex flex-col h-full w-full">
+    <div className="bg-white rounded-[24px] shadow-sm border border-gray-100 p-6 flex flex-col h-full w-full font-brand-secondary">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
         <div>
-          <h3 className="font-bold text-xl text-text-primary">Revenue Trend</h3>
-          <p className="text-sm text-text-secondary mt-1">
+          <h3 className="font-brand font-bold text-xl text-text-primary">Revenue Trend</h3>
+          <p className="font-brand-secondary text-sm text-text-secondary mt-1">
             Sales performance over time
           </p>
         </div>
-        <div className="flex bg-gray-50 p-1 rounded-xl w-fit border border-gray-100">
+        <div className="flex bg-gray-50 p-1 rounded-xl w-fit border border-gray-100 font-brand-secondary">
           {["Today", "Week", "Month"].map((item) => (
             <button
               key={item}
@@ -51,7 +51,7 @@ export const RevenueChart = () => {
         </div>
       </div>
 
-      <div className="w-full h-[300px] mt-4">
+      <div className="w-full h-[300px] mt-4 font-brand-secondary">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
             data={data}
@@ -59,8 +59,8 @@ export const RevenueChart = () => {
           >
             <defs>
               <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#FFC670" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="#FFC670" stopOpacity={0} />
+                <stop offset="5%" stopColor="var(--brand-primary, #FFC670)" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="var(--brand-primary, #FFC670)" stopOpacity={0} />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E5E5" />
@@ -68,19 +68,20 @@ export const RevenueChart = () => {
               dataKey="time"
               axisLine={false}
               tickLine={false}
-              tick={{ fill: "#A1A1AA", fontSize: 12 }}
+              tick={{ fill: "#A1A1AA", fontSize: 12, fontFamily: "var(--font-brand-secondary, sans-serif)" }}
               dy={10}
             />
             <YAxis
               axisLine={false}
               tickLine={false}
-              tick={{ fill: "#A1A1AA", fontSize: 12 }}
+              tick={{ fill: "#A1A1AA", fontSize: 12, fontFamily: "var(--font-brand-secondary, sans-serif)" }}
               tickFormatter={(value) => `₱${value / 1000}k`}
             />
             <Tooltip
               contentStyle={{
                 borderRadius: "16px",
                 border: "none",
+                fontFamily: "var(--font-brand-secondary, sans-serif)",
                 boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
               }}
               formatter={(value: any) => [`₱${Number(value).toLocaleString()}`, "Sales"]}
@@ -88,7 +89,7 @@ export const RevenueChart = () => {
             <Area
               type="monotone"
               dataKey="sales"
-              stroke="#FFC670"
+              stroke="var(--brand-primary, #FFC670)"
               strokeWidth={3}
               fillOpacity={1}
               fill="url(#colorSales)"

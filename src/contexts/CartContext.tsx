@@ -29,27 +29,62 @@ interface CartContextType {
   clearCart: () => void;
   cartTotal: number;
   itemCount: number;
+  isCartOpen: boolean;
+  setIsCartOpen: (open: boolean) => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [isCartOpen, setIsCartOpen] = useState(false);
 
-  const addToCart = (item: Omit<CartItem, "id">) => {
-    const newItem = { ...item, id: Math.random().toString(36).substring(2, 9) };
-    setCart((prev) => [...prev, newItem]);
+  const addToCart = (newItemInput: Omit<CartItem, "id">) => {
+    setCart((prevCart) => {
+      // Find if an identical item configuration already exists
+      const existingItemIndex = prevCart.findIndex(
+        (item) =>
+          item.menuItem.id === newItemInput.menuItem.id &&
+          JSON.stringify(
+            item.selectedOptions.map((o) => o.id).sort(),
+          ) ===
+            JSON.stringify(
+              newItemInput.selectedOptions.map((o) => o.id).sort(),
+            ) &&
+          item.specialInstructions.trim() ===
+            newItemInput.specialInstructions.trim(),
+      );
+
+      if (existingItemIndex > -1) {
+        return prevCart.map((item, idx) => {
+          if (idx === existingItemIndex) {
+            const updatedQuantity = item.quantity + newItemInput.quantity;
+            const unitPrice = newItemInput.totalPrice / newItemInput.quantity;
+            return {
+              ...item,
+              quantity: updatedQuantity,
+              totalPrice: Number((unitPrice * updatedQuantity).toFixed(2)),
+            };
+          }
+          return item;
+        });
+      }
+
+      const cleanUniqueId = `${newItemInput.menuItem.id}-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+      return [...prevCart, { ...newItemInput, id: cleanUniqueId }];
+    });
   };
 
   const removeFromCart = (id: string) => {
     setCart((prev) => prev.filter((item) => item.id !== id));
   };
 
-  const updateQuantity = (id: string, quantity: number) => {
+  const updateQuantity = (id: string, newQuantity: number) => {
+    if (newQuantity < 1) return;
+
     setCart((prev) =>
       prev.map((item) => {
         if (item.id === id) {
-          // Recalculate price: (base + modifiers) * new quantity
           const basePerUnit = item.menuItem.price;
           const modifiersPerUnit = item.selectedOptions.reduce(
             (sum, o) => sum + o.additionalPrice,
@@ -57,8 +92,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
           );
           return {
             ...item,
-            quantity,
-            totalPrice: (basePerUnit + modifiersPerUnit) * quantity,
+            quantity: newQuantity,
+            totalPrice: Number(
+              ((basePerUnit + modifiersPerUnit) * newQuantity).toFixed(2),
+            ),
           };
         }
         return item;
@@ -81,6 +118,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         clearCart,
         cartTotal,
         itemCount,
+        isCartOpen,
+        setIsCartOpen,
       }}
     >
       {children}

@@ -12,7 +12,7 @@ export const TenantDashboardHeader = ({
   adminName = "Admin",
   subtitle = (
     <>
-      You have <span className="text-[#FFB020] font-semibold">200+</span>{" "}
+      You have <span className="text-brand-primary font-semibold">200+</span>{" "}
       Orders, Today
     </>
   ),

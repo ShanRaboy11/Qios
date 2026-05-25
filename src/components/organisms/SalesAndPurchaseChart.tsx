@@ -37,7 +37,7 @@ export const SalesAndPurchaseChart = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center">
-            <Package className="w-5 h-5 text-[#ffc670]" />
+            <Package className="w-5 h-5 text-brand-primary" />
           </div>
           <h2 className="text-[18px] font-bold text-text-primary">
             Sales & Purchase
@@ -65,7 +65,7 @@ export const SalesAndPurchaseChart = () => {
       <div className="flex items-center gap-6 mb-8 mt-2">
         <div className="flex flex-col border border-gray-100 rounded-xl px-4 py-2">
           <div className="flex items-center gap-2 mb-1">
-            <div className="w-2.5 h-2.5 rounded-full bg-[#FFDC72]" />
+            <div className="w-2.5 h-2.5 rounded-full bg-brand-primary" />
             <span className="text-[14px] text-text-secondary">
               Total Purchase
             </span>
@@ -74,7 +74,7 @@ export const SalesAndPurchaseChart = () => {
         </div>
         <div className="flex flex-col border border-gray-100 rounded-xl px-4 py-2">
           <div className="flex items-center gap-2 mb-1">
-            <div className="w-2.5 h-2.5 rounded-full bg-[#FFEDBA]" />
+            <div className="w-2.5 h-2.5 rounded-full bg-brand-secondary" />
             <span className="text-[14px] text-text-secondary">Total Sales</span>
           </div>
           <span className="text-[20px] font-bold text-text-primary">38K</span>
@@ -118,13 +118,13 @@ export const SalesAndPurchaseChart = () => {
             <Bar
               dataKey="purchase"
               stackId="a"
-              fill="#FFDC72"
+              fill="var(--brand-primary, #FFDC72)"
               radius={[0, 0, 4, 4]}
             />
             <Bar
               dataKey="sales"
               stackId="a"
-              fill="#FFEDBA"
+              fill="var(--brand-secondary, #FFEDBA)"
               radius={[4, 4, 0, 0]}
             />
           </BarChart>

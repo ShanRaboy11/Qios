@@ -15,19 +15,19 @@ interface StaffLeaderboardProps {
 
 export const StaffLeaderboard = ({ data }: StaffLeaderboardProps) => {
   return (
-    <div className="bg-white rounded-[24px] shadow-sm border border-gray-100 overflow-hidden flex flex-col h-full">
+    <div className="bg-white rounded-[24px] shadow-sm border border-gray-100 overflow-hidden flex flex-col h-full font-brand-secondary">
       <div className="p-6 border-b border-gray-50">
-        <h3 className="font-bold text-xl text-text-primary">
+        <h3 className="font-brand font-bold text-xl text-text-primary">
           Staff Performance Leaderboard
         </h3>
-        <p className="text-sm text-text-secondary mt-1">
+        <p className="text-sm text-text-secondary mt-1 font-brand-secondary">
           Ranked by efficiency score and transaction velocity
         </p>
       </div>
       <div className="overflow-x-hidden">
-        <table className="w-full text-left border-collapse table-fixed">
+        <table className="w-full text-left border-collapse table-fixed font-brand-secondary">
           <thead>
-            <tr className="bg-[#FF5269] text-white text-[10px] sm:text-[11px] font-bold uppercase tracking-wider">
+            <tr className="bg-brand-accent text-white text-[10px] sm:text-[11px] font-bold uppercase tracking-wider">
               <th className="py-3 px-2 w-10 sm:w-12 text-center">Rank</th>
               <th className="py-3 px-2">Staff Name</th>
               <th className="py-3 px-2 w-16 sm:w-20 text-center">Volume</th>
