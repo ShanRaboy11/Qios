@@ -510,7 +510,9 @@ const MenuCategoryManagement = () => {
   const handleOpenModal = (item: MenuItem) => {
     setLocalError(null);
     setOriginalItem(item);
-    setDraftItem(JSON.parse(JSON.stringify({ ...item, recipe: item.recipe || [] })));
+    setDraftItem(
+      JSON.parse(JSON.stringify({ ...item, recipe: item.recipe || [] })),
+    );
   };
   const handleCloseModal = () => {
     setLocalError(null);
@@ -665,7 +667,7 @@ const MenuCategoryManagement = () => {
     <div className="w-full">
       {/* ── Main View Toggle ────────────────────────────────────────────── */}
       {isEmptyMenu ? (
-        <div className="font-inter relative flex w-full min-h-[700px] bg-gradient-to-br from-[#FFF8EE] via-transparent to-[#FFF1F3] p-4 md:p-0">
+        <div className="font-inter relative flex w-full min-h-[700px] p-4 md:p-0">
           <div className="flex-1 flex items-center justify-center px-4 py-8 md:px-8 md:py-12">
             <div className="w-full max-w-5xl rounded-[36px] border border-black/10 ring-1 ring-black/5 bg-gradient-to-br from-white/95 via-white/85 to-[#FFF7EC] shadow-[0_32px_100px_rgba(0,0,0,0.12)] overflow-hidden">
               <div className="grid gap-0 lg:grid-cols-[1.05fr_0.95fr]">
@@ -746,9 +748,9 @@ const MenuCategoryManagement = () => {
           </div>
         </div>
       ) : (
-        <div className="font-inter relative flex w-full flex-col md:flex-row gap-6 min-h-[700px] bg-gradient-to-br from-[#FFF8EE] via-transparent to-[#FFF1F3] p-4 md:p-0">
+        <div className="font-inter relative flex w-full flex-col md:flex-row gap-6 min-h-[700px] p-4 md:p-0">
           {/* ── Sidebar ─────────────────────────────────────────────────── */}
-          <aside className="w-full md:w-[290px] flex-shrink-0 flex flex-col gap-4 bg-white/70 backdrop-blur-sm rounded-[24px] border border-white/70 shadow-sm p-4 md:p-5">
+          <aside className="w-full md:w-[290px] flex-shrink-0 flex flex-col gap-4 bg-white/50 backdrop-blur-sm rounded-[24px] border border-white/60 shadow-sm p-4 md:p-5">
             <div className="flex flex-col gap-3">
               <div>
                 <p className="b3 font-bold text-text-primary">Categories</p>
@@ -1494,17 +1496,24 @@ const MenuCategoryManagement = () => {
                     >
                       <div className="flex-1 flex flex-col sm:flex-row gap-2">
                         <div className="flex-1">
-                          <p className="b4 font-bold text-text-primary mb-1">{ing.name}</p>
-                          <p className="b5 text-text-secondary uppercase">Unit: {ing.unit_type}</p>
+                          <p className="b4 font-bold text-text-primary mb-1">
+                            {ing.name}
+                          </p>
+                          <p className="b5 text-text-secondary uppercase">
+                            Unit: {ing.unit_type}
+                          </p>
                         </div>
                         <div className="flex flex-col">
-                          <label className="b5 text-text-secondary uppercase mb-1">Required Qty</label>
+                          <label className="b5 text-text-secondary uppercase mb-1">
+                            Required Qty
+                          </label>
                           <Input
                             type="number"
                             value={ing.quantity_required}
                             onChange={(e) => {
                               const nr = [...draftItem.recipe!];
-                              nr[index].quantity_required = parseFloat(e.target.value) || 0;
+                              nr[index].quantity_required =
+                                parseFloat(e.target.value) || 0;
                               updateDraft("recipe", nr);
                             }}
                             className="!py-2 w-full sm:w-28 b4"
@@ -1515,7 +1524,10 @@ const MenuCategoryManagement = () => {
                         onClick={() =>
                           updateDraft(
                             "recipe",
-                            draftItem.recipe!.filter((r) => r.inventory_item_id !== ing.inventory_item_id),
+                            draftItem.recipe!.filter(
+                              (r) =>
+                                r.inventory_item_id !== ing.inventory_item_id,
+                            ),
                           )
                         }
                         className="p-2 text-text-secondary hover:bg-brand-accent/10 hover:text-brand-accent rounded-xl transition-colors mt-4"
@@ -1525,20 +1537,28 @@ const MenuCategoryManagement = () => {
                     </div>
                   ))}
 
-                  <div className="relative" onClick={(e) => e.stopPropagation()}>
+                  <div
+                    className="relative"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <button
-                      onClick={() => setIsRecipeDropdownOpen(!isRecipeDropdownOpen)}
+                      onClick={() =>
+                        setIsRecipeDropdownOpen(!isRecipeDropdownOpen)
+                      }
                       className={cn(
                         "w-full flex items-center justify-between py-3 px-4 border border-dashed rounded-2xl transition-all b4 font-medium",
                         isRecipeDropdownOpen
                           ? "border-brand-accent text-brand-accent bg-brand-accent/5"
-                          : "border-black/15 text-text-secondary hover:border-brand-accent hover:text-brand-accent hover:bg-brand-accent/5"
+                          : "border-black/15 text-text-secondary hover:border-brand-accent hover:text-brand-accent hover:bg-brand-accent/5",
                       )}
                     >
                       <span>+ Add Ingredient...</span>
                       <ChevronDown
                         size={14}
-                        className={cn("transition-transform", isRecipeDropdownOpen && "rotate-180")}
+                        className={cn(
+                          "transition-transform",
+                          isRecipeDropdownOpen && "rotate-180",
+                        )}
                       />
                     </button>
                     {isRecipeDropdownOpen && (
@@ -1550,7 +1570,9 @@ const MenuCategoryManagement = () => {
                             </li>
                           ) : (
                             inventoryItems.map((inv) => {
-                              const isSelected = !!draftItem.recipe?.find((r) => r.inventory_item_id === inv.id);
+                              const isSelected = !!draftItem.recipe?.find(
+                                (r) => r.inventory_item_id === inv.id,
+                              );
                               return (
                                 <li
                                   key={inv.id}
@@ -1570,9 +1592,9 @@ const MenuCategoryManagement = () => {
                                   }}
                                   className={cn(
                                     "px-4 py-2.5 b4 border-b border-black/5 last:border-0 transition-colors",
-                                    isSelected 
-                                      ? "text-text-secondary/50 cursor-not-allowed bg-black/5" 
-                                      : "cursor-pointer hover:bg-brand-secondary/30 text-text-primary"
+                                    isSelected
+                                      ? "text-text-secondary/50 cursor-not-allowed bg-black/5"
+                                      : "cursor-pointer hover:bg-brand-secondary/30 text-text-primary",
                                   )}
                                 >
                                   {inv.name} ({inv.unit_type})

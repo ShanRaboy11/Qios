@@ -4,6 +4,36 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 type InventoryModeUI = "unit" | "measurement";
 type InventoryModeDb = "unit" | "recipe" | "measurement";
 
+const MEASUREMENT_UNITS = new Set([
+  "kg",
+  "g",
+  "mg",
+  "lb",
+  "oz",
+  "l",
+  "ml",
+  "gal",
+  "pt",
+]);
+
+const UNIT_UNITS = new Set([
+  "pcs",
+  "pieces",
+  "piece",
+  "boxes",
+  "box",
+  "bottles",
+  "bottle",
+  "cans",
+  "can",
+  "packs",
+  "pack",
+  "slices",
+  "slice",
+  "dozens",
+  "dozen",
+]);
+
 export interface InventoryItem {
   id: string;
   name: string;
@@ -31,6 +61,33 @@ export const useInventoryManagement = () => {
 
   const toDbInventoryMode = (mode: InventoryModeUI): InventoryModeDb =>
     mode === "measurement" ? "recipe" : "unit";
+
+  const inferInventoryModeFromUnit = (
+    unitType: string | undefined,
+    fallback: InventoryModeUI = "unit",
+  ): InventoryModeUI => {
+    const normalizedUnit = unitType?.trim().toLowerCase();
+
+    if (!normalizedUnit) {
+      return fallback;
+    }
+
+    if (MEASUREMENT_UNITS.has(normalizedUnit)) {
+      return "measurement";
+    }
+
+    if (UNIT_UNITS.has(normalizedUnit)) {
+      return "unit";
+    }
+
+    if (
+      /^(?:\d+(?:\.\d+)?\s*)?(kg|g|mg|lb|oz|l|ml|gal|pt)$/.test(normalizedUnit)
+    ) {
+      return "measurement";
+    }
+
+    return fallback;
+  };
 
   const mapRowToItem = (row: InventoryItemRow): InventoryItem => ({
     ...row,
@@ -110,13 +167,15 @@ export const useInventoryManagement = () => {
     setActionError(null);
     try {
       const tenantId = await getCurrentTenantId();
+      const inferredInventoryMode = inferInventoryModeFromUnit(
+        draft.unit_type,
+        draft.inventory_mode ?? "unit",
+      );
 
       const payload = {
         name: draft.name,
         unit_type: draft.unit_type,
-        inventory_mode: draft.inventory_mode
-          ? toDbInventoryMode(draft.inventory_mode)
-          : undefined,
+        inventory_mode: toDbInventoryMode(inferredInventoryMode),
         current_stock: draft.current_stock,
         low_stock_threshold: draft.low_stock_threshold,
         critical_stock_threshold: draft.critical_stock_threshold,
@@ -135,7 +194,7 @@ export const useInventoryManagement = () => {
         // Backward compatibility: older DBs may still use 'measurement' instead of 'recipe'.
         if (
           error &&
-          draft.inventory_mode === "measurement" &&
+          inferredInventoryMode === "measurement" &&
           isInventoryModeEnumError(error, "recipe")
         ) {
           const retryResult = await supabase
@@ -167,7 +226,7 @@ export const useInventoryManagement = () => {
 
         if (
           error &&
-          draft.inventory_mode === "measurement" &&
+          inferredInventoryMode === "measurement" &&
           isInventoryModeEnumError(error, "recipe")
         ) {
           const retryResult = await supabase

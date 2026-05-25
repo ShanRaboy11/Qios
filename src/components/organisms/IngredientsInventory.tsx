@@ -311,7 +311,7 @@ export default function IngredientsInventory() {
                   </div>
                   <div className="flex flex-col gap-1 border-l border-black/5 pl-2">
                     <span className="text-[10px] uppercase font-bold text-text-secondary tracking-wide">
-                      Crit
+                      Critical
                     </span>
                     <span className="b2 font-bold text-text-primary">
                       {item.critical_stock_threshold}
