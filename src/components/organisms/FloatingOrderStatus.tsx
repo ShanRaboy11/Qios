@@ -16,7 +16,10 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
+import { useCart } from "@/contexts/CartContext";
+
 const STEPS = [
+  { id: 0, label: "Pending Payment", icon: <Receipt size={18} /> },
   { id: 1, label: "Placed", icon: <Receipt size={18} /> },
   { id: 2, label: "Kitchen", icon: <ChefHat size={18} /> },
   { id: 3, label: "Ready", icon: <ShoppingBag size={18} /> },
@@ -24,24 +27,22 @@ const STEPS = [
 ];
 
 export const FloatingOrderStatus = () => {
-  const [currentStep, setCurrentStep] = useState(1);
+  const { isOrderPlaced, setIsOrderPlaced, cartTotal, currency } = useCart();
+  const [currentStep, setCurrentStep] = useState(0); // Start at Pending Payment
   const [isExpanded, setIsExpanded] = useState(false);
   const [isReadyNotified, setIsReadyNotified] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
 
-  // Auto-progress simulator for frontend demo
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentStep((prev) => {
-        if (prev >= 4) return 4;
-        return prev + 1;
-      });
-    }, 5000); // Progress every 5 seconds
+    if (isOrderPlaced) {
+      setIsVisible(true);
+      setCurrentStep(0);
+    }
+  }, [isOrderPlaced]);
 
-    return () => clearInterval(timer);
-  }, []);
+  // Remove the setInterval auto-progress simulator for actual production.
+  // We'll leave the Ready Notification effect in place so if it ever hits step 3 it works.
 
-  // Trigger ready notification animation when step becomes 3
   useEffect(() => {
     if (currentStep === 3) {
       setIsReadyNotified(true);
@@ -52,12 +53,12 @@ export const FloatingOrderStatus = () => {
     } else {
       setIsReadyNotified(false);
     }
-  }, [currentStep]);
+  }, [currentStep, isExpanded]);
 
-  if (!isVisible) return null;
+  if (!isOrderPlaced || !isVisible) return null;
 
   const currentLabel = STEPS.find(s => s.id === currentStep)?.label || "Processing";
-  const progress = ((currentStep - 1) / (STEPS.length - 1)) * 100;
+  const progress = (currentStep / (STEPS.length - 1)) * 100;
 
   return (
     <div className="fixed bottom-6 left-0 right-0 z-[100] px-4 pointer-events-none flex justify-center">
@@ -117,8 +118,8 @@ export const FloatingOrderStatus = () => {
                   <h2 className="text-2xl font-brand font-black text-text-primary">#ORD-2847</h2>
                 </div>
                 <div className="text-right">
-                  <span className="text-xs font-brand font-bold text-gray-500 uppercase tracking-widest mb-1 block">Total Paid</span>
-                  <span className="text-2xl font-brand font-black text-brand-accent">₱1,050.00</span>
+                  <span className="text-xs font-brand font-bold text-gray-500 uppercase tracking-widest mb-1 block">Total</span>
+                  <span className="text-2xl font-brand font-black text-brand-accent">{currency} {(cartTotal * 1.12).toFixed(2)}</span>
                 </div>
               </div>
             </div>

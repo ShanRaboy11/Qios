@@ -19,6 +19,8 @@ export const CartDrawer = () => {
     clearCart,
     isCartOpen,
     setIsCartOpen,
+    setIsOrderPlaced,
+    currency,
   } = useCart();
 
   const [isReceiptOpen, setIsReceiptOpen] = useState(false);
@@ -179,7 +181,7 @@ export const CartDrawer = () => {
                             </div>
 
                             <div className="font-bold text-text-primary text-right shrink-0 font-figtree">
-                              ₱ {item.totalPrice.toFixed(2)}
+                              {currency} {item.totalPrice.toFixed(2)}
                             </div>
                           </div>
                         </div>
@@ -194,7 +196,7 @@ export const CartDrawer = () => {
                 <div className="flex justify-between items-center">
                   <span className="text-text-secondary">Subtotal</span>
                   <span className="font-bold text-text-primary">
-                    ₱ {cartTotal.toFixed(2)}
+                    {currency} {cartTotal.toFixed(2)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
@@ -205,7 +207,7 @@ export const CartDrawer = () => {
                     </span>
                   </span>
                   <span className="font-bold text-text-primary">
-                    ₱ {(cartTotal * 0.12).toFixed(2)}
+                    {currency} {(cartTotal * 0.12).toFixed(2)}
                   </span>
                 </div>
                 <div className="h-px bg-black/5 w-full !my-4" />
@@ -214,7 +216,7 @@ export const CartDrawer = () => {
                     Total
                   </h3>
                   <h3 className="text-xl font-extrabold text-text-primary font-figtree">
-                    ₱ {(cartTotal * 1.12).toFixed(2)}
+                    {currency} {(cartTotal * 1.12).toFixed(2)}
                   </h3>
                 </div>
 
@@ -280,6 +282,7 @@ export const CartDrawer = () => {
                       setPlacedOrderId(`DEMO-${Math.floor(1000 + Math.random() * 9000)}`);
                       setIsConfirmOpen(false);
                       setIsCartOpen(false);
+                      setIsOrderPlaced(true); // <--- Add this
                       clearCart();
                       setTimeout(() => setIsReceiptOpen(true), 250);
                       return;
@@ -295,6 +298,7 @@ export const CartDrawer = () => {
                       setPlacedOrderId(result.qrHash);
                       setIsConfirmOpen(false);
                       setIsCartOpen(false);
+                      setIsOrderPlaced(true);
                       clearCart();
                       setTimeout(() => setIsReceiptOpen(true), 250);
                     } else {

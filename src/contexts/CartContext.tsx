@@ -31,13 +31,17 @@ interface CartContextType {
   itemCount: number;
   isCartOpen: boolean;
   setIsCartOpen: (open: boolean) => void;
+  isOrderPlaced: boolean;
+  setIsOrderPlaced: (placed: boolean) => void;
+  currency: string;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-export const CartProvider = ({ children }: { children: ReactNode }) => {
+export const CartProvider = ({ children, currency = "PHP" }: { children: ReactNode, currency?: string }) => {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isOrderPlaced, setIsOrderPlaced] = useState(false);
 
   const addToCart = (newItemInput: Omit<CartItem, "id">) => {
     setCart((prevCart) => {
@@ -120,6 +124,9 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         itemCount,
         isCartOpen,
         setIsCartOpen,
+        isOrderPlaced,
+        setIsOrderPlaced,
+        currency,
       }}
     >
       {children}
