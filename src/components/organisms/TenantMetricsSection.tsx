@@ -7,7 +7,7 @@ import { KPICard } from "@/components/molecules/KPICard";
 export const TenantMetricsSection = () => {
   return (
     <div className="flex flex-col gap-6 w-full">
-      {/* Primary KPIs Row */}
+      {/* primary KPIs Row */}
       <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         <KPICard
           title="Total Sales"
@@ -43,7 +43,7 @@ export const TenantMetricsSection = () => {
         />
       </div>
 
-      {/* Secondary KPIs Row */}
+      {/* secondary KPIs Row */}
       <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         <KPICard
           title="Profit"

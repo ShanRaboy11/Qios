@@ -51,7 +51,7 @@ export const Radio = ({
           {...props}
         />
 
-        {/* Outer circle */}
+        {/* outer circle */}
         <span
           className={cn(
             "flex items-center justify-center h-5 w-5 rounded-full border transition-all",
@@ -69,7 +69,7 @@ export const Radio = ({
             "peer-checked:[&>span]:scale-100",
           )}
         >
-          {/* Inner dot */}
+          {/* inner dot */}
           <span
             className={cn(
               "h-2.5 w-2.5 rounded-full scale-0 transition-transform",
@@ -78,7 +78,7 @@ export const Radio = ({
           />
         </span>
 
-        {/* Label */}
+        {/* label */}
         {label && (
           <span
             className={cn("b1 text-text-secondary transition-all", styles.text)}

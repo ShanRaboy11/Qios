@@ -75,7 +75,7 @@ export const ItemCustomization = ({
         </div>
 
         <div className="flex items-center gap-8">
-          {/* Quantity Controls */}
+          {/* quantity Controls */}
           <div className="flex items-center gap-4">
             <button
               onClick={() => setQuantity(Math.max(0, quantity - 1))}
@@ -94,7 +94,7 @@ export const ItemCustomization = ({
             </button>
           </div>
 
-          {/* Price */}
+          {/* price */}
           <span className="b1 font-bold text-text-primary shrink-0">
             ₱ {(price * quantity).toFixed(2)}
           </span>

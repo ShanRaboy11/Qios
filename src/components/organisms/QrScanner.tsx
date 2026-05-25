@@ -245,7 +245,7 @@ export const QrScanner = (): JSX.Element => {
 
   useEffect(() => () => stopCamera(), [stopCamera]);
 
-  // Automatically search order when QR scan succeeds
+  // automatically search order when QR scan succeeds
   useEffect(() => {
     if (scanState === "success" && orderId.trim()) {
       handleSearchOrder();
@@ -358,13 +358,13 @@ export const QrScanner = (): JSX.Element => {
     setSearchError("");
     setFoundOrder(null);
 
-    // Simulate a delay for loading effect
+    // simulate a delay for loading effect
     await new Promise((resolve) => setTimeout(resolve, 600));
 
-    // Determine order status based on order ID for demo purposes
+    // determine order status based on order ID for demo purposes
     const orderIdLower = orderId.trim().toLowerCase();
 
-    // Check for invalid reading
+    // check for invalid reading
     if (orderIdLower.includes("invalid") || orderId.trim().length < 3) {
       setSearchError(
         "❌ Invalid Reading: No active order was found matching this code/ID. Please verify and try again.",
@@ -375,7 +375,7 @@ export const QrScanner = (): JSX.Element => {
 
     let orderStatus: OrderData["status"] = "preparing";
 
-    // Special cases for testing different scenarios
+    // special cases for testing different scenarios
     if (orderIdLower.includes("served") || orderIdLower.includes("done")) {
       orderStatus = "served";
     } else if (orderIdLower.includes("cancel")) {
@@ -384,7 +384,7 @@ export const QrScanner = (): JSX.Element => {
       orderStatus = "voided";
     }
 
-    // Set detailed warnings for already done/completed/cancelled orders
+    // set detailed warnings for already done/completed/cancelled orders
     if (orderStatus === "served") {
       setSearchError(
         "ℹ️ Order Already Done: This order has already been completed and served. Opening read-only details.",
@@ -397,7 +397,7 @@ export const QrScanner = (): JSX.Element => {
       );
     }
 
-    // Mock data - replace with real API call later
+    // mock data - replace with real API call later
     const mockOrder: OrderData = {
       id: orderId.trim(),
       table_number: Math.floor(Math.random() * 15) + 1,
@@ -812,7 +812,7 @@ export const QrScanner = (): JSX.Element => {
           <div className="qrs-dots" />
         </div>
 
-        {/* Hidden decode canvas */}
+        {/* hidden decode canvas */}
         <canvas
           ref={canvasRef}
           style={{ display: "none" }}
@@ -837,24 +837,24 @@ export const QrScanner = (): JSX.Element => {
             }}
           >
             <div>
-              {/* Badge uses accent color */}
+              {/* badge uses accent color */}
               <div className="qrs-badge">
                 <div className="qrs-badge-dot" />
                 <span className="qrs-badge-label">Order Scanner</span>
               </div>
-              {/* Title — "QR" same color as the rest, no accent emphasis */}
+              {/* title — "QR" same color as the rest, no accent emphasis */}
               <h2 className="qrs-title">Scan QR Code</h2>
             </div>
           </div>
 
           {/* ── Viewport — blobs live inside here ── */}
           <div className="qrs-viewport">
-            {/* Blobs inside the viewport card */}
+            {/* blobs inside the viewport card */}
             <div className="qrs-vp-blob-amber" />
             <div className="qrs-vp-blob-accent" />
             <div className="qrs-vp-blob-mid" />
 
-            {/* Grid on top of blobs */}
+            {/* grid on top of blobs */}
             <div className="qrs-vp-grid" />
 
             <video
@@ -893,7 +893,7 @@ export const QrScanner = (): JSX.Element => {
               </div>
             )}
 
-            {/* Idle */}
+            {/* idle */}
             {scanState === "idle" && (
               <div className="qrs-state">
                 <QrPlaceholder />
@@ -901,7 +901,7 @@ export const QrScanner = (): JSX.Element => {
               </div>
             )}
 
-            {/* Requesting */}
+            {/* requesting */}
             {scanState === "requesting" && (
               <div className="qrs-state">
                 <Loader2
@@ -913,7 +913,7 @@ export const QrScanner = (): JSX.Element => {
               </div>
             )}
 
-            {/* Success */}
+            {/* success */}
             {scanState === "success" && (
               <div className="qrs-state qrs-state-success">
                 <svg
@@ -959,7 +959,7 @@ export const QrScanner = (): JSX.Element => {
               </div>
             )}
 
-            {/* Error */}
+            {/* error */}
             {scanState === "error" && (
               <div className="qrs-state qrs-state-error">
                 <XCircle
@@ -1062,7 +1062,7 @@ export const QrScanner = (): JSX.Element => {
             </Button>
           </div>
 
-          {/* Search Error Message */}
+          {/* search Error Message */}
           {searchError &&
             (() => {
               const isInfo = searchError.startsWith("ℹ️");
@@ -1111,7 +1111,7 @@ export const QrScanner = (): JSX.Element => {
         </div>
       </div>
 
-      {/* Order Details Modal */}
+      {/* order Details Modal */}
       {foundOrder && (
         <OrderDetails
           order={foundOrder}

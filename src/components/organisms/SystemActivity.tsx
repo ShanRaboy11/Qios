@@ -126,7 +126,7 @@ const ActivityCard = ({ act }: { act: ActivityData }) => {
       )}
       style={{ backgroundColor: "white" }}
     >
-      {/* Card Header — always visible, tap to toggle */}
+      {/* card Header — always visible, tap to toggle */}
       <button
         onClick={() => setIsOpen((prev) => !prev)}
         className="w-full flex items-center justify-between px-4 py-3 text-left gap-3 transition-colors"
@@ -156,7 +156,7 @@ const ActivityCard = ({ act }: { act: ActivityData }) => {
             {act.action.label}
           </Badge>
 
-          {/* Chevron */}
+          {/* chevron */}
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="16"
@@ -182,7 +182,7 @@ const ActivityCard = ({ act }: { act: ActivityData }) => {
         </div>
       </button>
 
-      {/* Collapsible Body */}
+      {/* collapsible Body */}
       <div
         className={cn(
           "grid transition-all duration-300 ease-in-out",
@@ -191,7 +191,7 @@ const ActivityCard = ({ act }: { act: ActivityData }) => {
       >
         <div className="overflow-hidden">
           <div className="px-4 py-4 flex flex-col gap-3 border-t-2 border-[#E5E5E5]">
-            {/* Row: Role */}
+            {/* row: Role */}
             <div className="flex items-center justify-between gap-2">
               <span
                 className="b5 font-bold uppercase tracking-wider"
@@ -209,7 +209,7 @@ const ActivityCard = ({ act }: { act: ActivityData }) => {
               </Badge>
             </div>
 
-            {/* Row: Target Establishment */}
+            {/* row: Target Establishment */}
             <div className="flex items-center justify-between gap-2">
               <span
                 className="b5 font-bold uppercase tracking-wider"
@@ -225,7 +225,7 @@ const ActivityCard = ({ act }: { act: ActivityData }) => {
               </span>
             </div>
 
-            {/* Row: Description */}
+            {/* row: Description */}
             <div
               className="rounded-xl px-3 py-2 b4"
               style={{
@@ -242,7 +242,7 @@ const ActivityCard = ({ act }: { act: ActivityData }) => {
               {act.description}
             </div>
 
-            {/* Row: Timestamp */}
+            {/* row: Timestamp */}
             <div className="flex items-center justify-end gap-1">
               <svg
                 xmlns="http://www.w3.org/2000/svg"

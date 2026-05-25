@@ -63,6 +63,7 @@ import {
   Addon,
   Size,
 } from "@/hooks/useMenuManagement";
+import { useInventoryManagement } from "@/hooks/useInventoryManagement";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -308,6 +309,8 @@ const MenuCategoryManagement = () => {
     uploadImage,
   } = useMenuManagement();
 
+  const { items: inventoryItems } = useInventoryManagement();
+
   const [activeCatId, setActiveCatId] = useState<string>("");
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [isLocalLoading, setIsLocalLoading] = useState(false);
@@ -506,7 +509,7 @@ const MenuCategoryManagement = () => {
   const handleOpenModal = (item: MenuItem) => {
     setLocalError(null);
     setOriginalItem(item);
-    setDraftItem(JSON.parse(JSON.stringify(item)));
+    setDraftItem(JSON.parse(JSON.stringify({ ...item, recipe: item.recipe || [] })));
   };
   const handleCloseModal = () => {
     setLocalError(null);
@@ -556,6 +559,7 @@ const MenuCategoryManagement = () => {
       addonsEnabled: false,
       addons: [],
       sizes: [],
+      recipe: [],
     });
   };
 
@@ -831,7 +835,7 @@ const MenuCategoryManagement = () => {
 
           {/* ── Main content ─────────────────────────────────────────────── */}
           <div className="flex-1 flex flex-col min-w-0 bg-white/50 backdrop-blur-sm rounded-[24px] overflow-hidden border border-white/60 shadow-sm">
-            {/* Header bar */}
+            {/* header bar */}
             <div className="relative overflow-hidden flex-shrink-0 border-b border-[#ffd08a]/30">
               <div className="pointer-events-none absolute -top-16 -right-10 w-52 h-52 rounded-full bg-brand-accent/[0.06]" />
               <div className="pointer-events-none absolute -bottom-10 right-28 w-40 h-40 rounded-full bg-brand-primary/[0.10]" />
@@ -896,7 +900,7 @@ const MenuCategoryManagement = () => {
               </div>
             </div>
 
-            {/* Toolbar */}
+            {/* toolbar */}
             <div className="flex-shrink-0 px-4 lg:px-6 py-3 border-b border-black/[0.05] bg-white/30 flex flex-col gap-2">
               <div className="flex items-center gap-3 flex-wrap">
                 <div className="w-80 flex-shrink-0">
@@ -985,7 +989,7 @@ const MenuCategoryManagement = () => {
               )}
             </div>
 
-            {/* Item Area */}
+            {/* item Area */}
             <div className="flex-1 overflow-y-auto px-4 lg:px-6 py-6 custom-scrollbar bg-white/25">
               {isLoading ? (
                 viewMode === "grid" ? (
@@ -1063,7 +1067,7 @@ const MenuCategoryManagement = () => {
 
       {/* ── GLOBAL MODALS (Always rendered to support animations) ───────── */}
 
-      {/* Item modal */}
+      {/* item modal */}
       {draftItem && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 modal-overlay">
           <div className="bg-bg-primary rounded-[28px] w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl border border-white/50 overflow-hidden modal-panel">
@@ -1467,6 +1471,89 @@ const MenuCategoryManagement = () => {
                     </div>
                   </div>
                 )}
+              </section>
+
+              <Divider />
+
+              <section>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <SectionLabel title="Recipe / Ingredients" />
+                    <span className="text-[9px] px-1.5 py-0.5 uppercase font-bold rounded-full border border-black/10 text-text-secondary bg-black/3 -mt-3">
+                      Optional
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-3 animate-in fade-in duration-200">
+                  {draftItem.recipe?.map((ing, index) => (
+                    <div
+                      key={ing.inventory_item_id}
+                      className="flex items-start gap-2 p-3.5 bg-transparent rounded-2xl border border-black/5 shadow-none"
+                    >
+                      <div className="flex-1 flex flex-col sm:flex-row gap-2">
+                        <div className="flex-1">
+                          <p className="b4 font-bold text-text-primary mb-1">{ing.name}</p>
+                          <p className="b5 text-text-secondary uppercase">Unit: {ing.unit_type}</p>
+                        </div>
+                        <div className="flex flex-col">
+                          <label className="b5 text-text-secondary uppercase mb-1">Required Qty</label>
+                          <Input
+                            type="number"
+                            value={ing.quantity_required}
+                            onChange={(e) => {
+                              const nr = [...draftItem.recipe!];
+                              nr[index].quantity_required = parseFloat(e.target.value) || 0;
+                              updateDraft("recipe", nr);
+                            }}
+                            className="!py-2 w-full sm:w-28 b4"
+                          />
+                        </div>
+                      </div>
+                      <button
+                        onClick={() =>
+                          updateDraft(
+                            "recipe",
+                            draftItem.recipe!.filter((r) => r.inventory_item_id !== ing.inventory_item_id),
+                          )
+                        }
+                        className="p-2 text-text-secondary hover:bg-brand-accent/10 hover:text-brand-accent rounded-xl transition-colors mt-4"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+                  ))}
+
+                  <div className="relative">
+                    <select
+                      className="w-full bg-white border border-dashed border-black/15 rounded-2xl p-3 b4 text-text-secondary hover:border-brand-accent focus:border-brand-accent outline-none appearance-none"
+                      onChange={(e) => {
+                        if (!e.target.value) return;
+                        const invItem = inventoryItems.find((i) => i.id === e.target.value);
+                        if (invItem && !draftItem.recipe?.find((r) => r.inventory_item_id === invItem.id)) {
+                          updateDraft("recipe", [
+                            ...(draftItem.recipe || []),
+                            {
+                              inventory_item_id: invItem.id,
+                              quantity_required: 1,
+                              name: invItem.name,
+                              unit_type: invItem.unit_type,
+                            },
+                          ]);
+                        }
+                        e.target.value = "";
+                      }}
+                    >
+                      <option value="">+ Add Ingredient...</option>
+                      {inventoryItems.map((inv) => (
+                        <option key={inv.id} value={inv.id} disabled={!!draftItem.recipe?.find((r) => r.inventory_item_id === inv.id)}>
+                          {inv.name} ({inv.unit_type})
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none" />
+                  </div>
+                </div>
               </section>
             </div>
 

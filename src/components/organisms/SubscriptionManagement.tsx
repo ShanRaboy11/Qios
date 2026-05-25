@@ -528,7 +528,7 @@ export default function SubscriptionManagement() {
 
   return (
     <>
-      {/* Content placed directly on page — no card wrapper */}
+      {/* content placed directly on page — no card wrapper */}
       <div className="flex flex-col md:flex-row gap-6 min-h-[700px]">
         {/* ── Sidebar ── */}
         <div className="w-full md:w-[280px] flex-shrink-0 flex flex-col gap-3">
@@ -605,7 +605,7 @@ export default function SubscriptionManagement() {
         <div className="flex-1 flex flex-col min-w-0 bg-white/50 rounded-[24px] overflow-hidden border border-white/60 shadow-sm">
           {draftPlan ? (
             <>
-              {/* Plan settings header */}
+              {/* plan settings header */}
               <div className="p-6 md:p-8 pb-5 border-b-2 border-white/50 flex-shrink-0 flex flex-col gap-5">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <div className="flex-1 w-full max-w-2xl flex gap-4 md:gap-6">
@@ -728,7 +728,7 @@ export default function SubscriptionManagement() {
                 </div>
               </div>
 
-              {/* Feature toggles */}
+              {/* feature toggles */}
               <div className="flex-1 overflow-y-auto p-6 md:p-8 custom-scrollbar">
                 <div className="flex flex-col gap-6 pb-4">
                   {showTemplateReminder && (
@@ -819,7 +819,7 @@ export default function SubscriptionManagement() {
                 </div>
               </div>
 
-              {/* Action footer */}
+              {/* action footer */}
               <div className="p-4 md:p-6 border-t-2 border-white/50 flex items-center justify-end gap-3 flex-shrink-0 bg-white/50">
                 {hasChanges && (
                   <div className="flex flex-col mr-auto">
@@ -861,14 +861,14 @@ export default function SubscriptionManagement() {
         </div>
       </div>
 
-      {/* Scrollbar styling */}
+      {/* scrollbar styling */}
       <style
         dangerouslySetInnerHTML={{
           __html: `.custom-scrollbar::-webkit-scrollbar{width:6px}.custom-scrollbar::-webkit-scrollbar-track{background:transparent}.custom-scrollbar::-webkit-scrollbar-thumb{background-color:rgba(0,0,0,0.1);border-radius:10px}.custom-scrollbar:hover::-webkit-scrollbar-thumb{background-color:rgba(0,0,0,0.2)}`,
         }}
       />
 
-      {/* Create plan modal */}
+      {/* create plan modal */}
       {isCreatePlanModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-text-primary/40 backdrop-blur-sm p-4">
           <div className="bg-white rounded-2xl md:rounded-[32px] w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">

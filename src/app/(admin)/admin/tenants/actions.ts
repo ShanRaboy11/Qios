@@ -799,7 +799,7 @@ async function getSubscriptionPlanByName(
   return null;
 }
 
-// Extract enabled features from subscription_plans JSONB features column
+// extract enabled features from subscription_plans JSONB features column
 function extractSubscriptionPlanFeatures(featuresJsonb: unknown): string[] {
   if (!featuresJsonb || typeof featuresJsonb !== "object") {
     return [];
@@ -808,11 +808,11 @@ function extractSubscriptionPlanFeatures(featuresJsonb: unknown): string[] {
   const features: string[] = [];
   const categories = featuresJsonb as Record<string, unknown>;
 
-  // Iterate through each category (customer, employee_ops, inventory, analytics, admin_controls)
+  // iterate through each category (customer, employee_ops, inventory, analytics, admin_controls)
   for (const [, categoryValue] of Object.entries(categories)) {
     if (categoryValue && typeof categoryValue === "object") {
       const categoryFeatures = categoryValue as Record<string, unknown>;
-      // Extract feature names where value is true
+      // extract feature names where value is true
       for (const [featureName, isEnabled] of Object.entries(categoryFeatures)) {
         if (isEnabled === true) {
           features.push(featureName);
@@ -866,8 +866,8 @@ function extractFeatureList(rawFeatures: unknown): string[] {
 export async function getTenants() {
   const supabase = createSupabaseAdminClient();
 
-  // Note: assuming we can join profiles to get the owner name, but we might just get the first admin.
-  // Profiles has tenant_id and role.
+  // note: assuming we can join profiles to get the owner name, but we might just get the first admin.
+  // profiles has tenant_id and role.
   const { data: tenants, error: tenantError } = await supabase
     .from("tenants")
     .select(
@@ -995,7 +995,7 @@ export async function getTenantProfileDetails(
   );
 
   // subscription_plan is stored as text in the tenants table.
-  // Use it to resolve the matching row from subscription_plans by name.
+  // use it to resolve the matching row from subscription_plans by name.
   const tenantPlanName =
     pickFirstString(tenantRecord, [
       "subscription_plan",
@@ -1184,8 +1184,8 @@ export async function updateTenantSubscription(
     throw new Error(metadataUpdateError.message);
   }
 
-  // Try a single, explicit update of the canonical columns first.
-  // This keeps the operation atomic and is the expected schema for recent deployments.
+  // try a single, explicit update of the canonical columns first.
+  // this keeps the operation atomic and is the expected schema for recent deployments.
   try {
     const { data: updatedRows, error: updateError } = await supabase
       .from("tenants")
@@ -1197,7 +1197,7 @@ export async function updateTenantSubscription(
       .select("id");
 
     if (updateError) {
-      // If the error is because the columns don't exist, fall back to permissive updates
+      // if the error is because the columns don't exist, fall back to permissive updates
       if (!isMissingColumnError(updateError.message)) {
         throw new Error(updateError.message);
       }
@@ -1207,7 +1207,7 @@ export async function updateTenantSubscription(
         !updatedRows ||
         (Array.isArray(updatedRows) && updatedRows.length === 0)
       ) {
-        // No rows updated — treat as an unexpected failure
+        // no rows updated — treat as an unexpected failure
         throw new Error(
           "Failed to update tenant subscription (no rows affected).",
         );
@@ -1245,13 +1245,13 @@ export async function updateTenantSubscription(
       };
     }
   } catch (err) {
-    // If this is a missing-column situation, we'll attempt legacy fallbacks below.
+    // if this is a missing-column situation, we'll attempt legacy fallbacks below.
     if (err instanceof Error && !isMissingColumnError(err.message)) {
       throw err;
     }
   }
 
-  // Legacy fallback: try older column names one-by-one if the canonical columns are not present.
+  // legacy fallback: try older column names one-by-one if the canonical columns are not present.
   const planColumns = ["subscription_plan", "plan", "plan_name", "package_id"];
   for (const column of planColumns) {
     const { error } = await supabase
@@ -1351,7 +1351,7 @@ export async function updateTenantStatus(
   const updateData: any = { status };
 
   if (status === "approved") {
-    // Automatically resolve any prior rejection or suspension comment when the tenant is approved.
+    // automatically resolve any prior rejection or suspension comment when the tenant is approved.
     updateData.admin_comments = "RESOLVED";
     updateData.suspend_comment = "RESOLVED";
   } else if (status === "rejected") {
@@ -1427,7 +1427,7 @@ export async function updateTenantStatus(
     }
   }
 
-  // Prefer the tenant's registered business email, then fall back to owner auth email.
+  // prefer the tenant's registered business email, then fall back to owner auth email.
   const { data: tenant, error: tenantFetchError } = await supabase
     .from("tenants")
     .select("business_email")
@@ -1447,7 +1447,7 @@ export async function updateTenantStatus(
       ? tenant.business_email.trim()
       : null;
 
-  // Find owner to resolve fallback email if tenant business_email is unavailable.
+  // find owner to resolve fallback email if tenant business_email is unavailable.
   const { data: adminProfiles, error: profilesError } = await supabase
     .from("profiles")
     .select("id, full_name")
@@ -1464,7 +1464,7 @@ export async function updateTenantStatus(
 
   if (adminProfiles && adminProfiles.length > 0) {
     const adminId = adminProfiles[0].id;
-    // Get user email using Supabase identity
+    // get user email using Supabase identity
     const {
       data: { user },
       error: authUserError,

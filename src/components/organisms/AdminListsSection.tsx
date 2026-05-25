@@ -1,7 +1,7 @@
 import React from "react";
 import { DashboardListItem } from "@/components/molecules/DashboardListItem";
 
-// Dummy Data
+// dummy Data
 const transactions = [
   {
     id: 1,
@@ -142,7 +142,7 @@ export const AdminListsSection = ({
 }: AdminListsSectionProps) => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 pb-10">
-      {/* Recent Transactions */}
+      {/* recent Transactions */}
       <div className="bg-white rounded-[24px] p-6 shadow-sm border border-transparent">
         <div className="flex justify-between items-center mb-5">
           <span className="h4 font-semibold text-text-primary">
@@ -184,7 +184,7 @@ export const AdminListsSection = ({
         </div>
       </div>
 
-      {/* Recently Registered */}
+      {/* recently Registered */}
       <div className="bg-white rounded-[24px] p-6 shadow-sm border border-transparent">
         <div className="flex justify-between items-center mb-5">
           <span className="h4 font-semibold text-text-primary">
@@ -221,7 +221,7 @@ export const AdminListsSection = ({
         </div>
       </div>
 
-      {/* Recent Plan Expiry */}
+      {/* recent Plan Expiry */}
       <div className="bg-white rounded-[24px] p-6 shadow-sm border border-transparent">
         <div className="flex justify-between items-center mb-5">
           <span className="h4 font-semibold text-text-primary">

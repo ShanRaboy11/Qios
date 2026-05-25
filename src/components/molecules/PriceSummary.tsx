@@ -24,10 +24,10 @@ export const PriceSummary = ({
         className,
       )}
     >
-      {/* Top Divider */}
+      {/* top Divider */}
       <div className="w-full border-t border-[#E5E5E5] pt-4" />
 
-      {/* Pricing Breakdown */}
+      {/* pricing Breakdown */}
       <div className="flex flex-col gap-3">
         <div className="flex justify-between items-center">
           <span className="b2 text-text-secondary">Subtotal</span>
@@ -50,10 +50,10 @@ export const PriceSummary = ({
         </div>
       </div>
 
-      {/* Bottom Divider */}
+      {/* bottom Divider */}
       <div className="w-full border-t border-[#E5E5E5]" />
 
-      {/* Total Section */}
+      {/* total Section */}
       <div className="flex justify-between items-center">
         <span className="h4 font-bold text-text-primary">Total</span>
         <span className="h4 font-bold text-text-primary">
@@ -61,7 +61,7 @@ export const PriceSummary = ({
         </span>
       </div>
 
-      {/* Action Divider (Optional if button follows) */}
+      {/* action Divider (Optional if button follows) */}
       <div className="w-full border-t border-[#E5E5E5] mt-2" />
     </div>
   );

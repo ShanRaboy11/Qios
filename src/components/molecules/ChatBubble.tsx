@@ -25,8 +25,8 @@ interface ChatBubbleProps {
 }
 
 // ---------------------------------------------------------------------------
-// Lightweight markdown renderer
-// Supports: **bold**, *italic*, `code`, bullet lists (- / *), line breaks
+// lightweight markdown renderer
+// supports: **bold**, *italic*, `code`, bullet lists (- / *), line breaks
 // ---------------------------------------------------------------------------
 function renderMarkdown(text: string): React.ReactNode[] {
   const lines = text.split(/\r?\n/);
@@ -62,7 +62,7 @@ function renderMarkdown(text: string): React.ReactNode[] {
 
 /** Handle inline **bold**, *italic*, `code` */
 function inlineMarkdown(text: string): React.ReactNode[] {
-  // Combined regex: **bold**, *italic*, `code`
+  // combined regex: **bold**, *italic*, `code`
   const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/g);
   return parts.map((part, i) => {
     if (part.startsWith("**") && part.endsWith("**")) {
@@ -90,7 +90,7 @@ function inlineMarkdown(text: string): React.ReactNode[] {
 }
 
 // ---------------------------------------------------------------------------
-// Logo SVG (Qios mascot)
+// logo SVG (Qios mascot)
 // ---------------------------------------------------------------------------
 const LogoSVG = () => (
   <svg
@@ -120,7 +120,7 @@ const LogoSVG = () => (
 );
 
 // ---------------------------------------------------------------------------
-// ChatBubble
+// chatBubble
 // ---------------------------------------------------------------------------
 export const ChatBubble = ({
   message,
@@ -142,13 +142,13 @@ export const ChatBubble = ({
     return (
       <div className={cn("flex flex-col items-start pb-10", className)}>
         <div className="group relative">
-          {/* Dark bubble */}
+          {/* dark bubble */}
           <div className="relative bg-[#2D2D2D] rounded-[12px_12px_12px_0px] pl-5 pr-4 pt-4 pb-8 shadow-[0px_2px_1px_rgba(0,0,0,0.05)] max-w-[312px]">
             <div className="text-white text-sm leading-[1.55] space-y-0.5">
               {renderMarkdown(message)}
             </div>
 
-            {/* Copy / Like / Dislike — shown on hover or when reacted */}
+            {/* copy / Like / Dislike — shown on hover or when reacted */}
             <div
               className={cn(
                 "absolute right-4 bottom-2 transition-opacity duration-150",
@@ -193,7 +193,7 @@ export const ChatBubble = ({
             </div>
           </div>
 
-          {/* Timestamp below bubble */}
+          {/* timestamp below bubble */}
           <span
             className="absolute left-14 text-[10px] leading-3 text-[#888888]"
             style={{ bottom: "-18px" }}
@@ -201,7 +201,7 @@ export const ChatBubble = ({
             {timestamp}
           </span>
 
-          {/* Logo avatar at bottom-left */}
+          {/* logo avatar at bottom-left */}
           <div
             className="absolute left-0 w-11 h-11 rounded-full bg-[#FFC670] flex items-center justify-center overflow-hidden"
             style={{
@@ -219,12 +219,12 @@ export const ChatBubble = ({
   return (
     <div className={cn("flex flex-col items-end pb-8", className)}>
       <div className="group relative">
-        {/* Light bubble */}
+        {/* light bubble */}
         <div className="relative bg-[#DEE2E6] rounded-[12px_12px_0px_12px] pl-5 pr-4 pt-4 pb-5 shadow-[0px_1px_1px_rgba(0,0,0,0.2)] max-w-[289px]">
           <p className="text-[#2D2D2D] text-sm leading-[1.55]">{message}</p>
         </div>
 
-        {/* Timestamp + read status */}
+        {/* timestamp + read status */}
         <div
           className="absolute left-0 flex items-center gap-1"
           style={{ bottom: "-18px" }}
@@ -238,7 +238,7 @@ export const ChatBubble = ({
           />
         </div>
 
-        {/* User avatar at bottom-right */}
+        {/* user avatar at bottom-right */}
         <div
           className="absolute right-[-1px] w-11 h-11 rounded-full bg-[#FFC670] flex items-center justify-center"
           style={{ bottom: "-16px", boxShadow: "0px 2px 3px rgba(0,0,0,0.25)" }}

@@ -10,7 +10,7 @@ export async function processScannedQr(
 ) {
   const supabase = await createSupabaseServerClient();
   
-  // Accept either qr_hash or standard UUID (if qrData looks like UUID)
+  // accept either qr_hash or standard UUID (if qrData looks like UUID)
   const isUUID = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(qrData.trim());
   
   let query = supabase

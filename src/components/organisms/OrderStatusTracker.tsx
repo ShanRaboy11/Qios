@@ -17,7 +17,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/atoms/Button";
 import Link from "next/link";
 
-// Mock Data
+// mock Data
 const ORDER_ITEMS = [
   { id: "1", name: "Classic Burger", qty: 1, price: 8.99, mods: "No onions" },
   { id: "2", name: "Large Fries", qty: 1, price: 3.99, mods: "" },
@@ -36,7 +36,7 @@ export const OrderStatusTracker = () => {
   const [isSummaryOpen, setIsSummaryOpen] = useState(false);
   const [isReadyNotified, setIsReadyNotified] = useState(false);
 
-  // Trigger ready notification animation when step becomes 3
+  // trigger ready notification animation when step becomes 3
   useEffect(() => {
     if (currentStep === 3) {
       setIsReadyNotified(true);
@@ -90,7 +90,7 @@ export const OrderStatusTracker = () => {
               exit={{ scale: 0.9, opacity: 0, y: -20 }}
               className="bg-[#FF5269] rounded-[32px] p-8 text-center text-white shadow-lg mb-8 relative overflow-hidden"
             >
-              {/* Pulsing background effect */}
+              {/* pulsing background effect */}
               <motion.div 
                 className="absolute inset-0 bg-white/10 rounded-[32px]"
                 animate={{ scale: [1, 1.05, 1], opacity: [0, 0.5, 0] }}

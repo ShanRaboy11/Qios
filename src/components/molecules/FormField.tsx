@@ -26,16 +26,16 @@ export const FormField = React.forwardRef<HTMLInputElement, FormFieldProps>(
     },
     ref,
   ) => {
-    // State to toggle password visibility
+    // state to toggle password visibility
     const [showPassword, setShowPassword] = useState(false);
 
     const isPasswordType = type === "password";
-    // If it's a password and showPassword is true, change type to "text"
+    // if it's a password and showPassword is true, change type to "text"
     const currentType = isPasswordType && showPassword ? "text" : type;
 
     return (
       <div className={cn("flex flex-col gap-1.5 w-full max-w-sm", className)}>
-        {/* Label - Uses b4 global style */}
+        {/* label - Uses b4 global style */}
         {label && (
           <label
             className={cn(
@@ -48,7 +48,7 @@ export const FormField = React.forwardRef<HTMLInputElement, FormFieldProps>(
         )}
 
         <div className="relative flex items-center group">
-          {/* Left Icon Wrapper */}
+          {/* left Icon Wrapper */}
           {leftIcon && (
             <div className="absolute left-5 text-text-secondary z-10">
               {leftIcon}
@@ -62,19 +62,19 @@ export const FormField = React.forwardRef<HTMLInputElement, FormFieldProps>(
             isError={isError}
             className={cn(
               leftIcon && "pl-14",
-              // Add right padding if there is a rightIcon OR if it's a password (for the eye)
+              // add right padding if there is a rightIcon OR if it's a password (for the eye)
               (rightIcon || isPasswordType) && "pr-14",
             )}
           />
 
-          {/* Right Icon / Password Toggle Logic */}
+          {/* right Icon / Password Toggle Logic */}
           <div className="absolute right-5 flex items-center z-10">
             {isPasswordType ? (
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="text-text-secondary hover:text-brand-primary transition-all active:scale-90 focus:outline-none"
-                tabIndex={-1} // Prevent tabbing into the eye icon
+                tabIndex={-1} // prevent tabbing into the eye icon
               >
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
@@ -84,7 +84,7 @@ export const FormField = React.forwardRef<HTMLInputElement, FormFieldProps>(
           </div>
         </div>
 
-        {/* Supportive Text - Uses b5 global style */}
+        {/* supportive Text - Uses b5 global style */}
         {supportiveText && (
           <span
             className={cn(

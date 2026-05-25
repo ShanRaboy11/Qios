@@ -133,14 +133,14 @@ export default function KitchenPreparationDashboard() {
     newStatus: OrderStatus,
   ) => {
     try {
-      // Optimistic update
+      // optimistic update
       setOrders((prev) =>
         prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o)),
       );
       await updateOrderStatus(orderId, tenantId, newStatus);
     } catch (err) {
       console.error("Failed to update status:", err);
-      fetchOrders(); // Revert on failure
+      fetchOrders(); // revert on failure
     }
   };
 

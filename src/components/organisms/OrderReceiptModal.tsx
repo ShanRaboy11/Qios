@@ -39,7 +39,7 @@ export const OrderReceiptModal = ({
 
   return (
     <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      {/* Close button */}
+      {/* close button */}
       <button
         onClick={onClose}
         className="absolute top-6 right-6 p-3 bg-white/20 hover:bg-white/40 rounded-full transition-colors z-[310] text-white"
@@ -54,12 +54,12 @@ export const OrderReceiptModal = ({
         transition={{ type: "spring", damping: 25, stiffness: 300 }}
         className="w-full max-w-[360px] flex flex-col items-center relative"
       >
-        {/* Receipt Body */}
+        {/* receipt Body */}
         <div
           ref={receiptRef}
           className="bg-[#FFDC72] w-full rounded-t-[24px] px-6 pt-8 pb-6 flex flex-col relative"
         >
-          {/* Order number + time */}
+          {/* order number + time */}
           <div className="flex flex-col items-center gap-4 mb-8">
             <div className="flex items-center gap-1.5 text-black/60 b5 font-medium">
               <svg
@@ -88,7 +88,7 @@ export const OrderReceiptModal = ({
             </div>
           </div>
 
-          {/* QR Code */}
+          {/* qR Code */}
           <div className="bg-white p-5 rounded-[20px] shadow-sm mb-8 flex items-center justify-center border border-black/5 w-full aspect-square relative mx-auto max-w-[240px]">
             <QRCode
               value={orderId}
@@ -97,7 +97,7 @@ export const OrderReceiptModal = ({
             />
           </div>
 
-          {/* Order Summary */}
+          {/* order Summary */}
           <div className="space-y-3 mb-6">
             {cartSnapshot.map((item) => (
               <div
@@ -126,7 +126,7 @@ export const OrderReceiptModal = ({
 
           <div className="h-px bg-black/20 w-full mb-4" />
 
-          {/* Total */}
+          {/* total */}
           <div className="flex justify-between items-center mb-8">
             <h3 className="h3 font-bold text-[#2D2D2D]">Total</h3>
             <h3 className="h3 font-bold text-[#2D2D2D]">
@@ -139,7 +139,7 @@ export const OrderReceiptModal = ({
             shape="rounded"
             className="w-full bg-brand-accent hover:opacity-90 text-white h-[56px] text-[16px] font-bold justify-center gap-2 shadow-sm active:scale-[0.98] transition-all"
             onClick={() => {
-              // Stub for download functionality. Could use html2canvas in future.
+              // stub for download functionality. Could use html2canvas in future.
               alert("Receipt download functionality to be implemented.");
             }}
           >

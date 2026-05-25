@@ -20,7 +20,7 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   size?: ButtonSize;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
-  loading?: boolean; // Added loading prop
+  loading?: boolean; // added loading prop
 }
 
 import { Loader2 } from "lucide-react";
@@ -34,9 +34,9 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       size = "md",
       leftIcon,
       rightIcon,
-      loading = false, // Added loading prop default
+      loading = false, // added loading prop default
       children,
-      disabled, // Added to merge with loading
+      disabled, // added to merge with loading
       ...props
     },
     ref,

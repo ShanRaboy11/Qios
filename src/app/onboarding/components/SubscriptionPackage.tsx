@@ -140,7 +140,7 @@ export function SubscriptionPackage({
     fetchPlans();
   }, []);
 
-  // Keep local selection in sync when parent updates (user navigates back)
+  // keep local selection in sync when parent updates (user navigates back)
   useEffect(() => {
     if (!data.packageName || plans.length === 0) {
       return;
@@ -184,7 +184,7 @@ export function SubscriptionPackage({
 
   return (
     <div className="flex flex-col items-center space-y-6 lg:space-y-10 animate-in fade-in slide-in-from-right-8 duration-500 w-full overflow-visible">
-      {/* PACKAGE SELECTION TABS */}
+      {/* pACKAGE SELECTION TABS */}
       <div className="inline-flex items-center bg-white rounded-[50px] p-1 lg:p-1.5 border border-neutral-100 shadow-sm overflow-x-auto max-w-full">
         {plans.map((pkg) => (
           <button
@@ -218,7 +218,7 @@ export function SubscriptionPackage({
           backgroundImage: `linear-gradient(to bottom, #ffffff, ${isDark ? "#e4e4e7" : activeColorHex + "20"})`,
         }}
       >
-        {/* Header Section */}
+        {/* header Section */}
         <div className="p-8 lg:p-10 text-center border-b border-black/5">
           <div className="flex flex-col items-center gap-3 mb-4">
             {activePackage.badge && (
@@ -255,7 +255,7 @@ export function SubscriptionPackage({
           </div>
         </div>
 
-        {/* Features Section */}
+        {/* features Section */}
         <div className="space-y-8">
           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-text-secondary/60 text-center">
             What's Included
@@ -304,7 +304,7 @@ export function SubscriptionPackage({
         </div>
       </div>
 
-      {/* SELECTION BUTTONS */}
+      {/* sELECTION BUTTONS */}
       <div className="w-full max-w-[500px] flex flex-row gap-6">
         <Button
           variant="ghost"

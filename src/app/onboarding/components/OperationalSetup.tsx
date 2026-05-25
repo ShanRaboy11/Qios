@@ -50,7 +50,7 @@ const DEFAULT_CONFIG: OperationalSetupConfig = {
   supplyLogic: "local",
 };
 
-// Each plan tier lists only its own features; cumulative sets are built below.
+// each plan tier lists only its own features; cumulative sets are built below.
 const TIER_FEATURES: Record<
   SubscriptionPlan,
   { tier: string; items: { title: string; description: string }[] }
@@ -127,7 +127,7 @@ const TIER_FEATURES: Record<
   },
 };
 
-// Builds a flat list of { tier, title, description } for all features included in a plan.
+// builds a flat list of { tier, title, description } for all features included in a plan.
 function getCumulativeFeatures(plan: SubscriptionPlan) {
   const order: SubscriptionPlan[] = ["basic", "business", "enterprise"];
   const planIndex = order.indexOf(plan);
@@ -166,7 +166,7 @@ const PlanBadge = ({
   );
 };
 
-// Small tier label shown beside each feature card in the entitlements section.
+// small tier label shown beside each feature card in the entitlements section.
 const TierLabel = ({
   tier,
   variant,
@@ -209,7 +209,7 @@ function OptionGroup<T extends OptionValue>({
 }) {
   return (
     <section className={cn("space-y-3 w-full", disabled && "opacity-60")}>
-      {/* Section Header */}
+      {/* section Header */}
       <div className="flex items-start gap-3 px-1">
         <div className="mt-0.5 shrink-0 rounded-xl border border-[var(--color-brand-primary)]/15 bg-[var(--color-brand-primary)]/10 p-2 text-[var(--color-brand-primary)]">
           <Icon size={16} />
@@ -312,7 +312,7 @@ export function OperationalSetup({
   const entitlementVariant = selectedPlan === "enterprise" ? "rose" : "amber";
   const cumulativeFeatures = getCumulativeFeatures(selectedPlan);
 
-  // Group features by tier for the section headers.
+  // group features by tier for the section headers.
   const featuresByTier = cumulativeFeatures.reduce<
     Record<string, { title: string; description: string }[]>
   >((acc, f) => {
@@ -328,7 +328,7 @@ export function OperationalSetup({
     setConfig((prev) => ({ ...prev, [key]: value }));
   };
 
-  // Reset to allowed defaults when changing plans
+  // reset to allowed defaults when changing plans
   React.useEffect(() => {
     if (selectedPlan === "basic") {
       setConfig((prev) => ({
@@ -349,9 +349,9 @@ export function OperationalSetup({
 
   return (
     <div className="flex w-full max-w-[960px] flex-col items-center gap-6 pb-8">
-      {/* Main Config Card */}
+      {/* main Config Card */}
       <div className="w-full rounded-2xl border border-neutral-100 bg-white shadow-sm">
-        {/* Card Header */}
+        {/* card Header */}
         <div className="flex items-start justify-between gap-4 border-b border-neutral-100 px-5 py-5 sm:px-6 sm:py-6">
           <div className="min-w-0">
             <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-brand-primary)]">
@@ -369,7 +369,7 @@ export function OperationalSetup({
           <PlanBadge plan={selectedPlan} variant={entitlementVariant} />
         </div>
 
-        {/* Option Groups */}
+        {/* option Groups */}
         <div className="divide-y divide-neutral-100">
           <div className="px-5 py-5 sm:px-6 sm:py-6">
             <OptionGroup
@@ -481,7 +481,7 @@ export function OperationalSetup({
         </div>
       </div>
 
-      {/* Plan Entitlements — Cumulative Feature Breakdown */}
+      {/* plan Entitlements — Cumulative Feature Breakdown */}
       <div className="w-full rounded-2xl border border-neutral-100 bg-neutral-50 shadow-sm">
         <div className="px-5 py-4 sm:px-6">
           <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-neutral-400">
@@ -505,7 +505,7 @@ export function OperationalSetup({
         <div className="space-y-4 p-4 sm:p-5">
           {Object.entries(featuresByTier).map(([tier, items], tierIndex) => (
             <div key={tier}>
-              {/* Tier section label */}
+              {/* tier section label */}
               <div className="mb-2.5 flex items-center gap-2">
                 <TierLabel tier={tier} variant={entitlementVariant} />
                 {tierIndex > 0 && (
@@ -515,7 +515,7 @@ export function OperationalSetup({
                 )}
               </div>
 
-              {/* Feature cards for this tier */}
+              {/* feature cards for this tier */}
               <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                 {items.map((feature) => (
                   <div
@@ -555,7 +555,7 @@ export function OperationalSetup({
         </div>
       </div>
 
-      {/* Action Buttons */}
+      {/* action Buttons */}
       <div className="flex w-full flex-row items-center gap-3 sm:gap-4">
         <Button
           variant="ghost"

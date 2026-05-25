@@ -59,10 +59,10 @@ function convertToBase(
   baseUnit: string,
 ): number {
   if (fromUnit === baseUnit) return qty;
-  // Weight conversions
+  // weight conversions
   if (fromUnit === "kg" && baseUnit === "g") return qty * 1000;
   if (fromUnit === "g" && baseUnit === "kg") return qty / 1000;
-  // Volume conversions
+  // volume conversions
   if (fromUnit === "L" && baseUnit === "mL") return qty * 1000;
   if (fromUnit === "mL" && baseUnit === "L") return qty / 1000;
   return qty;
@@ -136,7 +136,7 @@ const RecipeEditor = ({
 
         let newRow = { ...row, [field]: value };
 
-        // Auto-select unit when ingredient name matches DB
+        // auto-select unit when ingredient name matches DB
         if (field === "ingredientName") {
           const ingredient = INGREDIENTS_DB.find(
             (i) => i.name.toLowerCase() === value.toLowerCase(),
@@ -159,7 +159,7 @@ const RecipeEditor = ({
 
   return (
     <div className="bg-white rounded-[24px] border border-[#E5E5E5] mb-6 shadow-sm transition-all text-left">
-      {/* Accordion Header */}
+      {/* accordion Header */}
       <div
         onClick={() => setIsExpanded(!isExpanded)}
         className={cn(
@@ -171,7 +171,7 @@ const RecipeEditor = ({
         <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-start">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-white rounded-xl shadow-sm overflow-hidden flex items-center justify-center border border-[#E5E5E5]/50 shrink-0">
-              {/* Placeholder for image */}
+              {/* placeholder for image */}
               <div className="w-full h-full bg-slate-200"></div>
             </div>
             <div>
@@ -214,18 +214,18 @@ const RecipeEditor = ({
         </div>
       </div>
 
-      {/* Accordion Body */}
+      {/* accordion Body */}
       {isExpanded && (
         <div className="flex flex-col">
-          {/* DESKTOP VIEW: Table */}
+          {/* dESKTOP VIEW: Table */}
           <div className="hidden md:block w-full">
             <div className="w-full border-t border-[#E5E5E5]">
-              {/* Table Header */}
+              {/* table Header */}
               <div
                 className={cn(
                   "grid items-center gap-4 px-8 py-3 bg-slate-50 border-b border-[#E5E5E5]",
                   mode === "measurement"
-                    ? "grid-cols-[2fr_2fr_1fr_1fr_1fr_auto]" // Qty + Unit are grouped closely or side-by-side explicitly
+                    ? "grid-cols-[2fr_2fr_1fr_1fr_1fr_auto]" // qty + Unit are grouped closely or side-by-side explicitly
                     : "grid-cols-[2fr_1.5fr_1fr_1fr_1fr_auto]",
                 )}
               >
@@ -244,17 +244,17 @@ const RecipeEditor = ({
                 <span className="b4 font-bold text-text-primary uppercase tracking-wider text-right">
                   STATUS
                 </span>
-                <span className="w-[32px]"></span> {/* Action Col */}
+                <span className="w-[32px]"></span> {/* action Col */}
               </div>
 
-              {/* Ingredients List */}
+              {/* ingredients List */}
               <div className="flex flex-col px-8">
                 {rows.map((row) => {
                   const ingredient = row.ingredientId
                     ? getIngredient(row.ingredientId)
                     : null;
 
-                  // Computations
+                  // computations
                   let estimatedOrders = NaN;
                   if (ingredient && Number(row.qty) > 0) {
                     if (mode === "measurement") {
@@ -267,7 +267,7 @@ const RecipeEditor = ({
                         ingredient.onHand / convertedQty,
                       );
                     } else {
-                      // Unit-based
+                      // unit-based
                       estimatedOrders = Math.floor(
                         ingredient.onHand / Number(row.qty),
                       );
@@ -285,14 +285,14 @@ const RecipeEditor = ({
                           : "grid-cols-[2fr_1.5fr_1fr_1fr_1fr_auto]",
                       )}
                     >
-                      {/* Ingredient Dropdown */}
+                      {/* ingredient Dropdown */}
                       <div className="w-full flex items-center">
                         <span className="text-md font-regular text-text-primary">
                           {row.ingredientName || "New Ingredient"}
                         </span>
                       </div>
 
-                      {/* Inputs Column */}
+                      {/* inputs Column */}
                       <div className="w-full flex items-center justify-center gap-2">
                         {mode === "measurement" ? (
                           <>
@@ -338,19 +338,19 @@ const RecipeEditor = ({
                         )}
                       </div>
 
-                      {/* On Hand Read Only */}
+                      {/* on Hand Read Only */}
                       <span className="text-md font-medium text-text-secondary text-right">
                         {ingredient
                           ? `${ingredient.onHand} ${ingredient.baseUnit}`
                           : "-"}
                       </span>
 
-                      {/* Est Orders */}
+                      {/* est Orders */}
                       <span className="text-xl font-bold text-text-primary text-right">
                         {!isNaN(estimatedOrders) ? estimatedOrders : "-"}
                       </span>
 
-                      {/* Status */}
+                      {/* status */}
                       <div className="flex justify-end">
                         {ingredient ? (
                           <Badge
@@ -365,7 +365,7 @@ const RecipeEditor = ({
                         )}
                       </div>
 
-                      {/* Remove Button */}
+                      {/* remove Button */}
                       <button
                         onClick={() => removeRow(row.id)}
                         className="p-2 text-text-secondary hover:text-brand-accent transition-colors rounded-full hover:bg-red-50"
@@ -379,7 +379,7 @@ const RecipeEditor = ({
             </div>
           </div>
 
-          {/* MOBILE VIEW: Stacked Cards */}
+          {/* mOBILE VIEW: Stacked Cards */}
           <div className="flex flex-col md:hidden p-4 gap-4 bg-slate-50 border-t border-[#E5E5E5] w-full">
             {rows.length === 0 && (
               <p className="b4 text-center text-text-secondary py-4">
@@ -501,7 +501,7 @@ const RecipeEditor = ({
             })}
           </div>
 
-          {/* Add Ingredients Footer */}
+          {/* add Ingredients Footer */}
           <div className="px-4 md:px-8 py-5 border-t border-[#E5E5E5] text-center md:text-left bg-white rounded-b-[24px]">
             <Button
               variant="ghost"
@@ -530,7 +530,7 @@ export const RecipeMatrixView = () => {
       ? "Uses exact quantities (g, mL, etc.). The system will automatically convert metrics and compute estimated possible orders based on total stock volume."
       : "Uses fixed portions (no measurement). Deducts 1 or more exact item units per order from stock. Ideal for items sold as whole pieces.";
 
-  // Initial mockup rows
+  // initial mockup rows
   const initialMeasRows: RecipeRowState[] = [
     {
       id: "row1",
@@ -574,7 +574,7 @@ export const RecipeMatrixView = () => {
 
   return (
     <div className="w-full flex flex-col gap-6">
-      {/* Top Segmented & Alert */}
+      {/* top Segmented & Alert */}
       <div className="flex flex-col gap-4">
         <SegmentedControl
           options={[
@@ -587,7 +587,7 @@ export const RecipeMatrixView = () => {
         <AlertBanner message={alertMessage} />
       </div>
 
-      {/* Action Bar */}
+      {/* action Bar */}
       <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4 w-full">
         <div className="flex-grow flex items-center px-4 h-[52px] bg-white border border-[#E5E5E5] rounded-xl focus-within:border-brand-primary transition-colors">
           <Search className="text-text-secondary mr-3 w-5 h-5 shrink-0" />
@@ -620,7 +620,7 @@ export const RecipeMatrixView = () => {
         </div>
       </div>
 
-      {/* Recipe List */}
+      {/* recipe List */}
       <div className="mt-2">
         {"Pork Sisig".toLowerCase().includes(searchQuery.toLowerCase()) && (
           <RecipeEditor

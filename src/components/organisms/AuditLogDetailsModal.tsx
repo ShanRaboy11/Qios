@@ -78,7 +78,7 @@ export const AuditLogDetailsModal = ({
               </div>
 
               <div className="p-6 overflow-y-auto space-y-6">
-                {/* Meta Info */}
+                {/* meta Info */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
                     <span className="block text-xs font-bold text-text-secondary uppercase mb-1">
@@ -104,7 +104,7 @@ export const AuditLogDetailsModal = ({
                   </div>
                 </div>
 
-                {/* Action Info */}
+                {/* action Info */}
                 <div>
                   <h4 className="text-sm font-bold text-text-primary mb-3">
                     Action Summary
@@ -137,7 +137,7 @@ export const AuditLogDetailsModal = ({
                   </div>
                 </div>
 
-                {/* Diff View */}
+                {/* diff View */}
                 {(log.details.before || log.details.after) && (
                   <div>
                     <h4 className="text-sm font-bold text-text-primary mb-3">

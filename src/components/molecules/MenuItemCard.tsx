@@ -2,7 +2,7 @@ import React from "react";
 import { Button } from "../atoms/Button";
 import { Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
-// import Image from 'next/image'; // Can be added later if needed
+// import Image from 'next/image'; // can be added later if needed
 
 import { useCart } from "@/contexts/CartContext";
 
@@ -36,7 +36,7 @@ export const MenuItemCard = ({
         )}
         onClick={onAdd}
       >
-        {/* Background Image */}
+        {/* background Image */}
         <div className="absolute inset-0 bg-black/5 z-10 group-hover:bg-transparent transition-colors" />
         <img
           src={imageSrc}
@@ -44,7 +44,7 @@ export const MenuItemCard = ({
           className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
         />
 
-        {/* Price Tag Overlay */}
+        {/* price Tag Overlay */}
         <div className="absolute bottom-4 right-0 bg-brand-primary py-1.5 pl-3 pr-2 rounded-l-[16px] shadow-sm transform translate-x-1 group-hover:translate-x-0 transition-transform z-20">
           <span className="text-[#2D2D2D] font-brand-secondary font-bold text-[12px] sm:text-[14px] md:text-[16px] tracking-tight">
             {typeof price === "number" ? `${currency} ${price.toFixed(2)}` : price}
@@ -63,10 +63,10 @@ export const MenuItemCard = ({
         )}
         onClick={onAdd}
       >
-        {/* Card Background Shifted Right */}
+        {/* card Background Shifted Right */}
         <div className="absolute top-0 bottom-0 right-0 left-12 sm:left-16 bg-brand-primary/20 rounded-[32px] shadow-sm transition-all duration-300 group-hover:shadow-md z-0" />
 
-        {/* Protruding Image on the Left */}
+        {/* protruding Image on the Left */}
         <div className="relative z-10 flex-shrink-0 transition-transform duration-300 group-hover:-translate-x-1 ml-2 sm:ml-0">
           <div className="w-[130px] h-[130px] sm:w-[160px] sm:h-[160px] rounded-full overflow-hidden shadow-lg border-[3px] border-white/10">
             <img
@@ -77,14 +77,14 @@ export const MenuItemCard = ({
           </div>
         </div>
 
-        {/* Content Area */}
+        {/* content Area */}
         <div className="relative z-10 flex flex-col justify-center flex-grow py-5 pr-6 sm:pr-8 pl-4 sm:pl-5">
-          {/* Title - Left Aligned */}
+          {/* title - Left Aligned */}
           <h3 className="text-text-primary font-brand font-medium text-[20px] sm:text-[22px] leading-[1.25] tracking-tight text-left">
             {title}
           </h3>
 
-          {/* Price & Availability - Right Aligned block below */}
+          {/* price & Availability - Right Aligned block below */}
           <div className="-mt-1 sm:mt-5 text-right w-full">
             <p className="text-brand-accent font-brand-secondary font-bold text-[22px] sm:text-[26px]">
               {typeof price === "number" ? `${currency} ${price.toFixed(2)}` : price}
@@ -102,12 +102,12 @@ export const MenuItemCard = ({
 
   return (
     <div className={cn("relative pt-16 w-full max-w-[220px] group", className)}>
-      {/* Card Background */}
+      {/* card Background */}
       <div className="bg-brand-primary/20 rounded-[32px] px-5 pb-5 pt-[76px] h-full flex flex-col justify-between shadow-sm hover:shadow-md transition-all duration-300">
-        {/* Protruding Image */}
+        {/* protruding Image */}
         <div className="absolute top-0 left-1/2 transform -translate-x-1/2 transition-transform duration-300 group-hover:-translate-y-2 z-10">
           <div className="w-[140px] h-[140px] rounded-full overflow-hidden shadow-lg border-[4px] border-white/5">
-            {/* Standard img tag is used here to avoid next.config.js domain issues with external image URLs */}
+            {/* standard img tag is used here to avoid next.config.js domain issues with external image URLs */}
             <img
               src={imageSrc}
               alt={title}
@@ -116,7 +116,7 @@ export const MenuItemCard = ({
           </div>
         </div>
 
-        {/* Content Area */}
+        {/* content Area */}
         <div className="text-center mt-2 flex-grow flex flex-col justify-end z-0 pb-4">
           <h3 className="b3 text-[#2D2D2D] font-brand text-left font-bold text-[18px] sm:text-[20px] leading-[1.25] tracking-tight line-clamp-2">
             {title}
@@ -131,7 +131,7 @@ export const MenuItemCard = ({
           )}
         </div>
 
-        {/* Action Button */}
+        {/* action Button */}
         <div className="absolute right-5 bottom-5 z-20">
           <Button
             variant="accent"

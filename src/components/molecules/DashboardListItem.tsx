@@ -27,19 +27,19 @@ export const DashboardListItem = ({
       )}
     >
       <div className="flex items-center gap-4">
-        {/* Icon/Avatar Container */}
+        {/* icon/Avatar Container */}
         <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0">
           {icon}
         </div>
 
-        {/* Text Content */}
+        {/* text Content */}
         <div className="flex flex-col">
           <span className="b3 leading-tight">{title}</span>
           <span className="b4 text-text-secondary mt-1">{subtitle}</span>
         </div>
       </div>
 
-      {/* Right Content */}
+      {/* right Content */}
       <div className="flex flex-col items-end shrink-0">{rightContent}</div>
     </div>
   );

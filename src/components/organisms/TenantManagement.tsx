@@ -181,7 +181,7 @@ export default function TenantManagement({
             "Unable to refresh tenant data right now. Showing last loaded data.",
           );
         } else {
-          // Keep the UI usable in local dev even if Supabase is unavailable.
+          // keep the UI usable in local dev even if Supabase is unavailable.
           setTenants(INITIAL_DATA);
           setTenantListError(
             "Live tenant data is unavailable. Showing fallback data.",
@@ -215,7 +215,7 @@ export default function TenantManagement({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Modal State
+  // modal State
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
   const [actionType, setActionType] = useState<ActionType | null>(null);
@@ -339,7 +339,7 @@ export default function TenantManagement({
         </div>
       </div>
 
-      {/* Search and Filters */}
+      {/* search and Filters */}
       <div className="mt-5 flex flex-col md:flex-row items-stretch md:items-end gap-3 w-full">
         <div className="flex-1">
           <FormField
@@ -421,7 +421,7 @@ export default function TenantManagement({
         </div>
       </div>
 
-      {/* Tenant List */}
+      {/* tenant List */}
       <div className="flex flex-col gap-3 mt-3">
         {tenantListError && (
           <div className="rounded-2xl border border-warning-primary/20 bg-warning-primary/5 px-4 py-3 text-sm text-warning-primary">
@@ -460,7 +460,7 @@ export default function TenantManagement({
         )}
       </div>
 
-      {/* Confirmation Modal */}
+      {/* confirmation Modal */}
       {modalOpen && selectedTenant && actionType && (
         <ConfirmationModal
           tenant={selectedTenant}
@@ -508,12 +508,12 @@ function TenantCard({
       className="group bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col md:flex-row md:items-center gap-4 transition-all hover:border-orange-100 block"
     >
       <div className="flex items-start md:items-center gap-4 md:w-[60%] shrink-0">
-        {/* Logo */}
+        {/* logo */}
         <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-orange-300 via-orange-300 to-amber-200 rounded-2xl flex items-center justify-center border-[1.5px] border-white shadow-sm flex-shrink-0">
           <Building2 className="w-5 h-5 sm:w-6 sm:h-6 text-white opacity-90" />
         </div>
 
-        {/* Info */}
+        {/* info */}
         <div className="flex flex-col gap-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <h3 className="text-gray-900 text-base sm:text-lg font-semibold tracking-tight truncate group-hover:text-brand-accent transition-colors cursor-pointer">
@@ -529,13 +529,13 @@ function TenantCard({
       </div>
 
       <div className="flex flex-row items-center justify-between w-full md:w-auto md:flex-1 gap-3 md:gap-6 border-t border-gray-50 pt-3 md:pt-0 md:border-none mt-2 md:mt-0">
-        {/* Left Section: Joined Date & Status Indicator grouped together */}
+        {/* left Section: Joined Date & Status Indicator grouped together */}
         <div className="flex items-center gap-6 shrink-0">
           <span className="hidden lg:block text-gray-500 text-sm font-normal shrink-0">
             Joined {tenant.joined}
           </span>
 
-          {/* Status Indicator placed close to the joined date */}
+          {/* status Indicator placed close to the joined date */}
           <div className="flex items-center gap-2 sm:min-w-[85px] justify-between">
             <div
               className={cn(
@@ -562,7 +562,7 @@ function TenantCard({
           </div>
         </div>
 
-        {/* Right Section: Badge pushed to the right */}
+        {/* right Section: Badge pushed to the right */}
         <div className="flex items-center md:ml-auto">
           <Badge
             variant="outline"

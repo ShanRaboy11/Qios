@@ -13,6 +13,6 @@ export function createSupabaseBrowserClient(persistSession = true) {
   }
 
   // @supabase/ssr inherently synchronizes the user's session with browser cookies.
-  // This is required so that the Next.js Middleware can read the user's session on the server.
+  // this is required so that the Next.js Middleware can read the user's session on the server.
   return createBrowserClient(supabaseUrl, supabaseAnonKey);
 }

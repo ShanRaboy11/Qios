@@ -60,7 +60,7 @@ export const SalesAndPurchaseChart = () => {
         </div>
       </div>
 
-      {/* Custom Legend / Value Display */}
+      {/* custom Legend / Value Display */}
       <div className="w-full h-[1px] bg-[#E5E5E5] mb-3 sm:mb-4" />
       <div className="flex items-center gap-6 mb-8 mt-2">
         <div className="flex flex-col border border-gray-100 rounded-xl px-4 py-2">

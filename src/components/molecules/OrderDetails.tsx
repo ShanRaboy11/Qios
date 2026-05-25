@@ -91,7 +91,7 @@ export default function OrderDetails({
 
   useEffect(() => {
     setMounted(true);
-    // Prevent background scrolling while the modal is open
+    // prevent background scrolling while the modal is open
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = "unset";
@@ -99,7 +99,7 @@ export default function OrderDetails({
     };
   }, []);
 
-  // Sync state if order prop updates
+  // sync state if order prop updates
   useEffect(() => {
     setLocalOrder(order);
   }, [order]);
@@ -211,9 +211,9 @@ export default function OrderDetails({
 
   return createPortal(
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50 transition-all duration-300">
-      {/* Outer Card: Now cleanly sets structural limits using flex-col without scroll bars */}
+      {/* outer Card: Now cleanly sets structural limits using flex-col without scroll bars */}
       <div className="bg-bg-primary rounded-[32px] border border-brand-primary/20 shadow-[0_24px_64px_rgba(255,198,112,0.15)] max-w-2xl w-full max-h-[90vh] font-inter flex flex-col overflow-hidden">
-        {/* Header: Fixed at top */}
+        {/* header: Fixed at top */}
         <div className="bg-white border-b border-brand-primary/10 p-6 flex items-start justify-between z-10 rounded-t-[32px] shrink-0">
           <div className="flex-1">
             <div className="flex items-center flex-wrap gap-3 mb-1.5">
@@ -257,9 +257,9 @@ export default function OrderDetails({
           </Button>
         </div>
 
-        {/* Scrollable Container Container: Isolate scrollable content entirely here */}
+        {/* scrollable Container Container: Isolate scrollable content entirely here */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden style-scrollbar">
-          {/* Info Grid Cards */}
+          {/* info Grid Cards */}
           <div className="p-6 grid grid-cols-2 sm:grid-cols-4 gap-4 bg-white/50 border-b border-brand-primary/10">
             <div className="bg-white border border-brand-primary/15 rounded-[20px] p-4 flex flex-col items-center justify-center text-center shadow-sm">
               <div className="w-9 h-9 bg-brand-primary/10 rounded-full flex items-center justify-center mb-2">
@@ -312,7 +312,7 @@ export default function OrderDetails({
             </div>
           </div>
 
-          {/* Order Items Section */}
+          {/* order Items Section */}
           <div className="p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-figtree font-bold text-xl text-text-primary">
@@ -371,7 +371,7 @@ export default function OrderDetails({
                           </p>
                         )}
 
-                        {/* Modifiers List */}
+                        {/* modifiers List */}
                         {item.order_item_modifiers.length > 0 && (
                           <div className="text-xs text-text-secondary space-y-1.5 mt-2 bg-bg-primary/45 p-2.5 rounded-[12px] border border-brand-primary/5">
                             {item.order_item_modifiers.map((mod) => (
@@ -415,7 +415,7 @@ export default function OrderDetails({
                       </div>
                     </div>
 
-                    {/* Editable Fields for Cashier */}
+                    {/* editable Fields for Cashier */}
                     {isEditable ? (
                       <div className="mt-4 pt-4 border-t border-brand-primary/5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div className="flex items-center gap-3">
@@ -459,7 +459,7 @@ export default function OrderDetails({
             </div>
           </div>
 
-          {/* Pricing Subtotal Area */}
+          {/* pricing Subtotal Area */}
           <div className="p-6 bg-white border-t border-brand-primary/10">
             <div className="space-y-3 font-inter">
               <div className="flex justify-between items-center b2 font-medium">
@@ -487,7 +487,7 @@ export default function OrderDetails({
             </div>
           </div>
 
-          {/* Finalized Status Alert */}
+          {/* finalized Status Alert */}
           {isOrderCompleted && (
             <div className="p-6 border-t border-brand-primary/10 bg-white/40">
               <div className="bg-brand-primary/10 border border-brand-primary/20 rounded-[20px] p-5 flex items-start gap-4">
@@ -507,7 +507,7 @@ export default function OrderDetails({
             </div>
           )}
 
-          {/* Payment Select Section for cashier */}
+          {/* payment Select Section for cashier */}
           {!paymentCompleted && !isOrderCompleted && (
             <div className="p-6 border-t border-brand-primary/10 bg-white">
               <h3 className="font-figtree font-bold text-[18px] text-text-primary mb-4">
@@ -550,7 +550,7 @@ export default function OrderDetails({
           )}
         </div>
 
-        {/* Actions Footer: Fixed at bottom */}
+        {/* actions Footer: Fixed at bottom */}
         <div className="p-6 border-t border-brand-primary/10 bg-white rounded-b-[32px] shrink-0">
           {isOrderCompleted ? (
             <Button

@@ -40,8 +40,8 @@ export function DocumentUpload({
   const [previewSrc, setPreviewSrc] = useState<string | null>(null);
   const [previewIsImage, setPreviewIsImage] = useState(false);
 
-  // FIXED: Dependency array size must remain constant.
-  // We use previewSrc to ensure clean up happens when source changes or unmounts.
+  // fIXED: Dependency array size must remain constant.
+  // we use previewSrc to ensure clean up happens when source changes or unmounts.
   useEffect(() => {
     return () => {
       if (previewSrc && previewSrc.startsWith("blob:")) {
@@ -112,7 +112,7 @@ export function DocumentUpload({
         </Badge>
       </div>
 
-      {/* Preview Modal - High Z-index to cover Qios header */}
+      {/* preview Modal - High Z-index to cover Qios header */}
       {previewOpen && previewSrc && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="absolute inset-0" onClick={closePreview} />

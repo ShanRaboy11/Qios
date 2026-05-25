@@ -123,7 +123,7 @@ export default function OnboardingPage() {
       supplyLogic: "local",
     });
 
-  // Pending background save promises (optimistic saves)
+  // pending background save promises (optimistic saves)
   const pendingSaveBusiness = useRef<Promise<any> | null>(null);
   const pendingSaveDocuments = useRef<Promise<any> | null>(null);
   const pendingSaveProgress = useRef<Promise<any> | null>(null);
@@ -271,7 +271,7 @@ export default function OnboardingPage() {
       setAuthData((prev) => ({ ...prev, email }));
       const access = await resolveOnboardingAccess({ email });
 
-      // If onboarding is already submitted (eg. status: "pending/completed"), clear any session and do not resume
+      // if onboarding is already submitted (eg. status: "pending/completed"), clear any session and do not resume
       if (access.status === "completed") {
         try {
           const supabase = createSupabaseBrowserClient();
@@ -503,7 +503,7 @@ export default function OnboardingPage() {
       return setError("Owner / admin name is required.");
     }
 
-    // Start saving in background and advance immediately (optimistic)
+    // start saving in background and advance immediately (optimistic)
     try {
       const promise = saveBusinessInformation({
         tenantId: tenantId || undefined,
@@ -543,7 +543,7 @@ export default function OnboardingPage() {
     setError("");
     setSuccess("");
 
-    // Ensure tenantId is available (wait for background business save if needed)
+    // ensure tenantId is available (wait for background business save if needed)
     if (!tenantId) {
       if (pendingSaveBusiness.current) {
         await pendingSaveBusiness.current;
@@ -574,7 +574,7 @@ export default function OnboardingPage() {
         filesData[key] = { name: file.name, base64, type: file.type };
       }
 
-      // Start upload in background and continue immediately
+      // start upload in background and continue immediately
       const promise = saveDocumentUploads({
         tenantId,
         userId,
@@ -583,7 +583,7 @@ export default function OnboardingPage() {
       })
         .then(async (res) => {
           if (res.success && res.uploadedUrls) {
-            // Map urls back to requirement ids
+            // map urls back to requirement ids
             const next: Record<string, string> = {};
             res.uploadedUrls.forEach((url: string, idx: number) => {
               const id = DOCUMENT_REQUIREMENTS[idx]?.id;
@@ -592,7 +592,7 @@ export default function OnboardingPage() {
             setExistingDocumentUrls((prev) => ({ ...prev, ...next }));
             setSuccess("Documents saved in background.");
           }
-          // During resubmission, flip status to pending so the admin can re-review.
+          // during resubmission, flip status to pending so the admin can re-review.
           if (isResubmission && tenantId) {
             await markTenantResubmission(tenantId);
           }

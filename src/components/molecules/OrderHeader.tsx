@@ -38,7 +38,7 @@ export const OrderHeader = ({
         className,
       )}
     >
-      {/* Left Section: Info Stack */}
+      {/* left Section: Info Stack */}
       <div className="flex flex-col gap-2">
         <h3 className="h3 font-bold text-text-primary leading-tight">
           Order #{orderId}
@@ -55,7 +55,7 @@ export const OrderHeader = ({
         </div>
       </div>
 
-      {/* Right Section: Status Badge */}
+      {/* right Section: Status Badge */}
       <div
         className={cn(
           "px-4 py-1.5 md:px-6 md:py-2 rounded-full text-center",

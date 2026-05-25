@@ -9,7 +9,7 @@ import { CustomerHeader } from "@/components/organisms/CustomerHeader";
 import { CategoryTabBar } from "@/components/organisms/CategoryTabBar";
 import { MenuItemCard } from "@/components/molecules/MenuItemCard";
 import { PromoBanner } from "@/components/organisms/PromoBanner";
-import { ChevronRight, Search, MessageCircle, X } from "lucide-react"; // Added chat icons
+import { ChevronRight, Search, MessageCircle, X } from "lucide-react"; // added chat icons
 import OrderEditor from "@/components/organisms/OrderEditor";
 import { CartDrawer } from "@/components/organisms/CartDrawer";
 import { FloatingOrderStatus } from "@/components/organisms/FloatingOrderStatus";
@@ -19,7 +19,7 @@ import { CartProvider, useCart } from "@/contexts/CartContext";
 import { MenuItemData } from "@/components/organisms/MenuCatalog";
 import { renderCategoryIcon } from "@/lib/utils/categoryIcons";
 
-// Helper to create a mock MenuItemData with empty modifierGroups
+// helper to create a mock MenuItemData with empty modifierGroups
 const mockItem = (
   id: string,
   name: string,
@@ -95,7 +95,7 @@ function HomePageContent() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<MenuItemData | null>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [isChatOpen, setIsChatOpen] = useState(false); // Chat window visibility toggle
+  const [isChatOpen, setIsChatOpen] = useState(false); // chat window visibility toggle
   const [searchQuery, setSearchQuery] = useState("");
 
   const { setIsCartOpen } = useCart();
@@ -355,7 +355,7 @@ function HomePageContent() {
         onClose={() => setIsProfileOpen(false)}
       />
 
-      {/* FLOATING CHATBOT CONTAINER */}
+      {/* fLOATING CHATBOT CONTAINER */}
       <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-4">
         <AnimatePresence>
           {isChatOpen && (
@@ -366,7 +366,7 @@ function HomePageContent() {
               transition={smoothTransition}
               className="w-[360px] h-[450px] bg-white rounded-2xl shadow-2xl border border-black/5 overflow-hidden flex flex-col"
             >
-              {/* Chat Header */}
+              {/* chat Header */}
               <div className="bg-brand-accent p-4 text-white flex items-center justify-between shadow-sm">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
@@ -382,14 +382,14 @@ function HomePageContent() {
                 </button>
               </div>
 
-              {/* Chat Body messages area */}
+              {/* chat Body messages area */}
               <div className="flex-grow p-4 overflow-y-auto bg-neutral-50/50 flex flex-col gap-3 font-inter text-sm">
                 <div className="bg-brand-secondary/40 text-text-primary self-start p-3 rounded-2xl rounded-tl-none max-w-[80%] shadow-sm">
                   Hello! 👋 How can I assist you with your order today?
                 </div>
               </div>
 
-              {/* Chat Input row */}
+              {/* chat Input row */}
               <div className="p-3 bg-white border-t border-black/5 flex items-center gap-2">
                 <input
                   type="text"
@@ -404,7 +404,7 @@ function HomePageContent() {
           )}
         </AnimatePresence>
 
-        {/* Solid Branded Action Trigger Circle */}
+        {/* solid Branded Action Trigger Circle */}
         <div
           role="button"
           tabIndex={0}

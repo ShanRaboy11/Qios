@@ -18,7 +18,7 @@ export const UserItem = ({
   variant = "primary",
   className,
 }: UserItemProps) => {
-  // Extract initials (e.g., "Juan dela Cruz" -> "JD")
+  // extract initials (e.g., "Juan dela Cruz" -> "JD")
   const initials = name
     .split(" ")
     .map((n) => n[0])

@@ -42,7 +42,7 @@ export default function RootLayout({
         className={`${figtree.variable} ${inter.variable} ${ibrand.variable} font-[family-name:var(--font-inter)] antialiased`}
       >
         {/*
-          Hydration mismatch fix:
+          hydration mismatch fix:
           Certain browser extensions (like password managers) or testing tools
           add random attributes (e.g. fdprocessedid) to inputs before React hydrates.
           Wrapping the app in a div with suppressHydrationWarning prevents the

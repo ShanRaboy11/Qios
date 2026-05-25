@@ -4,14 +4,14 @@ import React, { createContext, useContext } from "react";
 import { cn } from "@/lib/utils";
 import { TenantBrandingSettingsData } from "@/app/(tenant)/[id]/settings/types";
 
-// Create the context
+// create the context
 interface TenantBrandingContextType {
   branding: Partial<TenantBrandingSettingsData> | null;
 }
 
 export const TenantBrandingContext = createContext<TenantBrandingContextType>({ branding: null });
 
-// Hook for consuming the context
+// hook for consuming the context
 export const useTenantBranding = () => {
   const context = useContext(TenantBrandingContext);
   if (!context) {
@@ -20,12 +20,12 @@ export const useTenantBranding = () => {
   return context;
 };
 
-// Map font settings to actual font families. 
+// map font settings to actual font families. 
 // "inter" maps to Tailwind's var(--font-inter), etc.
 const getFontFamilyString = (fontId?: string) => {
   switch (fontId) {
     case "inter": return "var(--font-inter), sans-serif";
-    case "playfair": return "'Playfair Display', serif"; // If playfair is used, fallback
+    case "playfair": return "'Playfair Display', serif"; // if playfair is used, fallback
     case "roboto": return "'Roboto', monospace";
     case "figtree": return "var(--font-figtree), sans-serif";
     case "ibrand": return "var(--font-ibrand), serif";
@@ -44,7 +44,7 @@ export const TenantBrandingProvider = ({
   children,
   className,
 }: TenantBrandingProviderProps) => {
-  // Extract values
+  // extract values
   const {
     primaryColor,
     secondaryColor,

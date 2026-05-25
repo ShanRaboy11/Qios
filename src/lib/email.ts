@@ -15,7 +15,7 @@ type SmtpConfig = {
 };
 
 // ─── Brand Tokens ─────────────────────────────────────────────────────────────
-// Sourced from globals.css / kds design tokens
+// sourced from globals.css / kds design tokens
 
 const B = {
   gold: "#ffd77a", // --kds-gold / --color-brand-secondary
@@ -175,7 +175,7 @@ const emailWrapper = (body: string) =>
 `.trim();
 
 // ─── Logo ─────────────────────────────────────────────────────────────────────
-// Text-only wordmark with Outlook-safe fallback.
+// text-only wordmark with Outlook-safe fallback.
 
 const qiosLogo = `
 <!--[if mso]>
@@ -189,8 +189,8 @@ const qiosLogo = `
 <!--<![endif]-->`;
 
 // ─── Blob decorations ─────────────────────────────────────────────────────────
-// SVG-based; works across clients without position:absolute hacks.
-// Two blobs: top-right (gold→primary) and bottom-left (coral, very faint).
+// sVG-based; works across clients without position:absolute hacks.
+// two blobs: top-right (gold→primary) and bottom-left (coral, very faint).
 
 const headerBlobs = `
 <tr>

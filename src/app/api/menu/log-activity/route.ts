@@ -30,7 +30,7 @@ export interface MenuActivityLogRequest {
  */
 export async function POST(req: NextRequest) {
   try {
-    // Verify the request is from an authenticated user
+    // verify the request is from an authenticated user
     const authHeader = req.headers.get("authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return NextResponse.json(
@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
     const token = authHeader.slice(7);
     const admin = createSupabaseAdminClient();
 
-    // Verify token and get user info
+    // verify token and get user info
     const { data: userData, error: userErr } = await admin.auth.getUser(token);
     if (userErr || !userData?.user) {
       return NextResponse.json(
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
 
     const userId = userData.user.id;
 
-    // Get user profile info
+    // get user profile info
     const { data: profile, error: profileErr } = await admin
       .from("profiles")
       .select("full_name, role, tenant_id")
@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Verify user belongs to the target tenant (or is super_admin)
+    // verify user belongs to the target tenant (or is super_admin)
     if (
       profile.role !== "super_admin" &&
       profile.tenant_id !== (
@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Parse request body
+    // parse request body
     let logRequest: MenuActivityLogRequest;
     try {
       logRequest = await req.json();
@@ -91,7 +91,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Validate required fields
+    // validate required fields
     const { actionType, entityType, entityId, entityName, tenantId, tenantName, metadata } =
       logRequest;
     if (!actionType || !entityType || !entityId || !entityName || !tenantId) {
@@ -104,12 +104,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Build description
+    // build description
     const entityLabel =
       entityType === "menu_item" ? "menu item" : "menu category";
     const description = `${actionType.toLowerCase()}d ${entityLabel}: ${entityName}`;
 
-    // Log the activity
+    // log the activity
     await logActivity({
       actorId: userId,
       actorName: profile.full_name,

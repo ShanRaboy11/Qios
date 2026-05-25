@@ -25,7 +25,7 @@ export const OverallInformation = () => {
         </h2>
       </div>
 
-      {/* Top 3 Stat Cards */}
+      {/* top 3 Stat Cards */}
       <div className="grid grid-cols-3 gap-3 mb-8">
         <div className="flex flex-col bg-gray-50 items-center justify-center border border-gray-100 rounded-2xl py-4 hover:border-orange-100 transition-colors">
           <User className="w-6 h-6 text-brand-primary mb-2" />
@@ -52,7 +52,7 @@ export const OverallInformation = () => {
 
       <div className="w-full h-[1px] bg-gray-100 mb-6" />
 
-      {/* Customers Overview Donut Chart */}
+      {/* customers Overview Donut Chart */}
       <div className="flex flex-col flex-1">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-[16px] font-bold text-text-primary">
@@ -97,7 +97,7 @@ export const OverallInformation = () => {
                 </Pie>
               </PieChart>
             </ResponsiveContainer>
-            {/* Donut Hole Placeholder / Icon could go here */}
+            {/* donut Hole Placeholder / Icon could go here */}
           </div>
           <div className="flex flex-row gap-10 sm:gap-10 flex-1 justify-center sm:justify-center flex-wrap">
             <div className="flex flex-col gap-1">

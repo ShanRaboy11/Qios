@@ -58,8 +58,8 @@ export async function DELETE(
     });
   }
 
-  // Delete the user from Supabase Auth
-  // This will cascade to delete the profile due to ON DELETE CASCADE
+  // delete the user from Supabase Auth
+  // this will cascade to delete the profile due to ON DELETE CASCADE
   const { error: deleteError } = await admin.auth.admin.deleteUser(employeeId);
 
   if (deleteError) {
