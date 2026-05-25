@@ -1509,6 +1509,7 @@ export async function updateTenantStatus(
       to: recipientEmail,
       status,
       comments: trimmedComments,
+      tenantId,
     });
     if (!emailResult.success) {
       console.error(

@@ -1,12 +1,6 @@
 "use client";
 
-import React, {
-  useActionState,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   CheckCircle2,
   CreditCard,
@@ -14,6 +8,8 @@ import {
   Loader2,
   Plus,
   Shield,
+  Smartphone,
+  Wallet,
   Trash2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -33,6 +29,7 @@ import {
 } from "@/app/(tenant)/[id]/settings/actions";
 import {
   emptySettingsActionState,
+  type SettingsActionState,
   type TenantBillingSettingsData,
 } from "@/app/(tenant)/[id]/settings/types";
 
@@ -66,27 +63,27 @@ const providerMeta: Record<
   visa: {
     label: "Visa",
     accent: "text-[#1A1F71]",
-    icon: <span className="text-[11px] font-bold tracking-[0.2em]">VISA</span>,
+    icon: <CreditCard className="w-4 h-4" />,
   },
   mastercard: {
     label: "Mastercard",
     accent: "text-[#EB001B]",
-    icon: <span className="text-[11px] font-bold tracking-[0.18em]">MC</span>,
+    icon: <CreditCard className="w-4 h-4" />,
   },
   paypal: {
     label: "PayPal",
     accent: "text-[#003087]",
-    icon: <span className="text-[11px] font-bold tracking-[0.18em]">PP</span>,
+    icon: <Wallet className="w-4 h-4" />,
   },
   stripe: {
     label: "Stripe",
     accent: "text-[#635BFF]",
-    icon: <span className="text-[11px] font-bold tracking-[0.18em]">S</span>,
+    icon: <Wallet className="w-4 h-4" />,
   },
   gcash: {
     label: "GCash",
     accent: "text-[#0070F3]",
-    icon: <span className="text-[11px] font-bold tracking-[0.18em]">GC</span>,
+    icon: <Smartphone className="w-4 h-4" />,
   },
   other: {
     label: "Other",
@@ -212,10 +209,57 @@ export const TenantBillingSettings = ({
     isDefault: true,
   });
 
-  const [paymentState, paymentAction, paymentPending] = useActionState(
-    saveTenantPaymentMethod.bind(null, tenantId),
+  const [paymentState, setPaymentState] = useState<SettingsActionState>(
     emptySettingsActionState,
   );
+  const [paymentPending, setPaymentPending] = useState(false);
+
+  const handlePaymentSubmit = async (
+    event: React.FormEvent<HTMLFormElement>,
+  ) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    setPaymentPending(true);
+
+    try {
+      const result = await saveTenantPaymentMethod(
+        tenantId,
+        paymentState,
+        formData,
+      );
+      setPaymentState(result);
+
+      if (result.success) {
+        setShowSuccess(true);
+        setShowPaymentForm(false);
+        setEditingMethodId("");
+        setFormData({
+          methodId: "",
+          provider: "visa",
+          displayName: "",
+          last4: "",
+          expMonth: "",
+          expYear: "",
+          cardholderName: "",
+          mobileNumber: "",
+          email: "",
+          description: "",
+          isDefault: true,
+        });
+        router.refresh();
+      }
+    } catch (error) {
+      setPaymentState({
+        ...emptySettingsActionState,
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to save payment method.",
+      });
+    } finally {
+      setPaymentPending(false);
+    }
+  };
 
   useEffect(() => {
     if (!paymentState.success) return;
@@ -621,7 +665,7 @@ export const TenantBillingSettings = ({
                         shape="rounded"
                         className="text-xs"
                       >
-                        {isCurrent ? "Current method" : "Linked method"}
+                        {isCurrent ? "Current" : "Linked"}
                       </Badge>
                       <p className="text-xs text-text-secondary">
                         Added on {formatDateTime(method.addedAt)}
@@ -662,7 +706,7 @@ export const TenantBillingSettings = ({
 
           {showPaymentForm && (
             <form
-              action={paymentAction}
+              onSubmit={handlePaymentSubmit}
               className="mt-4 p-5 rounded-2xl border border-gray-100 bg-white space-y-4"
             >
               <input type="hidden" name="methodId" value={formData.methodId} />

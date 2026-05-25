@@ -133,6 +133,7 @@ export const TenantSettings = ({
               <TenantStoreSettings
                 tenantId={tenantId}
                 initialData={initialData.store}
+                brandingData={initialData.branding}
                 scrollToQrSection={scrollToQrSection}
               />
             </motion.div>

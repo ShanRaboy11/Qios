@@ -40,13 +40,15 @@ export const Hero = () => {
                   Schedule a Demo
                 </Button>
               </Link>
-              <Button
-                variant="outline"
-                shape="rounded"
-                className="border-brand-accent text-brand-accent hover:bg-brand-accent hover:border-brand-accent hover:text-white"
-              >
-                Learn More
-              </Button>
+              <Link href="/services">
+                <Button
+                  variant="outline"
+                  shape="rounded"
+                  className="border-brand-accent text-brand-accent hover:bg-brand-accent hover:border-brand-accent hover:text-white"
+                >
+                  Learn More
+                </Button>
+              </Link>
             </div>
           </div>
         </div>

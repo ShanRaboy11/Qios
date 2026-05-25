@@ -41,6 +41,7 @@ export async function POST(req: Request) {
       branding_font_family: fontFamily,
       branding_secondary_font: secondaryFont,
       branding_menu_layout: menuLayout,
+      ...(body.customThemes ? { branding_custom_themes: body.customThemes } : {}),
       ...(uploaded || {}),
     };
 

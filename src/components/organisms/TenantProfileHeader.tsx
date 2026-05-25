@@ -75,7 +75,7 @@ export const TenantProfileHeader = ({
 
         {/* Action Buttons */}
         <div className="flex flex-wrap items-center gap-3">
-          {tenant.status === "Pending" && (
+          {(tenant.status === "Pending" || tenant.status === "Onboarding") && (
             <>
               <Button
                 variant="ghost"

@@ -73,6 +73,7 @@ const BRANDING_DEFAULTS: TenantBrandingSettingsData = {
   instagramUrl: "",
   facebookUrl: "",
   tiktokUrl: "",
+  customThemes: [],
 };
 
 const BILLING_DEFAULTS: TenantBillingSettingsData = {
@@ -331,7 +332,8 @@ export async function getTenantSettings(
 
   const currentPlan = matchedPlan ?? availablePlans[0] ?? null;
 
-  const { data: paymentMethodRows } = await admin
+  let paymentMethodRows: any[] = [];
+  const pmRes = await admin
     .from("tenant_payment_methods")
     .select(
       "id, provider, display_name, last4, exp_month, exp_year, cardholder_name, is_default, created_at",
@@ -339,6 +341,15 @@ export async function getTenantSettings(
     .eq("tenant_id", tenantId)
     .order("is_default", { ascending: false })
     .order("created_at", { ascending: false });
+
+  if (pmRes.error) {
+    console.error(
+      "Schema cache error (tenant_payment_methods):",
+      pmRes.error.message,
+    );
+  } else if (pmRes.data) {
+    paymentMethodRows = pmRes.data;
+  }
 
   const paymentMethods: TenantPaymentMethodData[] = (
     paymentMethodRows ?? []
@@ -354,13 +365,23 @@ export async function getTenantSettings(
     addedAt: toText(method.created_at),
   }));
 
-  const { data: billingHistoryRows } = await admin
+  let billingHistoryRows: any[] = [];
+  const bhRes = await admin
     .from("tenant_billing_history")
     .select(
       "id, invoice_number, description, amount, currency, status, billing_date, invoice_url",
     )
     .eq("tenant_id", tenantId)
     .order("billing_date", { ascending: false });
+
+  if (bhRes.error) {
+    console.error(
+      "Schema cache error (tenant_billing_history):",
+      bhRes.error.message,
+    );
+  } else if (bhRes.data) {
+    billingHistoryRows = bhRes.data;
+  }
 
   const billingHistory: TenantBillingHistoryData[] = (
     billingHistoryRows ?? []
@@ -810,6 +831,7 @@ export async function saveTenantBrandingSettings(
     const instagramUrl = toText(formData.get("instagramUrl"));
     const facebookUrl = toText(formData.get("facebookUrl"));
     const tiktokUrl = toText(formData.get("tiktokUrl"));
+    const customThemesRaw = toText(formData.get("customThemes"));
 
     const fieldErrors: Record<string, string> = {};
     const colorPattern = /^#[0-9a-fA-F]{6}$/;
@@ -841,6 +863,30 @@ export async function saveTenantBrandingSettings(
       };
     }
 
+    let customThemes: TenantBrandingSettingsData["customThemes"] = [];
+    if (customThemesRaw) {
+      try {
+        const parsed = JSON.parse(customThemesRaw);
+        if (Array.isArray(parsed)) {
+          customThemes = parsed
+            .filter((theme) => theme && typeof theme === "object")
+            .map((theme) => ({
+              id: toText((theme as any).id) || `custom-${Date.now()}`,
+              primary:
+                toText((theme as any).primary) ||
+                BRANDING_DEFAULTS.primaryColor,
+              secondary:
+                toText((theme as any).secondary) ||
+                BRANDING_DEFAULTS.secondaryColor,
+              accent:
+                toText((theme as any).accent) || BRANDING_DEFAULTS.accentColor,
+            }));
+        }
+      } catch {
+        customThemes = [];
+      }
+    }
+
     const { data: tenant, error: tenantError } = await admin
       .from("tenants")
       .select("settings")
@@ -862,6 +908,7 @@ export async function saveTenantBrandingSettings(
         branding_font_family: fontFamily,
         branding_secondary_font: secondaryFont,
         branding_menu_layout: menuLayout,
+        branding_custom_themes: customThemes,
         qios_subdomain: qiosSubdomain,
         custom_domain: customDomain,
         instagram_url: instagramUrl,

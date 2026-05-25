@@ -190,7 +190,7 @@ export const TenantProfileBentoGrid = ({
               <Button
                 variant="outline"
                 shape="pill"
-                className="w-full justify-center border-gray-200 text-text-primary hover:bg-gray-50 font-bold shadow-sm"
+                className="w-full justify-center border-gray-200 text-text-primary hover:bg-brand-primary hover:text-white hover:border-brand-primary font-bold shadow-sm"
                 onClick={onManagePlan}
               >
                 Manage Plan

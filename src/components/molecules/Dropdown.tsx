@@ -35,10 +35,10 @@ export const Dropdown = ({
 }: DropdownProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  
+
   // Compute selected option based on controlled value
   const selectedOption = React.useMemo(() => {
-    return options.find(opt => opt.value === value) || null;
+    return options.find((opt) => opt.value === value) || null;
   }, [value, options]);
 
   // Close when clicking outside
@@ -114,7 +114,7 @@ export const Dropdown = ({
       {isOpen && (
         <div
           className={cn(
-            "absolute top-[calc(85%)] left-0 z-50 bg-white border-2 border-[#E5E5E5] rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-300",
+            "absolute top-[calc(85%)] left-0 z-20 bg-white border-2 border-[#E5E5E5] rounded-2xl shadow-xl overflow-hidden animate-in zoom-in-95 duration-300",
             size === "sm" ? "min-w-full w-max" : "w-full",
           )}
         >
