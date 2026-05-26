@@ -13,8 +13,10 @@ import {
   AlertCircle,
 } from "lucide-react";
 import jsQR from "jsqr";
+import { useParams } from "next/navigation";
 import { Button } from "@/components/atoms/Button";
 import OrderDetails from "@/components/molecules/OrderDetails";
+import { processScannedQr } from "@/app/(employee)/[id]/employee/scanner/actions";
 
 type ScanState = "idle" | "requesting" | "scanning" | "success" | "error";
 
@@ -47,6 +49,57 @@ interface OrderData {
     }>;
   }>;
 }
+
+const normalizeScannedOrder = (order: any): OrderData => ({
+  id: String(order.id),
+  table_number:
+    order.table_number === null || order.table_number === undefined
+      ? undefined
+      : Number(order.table_number),
+  status: order.status,
+  total_price: Number(order.total_price ?? 0),
+  payment_status: order.payment_status,
+  payment_method: order.payment_method ?? undefined,
+  created_at: String(order.created_at),
+  updated_at: String(order.updated_at),
+  qr_hash: order.qr_hash ?? undefined,
+  order_items: Array.isArray(order.order_items)
+    ? order.order_items.map((item: any) => {
+        const menuItem = Array.isArray(item.menu_items)
+          ? item.menu_items[0]
+          : item.menu_items;
+
+        return {
+          id: String(item.id),
+          quantity: Number(item.quantity ?? 0),
+          unit_price: Number(item.unit_price ?? 0),
+          customization_notes: item.customization_notes ?? undefined,
+          menu_items: {
+            id: String(menuItem?.id ?? ""),
+            name: String(menuItem?.name ?? ""),
+            description: menuItem?.description ?? undefined,
+          },
+          order_item_modifiers: Array.isArray(item.order_item_modifiers)
+            ? item.order_item_modifiers.map((modifier: any) => {
+                const modifierOption = Array.isArray(modifier.modifier_options)
+                  ? modifier.modifier_options[0]
+                  : modifier.modifier_options;
+
+                return {
+                  id: String(modifier.id),
+                  modifier_options: {
+                    name: String(modifierOption?.name ?? ""),
+                    additional_price: Number(
+                      modifierOption?.additional_price ?? 0,
+                    ),
+                  },
+                };
+              })
+            : [],
+        };
+      })
+    : [],
+});
 
 // ── Corner brackets ────────────────────────────────────────────────────────────
 const ScanBrackets = ({ active }: { active: boolean }) => {
@@ -213,6 +266,8 @@ const QrPlaceholder = () => (
 );
 
 export const QrScanner = (): JSX.Element => {
+  const params = useParams<{ id?: string }>();
+  const tenantId = typeof params?.id === "string" ? params.id : "";
   const [orderId, setOrderId] = useState<string>("");
   const [scanState, setScanState] = useState<ScanState>("idle");
   const [errorMessage, setErrorMessage] = useState<string>("");
@@ -346,132 +401,65 @@ export const QrScanner = (): JSX.Element => {
     setScanState("idle");
     setErrorMessage("");
   };
-  const handleScanAgain = () => {
-    setOrderId("");
-    setScanState("idle");
-  };
-
   const handleSearchOrder = async () => {
     if (!orderId.trim()) return;
 
     setSearchLoading(true);
     setSearchError("");
     setFoundOrder(null);
+    const queryValue = orderId.trim();
 
-    // simulate a delay for loading effect
-    await new Promise((resolve) => setTimeout(resolve, 600));
+    try {
+      if (!tenantId) {
+        const fallbackOrder: OrderData = {
+          id: queryValue,
+          table_number: 12,
+          status: "preparing",
+          total_price: 450.75,
+          payment_status: "unpaid",
+          created_at: new Date(Date.now() - 15 * 60000).toISOString(),
+          updated_at: new Date().toISOString(),
+          qr_hash: `QR_${queryValue}`,
+          order_items: [
+            {
+              id: "item-1",
+              quantity: 2,
+              unit_price: 140,
+              customization_notes: "Extra crispy",
+              menu_items: {
+                id: "menu-1",
+                name: "Fried Chicken",
+                description: "Crispy fried chicken",
+              },
+              order_item_modifiers: [],
+            },
+          ],
+        };
 
-    // determine order status based on order ID for demo purposes
-    const orderIdLower = orderId.trim().toLowerCase();
+        setFoundOrder(fallbackOrder);
+        setScanState("idle");
+        return;
+      }
 
-    // check for invalid reading
-    if (orderIdLower.includes("invalid") || orderId.trim().length < 3) {
+      const order = await processScannedQr(tenantId, queryValue);
+      setFoundOrder(normalizeScannedOrder(order));
+      setScanState("idle");
+      setSearchError("");
+    } catch (err) {
       setSearchError(
-        "❌ Invalid Reading: No active order was found matching this code/ID. Please verify and try again.",
+        err instanceof Error ? err.message : "Unable to find this order.",
       );
+      setScanState("idle");
+    } finally {
       setSearchLoading(false);
-      return;
     }
-
-    let orderStatus: OrderData["status"] = "preparing";
-
-    // special cases for testing different scenarios
-    if (orderIdLower.includes("served") || orderIdLower.includes("done")) {
-      orderStatus = "served";
-    } else if (orderIdLower.includes("cancel")) {
-      orderStatus = "cancelled";
-    } else if (orderIdLower.includes("void")) {
-      orderStatus = "voided";
-    }
-
-    // set detailed warnings for already done/completed/cancelled orders
-    if (orderStatus === "served") {
-      setSearchError(
-        "ℹ️ Order Already Done: This order has already been completed and served. Opening read-only details.",
-      );
-    } else if (orderStatus === "cancelled" || orderStatus === "voided") {
-      setSearchError(
-        `ℹ️ Order ${
-          orderStatus.charAt(0).toUpperCase() + orderStatus.slice(1)
-        }: This order is marked as ${orderStatus.toUpperCase()} and cannot be updated. Opening read-only details.`,
-      );
-    }
-
-    // mock data - replace with real API call later
-    const mockOrder: OrderData = {
-      id: orderId.trim(),
-      table_number: Math.floor(Math.random() * 15) + 1,
-      status: orderStatus,
-      total_price: 450.75,
-      payment_status: orderStatus === "served" ? "paid" : "unpaid",
-      payment_method: orderStatus === "served" ? "cash" : undefined,
-      created_at: new Date(Date.now() - 15 * 60000).toISOString(),
-      updated_at: new Date().toISOString(),
-      qr_hash: "QR_" + orderId.trim(),
-      order_items: [
-        {
-          id: "item-1",
-          quantity: 2,
-          unit_price: 125.0,
-          customization_notes: "Extra crispy",
-          menu_items: {
-            id: "menu-1",
-            name: "Fried Chicken",
-            description: "Crispy fried chicken",
-          },
-          order_item_modifiers: [
-            {
-              id: "mod-1",
-              modifier_options: {
-                name: "Extra spicy",
-                additional_price: 15.0,
-              },
-            },
-          ],
-        },
-        {
-          id: "item-2",
-          quantity: 1,
-          unit_price: 65.0,
-          customization_notes: undefined,
-          menu_items: {
-            id: "menu-2",
-            name: "Rice",
-            description: "Garlic fried rice",
-          },
-          order_item_modifiers: [],
-        },
-        {
-          id: "item-3",
-          quantity: 2,
-          unit_price: 55.0,
-          customization_notes: "Lightly sweet",
-          menu_items: {
-            id: "menu-3",
-            name: "Mango Shake",
-            description: "Fresh mango shake",
-          },
-          order_item_modifiers: [
-            {
-              id: "mod-2",
-              modifier_options: {
-                name: "Extra ice",
-                additional_price: 0,
-              },
-            },
-          ],
-        },
-      ],
-    };
-
-    setFoundOrder(mockOrder);
-    setSearchLoading(false);
   };
 
   const handleCloseOrderDetails = () => {
     setFoundOrder(null);
     setOrderId("");
     setSearchError("");
+    setScanState("idle");
   };
 
   const handleClose = () => {
@@ -948,14 +936,6 @@ export const QrScanner = (): JSX.Element => {
                   />
                 </svg>
                 <p className="qrs-success-title">QR Code detected!</p>
-                <button
-                  type="button"
-                  onClick={handleScanAgain}
-                  className="qrs-rescan"
-                  style={{ color: "var(--color-success-primary)" }}
-                >
-                  <RotateCcw size={12} /> Scan again
-                </button>
               </div>
             )}
 

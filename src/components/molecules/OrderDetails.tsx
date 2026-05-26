@@ -207,6 +207,9 @@ export default function OrderDetails({
     !paymentCompleted &&
     !paymentProcessing;
 
+  const displayOrderCode =
+    localOrder.qr_hash?.trim() || localOrder.id.substring(0, 8).toUpperCase();
+
   if (!mounted) return null;
 
   return createPortal(
@@ -218,7 +221,7 @@ export default function OrderDetails({
           <div className="flex-1">
             <div className="flex items-center flex-wrap gap-3 mb-1.5">
               <span className="font-figtree text-2xl font-bold text-text-primary">
-                Order #{localOrder.id.substring(0, 8).toUpperCase()}
+                Order #{displayOrderCode}
               </span>
               <div className="flex gap-2">
                 <Badge
@@ -578,7 +581,6 @@ export default function OrderDetails({
                 variant="accent"
                 shape="pill"
                 className="flex-1 h-[52px] font-figtree font-bold"
-                leftIcon={<DollarSign size={18} />}
               >
                 Process Payment
               </Button>
