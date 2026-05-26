@@ -34,14 +34,16 @@ interface TenantStoreSettingsProps {
   scrollToQrSection?: boolean;
 }
 
-// Define Modern Themes
-const QR_THEMES = [
-  { id: "clean", name: "Pure White", bg: "#FFFFFF", text: "#111827", secondary: "#F3F4F6", isGradient: false },
-  { id: "dark", name: "Midnight", bg: "#0F172A", text: "#FFFFFF", secondary: "#1E293B", isGradient: false },
-  { id: "sunset", name: "Sunset Glow", bg: "linear-gradient(135deg, #FF5269 0%, #ffc670 100%)", text: "#FFFFFF", secondary: "rgba(255,255,255,0.2)", isGradient: true, colors: ["#FF5269", "#ffc670"] },
-  { id: "ocean", name: "Ocean Mist", bg: "linear-gradient(135deg, #0ea5e9 0%, #2dd4bf 100%)", text: "#FFFFFF", secondary: "rgba(255,255,255,0.2)", isGradient: true, colors: ["#0ea5e9", "#2dd4bf"] },
-  { id: "royal", name: "Royal Purple", bg: "linear-gradient(135deg, #6366f1 0%, #a855f7 100%)", text: "#FFFFFF", secondary: "rgba(255,255,255,0.2)", isGradient: true, colors: ["#6366f1", "#a855f7"] },
-];
+// Helper to determine if text should be white or black based on background brightness
+const getContrastColor = (hexcolor: string) => {
+  if (!hexcolor || hexcolor.startsWith("linear")) return "#FFFFFF";
+  const hex = hexcolor.replace("#", "");
+  const r = parseInt(hex.substr(0, 2), 16);
+  const g = parseInt(hex.substr(2, 2), 16);
+  const b = parseInt(hex.substr(4, 2), 16);
+  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+  return yiq >= 128 ? "#111827" : "#FFFFFF";
+};
 
 export const TenantStoreSettings = ({
   tenantId,
@@ -57,6 +59,53 @@ export const TenantStoreSettings = ({
     emptySettingsActionState,
   );
   const [isPending, setIsPending] = useState(false);
+
+  const safeHex = (value: string | undefined, fallback: string) =>
+    /^#[0-9A-Fa-f]{6}$/.test(value ?? "") ? (value as string) : fallback;
+
+  // Pulling directly from Branding & Appearance logic
+  const brandPalette = {
+    primary: safeHex(brandingData.primaryColor, "#ffc670"),
+    secondary: safeHex(brandingData.secondaryColor, "#fff9ef"),
+    accent: safeHex(brandingData.accentColor, "#ff5269"), 
+  };
+
+  // Dynamically generate themes based on Branding & Appearance Tab
+  const QR_THEMES = useMemo(() => [
+    { 
+      id: "brand-primary", 
+      name: "Brand Primary", 
+      bg: brandPalette.primary, 
+      text: getContrastColor(brandPalette.primary), 
+      secondary: "rgba(255,255,255,0.2)", 
+      isGradient: false 
+    },
+    { 
+      id: "brand-gradient", 
+      name: "Brand Gradient", 
+      bg: `linear-gradient(135deg, ${brandPalette.primary} 0%, ${brandPalette.accent} 100%)`, 
+      text: "#FFFFFF", 
+      secondary: "rgba(255,255,255,0.2)", 
+      isGradient: true, 
+      colors: [brandPalette.primary, brandPalette.accent] 
+    },
+    { 
+      id: "brand-accent", 
+      name: "Brand Accent", 
+      bg: brandPalette.accent, 
+      text: getContrastColor(brandPalette.accent), 
+      secondary: "rgba(255,255,255,0.2)", 
+      isGradient: false 
+    },
+    { 
+      id: "brand-soft", 
+      name: "Brand Soft", 
+      bg: brandPalette.secondary, 
+      text: getContrastColor(brandPalette.secondary), 
+      secondary: "rgba(0,0,0,0.05)", 
+      isGradient: false 
+    },
+  ], [brandPalette]);
 
   // QR Customization State
   const [selectedTheme, setSelectedTheme] = useState(QR_THEMES[0]);
@@ -107,15 +156,6 @@ export const TenantStoreSettings = ({
     { label: "UTC", value: "UTC" },
   ];
 
-  const safeHex = (value: string | undefined, fallback: string) =>
-    /^#[0-9A-Fa-f]{6}$/.test(value ?? "") ? (value as string) : fallback;
-
-  const brandPalette = {
-    primary: safeHex(brandingData.primaryColor, "#ffc670"),
-    secondary: safeHex(brandingData.secondaryColor, "#fff9ef"),
-    accent: "#ff5269",
-  };
-
   const dashboardLogoUrl = brandingData.dashboardLogoUrl?.trim() || "";
 
   const loadImageFromUrl = async (url: string) => {
@@ -145,7 +185,7 @@ export const TenantStoreSettings = ({
     [formData.storeName],
   );
 
-  useEffect(() => {
+   useEffect(() => {
     if (!tenantId) {
       setStoreUrl("");
       return;
@@ -153,7 +193,7 @@ export const TenantStoreSettings = ({
     const origin = window.location.origin;
     setStoreUrl(`${origin}/${tenantId}/home`);
   }, [tenantId]);
-
+  
   useEffect(() => {
     if (!scrollToQrSection) return;
     const timer = window.setTimeout(() => {
@@ -211,7 +251,6 @@ export const TenantStoreSettings = ({
       ctx.closePath();
     };
 
-    // 1. Draw Background (Solid or Gradient)
     if (selectedTheme.isGradient && selectedTheme.colors) {
       const gradient = ctx.createLinearGradient(0, 0, cardWidth, cardHeight);
       gradient.addColorStop(0, selectedTheme.colors[0]);
@@ -223,22 +262,24 @@ export const TenantStoreSettings = ({
     roundRect(0, 0, cardWidth, cardHeight, 100);
     ctx.fill();
 
-    let currentY = 250;
+    // SPACING FIX: Consistent top-down sequence
+    let currentY = 220;
 
-    // 2. Draw Store Name
     if (showBusinessName) {
       ctx.fillStyle = selectedTheme.text;
       ctx.font = "bold 90px sans-serif";
       ctx.textAlign = "center";
       ctx.fillText(storeNameLabel.toUpperCase(), cardWidth / 2, currentY);
       currentY += 160;
+    } else {
+      currentY += 80;
     }
 
-    // 3. Draw Badge
     const drawFancyBadge = (y: number) => {
       const badgeW = 380;
       const badgeH = 86;
       const badgeX = (cardWidth - badgeW) / 2;
+      // High-contrast logic for badge based on theme text color
       ctx.fillStyle = selectedTheme.text === "#FFFFFF" ? "rgba(255,255,255,0.9)" : brandPalette.accent;
       roundRect(badgeX, y - badgeH / 2, badgeW, badgeH, 43);
       ctx.fill();
@@ -251,26 +292,23 @@ export const TenantStoreSettings = ({
 
     if (qrLabelPosition === "Top") {
       drawFancyBadge(currentY);
-      currentY += 140;
+      currentY += 150; 
     } else {
       currentY += 40;
     }
 
-    // 4. Draw QR Container
     const qrBoxSize = 800;
     const qrBoxX = (cardWidth - qrBoxSize) / 2;
-    ctx.fillStyle = selectedTheme.id === "clean" ? "#F9FAFB" : "rgba(255,255,255,0.15)";
+    ctx.fillStyle = selectedTheme.id === "brand-soft" ? "rgba(0,0,0,0.05)" : "rgba(255,255,255,0.15)";
     roundRect(qrBoxX, currentY, qrBoxSize, qrBoxSize, 100);
     ctx.fill();
 
-    // 5. Draw QR Code (White background for readability if theme is dark)
     const qrInnerPadding = 60;
     const qrWhiteSize = qrBoxSize - qrInnerPadding * 2;
     ctx.fillStyle = "#FFFFFF";
     roundRect(qrBoxX + qrInnerPadding, currentY + qrInnerPadding, qrWhiteSize, qrWhiteSize, 60);
     ctx.fill();
 
-    const qrDrawPadding = 100;
     ctx.drawImage(
       qrImage,
       qrBoxX + qrInnerPadding + 40,
@@ -279,7 +317,6 @@ export const TenantStoreSettings = ({
       qrWhiteSize - 80
     );
 
-    // 6. Draw Logo Badge
     if (showLogoBadge) {
       const badgeSize = 160;
       const centerX = cardWidth / 2;
@@ -301,8 +338,6 @@ export const TenantStoreSettings = ({
         ctx.beginPath();
         ctx.arc(centerX, centerY, badgeSize / 2, 0, Math.PI * 2);
         ctx.fill();
-
-        // Draw "Q" in center of canvas
         ctx.fillStyle = "#FFFFFF";
         ctx.font = "bold 90px sans-serif";
         ctx.textAlign = "center";
@@ -312,10 +347,9 @@ export const TenantStoreSettings = ({
     }
 
     if (qrLabelPosition === "Bottom") {
-      drawFancyBadge(currentY + qrBoxSize + 100);
+      drawFancyBadge(currentY + qrBoxSize + 110);
     }
 
-    // 7. Footer
     const footerY = cardHeight - 120;
     ctx.fillStyle = selectedTheme.text;
     ctx.globalAlpha = 0.6;
@@ -345,7 +379,7 @@ export const TenantStoreSettings = ({
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 w-full">
-      {/* --- FORM SECTION --- */}
+      {/* --- FORM SECTION (Unchanged) --- */}
       <div>
         <h2 className="text-xl font-bold text-text-primary mb-1">Store Details</h2>
         <p className="text-sm text-text-secondary">Configure the business information displayed to customers.</p>
@@ -474,9 +508,9 @@ export const TenantStoreSettings = ({
           </form>
         </div>
 
-        {/* --- IMPROVED QR CUSTOMIZER SECTION --- */}
+        {/* --- BRANDED QR CUSTOMIZER SECTION --- */}
         <div ref={qrSectionRef} className="space-y-4 w-full pt-10">
-          <SectionHeader title="Store Access & QR Code" className="mb-0 py-2 border-gray-100" />
+          <SectionHeader title="Branded QR Customizer" className="mb-0 py-2 border-gray-100" />
           <div className="grid grid-cols-1 lg:grid-cols-[450px_1fr] gap-10">
             
             {/* Live Preview Column */}
@@ -492,7 +526,6 @@ export const TenantStoreSettings = ({
                     color: selectedTheme.text
                 }}
               >
-                {/* Subtle glass effect circles for gradients */}
                 {selectedTheme.isGradient && (
                     <>
                         <div className="absolute -top-20 -left-20 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
@@ -575,13 +608,13 @@ export const TenantStoreSettings = ({
             <div className="space-y-6">
               <div className="bg-white border border-gray-100 rounded-[2.5rem] p-8 shadow-sm space-y-10">
                 
-                {/* Theme Selector */}
+                {/* Brand Theme Selector */}
                 <div className="space-y-4">
                   <div className="flex items-center gap-2">
                     <Palette size={18} className="text-brand-accent" />
                     <h3 className="text-lg font-bold text-text-primary">Background Theme</h3>
                   </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-2 gap-3">
                     {QR_THEMES.map((theme) => (
                       <button
                         key={theme.id}
@@ -592,7 +625,7 @@ export const TenantStoreSettings = ({
                       >
                         <div 
                           className="h-10 w-full rounded-lg shadow-sm" 
-                          style={{ background: theme.bg, border: theme.id === 'clean' ? '1px solid #e5e7eb' : 'none' }} 
+                          style={{ background: theme.bg }} 
                         />
                         <span className="text-xs font-bold">{theme.name}</span>
                       </button>
@@ -637,10 +670,7 @@ export const TenantStoreSettings = ({
                     <Input value={storeUrl} readOnly className="pr-12 text-xs bg-gray-50 h-12 rounded-xl border-none" />
                     <button
                       type="button"
-                      onClick={() => {
-                        navigator.clipboard.writeText(storeUrl);
-                        // Add a toast notification here if available
-                      }}
+                      onClick={() => navigator.clipboard.writeText(storeUrl)}
                       className="absolute right-4 top-1/2 -translate-y-1/2 text-text-secondary hover:text-brand-primary transition-colors"
                     >
                       <Copy size={18} />
