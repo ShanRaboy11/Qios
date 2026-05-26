@@ -57,7 +57,7 @@ export default function DraftPage() {
 
           <SectionWrapper title="Kitchen Preparation Dashboard">
             <div className="p-4 bg-gray-100">
-              <KitchenPreparationDashboard />
+              <KitchenPreparationDashboard tenantId="" initialOrders={[]} />
             </div>
           </SectionWrapper>
 
