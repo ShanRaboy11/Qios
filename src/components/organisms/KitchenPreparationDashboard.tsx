@@ -26,6 +26,7 @@ interface Order {
   id: string;
   order_number: string;
   status: OrderStatus;
+  payment_status?: "unpaid" | "paid";
   created_at: string;
   table_number: string | null;
   order_type: string;
@@ -54,6 +55,7 @@ export default function KitchenPreparationDashboard() {
         id,
         order_number,
         status,
+        payment_status,
         created_at,
         table_number,
         order_type,
@@ -81,6 +83,7 @@ export default function KitchenPreparationDashboard() {
         id: d.id,
         order_number: d.order_number,
         status: d.status,
+        payment_status: d.payment_status,
         created_at: d.created_at,
         table_number: d.table_number,
         order_type: d.order_type,
@@ -190,6 +193,11 @@ export default function KitchenPreparationDashboard() {
         <div className="flex items-center gap-2">
           <span className="font-bold text-lg text-text-primary">
             #{order.order_number}
+          </span>
+          <span
+            className={`px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase tracking-wide ${order.payment_status === "paid" ? "bg-success-primary/10 text-success-primary" : "bg-amber-100 text-amber-700"}`}
+          >
+            {order.payment_status === "paid" ? "Paid" : "Unpaid"}
           </span>
         </div>
         <div

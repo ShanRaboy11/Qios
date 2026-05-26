@@ -19,6 +19,7 @@ import { Badge, BadgeColor } from "@/components/atoms/Badge";
 import { Radio } from "@/components/atoms/Radio";
 import { QuantityStepper } from "@/components/molecules/QuantityStepper";
 import { updateOrderFromScanner } from "@/app/(employee)/[id]/employee/scanner/actions";
+import { updateOrderPaymentStatus } from "@/app/(employee)/[id]/employee/queue/actions";
 
 interface OrderItemModifier {
   id: string;
@@ -93,7 +94,9 @@ export default function OrderDetails({
   const [paymentCompleted, setPaymentCompleted] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [authStatus, setAuthStatus] = useState<"idle" | "requesting" | "scanning" | "processing" | "error">("idle");
+  const [authStatus, setAuthStatus] = useState<
+    "idle" | "requesting" | "scanning" | "processing" | "error"
+  >("idle");
   const [authError, setAuthError] = useState("");
   const [pendingCancelOpen, setPendingCancelOpen] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<"cancelled" | null>(null);
@@ -195,17 +198,37 @@ export default function OrderDetails({
 
   const handleProcessPayment = async () => {
     setPaymentProcessing(true);
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    setPaymentCompleted(true);
+    try {
+      if (!localOrder.tenant_id) {
+        throw new Error("Tenant ID is missing for this order.");
+      }
 
-    const updatedOrder: OrderDetailsData = {
-      ...localOrder,
-      payment_status: "paid",
-      payment_method: selectedPaymentMethod,
-    };
-    setLocalOrder(updatedOrder);
-    onUpdateOrder?.(updatedOrder);
-    setPaymentProcessing(false);
+      await updateOrderPaymentStatus(
+        localOrder.id,
+        localOrder.tenant_id,
+        "paid",
+        selectedPaymentMethod,
+      );
+
+      setPaymentCompleted(true);
+
+      const updatedOrder: OrderDetailsData = {
+        ...localOrder,
+        payment_status: "paid",
+        payment_method: selectedPaymentMethod,
+      };
+      setLocalOrder(updatedOrder);
+      onUpdateOrder?.(updatedOrder);
+    } catch (error) {
+      console.error("Failed to process payment:", error);
+      setAuthError(
+        error instanceof Error
+          ? error.message
+          : "Unable to process this payment.",
+      );
+    } finally {
+      setPaymentProcessing(false);
+    }
   };
 
   const handleConfirmAndQueue = () => {
@@ -224,7 +247,9 @@ export default function OrderDetails({
 
   const displayOrderCode =
     localOrder.qr_hash?.trim() || localOrder.id.substring(0, 8).toUpperCase();
-  const adminQrValue = localOrder.tenant_id ? `ADMIN_AUTH:${localOrder.tenant_id}` : "";
+  const adminQrValue = localOrder.tenant_id
+    ? `ADMIN_AUTH:${localOrder.tenant_id}`
+    : "";
 
   const stopAuthScanner = () => {
     if (authFrameRef.current !== null) {
@@ -278,7 +303,11 @@ export default function OrderDetails({
         const scan = () => {
           const video = authVideoRef.current;
           const canvas = authCanvasRef.current;
-          if (!video || !canvas || video.readyState !== video.HAVE_ENOUGH_DATA) {
+          if (
+            !video ||
+            !canvas ||
+            video.readyState !== video.HAVE_ENOUGH_DATA
+          ) {
             authFrameRef.current = requestAnimationFrame(scan);
             return;
           }
@@ -352,7 +381,14 @@ export default function OrderDetails({
       cancelled = true;
       stopAuthScanner();
     };
-  }, [authModalOpen, adminQrValue, localOrder, pendingStatus, onUpdateOrder, scanAttempt]);
+  }, [
+    authModalOpen,
+    adminQrValue,
+    localOrder,
+    pendingStatus,
+    onUpdateOrder,
+    scanAttempt,
+  ]);
 
   const openAdminAuthModal = () => {
     if (!localOrder.tenant_id) {
@@ -421,7 +457,7 @@ export default function OrderDetails({
         {/* scrollable Container Container: Isolate scrollable content entirely here */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden style-scrollbar">
           {/* info Grid Cards */}
-          <div className="p-6 grid grid-cols-2 sm:grid-cols-4 gap-4 bg-white/50 border-b border-brand-primary/10">
+          <div className="p-6 grid grid-cols-1 sm:grid-cols-3 gap-4 bg-white/50 border-b border-brand-primary/10">
             <div className="bg-white border border-brand-primary/15 rounded-[20px] p-4 flex flex-col items-center justify-center text-center shadow-sm">
               <div className="w-9 h-9 bg-brand-primary/10 rounded-full flex items-center justify-center mb-2">
                 <Package size={18} className="text-brand-primary" />
@@ -447,7 +483,7 @@ export default function OrderDetails({
             </div>
 
             {localOrder.table_number && (
-              <div className="bg-white border border-brand-primary/15 rounded-[20px] p-4 flex flex-col items-center justify-center text-center shadow-sm">
+              <div className="bg-white border border-brand-primary/15 rounded-[20px] p-4 flex flex-col items-center justify-center text-center shadow-sm sm:col-span-3">
                 <div className="w-9 h-9 bg-success-primary/10 rounded-full flex items-center justify-center mb-2">
                   <Receipt size={18} className="text-success-primary" />
                 </div>
@@ -828,7 +864,10 @@ export default function OrderDetails({
                 {authStatus === "scanning" && (
                   <div
                     className="absolute left-4 right-4 h-[3px] rounded-full bg-gradient-to-r from-transparent via-[#FF5269] to-transparent shadow-[0_0_18px_rgba(255,82,105,0.65)] pointer-events-none"
-                    style={{ animation: "adminQrScanDown 2.8s cubic-bezier(0.4,0,0.6,1) infinite" }}
+                    style={{
+                      animation:
+                        "adminQrScanDown 2.8s cubic-bezier(0.4,0,0.6,1) infinite",
+                    }}
                     aria-hidden="true"
                   />
                 )}
@@ -879,7 +918,8 @@ export default function OrderDetails({
               Cancel Order?
             </h3>
             <p className="text-sm text-text-secondary mb-5">
-              You will need to scan the tenant admin QR before this action can be completed.
+              You will need to scan the tenant admin QR before this action can
+              be completed.
             </p>
             <div className="flex gap-3">
               <Button
