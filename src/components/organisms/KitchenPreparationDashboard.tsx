@@ -40,29 +40,41 @@ interface OrderWithPercentage extends Order {
 interface KitchenPreparationDashboardProps {
   tenantId: string;
   initialOrders: Order[];
+  totalOrderCount?: number;
+  queueMode?: boolean;
+  canUpdateStatus?: boolean;
 }
 
 export default function KitchenPreparationDashboard({
   tenantId,
   initialOrders,
+  totalOrderCount,
+  queueMode = false,
+  canUpdateStatus = true,
 }: KitchenPreparationDashboardProps) {
   const [orders, setOrders] = useState<Order[]>(initialOrders);
+  const [queueTotalCount, setQueueTotalCount] = useState(
+    totalOrderCount ?? initialOrders.length,
+  );
   const [now, setNow] = useState(Date.now());
   const supabase = createSupabaseBrowserClient();
 
   const fetchOrders = useCallback(async () => {
     if (!tenantId) return;
-    const { data, error } = await supabase
+    const orderStatuses = ["pending", "preparing", "ready"];
+
+    let orderQuery = supabase
       .from("orders")
       .select(
         `
         id,
-        order_number,
+        qr_hash,
         status,
         payment_status,
         created_at,
         table_number,
-        order_type,
+        total_price,
+        payment_method,
         order_items (
           id,
           quantity,
@@ -74,8 +86,19 @@ export default function KitchenPreparationDashboard({
       `,
       )
       .eq("tenant_id", tenantId)
-      .in("status", ["pending", "preparing", "ready"])
+      .in("status", orderStatuses)
       .order("created_at", { ascending: true });
+
+    let countQuery = supabase
+      .from("orders")
+      .select("id", { count: "exact", head: true })
+      .eq("tenant_id", tenantId)
+      .in("status", orderStatuses);
+
+    const [{ data, error }, { count }] = await Promise.all([
+      orderQuery,
+      countQuery,
+    ]);
 
     if (error) {
       console.error("Error fetching orders:", error);
@@ -85,12 +108,12 @@ export default function KitchenPreparationDashboard({
     if (data) {
       const mappedOrders: Order[] = data.map((d: any) => ({
         id: d.id,
-        order_number: d.order_number,
+        order_number: d.qr_hash ?? d.id,
         status: d.status,
         payment_status: d.payment_status,
         created_at: d.created_at,
         table_number: d.table_number,
-        order_type: d.order_type,
+        order_type: "",
         items: d.order_items
           ? d.order_items.map((i: any) => ({
               id: i.id,
@@ -102,6 +125,8 @@ export default function KitchenPreparationDashboard({
       }));
       setOrders(mappedOrders);
     }
+
+    setQueueTotalCount(count ?? initialOrders.length);
   }, [tenantId, supabase]);
 
   useEffect(() => {
@@ -251,30 +276,53 @@ export default function KitchenPreparationDashboard({
       </div>
 
       <div className="mt-auto pt-2 flex">
-        {order.status === "pending" && (
-          <button
-            onClick={() => handleUpdateStatus(order.id, "preparing")}
-            className="w-full py-2.5 rounded-xl text-sm font-bold transition-all bg-white text-text-primary hover:bg-bg-primary active:bg-gray-100 border border-brand-primary shadow-sm"
-          >
-            Start Preparing
-          </button>
-        )}
-        {order.status === "preparing" && (
-          <button
-            onClick={() => handleUpdateStatus(order.id, "ready")}
-            className="w-full py-2.5 rounded-xl text-sm font-bold transition-all bg-success-primary text-text-tertiary hover:bg-success-primary/90 active:bg-success-primary/80 shadow-sm"
-          >
-            Mark Ready
-          </button>
-        )}
-        {order.status === "ready" && (
-          <Button
-            onClick={() => handleUpdateStatus(order.id, "completed")}
-            variant="primary"
-            className="w-full py-2.5 rounded-xl text-sm font-bold shadow-sm flex items-center justify-center gap-2"
-          >
-            Order Received
-          </Button>
+        {queueMode ? (
+          <>
+            {order.status === "pending" && canUpdateStatus && (
+              <button
+                onClick={() => handleUpdateStatus(order.id, "preparing")}
+                className="w-full py-2.5 rounded-xl text-sm font-bold transition-all bg-white text-text-primary hover:bg-bg-primary active:bg-gray-100 border border-brand-primary shadow-sm"
+              >
+                Start Preparing
+              </button>
+            )}
+            {order.status === "preparing" && canUpdateStatus && (
+              <button
+                onClick={() => handleUpdateStatus(order.id, "ready")}
+                className="w-full py-2.5 rounded-xl text-sm font-bold transition-all bg-success-primary text-text-tertiary hover:bg-success-primary/90 active:bg-success-primary/80 shadow-sm"
+              >
+                Mark Ready
+              </button>
+            )}
+          </>
+        ) : (
+          <>
+            {order.status === "pending" && (
+              <button
+                onClick={() => handleUpdateStatus(order.id, "preparing")}
+                className="w-full py-2.5 rounded-xl text-sm font-bold transition-all bg-white text-text-primary hover:bg-bg-primary active:bg-gray-100 border border-brand-primary shadow-sm"
+              >
+                Start Preparing
+              </button>
+            )}
+            {order.status === "preparing" && (
+              <button
+                onClick={() => handleUpdateStatus(order.id, "ready")}
+                className="w-full py-2.5 rounded-xl text-sm font-bold transition-all bg-success-primary text-text-tertiary hover:bg-success-primary/90 active:bg-success-primary/80 shadow-sm"
+              >
+                Mark Ready
+              </button>
+            )}
+            {order.status === "ready" && (
+              <Button
+                onClick={() => handleUpdateStatus(order.id, "completed")}
+                variant="primary"
+                className="w-full py-2.5 rounded-xl text-sm font-bold shadow-sm flex items-center justify-center gap-2"
+              >
+                Order Received
+              </Button>
+            )}
+          </>
         )}
       </div>
     </div>
@@ -328,7 +376,7 @@ export default function KitchenPreparationDashboard({
 
         <div className="bg-white p-3 md:p-5 rounded-[20px] shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-100 flex items-center gap-3 md:gap-4 transition-transform hover:-translate-y-0.5">
           <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl bg-brand-primary/20 border border-brand-primary/30 flex items-center justify-center text-brand-primary font-bold text-lg md:text-2xl shadow-sm shrink-0">
-            {orders.filter((o) => o.status !== "completed").length}
+            {queueTotalCount}
           </div>
           <div className="flex flex-col justify-center min-w-0">
             <p className="text-[9px] md:text-[11px] text-brand-dark/70 font-bold uppercase tracking-widest mb-0.5 truncate">

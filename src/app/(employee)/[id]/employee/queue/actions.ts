@@ -1,38 +1,170 @@
 "use server";
 
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { logActivity } from "@/lib/activityLogger";
+import {
+  canAccessEmployeeRoute,
+  canUpdateEmployeeOrderStatus,
+  type RolePermissions,
+} from "@/lib/employeePermissions";
 import { revalidatePath } from "next/cache";
+
+type QueueOrder = {
+  id: string;
+  order_number: string;
+  status: "pending" | "preparing" | "ready";
+  payment_status?: "unpaid" | "paid";
+  created_at: string;
+  table_number: string | null;
+  order_type: string;
+  items: Array<{
+    id: string;
+    quantity: number;
+    notes: string;
+    name: string;
+  }>;
+};
+
+async function getEmployeeQueueContext(tenantId: string) {
+  const supabase = await createSupabaseServerClient();
+  const admin = createSupabaseAdminClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("Unauthorized");
+  }
+
+  const { data: profile, error: profileError } = await admin
+    .from("profiles")
+    .select("role, tenant_id, full_name, app_role_id")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (profileError || !profile) {
+    throw new Error("Unauthorized");
+  }
+
+  if (profile.role !== "super_admin" && profile.tenant_id !== tenantId) {
+    throw new Error("Unauthorized");
+  }
+
+  let permissions: RolePermissions | null = null;
+
+  if (profile.app_role_id) {
+    const { data: roleRow } = await admin
+      .from("roles")
+      .select("permissions")
+      .eq("id", profile.app_role_id)
+      .eq("tenant_id", tenantId)
+      .maybeSingle();
+
+    permissions = (roleRow?.permissions as RolePermissions | null) ?? null;
+  }
+
+  return { supabase, admin, user, profile, permissions };
+}
+
+export async function getEmployeeQueueData(tenantId: string) {
+  const { admin, permissions, profile } =
+    await getEmployeeQueueContext(tenantId);
+
+  if (
+    profile.role !== "super_admin" &&
+    !canAccessEmployeeRoute(permissions, "queue")
+  ) {
+    throw new Error("Insufficient permissions to access order queue");
+  }
+
+  const [{ count: totalOrderCount }, { data: orders, error: ordersError }] =
+    await Promise.all([
+      admin
+        .from("orders")
+        .select("id", { count: "exact", head: true })
+        .eq("tenant_id", tenantId)
+        .in("status", ["pending", "preparing", "ready"]),
+      admin
+        .from("orders")
+        .select(
+          `
+          id,
+          qr_hash,
+          status,
+          payment_status,
+          created_at,
+          table_number,
+          total_price,
+          payment_method,
+          order_items (
+            id,
+            quantity,
+            customization_notes,
+            menu_items (
+              name
+            )
+          )
+        `,
+        )
+        .eq("tenant_id", tenantId)
+        .in("status", ["pending", "preparing", "ready"])
+        .order("created_at", { ascending: true }),
+    ]);
+
+  if (ordersError) {
+    throw new Error(ordersError.message);
+  }
+
+  const mappedOrders: QueueOrder[] =
+    orders?.map((order: any) => ({
+      id: order.id,
+      order_number: order.qr_hash ?? order.id,
+      status: order.status,
+      payment_status: order.payment_status,
+      created_at: order.created_at,
+      table_number: order.table_number,
+      order_type: "",
+      items: (order.order_items || []).map((item: any) => ({
+        id: item.id,
+        quantity: item.quantity,
+        notes: item.customization_notes || "",
+        name: item.menu_items?.name || "Unknown Item",
+      })),
+    })) ?? [];
+
+  return {
+    orders: mappedOrders,
+    totalOrderCount: totalOrderCount ?? 0,
+    canUpdateStatus:
+      profile.role === "super_admin" ||
+      canUpdateEmployeeOrderStatus(permissions),
+  };
+}
 
 export async function updateOrderStatus(
   orderId: string,
   tenantId: string,
-  newStatus: string
+  newStatus: "preparing" | "ready" | "completed",
 ) {
-  const supabase = await createSupabaseServerClient();
+  const { supabase, admin, user, profile, permissions } =
+    await getEmployeeQueueContext(tenantId);
 
-  // get current user and profile for logging
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    throw new Error("Unauthorized");
+  if (
+    profile.role !== "super_admin" &&
+    !canUpdateEmployeeOrderStatus(permissions)
+  ) {
+    throw new Error("Insufficient permissions to update order status");
   }
-  
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("first_name, last_name, role")
-    .eq("id", user.id)
-    .single();
 
-  const actorName = profile ? `${profile.first_name} ${profile.last_name}` : "Unknown System User";
-  const actorRole = profile?.role ?? "employee";
-
-  const { data: previousOrder } = await supabase
+  const { data: previousOrder } = await admin
     .from("orders")
     .select("status")
     .eq("id", orderId)
     .single();
 
-  const { error } = await supabase
+  const { error } = await admin
     .from("orders")
     .update({ status: newStatus })
     .eq("id", orderId)
@@ -41,6 +173,9 @@ export async function updateOrderStatus(
   if (error) {
     throw new Error(error.message);
   }
+
+  const actorName = profile.full_name || "Unknown System User";
+  const actorRole = profile?.role ?? "employee";
 
   // log activity
   await logActivity({
@@ -62,27 +197,13 @@ export async function updateOrderPaymentStatus(
   paymentStatus: "paid",
   paymentMethod: string,
 ) {
-  const supabase = await createSupabaseServerClient();
+  const { supabase, admin, user, profile } =
+    await getEmployeeQueueContext(tenantId);
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    throw new Error("Unauthorized");
-  }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("first_name, last_name, role")
-    .eq("id", user.id)
-    .single();
-
-  const actorName = profile
-    ? `${profile.first_name} ${profile.last_name}`
-    : "Unknown System User";
+  const actorName = profile.full_name || "Unknown System User";
   const actorRole = profile?.role ?? "employee";
 
-  const { error } = await supabase
+  const { error } = await admin
     .from("orders")
     .update({
       payment_status: paymentStatus,
