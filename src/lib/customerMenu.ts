@@ -28,7 +28,7 @@ export async function fetchTenantCustomerMenu(tenantId: string) {
       .order("created_at", { ascending: true }),
     supabase
       .from("tenants")
-      .select("settings")
+      .select("business_name, settings")
       .eq("id", tenantId)
       .maybeSingle(),
   ]);
@@ -167,5 +167,12 @@ export async function fetchTenantCustomerMenu(tenantId: string) {
       readStr(tenantSettings, ["branding_logo_dashboard"]) || undefined,
   };
 
-  return { categories, items, currency, guestNumber, branding };
+  return {
+    categories,
+    items,
+    currency,
+    guestNumber,
+    branding,
+    storeName: tenantResult.data?.business_name || "",
+  };
 }

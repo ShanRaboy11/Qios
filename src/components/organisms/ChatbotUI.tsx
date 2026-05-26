@@ -51,9 +51,17 @@ export interface ChatbotUIProps {
    */
   menuContext?: string;
   /**
+   * Tenant id used by floating mode to fetch live tenant data on the backend.
+   */
+  tenantId?: string;
+  /**
    * Optional store / tenant name shown in the greeting.
    */
   storeName?: string;
+  /**
+   * Custom trigger content for the floating button when closed.
+   */
+  triggerContent?: React.ReactNode;
 }
 
 // ---------------------------------------------------------------------------
@@ -73,6 +81,7 @@ async function getGeminiReply(
   messages: Message[],
   menuContext?: string,
   storeName?: string,
+  tenantId?: string,
 ): Promise<string> {
   const latestMessage = messages.at(-1)?.message ?? "";
   const response = await fetch("/api/ai", {
@@ -83,6 +92,7 @@ async function getGeminiReply(
       messages: messages.map(({ role, message }) => ({ role, message })),
       context: menuContext,
       storeName,
+        tenantId,
     }),
   });
 
@@ -120,6 +130,7 @@ function makeGreeting(storeName?: string): string {
 interface ChatPanelProps {
   storeName?: string;
   menuContext?: string;
+  tenantId?: string;
   /** Callback fired when the ✕ button is pressed (floating mode only) */
   onClose?: () => void;
   /** Show the close (✕) button in the header */
@@ -130,6 +141,7 @@ interface ChatPanelProps {
 function ChatPanel({
   storeName,
   menuContext,
+  tenantId,
   onClose,
   showClose,
   className,
@@ -196,7 +208,12 @@ function ChatPanel({
     setIsTyping(true);
 
     try {
-      const reply = await getGeminiReply(nextMessages, menuContext, storeName);
+      const reply = await getGeminiReply(
+        nextMessages,
+        menuContext,
+        storeName,
+        tenantId,
+      );
       setMessages((prev) => [
         ...prev,
         {
@@ -474,7 +491,9 @@ function ChatPanel({
 function FloatingChatbot({
   menuContext,
   storeName,
-}: Pick<ChatbotUIProps, "menuContext" | "storeName">) {
+  tenantId,
+  triggerContent,
+}: Pick<ChatbotUIProps, "menuContext" | "storeName" | "tenantId" | "triggerContent">) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -512,6 +531,7 @@ function FloatingChatbot({
               <ChatPanel
                 storeName={storeName}
                 menuContext={menuContext}
+                tenantId={tenantId}
                 onClose={() => setIsOpen(false)}
                 showClose
                 className="h-full max-h-[620px]"
@@ -524,10 +544,8 @@ function FloatingChatbot({
       {/* fAB button */}
       <motion.button
         onClick={() => setIsOpen((v) => !v)}
-        whileHover={{ scale: 1.08 }}
-        whileTap={{ scale: 0.93 }}
         className={cn(
-          "fixed bottom-6 right-6 z-[100] w-14 h-14 rounded-full flex items-center justify-center shadow-2xl transition-colors duration-200",
+          "fixed bottom-6 right-6 z-[100] w-14 h-14 rounded-full flex items-center justify-center shadow-2xl transition-colors duration-200 overflow-hidden",
           isOpen ? "bg-[#2D2D2D]" : "bg-[#FFC670]",
         )}
         style={{
@@ -536,6 +554,7 @@ function FloatingChatbot({
             : "0 8px 32px rgba(255,198,112,0.5)",
         }}
         aria-label={isOpen ? "Close chat" : "Open chat assistant"}
+        type="button"
       >
         <AnimatePresence mode="wait" initial={false}>
           {isOpen ? (
@@ -556,15 +575,10 @@ function FloatingChatbot({
               exit={{ rotate: -90, opacity: 0 }}
               transition={{ duration: 0.18 }}
             >
-              <MessageCircle size={24} className="text-white" />
+              {triggerContent ?? <MessageCircle size={24} className="text-white" />}
             </motion.div>
           )}
         </AnimatePresence>
-
-        {/* pulse ring when closed */}
-        {!isOpen && (
-          <span className="absolute inset-0 rounded-full bg-[#FFC670]/50 animate-ping" />
-        )}
       </motion.button>
     </>
   );
@@ -577,10 +591,19 @@ export function ChatbotUI({
   mode = "page",
   menuContext,
   storeName,
+  tenantId,
+  triggerContent,
   onClose,
 }: ChatbotUIProps) {
   if (mode === "floating") {
-    return <FloatingChatbot menuContext={menuContext} storeName={storeName} />;
+    return (
+      <FloatingChatbot
+        menuContext={menuContext}
+        storeName={storeName}
+        tenantId={tenantId}
+        triggerContent={triggerContent}
+      />
+    );
   }
 
   // page mode — original full-page centred layout
@@ -589,6 +612,7 @@ export function ChatbotUI({
       <ChatPanel
         storeName={storeName}
         menuContext={menuContext}
+        tenantId={tenantId}
         onClose={onClose}
         showClose={!!onClose}
         className="w-full max-w-[400px] h-[750px]"
