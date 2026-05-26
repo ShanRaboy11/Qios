@@ -1,9 +1,11 @@
 "use client";
 
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import QRCode from "react-qr-code";
 import { Download, X } from "lucide-react";
 import { motion } from "framer-motion";
+import html2canvas from "html2canvas";
+import { jsPDF } from "jspdf";
 import { Button } from "@/components/atoms/Button";
 import { CartItem } from "@/contexts/CartContext";
 
@@ -21,6 +23,34 @@ export const OrderReceiptModal = ({
   cartTotal,
 }: OrderReceiptModalProps) => {
   const receiptRef = useRef<HTMLDivElement>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const downloadReceipt = async () => {
+    if (!receiptRef.current || isDownloading) {
+      return;
+    }
+
+    setIsDownloading(true);
+
+    try {
+      const canvas = await html2canvas(receiptRef.current, {
+        backgroundColor: null,
+        scale: Math.min(2, window.devicePixelRatio || 1),
+        useCORS: true,
+      });
+
+      const imageData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF({
+        unit: "px",
+        format: [canvas.width, canvas.height],
+      });
+
+      pdf.addImage(imageData, "PNG", 0, 0, canvas.width, canvas.height);
+      pdf.save(`qios-receipt-${orderId}.pdf`);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   const JaggedEdge = () => (
     <div
@@ -55,100 +85,98 @@ export const OrderReceiptModal = ({
         className="w-full max-w-[360px] flex flex-col items-center relative"
       >
         {/* receipt Body */}
-        <div
-          ref={receiptRef}
-          className="bg-[#FFDC72] w-full rounded-t-[24px] px-6 pt-8 pb-6 flex flex-col relative"
-        >
-          {/* order number + time */}
-          <div className="flex flex-col items-center gap-4 mb-8">
-            <div className="flex items-center gap-1.5 text-black/60 b5 font-medium">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <circle cx="12" cy="12" r="10" />
-                <polyline points="12 6 12 12 16 14" />
-              </svg>
-              Today,{" "}
-              {new Date().toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </div>
-            
-            <div className="bg-brand-accent text-white px-6 py-2.5 rounded-full font-inter font-bold text-[16px] shadow-sm">
-              Order #{orderId}
-            </div>
-          </div>
-
-          {/* qR Code */}
-          <div className="bg-white p-5 rounded-[20px] shadow-sm mb-8 flex items-center justify-center border border-black/5 w-full aspect-square relative mx-auto max-w-[240px]">
-            <QRCode
-              value={orderId}
-              size={256}
-              style={{ height: "auto", maxWidth: "100%", width: "100%" }}
-            />
-          </div>
-
-          {/* order Summary */}
-          <div className="space-y-3 mb-6">
-            {cartSnapshot.map((item) => (
-              <div
-                key={item.id}
-                className="flex justify-between items-start gap-4 border-b border-black/10 border-dashed pb-3 last:border-0 last:pb-0"
-              >
-                <div className="b2 font-medium text-[#2D2D2D] leading-tight">
-                  {item.quantity}× {item.menuItem.name}
-                  {item.selectedOptions.length > 0 && (
-                    <div className="text-[11px] text-black/50 mt-0.5 font-normal">
-                      {item.selectedOptions.map((o) => o.name).join(", ")}
-                    </div>
-                  )}
-                  {item.specialInstructions && (
-                    <div className="text-[11px] text-black/40 mt-0.5 italic">
-                      &ldquo;{item.specialInstructions}&rdquo;
-                    </div>
-                  )}
-                </div>
-                <div className="b2 font-bold text-text-primary shrink-0">
-                  ₱{item.totalPrice.toFixed(2)}
-                </div>
+        <div className="w-full flex flex-col items-center">
+          <div ref={receiptRef} className="w-full">
+            <div className="bg-[#FFDC72] w-full rounded-t-[24px] px-6 pt-8 pb-6 flex flex-col relative">
+            {/* order number + time */}
+            <div className="flex flex-col items-center gap-4 mb-8">
+              <div className="flex items-center gap-1.5 text-black/60 b5 font-medium">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12 6 12 12 16 14" />
+                </svg>
+                Today,{" "}
+                {new Date().toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
               </div>
-            ))}
+
+              <div className="bg-brand-accent text-white px-6 py-2.5 rounded-full font-inter font-bold text-[16px] shadow-sm">
+                Order #{orderId}
+              </div>
+            </div>
+
+            {/* qR Code */}
+            <div className="bg-white p-5 rounded-[20px] shadow-sm mb-8 flex items-center justify-center border border-black/5 w-full aspect-square relative mx-auto max-w-[240px]">
+              <QRCode
+                value={orderId}
+                size={256}
+                style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+              />
+            </div>
+
+            {/* order Summary */}
+            <div className="space-y-3 mb-6">
+              {cartSnapshot.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex justify-between items-start gap-4 border-b border-black/10 border-dashed pb-3 last:border-0 last:pb-0"
+                >
+                  <div className="b2 font-medium text-[#2D2D2D] leading-tight">
+                    {item.quantity}× {item.menuItem.name}
+                    {item.selectedOptions.length > 0 && (
+                      <div className="text-[11px] text-black/50 mt-0.5 font-normal">
+                        {item.selectedOptions.map((o) => o.name).join(", ")}
+                      </div>
+                    )}
+                    {item.specialInstructions && (
+                      <div className="text-[11px] text-black/40 mt-0.5 italic">
+                        &ldquo;{item.specialInstructions}&rdquo;
+                      </div>
+                    )}
+                  </div>
+                  <div className="b2 font-bold text-text-primary shrink-0">
+                    ₱{item.totalPrice.toFixed(2)}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="h-px bg-black/20 w-full mb-4" />
+
+            {/* total */}
+            <div className="flex justify-between items-center mb-8">
+              <h3 className="h3 font-bold text-[#2D2D2D]">Total</h3>
+              <h3 className="h3 font-bold text-[#2D2D2D]">
+                ₱{cartTotal.toFixed(2)}
+              </h3>
+            </div>
           </div>
-
-          <div className="h-px bg-black/20 w-full mb-4" />
-
-          {/* total */}
-          <div className="flex justify-between items-center mb-8">
-            <h3 className="h3 font-bold text-[#2D2D2D]">Total</h3>
-            <h3 className="h3 font-bold text-[#2D2D2D]">
-              ₱{(cartTotal * 1.12).toFixed(2)}
-            </h3>
           </div>
-
-          <Button
-            variant="primary"
-            shape="rounded"
-            className="w-full bg-brand-accent hover:opacity-90 text-white h-[56px] text-[16px] font-bold justify-center gap-2 shadow-sm active:scale-[0.98] transition-all"
-            onClick={() => {
-              // stub for download functionality. Could use html2canvas in future.
-              alert("Receipt download functionality to be implemented.");
-            }}
-          >
-            <Download size={20} />
-            Download Receipt
-          </Button>
+          <JaggedEdge />
         </div>
 
-        <JaggedEdge />
+        <Button
+          variant="primary"
+          shape="rounded"
+          className="w-full bg-brand-accent hover:opacity-90 text-white h-[56px] mt-4 text-[16px] font-bold justify-center gap-2 shadow-sm active:scale-[0.98] transition-all"
+          onClick={downloadReceipt}
+          disabled={isDownloading}
+        >
+          <Download size={20} />
+          {isDownloading ? "Downloading..." : "Download Receipt"}
+        </Button>
       </motion.div>
     </div>
   );

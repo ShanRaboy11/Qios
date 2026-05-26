@@ -9,9 +9,9 @@ export async function processScannedQr(
   qrData: string
 ) {
   const supabase = await createSupabaseServerClient();
-  
-  // accept either qr_hash or standard UUID (if qrData looks like UUID)
-  const isUUID = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(qrData.trim());
+  const normalizedQrData = qrData.trim().replace(/^Order\s*#\s*/i, "").replace(/^#\s*/, "");
+  const isUUID = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(normalizedQrData);
+  const tenantIsUUID = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(tenantId.trim());
   
   let query = supabase
     .from("orders")
@@ -44,13 +44,16 @@ export async function processScannedQr(
           )
         )
       )
-    `)
-    .eq('tenant_id', tenantId);
+    `);
+
+  if (tenantIsUUID) {
+    query = query.eq("tenant_id", tenantId.trim());
+  }
 
   if (isUUID) {
-    query = query.eq('id', qrData.trim());
+    query = query.eq("id", normalizedQrData);
   } else {
-    query = query.eq('qr_hash', qrData.trim());
+    query = query.eq("qr_hash", normalizedQrData);
   }
 
   const { data, error } = await query.maybeSingle();
@@ -73,6 +76,9 @@ export async function updateOrderFromScanner(
   actionDesc: string
 ) {
   const supabase = await createSupabaseServerClient();
+  const tenantIsUUID = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(
+    tenantId.trim(),
+  );
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Unauthorized");
@@ -86,11 +92,16 @@ export async function updateOrderFromScanner(
   const actorName = profile ? `${profile.first_name} ${profile.last_name}` : "Unknown System User";
   const actorRole = profile?.role ?? "employee";
 
-  const { error } = await supabase
+  let updateQuery = supabase
     .from("orders")
     .update({ status: newStatus })
-    .eq("id", orderId)
-    .eq("tenant_id", tenantId);
+    .eq("id", orderId);
+
+  if (tenantIsUUID) {
+    updateQuery = updateQuery.eq("tenant_id", tenantId.trim());
+  }
+
+  const { error } = await updateQuery;
 
   if (error) throw new Error(error.message);
 

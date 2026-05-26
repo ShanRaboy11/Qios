@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { useParams } from "next/navigation";
 import { Button } from "@/components/atoms/Button";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { updateOrderStatus } from "@/app/(employee)/[id]/employee/queue/actions";
@@ -26,6 +25,7 @@ interface Order {
   id: string;
   order_number: string;
   status: OrderStatus;
+  payment_status?: "unpaid" | "paid";
   created_at: string;
   table_number: string | null;
   order_type: string;
@@ -37,11 +37,16 @@ interface OrderWithPercentage extends Order {
   targetTimePercentage: number;
 }
 
-export default function KitchenPreparationDashboard() {
-  const params = useParams();
-  const tenantId = params.id as string;
+interface KitchenPreparationDashboardProps {
+  tenantId: string;
+  initialOrders: Order[];
+}
 
-  const [orders, setOrders] = useState<Order[]>([]);
+export default function KitchenPreparationDashboard({
+  tenantId,
+  initialOrders,
+}: KitchenPreparationDashboardProps) {
+  const [orders, setOrders] = useState<Order[]>(initialOrders);
   const [now, setNow] = useState(Date.now());
   const supabase = createSupabaseBrowserClient();
 
@@ -54,6 +59,7 @@ export default function KitchenPreparationDashboard() {
         id,
         order_number,
         status,
+        payment_status,
         created_at,
         table_number,
         order_type,
@@ -81,6 +87,7 @@ export default function KitchenPreparationDashboard() {
         id: d.id,
         order_number: d.order_number,
         status: d.status,
+        payment_status: d.payment_status,
         created_at: d.created_at,
         table_number: d.table_number,
         order_type: d.order_type,
@@ -190,6 +197,11 @@ export default function KitchenPreparationDashboard() {
         <div className="flex items-center gap-2">
           <span className="font-bold text-lg text-text-primary">
             #{order.order_number}
+          </span>
+          <span
+            className={`px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase tracking-wide ${order.payment_status === "paid" ? "bg-success-primary/10 text-success-primary" : "bg-amber-100 text-amber-700"}`}
+          >
+            {order.payment_status === "paid" ? "Paid" : "Unpaid"}
           </span>
         </div>
         <div
@@ -343,6 +355,7 @@ export default function KitchenPreparationDashboard() {
             </span>
           </div>
           <div className="flex flex-col gap-4 overflow-y-auto">
+            {pOrders.map(renderOrderCard)}
             {pOrders.length === 0 && (
               <div className="flex flex-col items-center gap-3 text-center p-7 rounded-[14px] bg-[#F1EFE8] border border-dashed border-[#B4B2A9]">
                 <div className="w-12 h-12 rounded-xl bg-[#D3D1C7] flex items-center justify-center">
