@@ -347,7 +347,7 @@ export function ActionConfirmationModal({
         >
           {/* ── Header ── */}
           <div className="px-7 pt-8 pb-5 flex flex-col items-center text-center">
-            {/* Icon */}
+            {/* icon */}
             <div
               className={cn(
                 "w-14 h-14 rounded-2xl flex items-center justify-center mb-4",
@@ -357,7 +357,7 @@ export function ActionConfirmationModal({
               {cfg.icon}
             </div>
 
-            {/* Badge */}
+            {/* badge */}
             {cfg.tag && (
               <div className="mb-3">
                 <Badge
@@ -370,7 +370,7 @@ export function ActionConfirmationModal({
               </div>
             )}
 
-            {/* Kicker */}
+            {/* kicker */}
             <p
               className={cn(
                 "text-[10px] font-bold uppercase tracking-[0.1em] mb-1.5",
@@ -380,12 +380,12 @@ export function ActionConfirmationModal({
               {cfg.kicker}
             </p>
 
-            {/* Title */}
+            {/* title */}
             <h3 className="text-[17px] font-semibold leading-snug text-text-primary mb-2">
               {resolvedTitle}
             </h3>
 
-            {/* Description */}
+            {/* description */}
             <p className="text-[12.5px] leading-relaxed text-text-secondary">
               {resolvedMessage}
             </p>

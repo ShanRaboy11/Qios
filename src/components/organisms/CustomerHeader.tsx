@@ -5,12 +5,12 @@ import { Search, User, ChevronLeft, ShoppingBag } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FormField } from "@/components/molecules/FormField";
 import { useTenantBranding } from "@/components/providers/TenantBrandingProvider";
-import { useCart } from "@/contexts/CartContext"; // Dynamic interface consumption
+import { useCart } from "@/contexts/CartContext"; // dynamic interface consumption
 
 export interface CustomerHeaderProps {
   isCategoryView?: boolean;
   onBack?: () => void;
-  onCartClick?: () => void; // Added tracking signature property
+  onCartClick?: () => void; // added tracking signature property
   onProfileClick?: () => void;
   searchQuery?: string;
   onSearchChange?: (val: string) => void;
@@ -31,7 +31,7 @@ export const CustomerHeader = ({
   onSearchChange,
 }: CustomerHeaderProps) => {
   const { branding } = useTenantBranding();
-  const { itemCount } = useCart(); // Read the real-time calculated context counter
+  const { itemCount } = useCart(); // read the real-time calculated context counter
 
   const [greeting, setGreeting] = React.useState("Good Morning!");
   const [subGreeting, setSubGreeting] = React.useState("Rise and Shine! It's Breakfast Time");
@@ -56,7 +56,7 @@ export const CustomerHeader = ({
       transition={smoothTransition}
       className="w-full px-6 pt-12 pb-6 sticky top-0 z-30 backdrop-blur-md"
     >
-      {/* Top action row */}
+      {/* top action row */}
       <motion.div
         layout
         transition={smoothTransition}
@@ -135,7 +135,7 @@ export const CustomerHeader = ({
         </motion.button>
       </motion.div>
 
-      {/* Greeting text blocks layout template */}
+      {/* greeting text blocks layout template */}
       <AnimatePresence mode="wait">
         {!isCategoryView && (
           <motion.div

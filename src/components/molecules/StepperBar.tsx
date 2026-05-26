@@ -58,12 +58,12 @@ export const StepperBar = ({
                 orientation === "vertical" && "pb-8  relative",
               )}
             >
-              {/* Connector Line (Vertical) */}
+              {/* connector Line (Vertical) */}
               {orientation === "vertical" && !isLast && (
                 <div className="absolute left-6 top-12 bottom-0 w-[2px] border-l-2 border-dashed border-brand-accent/50" />
               )}
 
-              {/* Step Icon Atom */}
+              {/* step Icon Atom */}
               <div
                 className={cn(
                   "size-12 rounded-full flex items-center justify-center transition-all duration-300 z-10",
@@ -77,7 +77,7 @@ export const StepperBar = ({
                 {status === "complete" ? <Check size={20} /> : step.icon}
               </div>
 
-              {/* Step Label */}
+              {/* step Label */}
               <span
                 className={cn(
                   "b2 font-medium transition-colors duration-300",
@@ -89,7 +89,7 @@ export const StepperBar = ({
                 {step.label}
               </span>
 
-              {/* Connector Line (Horizontal) */}
+              {/* connector Line (Horizontal) */}
               {orientation === "horizontal" && !isLast && (
                 <div className="w-16 border-t-2 border-dashed border-brand-accent/30 mx-2" />
               )}

@@ -118,7 +118,7 @@ export const ThresholdSettingsPanel = () => {
     });
   }, [items]);
 
-  // Derived statistics
+  // derived statistics
   const stats = useMemo(() => {
     let critical = 0;
     let low = 0;
@@ -153,7 +153,7 @@ export const ThresholdSettingsPanel = () => {
     });
   }, [items, statusFilter]);
 
-  // Group by category
+  // group by category
   const groupedItems = useMemo(() => {
     const groups: Record<string, IngredientData[]> = {};
     filteredItems.forEach((item) => {
@@ -165,7 +165,7 @@ export const ThresholdSettingsPanel = () => {
 
   return (
     <div className="w-full flex flex-col gap-6 md:gap-10">
-      {/* Overview Cards */}
+      {/* overview Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard
           title="TOTAL STOCKS"
@@ -197,9 +197,9 @@ export const ThresholdSettingsPanel = () => {
         />
       </div>
 
-      {/* Threshold Settings Panel */}
+      {/* threshold Settings Panel */}
       <div className="bg-white rounded-[24px] border border-[#E5E5E5] overflow-hidden shadow-sm">
-        {/* Header */}
+        {/* header */}
         <div className="bg-brand-primary/10 flex flex-col md:flex-row items-start md:items-center justify-between p-4 md:p-6 gap-4 border-b border-[#E5E5E5]">
           <div>
             <h2 className="text-lg md:text-xl font-extrabold text-text-primary tracking-wide">
@@ -216,10 +216,10 @@ export const ThresholdSettingsPanel = () => {
           />
         </div>
 
-        {/* Responsive Table Wrapper */}
+        {/* responsive Table Wrapper */}
         <div className="w-full p-4 md:p-6">
           <div className="flex flex-col gap-6">
-            {/* Table Header (Desktop Only) */}
+            {/* table Header (Desktop Only) */}
             <div className="hidden md:grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr] items-center gap-6 px-4 pb-2 border-b-2 border-[#E5E5E5]">
               <span className="b5 font-bold text-text-secondary uppercase tracking-wider">
                 INGREDIENT
@@ -238,7 +238,7 @@ export const ThresholdSettingsPanel = () => {
               </span>
             </div>
 
-            {/* Grouped Table Body */}
+            {/* grouped Table Body */}
             {Object.keys(groupedItems).length === 0 ? (
               <div className="py-10 text-center text-text-tertiary b3">
                 No ingredients found for this filter.
@@ -271,7 +271,7 @@ export const ThresholdSettingsPanel = () => {
           </div>
         </div>
 
-        {/* Footer actions */}
+        {/* footer actions */}
         <div className="p-4 md:p-6 border-t border-[#E5E5E5] flex flex-col md:flex-row justify-end gap-4 md:items-center bg-slate-50">
           <Button
             variant="ghost"

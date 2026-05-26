@@ -5,7 +5,7 @@ const IV_LENGTH = 16;
 
 const getSecretKey = () => {
   const secret = process.env.ENCRYPTION_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || 'qios-fallback-secret-do-not-use-in-prod';
-  // Use SHA-256 to ensure we have exactly 32 bytes for the AES-256-CBC key
+  // use SHA-256 to ensure we have exactly 32 bytes for the AES-256-CBC key
   return crypto.createHash('sha256').update(String(secret)).digest();
 };
 

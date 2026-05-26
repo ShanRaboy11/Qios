@@ -40,13 +40,13 @@ export function OnboardingSidebar({ steps, currentStep }: SidebarProps) {
   return (
     <div
       className={cn(
-        // FIXED: Removed 'sticky' and 'top' classes.
-        // Added 'lg:min-h-screen' and 'lg:self-stretch' to ensure background stretches to footer.
+        // fIXED: Removed 'sticky' and 'top' classes.
+        // added 'lg:min-h-screen' and 'lg:self-stretch' to ensure background stretches to footer.
 "       w-full lg:w-[45%] xl:w-[55%] h-auto lg:min-h-screen lg:self-stretch lg:-mt-[72px] relative z-40 overflow-hidden",        "flex flex-col justify-center items-center px-6 py-12 lg:py-24",
         "bg-gradient-to-br from-[#FFF5E9] via-[#FFD8B1] to-[#FFCC99] border-b lg:border-b-0 lg:border-r border-orange-200",
       )}
     >
-      {/* BACKGROUND ELEMENTS */}
+      {/* bACKGROUND ELEMENTS */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div
           className="absolute -top-[5%] -left-[5%] w-[80%] h-[80%] rounded-full opacity-40 blur-[120px] animate-pulse"
@@ -126,7 +126,7 @@ export function OnboardingSidebar({ steps, currentStep }: SidebarProps) {
         }
       `}</style>
 
-      {/* CONTENT LOGIC */}
+      {/* cONTENT LOGIC */}
       <div className="flex flex-row lg:flex-col gap-4 md:gap-12 lg:gap-12 relative justify-center items-center z-10">
         {steps.map((step, index) => {
           const isDone = currentStep > step.id;
@@ -137,7 +137,7 @@ export function OnboardingSidebar({ steps, currentStep }: SidebarProps) {
               key={step.id}
               className="relative flex flex-col lg:flex-row items-center gap-2 lg:gap-10 lg:w-[320px]"
             >
-              {/* CONNECTOR LINES */}
+              {/* cONNECTOR LINES */}
               {index !== steps.length - 1 && (
                 <>
                   <div
@@ -160,7 +160,7 @@ export function OnboardingSidebar({ steps, currentStep }: SidebarProps) {
                 </>
               )}
 
-              {/* ICON CIRCLE */}
+              {/* iCON CIRCLE */}
               <div
                 className={cn(
                   "w-10 h-10 lg:w-20 lg:h-20 rounded-full flex items-center justify-center z-10 transition-all duration-500 border-2 lg:border-4 shrink-0",
@@ -178,7 +178,7 @@ export function OnboardingSidebar({ steps, currentStep }: SidebarProps) {
                 )}
               </div>
 
-              {/* STEP TITLE */}
+              {/* sTEP TITLE */}
               <span
                 className={cn(
                   "hidden sm:block whitespace-nowrap transition-colors text-[10px] lg:text-xl font-figtree",

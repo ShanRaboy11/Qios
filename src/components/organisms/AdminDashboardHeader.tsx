@@ -12,13 +12,13 @@ export const AdminDashboardHeader = ({
 }: AdminDashboardHeaderProps) => {
   return (
     <div className="w-full relative overflow-hidden rounded-[24px] p-6 md:p-10 mb-6 bg-gradient-to-r from-[#F9C379] to-[#F28C50]">
-      {/* Abstract Background Bubbles */}
+      {/* abstract Background Bubbles */}
       <div className="absolute top-0 left-0 w-32 h-32 bg-white/20 rounded-full blur-[2px] -translate-x-10 -translate-y-10" />
       <div className="absolute bottom-0 right-0 w-48 h-48 bg-white/30 rounded-full blur-[5px] translate-x-10 translate-y-10" />
       <div className="absolute top-1/2 right-1/4 w-24 h-24 bg-[#FF7D40]/30 rounded-full blur-[8px]" />
 
       <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-        {/* Text Section */}
+        {/* text Section */}
         <div>
           <h1 className="h2 text-text-primary leading-tight mb-2">
             Welcome Back, Admin
@@ -30,7 +30,7 @@ export const AdminDashboardHeader = ({
           </p>
         </div>
 
-        {/* Buttons Section */}
+        {/* buttons Section */}
         <div className="flex items-center gap-3">
           <button
             onClick={onCompaniesClick}

@@ -50,7 +50,7 @@ export const AdminSettings = () => {
 
   return (
     <div className="flex flex-col md:flex-row gap-6 md:gap-8 min-h-[600px]">
-      {/* Sidebar */}
+      {/* sidebar */}
       <div className="w-full md:w-64 flex-shrink-0 flex flex-col gap-2">
         {tabs.map((tab) => {
           const Icon = tab.icon;
@@ -81,7 +81,7 @@ export const AdminSettings = () => {
         })}
       </div>
 
-      {/* Content Area */}
+      {/* content Area */}
       <div className="flex-1 bg-white rounded-[24px] shadow-sm border border-gray-100 p-6 md:p-8 overflow-hidden">
         {activeTab === "account" && <AccountSettings />}
         {activeTab === "platform" && <PlatformSettings />}
@@ -172,7 +172,7 @@ const AccountSettings = () => {
       </div>
 
       <div className="space-y-6">
-        {/* Profile Information */}
+        {/* profile Information */}
         <div className="space-y-4">
           <SectionHeader
             title="Profile Information"
@@ -220,7 +220,7 @@ const AccountSettings = () => {
           </div>
         </div>
 
-        {/* Preferences */}
+        {/* preferences */}
         <div className="space-y-4">
           <SectionHeader
             title="Preferences"
@@ -318,13 +318,13 @@ const PlatformSettings = () => {
     loadSettings();
   }, [supabase]);
 
-  // Inside PlatformSettings -> handleSave
+  // inside PlatformSettings -> handleSave
   const handleSave = async () => {
     setShowConfirmModal(false);
     setSaving(true);
     const { data: userData } = await supabase.auth.getUser();
 
-    // Get current user profile for their name
+    // get current user profile for their name
     const { data: profile } = await supabase
       .from("profiles")
       .select("full_name")
@@ -379,7 +379,7 @@ const PlatformSettings = () => {
       </div>
 
       <div className="space-y-6">
-        {/* General */}
+        {/* general */}
         <div className="space-y-4">
           <SectionHeader
             title="General Settings"
@@ -410,7 +410,7 @@ const PlatformSettings = () => {
           </div>
         </div>
 
-        {/* Tenant Defaults */}
+        {/* tenant Defaults */}
         <div className="space-y-4">
           <SectionHeader
             title="Tenant Defaults"
@@ -448,7 +448,7 @@ const PlatformSettings = () => {
           </div>
         </div>
 
-        {/* Maintenance */}
+        {/* maintenance */}
         <div className="space-y-4">
           <SectionHeader
             title="System Status"
@@ -692,7 +692,7 @@ const SecuritySettings = () => {
 
   useEffect(() => {
     async function loadSettings() {
-      // Load platform settings
+      // load platform settings
       const { data } = await supabase
         .from("platform_settings")
         .select("password_min_length, session_timeout_hours")
@@ -703,7 +703,7 @@ const SecuritySettings = () => {
         setSessionTimeoutHours(data.session_timeout_hours?.toString() || "24");
       }
 
-      // Load active sessions
+      // load active sessions
       const { data: sessionData } = await supabase.auth.getSession();
       if (sessionData?.session) {
         setCurrentSessionId(sessionData.session.id);
@@ -714,7 +714,7 @@ const SecuritySettings = () => {
       console.log("Sessions fetch result:", { mySessions, sessionFetchError });
 
       if (mySessions) {
-        // Sort current session first
+        // sort current session first
         const sortedSessions = [...mySessions].sort((a, b) => {
           if (a.id === sessionData?.session?.id) return -1;
           if (b.id === sessionData?.session?.id) return 1;
@@ -832,7 +832,7 @@ const SecuritySettings = () => {
       </div>
 
       <div className="space-y-6">
-        {/* Policies */}
+        {/* policies */}
         <div className="space-y-4">
           <SectionHeader
             title="Password Policies"
@@ -864,7 +864,7 @@ const SecuritySettings = () => {
           </div>
         </div>
 
-        {/* Sessions */}
+        {/* sessions */}
         <div className="space-y-4 pt-2">
           <SectionHeader
             title="Your Active Sessions"
@@ -876,7 +876,7 @@ const SecuritySettings = () => {
                 const isActive = session.id === currentSessionId;
                 const { deviceText, icon } = parseUserAgent(session.user_agent);
 
-                // Keep time relatively simple for this display
+                // keep time relatively simple for this display
                 const lastUpdated = new Date(session.updated_at);
                 const timeStr = isActive
                   ? "Current Session"

@@ -36,12 +36,12 @@ export const Dropdown = ({
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Compute selected option based on controlled value
+  // compute selected option based on controlled value
   const selectedOption = React.useMemo(() => {
     return options.find((opt) => opt.value === value) || null;
   }, [value, options]);
 
-  // Close when clicking outside
+  // close when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -68,7 +68,7 @@ export const Dropdown = ({
         className,
       )}
     >
-      {/* Label */}
+      {/* label */}
       <label
         className={cn(
           "b4 ml-1 font-medium transition-colors",
@@ -79,7 +79,7 @@ export const Dropdown = ({
         {label}
       </label>
 
-      {/* Trigger Button - Reusing Input styles logic */}
+      {/* trigger Button - Reusing Input styles logic */}
       <div
         className="relative group cursor-pointer"
         onClick={() => setIsOpen(!isOpen)}
@@ -110,7 +110,7 @@ export const Dropdown = ({
         />
       </div>
 
-      {/* Flexible Dropdown List */}
+      {/* flexible Dropdown List */}
       {isOpen && (
         <div
           className={cn(
@@ -143,7 +143,7 @@ export const Dropdown = ({
         </div>
       )}
 
-      {/* Supportive Text */}
+      {/* supportive Text */}
       {supportiveText && (
         <span
           className={cn(

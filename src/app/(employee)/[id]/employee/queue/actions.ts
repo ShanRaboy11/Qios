@@ -11,7 +11,7 @@ export async function updateOrderStatus(
 ) {
   const supabase = await createSupabaseServerClient();
 
-  // Get current user and profile for logging
+  // get current user and profile for logging
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     throw new Error("Unauthorized");
@@ -42,7 +42,7 @@ export async function updateOrderStatus(
     throw new Error(error.message);
   }
 
-  // Log activity
+  // log activity
   await logActivity({
     actorId: user.id,
     actorName,

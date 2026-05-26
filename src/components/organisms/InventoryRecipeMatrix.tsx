@@ -1,4 +1,4 @@
-"use client";
+"use client"; //hehe
 
 import React, { useState } from "react";
 import { TabGroup } from "@/components/molecules/TabGroup";
@@ -15,7 +15,7 @@ export const InventoryRecipeMatrix = () => {
 
   return (
     <div className="w-full max-w-[1280px] mx-auto min-h-screen p-4 md:p-8 bg-[#FAF7F2] font-inter">
-      {/* Header */}
+      {/* header */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 md:mb-8 gap-6 md:gap-0">
         <h1 className="text-[28px] md:text-[32px] font-extrabold text-text-primary tracking-tight">
           Inventory & Recipe Matrix
@@ -29,7 +29,7 @@ export const InventoryRecipeMatrix = () => {
         </div>
       </div>
 
-      {/* Main Content Area */}
+      {/* main Content Area */}
       <div className="w-full">
         {activeTab === "recipe" && <RecipeMatrixView />}
         {activeTab === "threshold" && <ThresholdSettingsPanel />}

@@ -44,7 +44,7 @@ export const FeatureToggle = ({
       )}
     >
       <div className="flex flex-col gap-0.5 select-none">
-        {/* Feature Name */}
+        {/* feature Name */}
         <span
           className={cn(
             "b2 font-bold transition-colors duration-300",
@@ -54,7 +54,7 @@ export const FeatureToggle = ({
           {label}
         </span>
 
-        {/* Optional Description */}
+        {/* optional Description */}
         {description && (
           <span
             className={cn(

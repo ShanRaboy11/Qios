@@ -108,7 +108,7 @@ export async function placeOrder(
         .insert(orderItemModifiers);
 
       if (modifiersError) {
-        // Non-fatal: order is still valid; log and continue
+        // non-fatal: order is still valid; log and continue
         console.error("Failed to insert order item modifiers:", modifiersError);
       }
     }

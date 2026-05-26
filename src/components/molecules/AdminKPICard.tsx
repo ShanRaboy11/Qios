@@ -8,11 +8,11 @@ interface AdminKPICardProps {
   title: string;
   value: string | number;
   percentage: string;
-  badgeColor?: AdminKPIBadgeColor; // Optional, defaults to green
+  badgeColor?: AdminKPIBadgeColor; // optional, defaults to green
   icon: React.ReactNode;
   color: AdminKPIColor;
   className?: string;
-  chartData?: number[]; // Dummy array to represent heights 1-10
+  chartData?: number[]; // dummy array to represent heights 1-10
 }
 
 export const AdminKPICard = ({
@@ -29,7 +29,7 @@ export const AdminKPICard = ({
     pink: "bg-[#FFEDED] text-[#FF5269]",
     yellow: "bg-[#FFF8DF] text-[#FFB020]",
     green: "bg-[#E6FFE6] text-[#22C55E]",
-    red: "bg-[#FFEDED] text-[#EF4444]", // Reuse pink bg for red icon usually
+    red: "bg-[#FFEDED] text-[#EF4444]", // reuse pink bg for red icon usually
   };
 
   const chartColorStyles = {
@@ -75,7 +75,7 @@ export const AdminKPICard = ({
           </span>
         </div>
 
-        {/* Mini Bar Chart */}
+        {/* mini Bar Chart */}
         <div className="hidden md:flex items-end gap-1 h-8">
           {chartData.map((height, i) => (
             <div

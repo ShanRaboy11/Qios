@@ -75,7 +75,7 @@ export const Toggle = ({
     >
       <span className="sr-only">Toggle switch</span>
 
-      {/* Background Text */}
+      {/* background Text */}
       {showText && (
         <span
           className={cn(
@@ -102,7 +102,7 @@ export const Toggle = ({
         </span>
       )}
 
-      {/* Thumb */}
+      {/* thumb */}
       <span
         className={cn(
           "absolute flex items-center justify-center h-6 w-6 rounded-full bg-white transition-transform duration-300 transform shadow-md",

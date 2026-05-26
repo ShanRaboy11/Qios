@@ -55,7 +55,7 @@ export const ModifierRow = ({
         </div>
       </div>
 
-      {/* Price / Status Tag */}
+      {/* price / Status Tag */}
       {priceTag && (
         <span
           className={cn(

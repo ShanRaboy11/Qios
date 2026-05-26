@@ -18,7 +18,7 @@ export function ContactInformation({
   onVerified,
   onBack,
 }: ContactInformationProps) {
-  // Timer starts immediately as the code is sent during the transition from Step 1
+  // timer starts immediately as the code is sent during the transition from Step 1
   const [isTimerRunning, setIsTimerRunning] = useState(true);
   const [timeLeft, setTimeLeft] = useState(45);
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
@@ -89,7 +89,7 @@ export function ContactInformation({
   return (
     /* items-center centers the content horizontally */
     <div className="flex flex-col items-center w-full space-y-10 animate-in fade-in slide-in-from-right-8 duration-500 ">
-      {/* Timer and OTP */}
+      {/* timer and OTP */}
       <div className="flex flex-col items-center w-full max-w-[550px] space-y-12 pt-4">
         <div className="flex items-center gap-5">
           <div className="flex items-center gap-2 b2 font-bold text-text-primary text-xl">
@@ -121,9 +121,9 @@ export function ContactInformation({
           <p className="text-sm text-red-500 text-center">{localError}</p>
         )}
 
-        {/* Verification code is not displayed in any environment for security. */}
+        {/* verification code is not displayed in any environment for security. */}
 
-        {/* OTP Inputs */}
+        {/* oTP Inputs */}
         <div className="flex gap-4 justify-center">
           {otp.map((digit, i) => (
             <input

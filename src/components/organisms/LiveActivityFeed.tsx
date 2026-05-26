@@ -25,12 +25,12 @@ export const LiveActivityFeed = ({ activities }: LiveActivityFeedProps) => {
       <div className="p-6 overflow-y-auto flex-1 space-y-6 max-h-[500px]">
         {activities.map((activity, idx) => (
           <div key={activity.id} className="relative flex gap-4">
-            {/* Timeline Line */}
+            {/* timeline Line */}
             {idx !== activities.length - 1 && (
               <div className="absolute left-[5px] top-[14px] bottom-[-24px] w-px bg-gray-100" />
             )}
 
-            {/* Status Dot */}
+            {/* status Dot */}
             <div
               className={cn(
                 "w-2.5 h-2.5 rounded-full mt-1.5 z-10 flex-shrink-0 ring-4 ring-white",
@@ -42,7 +42,7 @@ export const LiveActivityFeed = ({ activities }: LiveActivityFeedProps) => {
               )}
             />
 
-            {/* Content */}
+            {/* content */}
             <div className="flex-1">
               <p className="text-[13px] text-text-secondary leading-snug">
                 <span className="font-bold text-text-primary">

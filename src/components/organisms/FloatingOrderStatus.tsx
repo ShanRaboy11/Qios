@@ -28,7 +28,7 @@ const STEPS = [
 
 export const FloatingOrderStatus = () => {
   const { isOrderPlaced, setIsOrderPlaced, cartTotal, currency } = useCart();
-  const [currentStep, setCurrentStep] = useState(0); // Start at Pending Payment
+  const [currentStep, setCurrentStep] = useState(0); // start at Pending Payment
   const [isExpanded, setIsExpanded] = useState(false);
   const [isReadyNotified, setIsReadyNotified] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
@@ -40,13 +40,13 @@ export const FloatingOrderStatus = () => {
     }
   }, [isOrderPlaced]);
 
-  // Remove the setInterval auto-progress simulator for actual production.
-  // We'll leave the Ready Notification effect in place so if it ever hits step 3 it works.
+  // remove the setInterval auto-progress simulator for actual production.
+  // we'll leave the Ready Notification effect in place so if it ever hits step 3 it works.
 
   useEffect(() => {
     if (currentStep === 3) {
       setIsReadyNotified(true);
-      if (!isExpanded) setIsExpanded(true); // Auto expand when ready!
+      if (!isExpanded) setIsExpanded(true); // auto expand when ready!
       if (typeof window !== "undefined" && window.navigator && window.navigator.vibrate) {
         window.navigator.vibrate([200, 100, 200]);
       }
@@ -64,7 +64,7 @@ export const FloatingOrderStatus = () => {
     <div className="fixed bottom-6 left-0 right-0 z-[100] px-4 pointer-events-none flex justify-center">
       <AnimatePresence mode="wait">
         {!isExpanded ? (
-          // COLLAPSED PILL STATE
+          // cOLLAPSED PILL STATE
           <motion.div
             key="collapsed"
             initial={{ y: 50, opacity: 0 }}
@@ -75,7 +75,7 @@ export const FloatingOrderStatus = () => {
             onClick={() => setIsExpanded(true)}
             className="pointer-events-auto bg-white/90 backdrop-blur-xl border border-white shadow-[0_8px_30px_rgb(0,0,0,0.12)] rounded-full px-5 py-3 flex items-center gap-4 cursor-pointer relative overflow-hidden max-w-sm w-full"
           >
-            {/* Progress Bar background in pill */}
+            {/* progress Bar background in pill */}
             <div className="absolute bottom-0 left-0 h-1 bg-brand-primary transition-all duration-500 ease-out" style={{ width: `${progress}%` }} />
             
             <div className={cn(
@@ -95,7 +95,7 @@ export const FloatingOrderStatus = () => {
             <ChevronUp size={20} className="text-gray-400" />
           </motion.div>
         ) : (
-          // EXPANDED CARD STATE
+          // eXPANDED CARD STATE
           <motion.div
             key="expanded"
             initial={{ y: 50, opacity: 0, scale: 0.95 }}
@@ -103,7 +103,7 @@ export const FloatingOrderStatus = () => {
             exit={{ y: 50, opacity: 0, scale: 0.95 }}
             className="pointer-events-auto w-full max-w-md bg-white rounded-[32px] shadow-[0_20px_40px_rgb(0,0,0,0.15)] border border-gray-100 overflow-hidden font-brand-secondary"
           >
-            {/* Header: Order & Total (Requested by User) */}
+            {/* header: Order & Total (Requested by User) */}
             <div className="bg-bg-primary p-6 pb-5 relative">
               <button 
                 onClick={() => setIsExpanded(false)}
@@ -124,11 +124,11 @@ export const FloatingOrderStatus = () => {
               </div>
             </div>
 
-            {/* Main Status Content */}
+            {/* main Status Content */}
             <div className="p-6 bg-white relative">
               <AnimatePresence mode="wait">
                 {isReadyNotified ? (
-                  // Ready Notification State
+                  // ready Notification State
                   <motion.div
                     key="ready"
                     initial={{ scale: 0.9, opacity: 0 }}
@@ -151,7 +151,7 @@ export const FloatingOrderStatus = () => {
                     <p className="text-white/90 text-sm font-brand-secondary">Please present your receipt at the counter.</p>
                   </motion.div>
                 ) : (
-                  // Horizontal StepperBar State
+                  // horizontal StepperBar State
                   <motion.div
                     key="stepper"
                     initial={{ opacity: 0 }}
@@ -164,7 +164,7 @@ export const FloatingOrderStatus = () => {
                       Est. Time: 12 min
                     </div>
                     
-                    {/* Horizontal StepperBar wrapper to handle overflow cleanly on mobile */}
+                    {/* horizontal StepperBar wrapper to handle overflow cleanly on mobile */}
                     <div className="w-full overflow-x-auto pb-4 scrollbar-hide">
                       <div className="min-w-[300px]">
                         <StepperBar 

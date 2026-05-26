@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 // ---------------------------------------------------------------------------
-// Auth helper – verifies the bearer token and requires super_admin role
+// auth helper – verifies the bearer token and requires super_admin role
 // ---------------------------------------------------------------------------
 async function requireSuperAdmin(
   admin: ReturnType<typeof createSupabaseAdminClient>,
@@ -37,9 +37,9 @@ async function requireSuperAdmin(
 }
 
 // ---------------------------------------------------------------------------
-// GET /api/admin/system-activity
+// gET /api/admin/system-activity
 //
-// Query params:
+// query params:
 //   search  – free-text on actor_name, description, target_tenant_name
 //   role    – exact actor_role ("All Roles" = no filter)
 //   date    – ISO date "YYYY-MM-DD" to filter to that calendar day (UTC)
@@ -107,8 +107,8 @@ export async function GET(req: NextRequest) {
 }
 
 // ---------------------------------------------------------------------------
-// POST /api/admin/system-activity
-// Body: { actor_id?, actor_name, actor_role, action_type, description,
+// pOST /api/admin/system-activity
+// body: { actor_id?, actor_name, actor_role, action_type, description,
 //         target_tenant_id?, target_tenant_name?, metadata? }
 // ---------------------------------------------------------------------------
 export async function POST(req: NextRequest) {

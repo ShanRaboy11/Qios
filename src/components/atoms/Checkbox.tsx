@@ -55,7 +55,7 @@ export const Checkbox = ({
           {...props}
         />
 
-        {/* Box */}
+        {/* box */}
         <span
           className={cn(
             "flex items-center justify-center h-5 w-5 shrink-0 rounded-[4px] border bg-white transition-all duration-200",
@@ -89,7 +89,7 @@ export const Checkbox = ({
           )}
         </span>
 
-        {/* Label */}
+        {/* label */}
         {label && (
           <span
             className={cn(

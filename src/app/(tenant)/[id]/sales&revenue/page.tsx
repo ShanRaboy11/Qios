@@ -256,7 +256,7 @@ export default function SalesRevenueSuite() {
               </div>
             </div>
 
-            {/* GRAPH SECTION */}
+            {/* gRAPH SECTION */}
             <div className="relative h-[220px] md:h-[280px] mb-2">
               <div className="absolute left-0 h-full flex flex-col justify-between b4 font-medium text-gray-400 z-0 pointer-events-none">
                 {["$8.8m", "$8.6m", "$8.4m", "$8.2m", "$8m"].map((v) => (
@@ -277,14 +277,14 @@ export default function SalesRevenueSuite() {
                 ))}
               </div>
 
-              {/* Grid Lines */}
+              {/* grid Lines */}
               <div className="absolute inset-x-10 md:inset-x-12 top-0 h-full flex flex-col justify-between pointer-events-none z-0">
                 {[...Array(5)].map((_, i) => (
                   <div key={i} className="w-full border-t border-gray-100" />
                 ))}
               </div>
 
-              {/* Bars Container */}
+              {/* bars Container */}
               <div className="absolute inset-x-10 md:inset-x-12 top-0 h-full flex items-center justify-between px-1 sm:px-4 z-10">
                 {CHART_DATA.map((item) => (
                   <div
@@ -343,7 +343,7 @@ export default function SalesRevenueSuite() {
               </div>
             </div>
 
-            {/* Month labels alignment */}
+            {/* month labels alignment */}
             <div className="flex justify-between items-center px-10 md:px-[4.5rem] mb-8">
               {CHART_DATA.map((item) => (
                 <div key={item.month} className="flex-1 text-center">
@@ -361,7 +361,7 @@ export default function SalesRevenueSuite() {
               ))}
             </div>
 
-            {/* Legend */}
+            {/* legend */}
             <div className="flex flex-wrap justify-center gap-4 sm:gap-8">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 bg-[#FFD77A] rounded-full" />

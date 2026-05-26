@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import MenuInventory from "@/components/organisms/MenuInventory";
 import IngredientsInventory from "@/components/organisms/IngredientsInventory";
 
 export default function InventoryPage() {
@@ -16,7 +15,6 @@ export default function InventoryPage() {
         </div>
       </div>
       <div className="flex flex-col gap-8 w-full">
-        <MenuInventory />
         <IngredientsInventory />
       </div>
     </>

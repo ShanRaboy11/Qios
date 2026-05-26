@@ -106,7 +106,7 @@ export function PrepCard({ order, onAdvance, index = 0, now }: PrepCardProps) {
         animationDelay: `${index * 70}ms`,
       }}
     >
-      {/* Decorative blob */}
+      {/* decorative blob */}
       <div
         aria-hidden
         className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full opacity-30 blur-2xl"
@@ -120,7 +120,7 @@ export function PrepCard({ order, onAdvance, index = 0, now }: PrepCardProps) {
         <div className="flex flex-col gap-4 flex-1">
           {/* ── Header row ── */}
           <div className="flex items-start justify-between gap-3">
-            {/* Order ID + table */}
+            {/* order ID + table */}
             <div className="flex flex-col gap-0.5">
               <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--kds-muted)]">
                 Order
@@ -133,7 +133,7 @@ export function PrepCard({ order, onAdvance, index = 0, now }: PrepCardProps) {
               </p>
             </div>
 
-            {/* Timer badge */}
+            {/* timer badge */}
             <div
               className={cn(
                 "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-bold tabular-nums",
@@ -197,7 +197,7 @@ export function PrepCard({ order, onAdvance, index = 0, now }: PrepCardProps) {
           <ul className="flex flex-col gap-2">
             {order.items.map((item, i) => (
               <li key={i} className="flex items-center gap-2.5">
-                {/* Dish image with emoji fallback */}
+                {/* dish image with emoji fallback */}
                 <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-xl bg-[var(--kds-gold-soft)]">
                   <span className="absolute inset-0 flex items-center justify-center text-xl leading-none select-none">
                     {item.emoji ?? "🍽️"}

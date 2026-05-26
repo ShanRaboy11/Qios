@@ -21,25 +21,25 @@ export function RegistrationSuccessModal({
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg max-w-md w-full p-8 animate-in fade-in zoom-in-95 duration-300">
-        {/* Success Icon */}
+        {/* success Icon */}
         <div className="flex justify-center mb-6">
           <div className="bg-green-100 rounded-full p-4">
             <CheckCircle2 className="w-12 h-12 text-green-600" />
           </div>
         </div>
 
-        {/* Title */}
+        {/* title */}
         <h2 className="text-2xl font-bold text-center text-gray-900 mb-4">
           Registration Successful!
         </h2>
 
-        {/* Description */}
+        {/* description */}
         <p className="text-center text-gray-600 mb-6 leading-relaxed">
           Thank you, <span className="font-semibold">{adminName}</span>. Your
           registration has been successfully submitted.
         </p>
 
-        {/* Info Card 1: Email Sent */}
+        {/* info Card 1: Email Sent */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
           <div className="flex items-start gap-3">
             <Mail className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
@@ -54,7 +54,7 @@ export function RegistrationSuccessModal({
           </div>
         </div>
 
-        {/* Info Card 2: Verification Timeline */}
+        {/* info Card 2: Verification Timeline */}
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
           <div className="flex items-start gap-3">
             <Clock className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
@@ -73,7 +73,7 @@ export function RegistrationSuccessModal({
           </div>
         </div>
 
-        {/* Message */}
+        {/* message */}
         <p className="text-center text-sm text-gray-600 mb-6">
           We'll notify you via email as soon as your registration is approved or
           if we need any additional information.{" "}
@@ -82,7 +82,7 @@ export function RegistrationSuccessModal({
           </span>
         </p>
 
-        {/* Action Buttons */}
+        {/* action Buttons */}
         <div className="flex flex-col gap-3">
           <Button
             variant="primary"

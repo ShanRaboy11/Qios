@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
-// Define your types mirroring the component's types
+// define your types mirroring the component's types
 export interface Category {
   id: string;
   name: string;
@@ -23,6 +23,13 @@ export interface Size {
   price: string;
 }
 
+export interface RecipeIngredient {
+  inventory_item_id: string;
+  quantity_required: number;
+  name?: string;
+  unit_type?: string;
+}
+
 export interface MenuItem {
   id: string;
   categoryId: string;
@@ -34,6 +41,7 @@ export interface MenuItem {
   addons: Addon[];
   sizes: Size[];
   image?: string;
+  recipe?: RecipeIngredient[];
 }
 
 export const useMenuManagement = () => {
@@ -81,24 +89,37 @@ export const useMenuManagement = () => {
     return profile.tenant_id;
   };
 
-  // Fetch initial data
+  // fetch initial data
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
         const tenantId = await getCurrentTenantId();
 
-        const [catsRes, itemsRes] = await Promise.all([
+        const [catsRes, itemsRes, recipeRes] = await Promise.all([
           supabase
             .from("categories")
             .select("*")
             .eq("tenant_id", tenantId)
             .order("display_order"),
           supabase.from("menu_items").select("*").eq("tenant_id", tenantId),
+          supabase.from("recipe_matrix").select("menu_item_id, inventory_item_id, quantity_required, inventory_items(name, unit_type)").eq("tenant_id", tenantId),
         ]);
 
         if (catsRes.error) throw catsRes.error;
         if (itemsRes.error) throw itemsRes.error;
+        if (recipeRes.error) throw recipeRes.error;
+
+        const recipesByMenuItem = recipeRes.data?.reduce((acc: any, row: any) => {
+          if (!acc[row.menu_item_id]) acc[row.menu_item_id] = [];
+          acc[row.menu_item_id].push({
+            inventory_item_id: row.inventory_item_id,
+            quantity_required: row.quantity_required,
+            name: row.inventory_items?.name,
+            unit_type: row.inventory_items?.unit_type,
+          });
+          return acc;
+        }, {});
 
         setCategories(
           catsRes.data.map((c: any) => ({
@@ -124,6 +145,7 @@ export const useMenuManagement = () => {
             sizes:
               typeof i.sizes === "string" ? JSON.parse(i.sizes) : i.sizes || [],
             image: i.image_url || undefined,
+            recipe: recipesByMenuItem?.[i.id] || [],
           })),
         );
       } catch (err) {
@@ -253,8 +275,26 @@ export const useMenuManagement = () => {
           .single();
 
         if (error) throw error;
+        
+        const itemId = data.id;
+        
+        if (draftItem.recipe !== undefined) {
+          const { error: deleteError } = await supabase.from("recipe_matrix").delete().eq("tenant_id", tenant_id).eq("menu_item_id", itemId);
+          if (deleteError) throw deleteError;
+          
+          if (draftItem.recipe.length > 0) {
+            const recipePayload = draftItem.recipe.map(r => ({
+              tenant_id,
+              menu_item_id: itemId,
+              inventory_item_id: r.inventory_item_id,
+              quantity_required: r.quantity_required,
+            }));
+            const { error: insertError } = await supabase.from("recipe_matrix").insert(recipePayload);
+            if (insertError) throw insertError;
+          }
+        }
 
-        const newItem: MenuItem = { ...draftItem, id: data.id };
+        const newItem: MenuItem = { ...draftItem, id: itemId };
         setItems((prev) => [...prev, newItem]);
         return newItem;
       } else {
@@ -268,6 +308,24 @@ export const useMenuManagement = () => {
           .single();
 
         if (error) throw error;
+        
+        const itemId = data.id;
+        if (draftItem.recipe !== undefined) {
+          const { error: deleteError } = await supabase.from("recipe_matrix").delete().eq("tenant_id", tenant_id).eq("menu_item_id", itemId);
+          if (deleteError) throw deleteError;
+          
+          if (draftItem.recipe.length > 0) {
+            const recipePayload = draftItem.recipe.map(r => ({
+              tenant_id,
+              menu_item_id: itemId,
+              inventory_item_id: r.inventory_item_id,
+              quantity_required: r.quantity_required,
+            }));
+            const { error: insertError } = await supabase.from("recipe_matrix").insert(recipePayload);
+            if (insertError) throw insertError;
+          }
+        }
+
         setItems((prev) =>
           prev.map((i) =>
             i.id === draftItem.id
@@ -339,7 +397,7 @@ export const useMenuManagement = () => {
     try {
       const tenant_id = await getCurrentTenantId();
 
-      // Two-phase update avoids transient unique-key collisions when swapping positions.
+      // two-phase update avoids transient unique-key collisions when swapping positions.
       const tempUpdates = newCategories.map((c, index) => ({
         id: c.id,
         display_order: -1000 - index,

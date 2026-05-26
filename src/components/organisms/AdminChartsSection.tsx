@@ -62,7 +62,7 @@ export const AdminChartsSection = () => {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 mb-6">
-      {/* Companies Bar Chart */}
+      {/* companies Bar Chart */}
       <ChartCard
         title="Companies"
         dropdownLabel="This Week"
@@ -108,7 +108,7 @@ export const AdminChartsSection = () => {
         </div>
       </ChartCard>
 
-      {/* Revenue Area Chart */}
+      {/* revenue Area Chart */}
       <ChartCard title="Revenue" dropdownLabel="2026" className="lg:col-span-6">
         <div className="h-[250px] w-full mt-4 flex flex-col">
           <div className="flex justify-between items-start mb-6">
@@ -173,7 +173,7 @@ export const AdminChartsSection = () => {
         </div>
       </ChartCard>
 
-      {/* Plans Donut Chart */}
+      {/* plans Donut Chart */}
       <ChartCard
         title="Plans"
         dropdownLabel="This Month"
