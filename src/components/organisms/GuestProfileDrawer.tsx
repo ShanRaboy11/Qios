@@ -124,7 +124,7 @@ export const GuestProfileDrawer = ({ isOpen, onClose, guestNumber = 1 }: GuestPr
                         <p className="font-bold text-text-primary">Active Order</p>
                         <p className="text-sm text-gray-500">Just now</p>
                       </div>
-                      <span className="font-bold text-brand-accent">{currency} {(cartTotal * 1.12).toFixed(2)}</span>
+                      <span className="font-bold text-brand-accent">{currency} {cartTotal.toFixed(2)}</span>
                     </div>
                   ) : (
                     <div className="text-sm text-gray-500 text-center py-2">

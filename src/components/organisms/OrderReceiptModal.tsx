@@ -128,9 +128,9 @@ export const OrderReceiptModal = ({
 
           {/* total */}
           <div className="flex justify-between items-center mb-8">
-            <h3 className="h3 font-bold text-[#2D2D2D]">Total</h3>
+            <h3 className="h3 font-bold text-[#2D2D2D]">Amount Paid</h3>
             <h3 className="h3 font-bold text-[#2D2D2D]">
-              ₱{(cartTotal * 1.12).toFixed(2)}
+              ₱{cartTotal.toFixed(2)}
             </h3>
           </div>
 

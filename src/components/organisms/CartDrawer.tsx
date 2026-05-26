@@ -27,6 +27,7 @@ export const CartDrawer = () => {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [placedOrderId, setPlacedOrderId] = useState<string | null>(null);
+  const vatAmount = cartTotal * 0.12;
   const [cartSnapshot, setCartSnapshot] = useState<CartItem[]>([]);
   const [cartTotalSnapshot, setCartTotalSnapshot] = useState(0);
 
@@ -194,29 +195,29 @@ export const CartDrawer = () => {
               {/* checkout Footer Structure */}
               <div className="bg-white px-6 py-6 rounded-t-[32px] border-t border-black/5 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] space-y-3 relative z-10 shrink-0 font-inter">
                 <div className="flex justify-between items-center">
-                  <span className="text-text-secondary">Subtotal</span>
+                  <span className="text-text-secondary">Menu Total</span>
                   <span className="font-bold text-text-primary">
                     {currency} {cartTotal.toFixed(2)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-text-secondary">
-                    Tax{" "}
+                    VAT{" "}
                     <span className="text-xs text-text-secondary/70">
-                      (12%)
+                      (12%, covered by business)
                     </span>
                   </span>
                   <span className="font-bold text-text-primary">
-                    {currency} {(cartTotal * 0.12).toFixed(2)}
+                    {currency} {vatAmount.toFixed(2)}
                   </span>
                 </div>
                 <div className="h-px bg-black/5 w-full !my-4" />
                 <div className="flex justify-between items-center pb-4">
                   <h3 className="text-lg font-extrabold text-text-primary font-figtree">
-                    Total
+                    Amount to Pay
                   </h3>
                   <h3 className="text-xl font-extrabold text-text-primary font-figtree">
-                    {currency} {(cartTotal * 1.12).toFixed(2)}
+                    {currency} {cartTotal.toFixed(2)}
                   </h3>
                 </div>
 
