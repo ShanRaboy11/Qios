@@ -150,7 +150,6 @@ export async function POST(
   const fullName = name
     ? String(name).trim()
     : String(normalizedEmail.split("@")[0]);
-  const username = String(normalizedEmail.split("@")[0]);
 
   const { data: authData, error: authError } =
     await admin.auth.admin.createUser({
@@ -161,7 +160,6 @@ export async function POST(
         full_name: fullName,
         tenant_id: tenantId,
         app_role_id: roleId,
-        username,
       },
     });
 
@@ -178,7 +176,6 @@ export async function POST(
       role: "employee",
       tenant_id: tenantId,
       app_role_id: roleId,
-      username,
     },
     { onConflict: "id" },
   );
