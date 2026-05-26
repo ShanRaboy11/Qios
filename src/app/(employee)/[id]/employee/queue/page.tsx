@@ -63,9 +63,10 @@ async function getInitialOrders(tenantId: string) {
 export default async function OrderQueuePage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  const initialOrders = await getInitialOrders(params.id);
+  const { id: tenantId } = await params;
+  const initialOrders = await getInitialOrders(tenantId);
 
   return (
     <div className="flex flex-col pb-32">
@@ -77,7 +78,7 @@ export default async function OrderQueuePage({
       </header>
 
       <div className="w-full">
-        <KitchenPreparationDashboard tenantId={params.id} initialOrders={initialOrders} />
+        <KitchenPreparationDashboard tenantId={tenantId} initialOrders={initialOrders} />
       </div>
     </div>
   );
