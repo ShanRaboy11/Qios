@@ -58,6 +58,25 @@ export async function POST(
     });
   }
 
+  const { data: role, error: roleError } = await admin
+    .from("roles")
+    .select("id, tenant_id")
+    .eq("id", roleId)
+    .eq("tenant_id", tenantId)
+    .maybeSingle();
+
+  if (roleError) {
+    return new Response(JSON.stringify({ error: roleError.message }), {
+      status: 500,
+    });
+  }
+
+  if (!role) {
+    return new Response(JSON.stringify({ error: "role not found" }), {
+      status: 404,
+    });
+  }
+
   let body: any;
   try {
     body = await req.json();
@@ -68,8 +87,11 @@ export async function POST(
   }
 
   const { name, email, password } = body;
+  const normalizedEmail = String(email ?? "")
+    .trim()
+    .toLowerCase();
 
-  if (!email || !password) {
+  if (!normalizedEmail || !password) {
     return new Response(
       JSON.stringify({ error: "missing required fields: email and password" }),
       {
@@ -80,7 +102,7 @@ export async function POST(
 
   // validate email format
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) {
+  if (!emailRegex.test(normalizedEmail)) {
     return new Response(JSON.stringify({ error: "invalid email format" }), {
       status: 400,
     });
@@ -125,17 +147,21 @@ export async function POST(
   }
 
   // create user in supabase auth with email address directly
-  const fullName = name ? String(name) : String(email.split("@")[0]);
+  const fullName = name
+    ? String(name).trim()
+    : String(normalizedEmail.split("@")[0]);
+  const username = String(normalizedEmail.split("@")[0]);
 
   const { data: authData, error: authError } =
     await admin.auth.admin.createUser({
-      email: email,
+      email: normalizedEmail,
       password: password,
       email_confirm: true,
       user_metadata: {
         full_name: fullName,
         tenant_id: tenantId,
         app_role_id: roleId,
+        username,
       },
     });
 
@@ -145,10 +171,29 @@ export async function POST(
     });
   }
 
+  const { error: profileError } = await admin.from("profiles").upsert(
+    {
+      id: authData.user.id,
+      full_name: fullName,
+      role: "employee",
+      tenant_id: tenantId,
+      app_role_id: roleId,
+      username,
+    },
+    { onConflict: "id" },
+  );
+
+  if (profileError) {
+    await admin.auth.admin.deleteUser(authData.user.id);
+    return new Response(JSON.stringify({ error: profileError.message }), {
+      status: 500,
+    });
+  }
+
   const newEmployee = {
     id: authData.user.id,
     name: fullName,
-    email,
+    email: normalizedEmail,
   };
 
   return new Response(JSON.stringify(newEmployee), { status: 201 });
