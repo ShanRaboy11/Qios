@@ -214,6 +214,7 @@ export default function OrderDetails({
 
       const updatedOrder: OrderDetailsData = {
         ...localOrder,
+        status: "pending",
         payment_status: "paid",
         payment_method: selectedPaymentMethod,
       };

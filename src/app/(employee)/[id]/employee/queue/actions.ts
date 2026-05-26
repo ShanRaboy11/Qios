@@ -84,7 +84,11 @@ export async function updateOrderPaymentStatus(
 
   const { error } = await supabase
     .from("orders")
-    .update({ payment_status: paymentStatus, payment_method: paymentMethod })
+    .update({
+      payment_status: paymentStatus,
+      payment_method: paymentMethod,
+      status: "pending",
+    })
     .eq("id", orderId)
     .eq("tenant_id", tenantId);
 
