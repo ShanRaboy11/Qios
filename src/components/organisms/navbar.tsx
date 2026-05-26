@@ -12,6 +12,10 @@ import { TenantBrandingContext } from "@/components/providers/TenantBrandingProv
 import QRCode from "react-qr-code";
 import { QrCode as QrIcon } from "lucide-react";
 import {
+  canAccessEmployeeRoute,
+  type RolePermissions,
+} from "@/lib/employeePermissions";
+import {
   clearAuthSessionExpiry,
   getAuthSessionExpiry,
   isAuthSessionExpired,
@@ -43,11 +47,13 @@ export const Navbar = ({
   const [tenantDisplayEmail, setTenantDisplayEmail] =
     useState("tenant@qios.com");
   const [tenantAvatarInitials, setTenantAvatarInitials] = useState("TU");
+  const [employeePermissions, setEmployeePermissions] =
+    useState<RolePermissions | null>(null);
   const router = useRouter();
   const params = useParams();
   const pathname = usePathname();
   const tenantId = (params?.id as string) || "default-tenant";
-  
+
   const { branding } = useContext(TenantBrandingContext);
   const tenantLogoUrl = branding?.dashboardLogoUrl;
 
@@ -106,6 +112,57 @@ export const Navbar = ({
     };
 
     void loadTenantHeader();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [type]);
+
+  useEffect(() => {
+    if (type !== "employee") {
+      setEmployeePermissions(null);
+      return;
+    }
+
+    let isMounted = true;
+
+    const loadEmployeePermissions = async () => {
+      try {
+        const supabase = createSupabaseBrowserClient();
+        const { data: authData } = await supabase.auth.getUser();
+        const user = authData.user;
+
+        if (!user || !isMounted) return;
+
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("app_role_id, tenant_id")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        if (!profile?.app_role_id || !profile?.tenant_id) {
+          if (isMounted) setEmployeePermissions(null);
+          return;
+        }
+
+        const { data: role } = await supabase
+          .from("roles")
+          .select("permissions")
+          .eq("id", profile.app_role_id)
+          .eq("tenant_id", profile.tenant_id)
+          .maybeSingle();
+
+        if (!isMounted) return;
+
+        setEmployeePermissions(
+          (role?.permissions as RolePermissions | null) ?? null,
+        );
+      } catch {
+        if (isMounted) setEmployeePermissions(null);
+      }
+    };
+
+    void loadEmployeePermissions();
 
     return () => {
       isMounted = false;
@@ -225,13 +282,20 @@ export const Navbar = ({
     { label: "Transactions", href: "#", id: "transactions" },
   ];
 
+  const visibleLinks =
+    type === "employee" && employeePermissions
+      ? employeeLinks.filter((link) =>
+          canAccessEmployeeRoute(employeePermissions, link.id),
+        )
+      : employeeLinks;
+
   const links =
     type === "admin"
       ? adminLinks
       : type === "tenant"
         ? tenantLinks
         : type === "employee"
-          ? employeeLinks
+          ? visibleLinks
           : defaultLinks;
 
   return (
@@ -269,7 +333,11 @@ export const Navbar = ({
         className="shrink-0 relative cursor-pointer flex items-center"
       >
         {type === "tenant" && tenantLogoUrl ? (
-          <img src={tenantLogoUrl} alt="Tenant Logo" className="h-10 w-auto object-contain" />
+          <img
+            src={tenantLogoUrl}
+            alt="Tenant Logo"
+            className="h-10 w-auto object-contain"
+          />
         ) : (
           <span
             className="font-ibrand"

@@ -589,9 +589,11 @@ export default function RolesManagement() {
     if (!draftRole || !newEmployeeName.trim() || !newEmployeeEmail.trim())
       return;
 
+    const normalizedEmail = newEmployeeEmail.trim().toLowerCase();
+
     // validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(newEmployeeEmail)) {
+    if (!emailRegex.test(normalizedEmail)) {
       alert("please enter a valid email address");
       return;
     }
@@ -616,8 +618,8 @@ export default function RolesManagement() {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
-            name: newEmployeeName,
-            email: newEmployeeEmail,
+            name: newEmployeeName.trim(),
+            email: normalizedEmail,
             password: temporaryPassword,
           }),
         },
@@ -636,8 +638,8 @@ export default function RolesManagement() {
 
       const newEmployee: Employee = {
         id: data.id,
-        name: newEmployeeName,
-        email: newEmployeeEmail,
+        name: newEmployeeName.trim(),
+        email: normalizedEmail,
         password: temporaryPassword,
       };
 
@@ -647,8 +649,8 @@ export default function RolesManagement() {
       });
 
       setNewEmployeeCredentials({
-        name: newEmployeeName,
-        email: newEmployeeEmail,
+        name: newEmployeeName.trim(),
+        email: normalizedEmail,
         password: temporaryPassword,
       });
       setNewEmployeeName("");

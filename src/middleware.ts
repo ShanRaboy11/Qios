@@ -1,5 +1,10 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import {
+  canAccessEmployeeRoute,
+  getFirstAccessibleEmployeeRoute,
+  type RolePermissions,
+} from "@/lib/employeePermissions";
 
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -96,6 +101,10 @@ export async function middleware(request: NextRequest) {
   if (user && isTenantOrEmployeeRoute && !isPublicCustomerRoute && !isDev) {
     let role = null;
     let userTenantId = null;
+    let userAppRoleId = null;
+    const userMetadata = user.user_metadata as
+      | Record<string, unknown>
+      | undefined;
 
     if (accessToken) {
       try {
@@ -109,17 +118,55 @@ export async function middleware(request: NextRequest) {
       } catch (e) {}
     }
 
+    if (!userTenantId) {
+      userTenantId =
+        (typeof userMetadata?.tenant_id === "string"
+          ? userMetadata.tenant_id
+          : undefined) ||
+        (typeof userMetadata?.tenantId === "string"
+          ? userMetadata.tenantId
+          : undefined);
+    }
+
+    if (!userAppRoleId) {
+      userAppRoleId =
+        (typeof userMetadata?.app_role_id === "string"
+          ? userMetadata.app_role_id
+          : undefined) ||
+        (typeof userMetadata?.appRoleId === "string"
+          ? userMetadata.appRoleId
+          : undefined);
+    }
+
     // fallback to database if token does not contain claims
     if (!role) {
       const { data: profile } = await supabase
         .from("profiles")
-        .select("role, tenant_id")
+        .select("role, tenant_id, app_role_id")
         .eq("id", user.id)
         .single();
 
       if (profile) {
         role = profile.role;
         userTenantId = profile.tenant_id;
+        userAppRoleId = profile.app_role_id;
+      }
+    }
+
+    if (!role && userAppRoleId) {
+      role = "employee";
+    }
+
+    if (!userAppRoleId) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("app_role_id, tenant_id")
+        .eq("id", user.id)
+        .single();
+
+      if (profile) {
+        userAppRoleId = profile.app_role_id;
+        userTenantId = userTenantId || profile.tenant_id;
       }
     }
 
@@ -127,6 +174,21 @@ export async function middleware(request: NextRequest) {
     const isEmployeePath = request.nextUrl.pathname.startsWith(
       `/${pathTenantId}/employee`,
     );
+
+    const employeeView = isEmployeePath ? pathParts[2] || "dashboard" : null;
+    let employeePermissions: RolePermissions | null = null;
+
+    if (role === "employee" && userTenantId && userAppRoleId) {
+      const { data: appRole } = await supabase
+        .from("roles")
+        .select("permissions")
+        .eq("id", userAppRoleId)
+        .eq("tenant_id", userTenantId)
+        .maybeSingle();
+
+      employeePermissions =
+        (appRole?.permissions as RolePermissions | null) ?? null;
+    }
 
     if (role === "super_admin") {
       // allow all access for now
@@ -146,6 +208,19 @@ export async function middleware(request: NextRequest) {
           : "/";
         return NextResponse.redirect(redirectUrl);
       }
+
+      if (
+        employeeView &&
+        !canAccessEmployeeRoute(employeePermissions, employeeView)
+      ) {
+        const redirectUrl = request.nextUrl.clone();
+        redirectUrl.pathname = userTenantId
+          ? `/${userTenantId}/employee/${getFirstAccessibleEmployeeRoute(
+              employeePermissions,
+            )}`
+          : "/";
+        return NextResponse.redirect(redirectUrl);
+      }
     } else {
       const redirectUrl = request.nextUrl.clone();
       redirectUrl.pathname = "/";
@@ -159,6 +234,9 @@ export async function middleware(request: NextRequest) {
   if (user && (isAuthRoute || isRootRoute) && !isServerAction) {
     const { data: sessionData } = await supabase.auth.getSession();
     const token = sessionData.session?.access_token;
+    const userMetadata = user.user_metadata as
+      | Record<string, unknown>
+      | undefined;
 
     let redirectPath = "/";
     let role = null;
@@ -180,13 +258,41 @@ export async function middleware(request: NextRequest) {
     if (!role) {
       const { data: profile } = await supabase
         .from("profiles")
-        .select("role, tenant_id")
+        .select("role, tenant_id, app_role_id")
         .eq("id", user.id)
         .single();
 
       if (profile) {
         role = profile.role;
         tenantId = profile.tenant_id;
+
+        if (!role && profile.app_role_id) {
+          role = "employee";
+        }
+      }
+    }
+
+    if (!tenantId) {
+      tenantId =
+        (typeof userMetadata?.tenant_id === "string"
+          ? userMetadata.tenant_id
+          : undefined) ||
+        (typeof userMetadata?.tenantId === "string"
+          ? userMetadata.tenantId
+          : undefined);
+    }
+
+    if (!role) {
+      const metadataRoleHint =
+        (typeof userMetadata?.app_role_id === "string"
+          ? userMetadata.app_role_id
+          : undefined) ||
+        (typeof userMetadata?.appRoleId === "string"
+          ? userMetadata.appRoleId
+          : undefined);
+
+      if (metadataRoleHint) {
+        role = "employee";
       }
     }
 
