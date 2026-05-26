@@ -3,6 +3,7 @@ export interface TenantProfileSettingsData {
   email: string;
   phoneNumber: string;
   avatarUrl?: string;
+  adminQrValue: string;
 }
 
 export interface TenantStoreSettingsData {

@@ -551,6 +551,7 @@ export async function getTenantSettings(
       email: toText(authUser?.user?.email ?? ""),
       phoneNumber,
       avatarUrl: avatarUrl || undefined,
+      adminQrValue: `ADMIN_AUTH:${tenantId}`,
     },
     store,
     branding,

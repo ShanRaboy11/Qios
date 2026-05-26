@@ -22,6 +22,7 @@ type ScanState = "idle" | "requesting" | "scanning" | "success" | "error";
 
 interface OrderData {
   id: string;
+  tenant_id?: string;
   table_number?: number;
   status: "pending" | "preparing" | "ready" | "cancelled" | "voided" | "served";
   total_price: number;
@@ -52,6 +53,7 @@ interface OrderData {
 
 const normalizeScannedOrder = (order: any): OrderData => ({
   id: String(order.id),
+  tenant_id: order.tenant_id ?? undefined,
   table_number:
     order.table_number === null || order.table_number === undefined
       ? undefined
