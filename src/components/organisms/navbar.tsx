@@ -136,9 +136,31 @@ export const Navbar = ({
 
         const { data: profile } = await supabase
           .from("profiles")
-          .select("app_role_id, tenant_id")
+          .select("full_name, app_role_id, tenant_id")
           .eq("id", user.id)
           .maybeSingle();
+
+        const displayName =
+          profile?.full_name?.trim() ||
+          (typeof user.user_metadata?.full_name === "string"
+            ? user.user_metadata.full_name.trim()
+            : "") ||
+          user.email ||
+          "Employee";
+
+        const displayEmail = user.email || "employee@qios.com";
+        const initialsSource = displayName
+          .split(/\s+/)
+          .filter(Boolean)
+          .slice(0, 2);
+
+        setTenantDisplayName(displayName);
+        setTenantDisplayEmail(displayEmail);
+        setTenantAvatarInitials(
+          initialsSource.length > 1
+            ? `${initialsSource[0].charAt(0)}${initialsSource[1].charAt(0)}`.toUpperCase()
+            : displayName.charAt(0).toUpperCase() || "EU",
+        );
 
         if (!profile?.app_role_id || !profile?.tenant_id) {
           if (isMounted) setEmployeePermissions(null);
@@ -470,14 +492,14 @@ export const Navbar = ({
                       {type === "admin"
                         ? "Admin User"
                         : type === "employee"
-                          ? "Employee User"
+                          ? tenantDisplayName
                           : tenantDisplayName}
                     </p>
                     <p className="text-[13px] text-text-secondary truncate mt-0.5">
                       {type === "admin"
                         ? "admin@qios.com"
                         : type === "employee"
-                          ? "employee@qios.com"
+                          ? tenantDisplayEmail
                           : tenantDisplayEmail}
                     </p>
                   </div>

@@ -329,6 +329,11 @@ export default function RolesManagement() {
     email: string;
     password: string;
   } | null>(null);
+  const [pendingDeleteEmployee, setPendingDeleteEmployee] = useState<{
+    id: string;
+    name: string;
+    email: string;
+  } | null>(null);
   const [employeeSearchQuery, setEmployeeSearchQuery] = useState("");
 
   const [isCreateRoleModalOpen, setIsCreateRoleModalOpen] = useState(false);
@@ -351,7 +356,25 @@ export default function RolesManagement() {
     }
   }, [activeRole]);
 
-  const hasChanges = JSON.stringify(activeRole) !== JSON.stringify(draftRole);
+  const hasChanges =
+    JSON.stringify(
+      activeRole
+        ? {
+            name: activeRole.name,
+            color: activeRole.color,
+            permissions: activeRole.permissions,
+          }
+        : null,
+    ) !==
+    JSON.stringify(
+      draftRole
+        ? {
+            name: draftRole.name,
+            color: draftRole.color,
+            permissions: draftRole.permissions,
+          }
+        : null,
+    );
 
   const handlePermissionChange = (
     category: keyof Permissions,
@@ -470,6 +493,11 @@ export default function RolesManagement() {
     if (activeRole) {
       setDraftRole(JSON.parse(JSON.stringify(activeRole)));
     }
+  };
+
+  const requestRemoveEmployee = (employee: Employee) => {
+    setPendingDeleteEmployee(employee);
+    setConfirmationAction("delete");
   };
 
   const createRoleInBackend = async (
@@ -643,10 +671,17 @@ export default function RolesManagement() {
         password: temporaryPassword,
       };
 
-      setDraftRole({
+      const updatedRole = {
         ...draftRole,
         employees: [...draftRole.employees, newEmployee],
-      });
+      };
+
+      setRoles((currentRoles) =>
+        currentRoles.map((role) =>
+          role.id === draftRole.id ? updatedRole : role,
+        ),
+      );
+      setDraftRole(updatedRole);
 
       setNewEmployeeCredentials({
         name: newEmployeeName.trim(),
@@ -663,11 +698,8 @@ export default function RolesManagement() {
     }
   };
 
-  const handleRemoveEmployee = async (empId: string) => {
+  const deleteEmployee = async (empId: string) => {
     if (!draftRole || !tenantId) return;
-
-    const confirmed = confirm("Are you sure you want to remove this employee?");
-    if (!confirmed) return;
 
     setSaving(true);
     try {
@@ -706,10 +738,17 @@ export default function RolesManagement() {
       return;
     }
 
-    setDraftRole({
+    const updatedRole = {
       ...draftRole,
       employees: draftRole.employees.filter((e) => e.id !== empId),
-    });
+    };
+
+    setRoles((currentRoles) =>
+      currentRoles.map((role) =>
+        role.id === draftRole.id ? updatedRole : role,
+      ),
+    );
+    setDraftRole(updatedRole);
     setSaving(false);
   };
 
@@ -770,7 +809,12 @@ export default function RolesManagement() {
     } else if (confirmationAction === "copy") {
       handleDuplicate();
     } else if (confirmationAction === "delete") {
-      await handleDelete();
+      if (pendingDeleteEmployee) {
+        await deleteEmployee(pendingDeleteEmployee.id);
+        setPendingDeleteEmployee(null);
+      } else {
+        await handleDelete();
+      }
     }
 
     setConfirmationAction(null);
@@ -1137,7 +1181,7 @@ export default function RolesManagement() {
                                       size="icon"
                                       className="hover:bg-warning-secondary hover:text-warning-primary"
                                       onClick={() =>
-                                        handleRemoveEmployee(employee.id)
+                                        requestRemoveEmployee(employee)
                                       }
                                     >
                                       <Trash2 size={16} />
@@ -1437,9 +1481,25 @@ export default function RolesManagement() {
       <ActionConfirmationModal
         isOpen={!!confirmationAction}
         action={confirmationAction}
+        title={pendingDeleteEmployee ? "Remove this employee?" : undefined}
+        message={
+          pendingDeleteEmployee ? (
+            <>
+              <strong className="font-semibold text-text-primary">
+                {pendingDeleteEmployee.name}
+              </strong>{" "}
+              ({pendingDeleteEmployee.email}) will be removed from this role and
+              deleted from the system. This action cannot be undone.
+            </>
+          ) : undefined
+        }
+        confirmLabel={pendingDeleteEmployee ? "Remove" : undefined}
         draftPlanName={draftRole?.name}
         activePlanName={activeRole?.name}
-        onClose={() => setConfirmationAction(null)}
+        onClose={() => {
+          setConfirmationAction(null);
+          setPendingDeleteEmployee(null);
+        }}
         onConfirm={runConfirmedAction}
       />
     </>
