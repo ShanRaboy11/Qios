@@ -62,6 +62,7 @@ export default function KitchenPreparationDashboard({
   const fetchOrders = useCallback(async () => {
     if (!tenantId) return;
     const orderStatuses = ["pending", "preparing", "ready"];
+    const isQueueView = queueMode;
 
     let orderQuery = supabase
       .from("orders")
@@ -89,11 +90,19 @@ export default function KitchenPreparationDashboard({
       .in("status", orderStatuses)
       .order("created_at", { ascending: true });
 
+    if (isQueueView) {
+      orderQuery = orderQuery.eq("payment_status", "paid");
+    }
+
     let countQuery = supabase
       .from("orders")
       .select("id", { count: "exact", head: true })
       .eq("tenant_id", tenantId)
       .in("status", orderStatuses);
+
+    if (isQueueView) {
+      countQuery = countQuery.eq("payment_status", "paid");
+    }
 
     const [{ data, error }, { count }] = await Promise.all([
       orderQuery,
@@ -191,13 +200,16 @@ export default function KitchenPreparationDashboard({
       const createdTime = new Date(order.created_at).getTime();
       const timeElapsedMs = Math.max(0, now - createdTime);
       const targetTimePercentage = Math.floor(
-        (timeElapsedMs / targetTimeMs) * 100,
+        Math.min((timeElapsedMs / targetTimeMs) * 100, 100),
       );
 
       const elapsedMinutes = Math.floor(timeElapsedMs / 60000);
       const hours = Math.floor(elapsedMinutes / 60);
       const mins = elapsedMinutes % 60;
-      const timeDisplay = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+      const elapsedLabel = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+      const statusLabel =
+        order.status.charAt(0).toUpperCase() + order.status.slice(1);
+      const timeDisplay = `${statusLabel} for ${elapsedLabel}`;
 
       return {
         ...order,
@@ -237,14 +249,16 @@ export default function KitchenPreparationDashboard({
       </div>
 
       <div className="flex items-center gap-2 text-xs text-text-secondary font-medium">
-        <span className="px-2 py-0.5 bg-gray-100 rounded-md shrink-0">
-          Table {order.table_number || "N/A"}
-        </span>
-        <span>�</span>
-        <span className="truncate">{order.order_type.replace("_", "-")}</span>
-        <span>�</span>
+        {order.table_number ? (
+          <span className="px-2 py-0.5 bg-gray-100 rounded-md shrink-0">
+            Table {order.table_number}
+          </span>
+        ) : null}
+        {order.order_type ? (
+          <span className="truncate">{order.order_type.replace("_", "-")}</span>
+        ) : null}
         <span
-          className={`${order.targetTimePercentage > 100 ? "text-red-500 font-bold" : ""} shrink-0`}
+          className={`${order.targetTimePercentage >= 100 ? "text-red-500 font-bold" : ""} shrink-0 ml-auto`}
         >
           {order.targetTimePercentage}%
         </span>

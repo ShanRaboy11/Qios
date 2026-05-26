@@ -85,7 +85,8 @@ export async function getEmployeeQueueData(tenantId: string) {
         .from("orders")
         .select("id", { count: "exact", head: true })
         .eq("tenant_id", tenantId)
-        .in("status", ["pending", "preparing", "ready"]),
+        .in("status", ["pending", "preparing", "ready"])
+        .eq("payment_status", "paid"),
       admin
         .from("orders")
         .select(
@@ -110,6 +111,7 @@ export async function getEmployeeQueueData(tenantId: string) {
         )
         .eq("tenant_id", tenantId)
         .in("status", ["pending", "preparing", "ready"])
+        .eq("payment_status", "paid")
         .order("created_at", { ascending: true }),
     ]);
 
