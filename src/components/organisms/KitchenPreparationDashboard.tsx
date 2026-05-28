@@ -37,6 +37,8 @@ interface OrderWithPercentage extends Order {
   targetTimePercentage: number;
 }
 
+type QueueActionStatus = "preparing" | "ready" | "completed";
+
 interface KitchenPreparationDashboardProps {
   tenantId: string;
   initialOrders: Order[];
@@ -171,7 +173,7 @@ export default function KitchenPreparationDashboard({
 
   const handleUpdateStatus = async (
     orderId: string,
-    newStatus: OrderStatus,
+    newStatus: QueueActionStatus,
   ) => {
     try {
       // optimistic update

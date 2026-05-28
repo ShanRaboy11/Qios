@@ -148,7 +148,14 @@ export async function getEmployeeQueueData(tenantId: string) {
 export async function updateOrderStatus(
   orderId: string,
   tenantId: string,
-  newStatus: "preparing" | "ready" | "completed",
+  newStatus:
+    | "pending"
+    | "preparing"
+    | "ready"
+    | "completed"
+    | "served"
+    | "cancelled"
+    | "voided",
 ) {
   const { supabase, admin, user, profile, permissions } =
     await getEmployeeQueueContext(tenantId);
