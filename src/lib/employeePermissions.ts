@@ -86,3 +86,9 @@ export function getFirstAccessibleEmployeeRoute(
 
   return "dashboard";
 }
+
+export function canUpdateEmployeeOrderStatus(
+  permissions: RolePermissions | null,
+) {
+  return hasPermission(permissions, "Order Status Updating");
+}
