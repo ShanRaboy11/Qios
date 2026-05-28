@@ -271,9 +271,7 @@ function CustomerOrderingHomeInner({
                       transition={{ duration: 0.3 }}
                       className="w-full"
                     >
-                      <h2 className="h3 font-bold mb-6 -mt-2">
-                        {selectedCategory}
-                      </h2>
+                      <div className="sr-only">Category: {selectedCategory}</div>
                       <motion.div
                         initial="hidden"
                         animate="show"
