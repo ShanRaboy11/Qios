@@ -311,3 +311,23 @@ h4,
 .scrollbar-none::-webkit-scrollbar {
   display: none;
 }
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    110deg,
+    rgba(0, 0, 0, 0.06) 8%,
+    rgba(255, 255, 255, 0.55) 18%,
+    rgba(0, 0, 0, 0.06) 33%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.3s linear infinite;
+}
