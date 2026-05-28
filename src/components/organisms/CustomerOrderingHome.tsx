@@ -91,7 +91,7 @@ function CustomerOrderingHomeInner({
         animate={{ backgroundColor: isCategoryView ? accentColor : primaryColor }}
         className="flex flex-col min-h-screen w-full overflow-x-hidden relative transition-colors duration-500"
       >
-        <div className="w-full max-w-[500px] md:max-w-none mx-auto flex-grow flex flex-col relative pb-0 md:pb-10 overflow-x-hidden">
+        <div className="w-full max-w-[500px] md:max-w-none mx-auto flex-grow flex flex-col relative pb-0 md:pb-0 overflow-visible">
           <CustomerHeader
             isCategoryView={isCategoryView || isSearching}
             onBack={() => {
@@ -121,7 +121,7 @@ function CustomerOrderingHomeInner({
             <motion.div
               layout
               className={cn(
-                "flex-grow bg-white w-full px-5 py-7 md:px-32 pb-10 flex flex-col items-center relative z-40 shadow-[0_-4px_24px_rgba(0,0,0,0.05)] transition-all duration-500",
+                "flex-grow bg-white w-full px-5 py-7 md:px-32 pb-32 md:pb-48 flex flex-col items-center relative z-40 shadow-[0_-4px_24px_rgba(0,0,0,0.05)] transition-all duration-500",
                 isCategoryView || isSearching
                   ? "-mt-[6px] pt-8 rounded-t-[18px]"
                   : "-mt-[165px] pt-[140px] rounded-t-[40px]",
@@ -273,9 +273,7 @@ function CustomerOrderingHomeInner({
                       transition={{ duration: 0.3 }}
                       className="w-full"
                     >
-                      <h2 className="h3 font-bold mb-6 -mt-2">
-                        {selectedCategory}
-                      </h2>
+                      <div className="sr-only">Category: {selectedCategory}</div>
                       <motion.div
                         initial="hidden"
                         animate="show"
@@ -347,7 +345,7 @@ function CustomerOrderingHomeInner({
           tenantId={tenantId}
           storeName={storeName}
           triggerContent={
-            <div className="flex h-full w-full items-center justify-center overflow-hidden scale-[0.56] origin-center translate-y-[2px]">
+            <div className="flex h-full w-full items-center justify-center overflow-visible scale-[0.56] origin-center translate-y-[2px]">
               <ChatbotLogo size={44} />
             </div>
           }
