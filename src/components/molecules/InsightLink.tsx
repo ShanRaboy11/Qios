@@ -13,7 +13,7 @@ const presetIcons = {
 };
 
 interface InsightLinkProps {
-  // Now optional to allow for custom icons
+  // now optional to allow for custom icons
   type?: keyof typeof presetIcons;
   icon?: React.ReactNode;
   title: string;
@@ -21,7 +21,7 @@ interface InsightLinkProps {
   onClick?: () => void;
   color?: InsightLinkColor;
   className?: string;
-  // Dropdown Props
+  // dropdown Props
   options?: string[];
   selectedOption?: string;
   onOptionChange?: (value: string) => void;
@@ -39,7 +39,7 @@ export const InsightLink = ({
   selectedOption,
   onOptionChange,
 }: InsightLinkProps) => {
-  // Resolve icon: Custom icon prop takes priority, then preset types
+  // resolve icon: Custom icon prop takes priority, then preset types
   const displayIcon = icon || (type ? presetIcons[type] : null);
 
   const colorStyles = {

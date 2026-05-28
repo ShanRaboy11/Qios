@@ -14,7 +14,7 @@ const presetIcons = {
 };
 
 interface KPICardProps {
-  // Now supports either a preset key or a custom React element
+  // now supports either a preset key or a custom React element
   type?: keyof typeof presetIcons;
   icon?: React.ReactNode;
   title: string;
@@ -42,7 +42,7 @@ export const KPICard = ({
   const isFilled = variant === "filled";
   const isPositive = percentageChange && percentageChange > 0;
 
-  // Prioritize the custom icon prop, then fallback to preset icons
+  // prioritize the custom icon prop, then fallback to preset icons
   const displayIcon = icon || (type ? presetIcons[type] : null);
 
   const colorStyles = {
@@ -78,7 +78,7 @@ export const KPICard = ({
             : "flex-row p-0",
         )}
       >
-        {/* Icon Container */}
+        {/* icon Container */}
         <div
           className={cn(
             "h-10 w-10 sm:h-12 sm:w-12 rounded-xl flex items-center justify-center shrink-0 border transition-all",
@@ -87,13 +87,13 @@ export const KPICard = ({
               : "bg-brand-primary/10 text-brand-primary border-brand-primary/20",
           )}
         >
-          {/* We can force the icon to scale using CSS, or rely on its own size. Assuming it has a default size, scaling the container might be enough, but let's add [&>svg]:w-5 [&>svg]:h-5 sm:[&>svg]:w-6 sm:[&>svg]:h-6 */}
+          {/* we can force the icon to scale using CSS, or rely on its own size. Assuming it has a default size, scaling the container might be enough, but let's add [&>svg]:w-5 [&>svg]:h-5 sm:[&>svg]:w-6 sm:[&>svg]:h-6 */}
           <div className="flex items-center justify-center [&>svg]:w-5 [&>svg]:h-5 sm:[&>svg]:w-6 sm:[&>svg]:h-6">
             {displayIcon}
           </div>
         </div>
 
-        {/* Text Area */}
+        {/* text Area */}
         <div className="flex flex-col flex-grow min-w-0">
           <div className="flex flex-col sm:flex-row sm:justify-between items-start w-full gap-2">
             <div className="flex flex-col min-w-0 w-full">

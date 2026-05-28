@@ -431,7 +431,7 @@ export const TenantProfilePage = ({ tenantId }: TenantProfilePageProps) => {
         )}
       </AnimatePresence>
 
-      {/* Approve / Reactivate / Reject use shared confirmation modal (keeps Cancel ghost variant). */}
+      {/* approve / Reactivate / Reject use shared confirmation modal (keeps Cancel ghost variant). */}
       {(modal.type === "approve_tenant" ||
         modal.type === "reactivate_tenant" ||
         modal.type === "reject_tenant" ||

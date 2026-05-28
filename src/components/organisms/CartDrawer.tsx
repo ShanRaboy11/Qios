@@ -27,13 +27,14 @@ export const CartDrawer = () => {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [placedOrderId, setPlacedOrderId] = useState<string | null>(null);
+  const vatAmount = cartTotal * 0.12;
   const [cartSnapshot, setCartSnapshot] = useState<CartItem[]>([]);
   const [cartTotalSnapshot, setCartTotalSnapshot] = useState(0);
 
   const params = useParams();
   const tenantId = typeof params?.id === "string" ? params.id : "";
 
-  // Prevent background body scroll when the drawer layout is fully visible
+  // prevent background body scroll when the drawer layout is fully visible
   useEffect(() => {
     if (isCartOpen) {
       document.body.style.overflow = "hidden";
@@ -47,7 +48,7 @@ export const CartDrawer = () => {
 
   return (
     <>
-      {/* Cart Drawer Wrapper */}
+      {/* cart Drawer Wrapper */}
       <AnimatePresence>
         {isCartOpen && (
           <motion.div
@@ -58,7 +59,7 @@ export const CartDrawer = () => {
             className="fixed inset-0 z-[200] flex justify-end bg-black/40 backdrop-blur-sm"
             onClick={() => setIsCartOpen(false)}
           >
-            {/* Drawer Panel Container */}
+            {/* drawer Panel Container */}
             <motion.div
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
@@ -67,7 +68,7 @@ export const CartDrawer = () => {
               className="w-full max-w-md h-full bg-white shadow-2xl flex flex-col rounded-l-[32px] md:rounded-l-[40px] overflow-hidden border-l border-black/5"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Header */}
+              {/* header */}
               <div className="bg-brand-secondary px-6 py-6 flex flex-col gap-3 relative font-brand-secondary shrink-0">
                 <button
                   onClick={() => setIsCartOpen(false)}
@@ -90,7 +91,7 @@ export const CartDrawer = () => {
                 </div>
               </div>
 
-              {/* Cart Items List Area */}
+              {/* cart Items List Area */}
               <div className="flex-1 overflow-y-auto px-6 py-4 style-scrollbar">
                 {cart.length === 0 ? (
                   <div className="h-full flex flex-col items-center justify-center text-center py-12">
@@ -106,7 +107,7 @@ export const CartDrawer = () => {
                   <div className="divide-y divide-black/5">
                     {cart.map((item) => (
                       <div key={item.id} className="py-5 flex gap-4 font-inter">
-                        {/* Item Thumbnail */}
+                        {/* item Thumbnail */}
                         <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl overflow-hidden bg-black/5 flex-shrink-0 border border-black/5">
                           <img
                             src={item.menuItem.imageUrl}
@@ -115,7 +116,7 @@ export const CartDrawer = () => {
                           />
                         </div>
 
-                        {/* Item Specifications */}
+                        {/* item Specifications */}
                         <div className="flex-1 flex flex-col min-w-0">
                           <div className="flex justify-between items-start gap-2">
                             <div className="space-y-1 min-w-0 flex-1">
@@ -149,7 +150,7 @@ export const CartDrawer = () => {
                             </button>
                           </div>
 
-                          {/* Item Quantity and Dynamic Price Controls */}
+                          {/* item Quantity and Dynamic Price Controls */}
                           <div className="flex items-center justify-between mt-auto pt-2">
                             <div className="flex items-center gap-2">
                               <button
@@ -191,32 +192,32 @@ export const CartDrawer = () => {
                 )}
               </div>
 
-              {/* Checkout Footer Structure */}
+              {/* checkout Footer Structure */}
               <div className="bg-white px-6 py-6 rounded-t-[32px] border-t border-black/5 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] space-y-3 relative z-10 shrink-0 font-inter">
                 <div className="flex justify-between items-center">
-                  <span className="text-text-secondary">Subtotal</span>
+                  <span className="text-text-secondary">Menu Total</span>
                   <span className="font-bold text-text-primary">
                     {currency} {cartTotal.toFixed(2)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-text-secondary">
-                    Tax{" "}
+                    VAT{" "}
                     <span className="text-xs text-text-secondary/70">
-                      (12%)
+                      (12%, covered by business)
                     </span>
                   </span>
                   <span className="font-bold text-text-primary">
-                    {currency} {(cartTotal * 0.12).toFixed(2)}
+                    {currency} {vatAmount.toFixed(2)}
                   </span>
                 </div>
                 <div className="h-px bg-black/5 w-full !my-4" />
                 <div className="flex justify-between items-center pb-4">
                   <h3 className="text-lg font-extrabold text-text-primary font-figtree">
-                    Total
+                    Amount to Pay
                   </h3>
                   <h3 className="text-xl font-extrabold text-text-primary font-figtree">
-                    {currency} {(cartTotal * 1.12).toFixed(2)}
+                    {currency} {cartTotal.toFixed(2)}
                   </h3>
                 </div>
 
@@ -237,7 +238,7 @@ export const CartDrawer = () => {
         )}
       </AnimatePresence>
 
-      {/* Checkout Confirmation Modal Layer */}
+      {/* checkout Confirmation Modal Layer */}
       <AnimatePresence>
         {isConfirmOpen && (
           <motion.div
@@ -276,7 +277,7 @@ export const CartDrawer = () => {
                   disabled={isSubmitting}
                   onClick={async () => {
                     if (!tenantId) {
-                      // Demo fallback when no tenant scope
+                      // demo fallback when no tenant scope
                       setCartSnapshot([...cart]);
                       setCartTotalSnapshot(cartTotal);
                       setPlacedOrderId(
@@ -316,7 +317,7 @@ export const CartDrawer = () => {
         )}
       </AnimatePresence>
 
-      {/* Order Receipt Modal View */}
+      {/* order Receipt Modal View */}
       <AnimatePresence>
         {isReceiptOpen && placedOrderId && (
           <OrderReceiptModal

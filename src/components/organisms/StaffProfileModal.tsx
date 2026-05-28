@@ -26,7 +26,7 @@ export const StaffProfileModal = ({
 }: StaffProfileModalProps) => {
   const [activeTab, setActiveTab] = useState<"profile" | "schedule">("profile");
 
-  // Reset tab when modal closes or staff changes
+  // reset tab when modal closes or staff changes
   React.useEffect(() => {
     if (isOpen) {
       setActiveTab("profile");
@@ -37,16 +37,16 @@ export const StaffProfileModal = ({
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:p-6">
-      {/* Backdrop */}
+      {/* backdrop */}
       <div
         className="fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
         onClick={onClose}
       />
 
-      {/* Modal Content */}
+      {/* modal Content */}
       <div className="bg-white rounded-[32px] w-full max-w-lg shadow-2xl relative z-10 animate-in fade-in zoom-in-95 duration-200 overflow-hidden flex flex-col max-h-[90vh]">
         <div className="flex-1 overflow-y-auto custom-scrollbar">
-          {/* Header Background (Brand color) */}
+          {/* header Background (Brand color) */}
           <div className="h-24 bg-gradient-to-r from-[#FFD77A] to-[#FF5269] relative flex-shrink-0">
             <button
               onClick={onClose}
@@ -57,7 +57,7 @@ export const StaffProfileModal = ({
           </div>
 
           <div className="px-8 pb-8">
-            {/* Avatar & Basic Info (overlapping header) */}
+            {/* avatar & Basic Info (overlapping header) */}
             <div className="flex flex-col items-center -mt-12 mb-6 relative z-10">
               <div className="p-1.5 bg-white rounded-full shadow-sm mb-3">
                 <Avatar
@@ -96,7 +96,7 @@ export const StaffProfileModal = ({
               </div>
             </div>
 
-            {/* Content Sections */}
+            {/* content Sections */}
             {activeTab === "profile" ? (
               <div className="space-y-4">
                 <div className="bg-gray-50/50 rounded-2xl p-4 border border-gray-100/50">
@@ -280,7 +280,7 @@ export const StaffProfileModal = ({
           </div>
         </div>
 
-        {/* Action Footer */}
+        {/* action Footer */}
         <div className="p-6 border-t border-gray-100 flex justify-end gap-3 bg-white">
           {activeTab === "profile" ? (
             <>

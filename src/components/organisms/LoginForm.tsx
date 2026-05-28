@@ -227,10 +227,10 @@ export const LoginForm = () => {
       await verifyLoginTwoFactorCode(twoFactorConfig.userId, twoFactorCode);
       if (twoFactorConfig.routeDestination) {
         // sync router and reload based on environment
-        const isLocalhost = typeof window !== "undefined" && (
-          window.location.hostname === "localhost" ||
-          window.location.hostname === "127.0.0.1"
-        );
+        const isLocalhost =
+          typeof window !== "undefined" &&
+          (window.location.hostname === "localhost" ||
+            window.location.hostname === "127.0.0.1");
         if (isLocalhost) {
           router.push(twoFactorConfig.routeDestination);
         } else {
@@ -286,9 +286,13 @@ export const LoginForm = () => {
     setIsLoading(true);
     try {
       const supabase = createSupabaseBrowserClient(rememberMe);
+      const normalizedEmail = email.trim().toLowerCase();
 
       const { data: signInData, error: signInError } =
-        await supabase.auth.signInWithPassword({ email, password });
+        await supabase.auth.signInWithPassword({
+          email: normalizedEmail,
+          password,
+        });
 
       if (signInError || !signInData.user || !signInData.session) {
         setError("Invalid email or password. Please try again.");
@@ -296,31 +300,71 @@ export const LoginForm = () => {
       }
 
       if (rememberMe) {
-        localStorage.setItem("rememberedEmail", email);
+        localStorage.setItem("rememberedEmail", normalizedEmail);
       } else {
         localStorage.removeItem("rememberedEmail");
       }
 
       const claims = decodeJwtPayload(signInData.session.access_token);
-      
+
       // always fetch canonical role and tenant from profiles table
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
-        .select("role, tenant_id")
+        .select("role, tenant_id, app_role_id")
         .eq("id", signInData.user.id)
         .single();
 
       let role = profile?.role;
       let tenantId = profile?.tenant_id;
+      const appRoleId = profile?.app_role_id;
 
       // fallback to jwt claims if profile data is missing
       if (!role) {
         // avoid generic supabase role "authenticated"
-        role = claims.user_role || (claims.role !== "authenticated" ? claims.role : undefined);
+        role =
+          claims.user_role ||
+          (claims.role !== "authenticated" ? claims.role : undefined);
       }
-      
+
       if (!tenantId) {
         tenantId = claims.tenant_id || claims.tenantId;
+      }
+
+      if (!tenantId) {
+        const metadata = signInData.user.user_metadata as
+          | Record<string, unknown>
+          | undefined;
+
+        tenantId =
+          (typeof metadata?.tenant_id === "string"
+            ? metadata.tenant_id
+            : undefined) ||
+          (typeof metadata?.tenantId === "string"
+            ? metadata.tenantId
+            : undefined) ||
+          tenantId;
+      }
+
+      if (!role && appRoleId) {
+        role = "employee";
+      }
+
+      if (!role) {
+        const metadata = signInData.user.user_metadata as
+          | Record<string, unknown>
+          | undefined;
+
+        const metaAppRoleId =
+          (typeof metadata?.app_role_id === "string"
+            ? metadata.app_role_id
+            : undefined) ||
+          (typeof metadata?.appRoleId === "string"
+            ? metadata.appRoleId
+            : undefined);
+
+        if (metaAppRoleId) {
+          role = "employee";
+        }
       }
 
       tenantId = tenantId || "";
@@ -621,9 +665,7 @@ export const LoginForm = () => {
               <Shield className="w-8 h-8 text-brand-accent" />
             </div>
             <h1 className="text-2xl font-extrabold text-text-primary text-center">
-              {useRecoveryCode
-                ? "Recovery Code"
-                : "Two-Factor Authentication"}
+              {useRecoveryCode ? "Recovery Code" : "Two-Factor Authentication"}
             </h1>
             <p className="b4 text-text-secondary mt-1 text-center max-w-sm">
               {useRecoveryCode
@@ -643,7 +685,9 @@ export const LoginForm = () => {
                   placeholder="Enter 8-character code"
                   value={twoFactorCode}
                   onChange={(e) => {
-                    setTwoFactorCode(e.target.value.replace(/[^0-9A-Za-z]/g, ""));
+                    setTwoFactorCode(
+                      e.target.value.replace(/[^0-9A-Za-z]/g, ""),
+                    );
                     if (error) setError(null);
                   }}
                   onKeyDown={handleKeyDown}
@@ -673,8 +717,9 @@ export const LoginForm = () => {
                 size="lg"
                 className="w-full h-[52px]"
                 disabled={
-                  (useRecoveryCode ? twoFactorCode.length < 8 : twoFactorCode.length < 6) ||
-                  isLoading
+                  (useRecoveryCode
+                    ? twoFactorCode.length < 8
+                    : twoFactorCode.length < 6) || isLoading
                 }
                 loading={isLoading}
               >
@@ -683,9 +728,7 @@ export const LoginForm = () => {
 
               <div className="text-center mt-4">
                 <span className="text-text-secondary text-sm">
-                  {useRecoveryCode
-                    ? "Have your device? "
-                    : "Having trouble? "}
+                  {useRecoveryCode ? "Have your device? " : "Having trouble? "}
                 </span>
                 <button
                   type="button"
@@ -696,9 +739,7 @@ export const LoginForm = () => {
                   }}
                   className="text-brand-primary font-bold hover:text-brand-accent transition-colors focus:outline-none text-sm"
                 >
-                  {useRecoveryCode
-                    ? "Use authenticator"
-                    : "Use recovery code"}
+                  {useRecoveryCode ? "Use authenticator" : "Use recovery code"}
                 </button>
               </div>
             </form>

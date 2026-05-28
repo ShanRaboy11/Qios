@@ -28,7 +28,7 @@ export async function fetchTenantCustomerMenu(tenantId: string) {
       .order("created_at", { ascending: true }),
     supabase
       .from("tenants")
-      .select("settings")
+      .select("business_name, settings")
       .eq("id", tenantId)
       .maybeSingle(),
   ]);
@@ -49,7 +49,7 @@ export async function fetchTenantCustomerMenu(tenantId: string) {
     dbCategories.map((c: any) => [c.id, c.name]),
   );
 
-  // Fetch modifier groups and their options for all returned menu items in one query
+  // fetch modifier groups and their options for all returned menu items in one query
   const menuItemIds = dbItems.map((i: any) => i.id);
   let modifierGroupsByItemId = new Map<string, MenuItemModifierGroup[]>();
 
@@ -118,7 +118,7 @@ export async function fetchTenantCustomerMenu(tenantId: string) {
     modifierGroups: modifierGroupsByItemId.get(item.id) ?? [],
   })) satisfies MenuItemData[];
 
-  // Fetch currency
+  // fetch currency
   const { data: platformSettings } = await supabase
     .from("platform_settings")
     .select("default_currency")
@@ -127,7 +127,7 @@ export async function fetchTenantCustomerMenu(tenantId: string) {
 
   const currency = platformSettings?.default_currency || "PHP";
 
-  // Calculate guest number (orders today + 1)
+  // calculate guest number (orders today + 1)
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -167,5 +167,12 @@ export async function fetchTenantCustomerMenu(tenantId: string) {
       readStr(tenantSettings, ["branding_logo_dashboard"]) || undefined,
   };
 
-  return { categories, items, currency, guestNumber, branding };
+  return {
+    categories,
+    items,
+    currency,
+    guestNumber,
+    branding,
+    storeName: tenantResult.data?.business_name || "",
+  };
 }

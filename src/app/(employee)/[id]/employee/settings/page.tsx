@@ -27,24 +27,24 @@ export default function EmployeeSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
-  // Profile Form States
+  // profile Form States
   const [fullName, setFullName] = useState("Employee User");
   const [displayName, setDisplayName] = useState("Emp_User");
   const [email, setEmail] = useState("employee@qios.com");
   const [phone, setPhone] = useState("+63 912 345 6789");
 
-  // Shift & Operational States
+  // shift & Operational States
   const [terminal, setTerminal] = useState("counter-1");
   const [defaultView, setDefaultView] = useState("scanner");
   const [autoLogoff, setAutoLogoff] = useState("10");
 
-  // Security States
+  // security States
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [quickPin, setQuickPin] = useState("1234");
 
-  // Sound & Notification States
+  // sound & Notification States
   const [soundQueue, setSoundQueue] = useState(true);
   const [soundScan, setSoundScan] = useState(true);
   const [soundStock, setSoundStock] = useState(false);
@@ -56,13 +56,13 @@ export default function EmployeeSettingsPage() {
     setSaving(true);
     setSaveSuccess(false);
 
-    // Simulate saving settings
+    // simulate saving settings
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     setSaving(false);
     setSaveSuccess(true);
 
-    // Clear success message after 3 seconds
+    // clear success message after 3 seconds
     setTimeout(() => {
       setSaveSuccess(false);
     }, 3000);
@@ -75,7 +75,7 @@ export default function EmployeeSettingsPage() {
     { id: "notifications", label: "Sounds & Alerts", icon: <Bell size={18} /> },
   ] as const;
 
-  // Dropdown options constants
+  // dropdown options constants
   const terminalOptions = [
     { label: "Terminal 01 - Main Lobby Counter", value: "counter-1" },
     { label: "Terminal 02 - Dining Room Cashier", value: "counter-2" },
@@ -107,7 +107,7 @@ export default function EmployeeSettingsPage() {
       </header>
 
       <div className="flex flex-col lg:flex-row gap-8 items-start">
-        {/* Left Vertical Tab Selector */}
+        {/* left Vertical Tab Selector */}
         <div className="w-full lg:w-64 flex flex-row lg:flex-col gap-1.5 overflow-x-auto lg:overflow-visible pb-3 lg:pb-0 border-b lg:border-b-0 lg:border-r border-brand-primary/10 pr-0 lg:pr-6 shrink-0 scrollbar-none">
           {tabs.map((tab) => (
             <button
@@ -129,11 +129,11 @@ export default function EmployeeSettingsPage() {
           ))}
         </div>
 
-        {/* Right Details Panel */}
+        {/* right Details Panel */}
         <div className="flex-1 w-full bg-white/70 backdrop-blur-md border border-brand-primary/10 rounded-[32px] p-6 md:p-8 shadow-sm">
           <form onSubmit={handleSave} className="space-y-6">
             
-            {/* Tab 1: Profile Details */}
+            {/* tab 1: Profile Details */}
             {activeTab === "profile" && (
               <div className="space-y-6 animate-in fade-in duration-300">
                 <div className="flex items-center gap-4 flex-wrap pb-4 border-b border-brand-primary/5">
@@ -201,7 +201,7 @@ export default function EmployeeSettingsPage() {
               </div>
             )}
 
-            {/* Tab 2: Shift & Operations */}
+            {/* tab 2: Shift & Operations */}
             {activeTab === "shift" && (
               <div className="space-y-6 animate-in fade-in duration-300">
                 <div className="pb-4 border-b border-brand-primary/5">
@@ -246,7 +246,7 @@ export default function EmployeeSettingsPage() {
               </div>
             )}
 
-            {/* Tab 3: Security & Passwords */}
+            {/* tab 3: Security & Passwords */}
             {activeTab === "security" && (
               <div className="space-y-6 animate-in fade-in duration-300">
                 <div className="pb-4 border-b border-brand-primary/5">
@@ -317,7 +317,7 @@ export default function EmployeeSettingsPage() {
               </div>
             )}
 
-            {/* Tab 4: Sounds & Notifications */}
+            {/* tab 4: Sounds & Notifications */}
             {activeTab === "notifications" && (
               <div className="space-y-6 animate-in fade-in duration-300">
                 <div className="pb-4 border-b border-brand-primary/5">
@@ -328,7 +328,7 @@ export default function EmployeeSettingsPage() {
                 </div>
 
                 <div className="space-y-4">
-                  {/* Sound 1 */}
+                  {/* sound 1 */}
                   <div className="flex items-center justify-between p-5 border border-brand-primary/10 rounded-[24px] bg-white/50 hover:bg-white/80 transition-all">
                     <div className="flex-1 pr-4">
                       <p className="b2 font-bold text-text-primary font-figtree flex items-center gap-1.5">
@@ -346,7 +346,7 @@ export default function EmployeeSettingsPage() {
                     />
                   </div>
 
-                  {/* Sound 2 */}
+                  {/* sound 2 */}
                   <div className="flex items-center justify-between p-5 border border-brand-primary/10 rounded-[24px] bg-white/50 hover:bg-white/80 transition-all">
                     <div className="flex-1 pr-4">
                       <p className="b2 font-bold text-text-primary font-figtree flex items-center gap-1.5">
@@ -364,7 +364,7 @@ export default function EmployeeSettingsPage() {
                     />
                   </div>
 
-                  {/* Sound 3 */}
+                  {/* sound 3 */}
                   <div className="flex items-center justify-between p-5 border border-brand-primary/10 rounded-[24px] bg-white/50 hover:bg-white/80 transition-all">
                     <div className="flex-1 pr-4">
                       <p className="b2 font-bold text-text-primary font-figtree flex items-center gap-1.5">
@@ -386,7 +386,7 @@ export default function EmployeeSettingsPage() {
 
                   <h3 className="b2 font-bold text-text-primary font-figtree mb-2 ml-1">Notification Channels</h3>
 
-                  {/* Channel 1 */}
+                  {/* channel 1 */}
                   <div className="flex items-center justify-between p-5 border border-brand-primary/10 rounded-[24px] bg-white/50 hover:bg-white/80 transition-all">
                     <div className="flex-1 pr-4">
                       <p className="b2 font-bold text-text-primary font-figtree flex items-center gap-1.5">
@@ -404,7 +404,7 @@ export default function EmployeeSettingsPage() {
                     />
                   </div>
 
-                  {/* Channel 2 */}
+                  {/* channel 2 */}
                   <div className="flex items-center justify-between p-5 border border-brand-primary/10 rounded-[24px] bg-white/50 hover:bg-white/80 transition-all">
                     <div className="flex-1 pr-4">
                       <p className="b2 font-bold text-text-primary font-figtree flex items-center gap-1.5">
@@ -425,7 +425,7 @@ export default function EmployeeSettingsPage() {
               </div>
             )}
 
-            {/* Footer Form Controls */}
+            {/* footer Form Controls */}
             <div className="mt-8 pt-6 border-t border-brand-primary/10 flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-2">
                 {saveSuccess && (

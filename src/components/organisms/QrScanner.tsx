@@ -13,13 +13,16 @@ import {
   AlertCircle,
 } from "lucide-react";
 import jsQR from "jsqr";
+import { useParams } from "next/navigation";
 import { Button } from "@/components/atoms/Button";
 import OrderDetails from "@/components/molecules/OrderDetails";
+import { processScannedQr } from "@/app/(employee)/[id]/employee/scanner/actions";
 
 type ScanState = "idle" | "requesting" | "scanning" | "success" | "error";
 
 interface OrderData {
   id: string;
+  tenant_id?: string;
   table_number?: number;
   status: "pending" | "preparing" | "ready" | "cancelled" | "voided" | "served";
   total_price: number;
@@ -47,6 +50,58 @@ interface OrderData {
     }>;
   }>;
 }
+
+const normalizeScannedOrder = (order: any): OrderData => ({
+  id: String(order.id),
+  tenant_id: order.tenant_id ?? undefined,
+  table_number:
+    order.table_number === null || order.table_number === undefined
+      ? undefined
+      : Number(order.table_number),
+  status: order.status,
+  total_price: Number(order.total_price ?? 0),
+  payment_status: order.payment_status,
+  payment_method: order.payment_method ?? undefined,
+  created_at: String(order.created_at),
+  updated_at: String(order.updated_at),
+  qr_hash: order.qr_hash ?? undefined,
+  order_items: Array.isArray(order.order_items)
+    ? order.order_items.map((item: any) => {
+        const menuItem = Array.isArray(item.menu_items)
+          ? item.menu_items[0]
+          : item.menu_items;
+
+        return {
+          id: String(item.id),
+          quantity: Number(item.quantity ?? 0),
+          unit_price: Number(item.unit_price ?? 0),
+          customization_notes: item.customization_notes ?? undefined,
+          menu_items: {
+            id: String(menuItem?.id ?? ""),
+            name: String(menuItem?.name ?? ""),
+            description: menuItem?.description ?? undefined,
+          },
+          order_item_modifiers: Array.isArray(item.order_item_modifiers)
+            ? item.order_item_modifiers.map((modifier: any) => {
+                const modifierOption = Array.isArray(modifier.modifier_options)
+                  ? modifier.modifier_options[0]
+                  : modifier.modifier_options;
+
+                return {
+                  id: String(modifier.id),
+                  modifier_options: {
+                    name: String(modifierOption?.name ?? ""),
+                    additional_price: Number(
+                      modifierOption?.additional_price ?? 0,
+                    ),
+                  },
+                };
+              })
+            : [],
+        };
+      })
+    : [],
+});
 
 // ── Corner brackets ────────────────────────────────────────────────────────────
 const ScanBrackets = ({ active }: { active: boolean }) => {
@@ -213,6 +268,8 @@ const QrPlaceholder = () => (
 );
 
 export const QrScanner = (): JSX.Element => {
+  const params = useParams<{ id?: string }>();
+  const tenantId = typeof params?.id === "string" ? params.id : "";
   const [orderId, setOrderId] = useState<string>("");
   const [scanState, setScanState] = useState<ScanState>("idle");
   const [errorMessage, setErrorMessage] = useState<string>("");
@@ -245,7 +302,7 @@ export const QrScanner = (): JSX.Element => {
 
   useEffect(() => () => stopCamera(), [stopCamera]);
 
-  // Automatically search order when QR scan succeeds
+  // automatically search order when QR scan succeeds
   useEffect(() => {
     if (scanState === "success" && orderId.trim()) {
       handleSearchOrder();
@@ -346,132 +403,65 @@ export const QrScanner = (): JSX.Element => {
     setScanState("idle");
     setErrorMessage("");
   };
-  const handleScanAgain = () => {
-    setOrderId("");
-    setScanState("idle");
-  };
-
   const handleSearchOrder = async () => {
     if (!orderId.trim()) return;
 
     setSearchLoading(true);
     setSearchError("");
     setFoundOrder(null);
+    const queryValue = orderId.trim();
 
-    // Simulate a delay for loading effect
-    await new Promise((resolve) => setTimeout(resolve, 600));
+    try {
+      if (!tenantId) {
+        const fallbackOrder: OrderData = {
+          id: queryValue,
+          table_number: 12,
+          status: "preparing",
+          total_price: 450.75,
+          payment_status: "unpaid",
+          created_at: new Date(Date.now() - 15 * 60000).toISOString(),
+          updated_at: new Date().toISOString(),
+          qr_hash: `QR_${queryValue}`,
+          order_items: [
+            {
+              id: "item-1",
+              quantity: 2,
+              unit_price: 140,
+              customization_notes: "Extra crispy",
+              menu_items: {
+                id: "menu-1",
+                name: "Fried Chicken",
+                description: "Crispy fried chicken",
+              },
+              order_item_modifiers: [],
+            },
+          ],
+        };
 
-    // Determine order status based on order ID for demo purposes
-    const orderIdLower = orderId.trim().toLowerCase();
+        setFoundOrder(fallbackOrder);
+        setScanState("idle");
+        return;
+      }
 
-    // Check for invalid reading
-    if (orderIdLower.includes("invalid") || orderId.trim().length < 3) {
+      const order = await processScannedQr(tenantId, queryValue);
+      setFoundOrder(normalizeScannedOrder(order));
+      setScanState("idle");
+      setSearchError("");
+    } catch (err) {
       setSearchError(
-        "❌ Invalid Reading: No active order was found matching this code/ID. Please verify and try again.",
+        err instanceof Error ? err.message : "Unable to find this order.",
       );
+      setScanState("idle");
+    } finally {
       setSearchLoading(false);
-      return;
     }
-
-    let orderStatus: OrderData["status"] = "preparing";
-
-    // Special cases for testing different scenarios
-    if (orderIdLower.includes("served") || orderIdLower.includes("done")) {
-      orderStatus = "served";
-    } else if (orderIdLower.includes("cancel")) {
-      orderStatus = "cancelled";
-    } else if (orderIdLower.includes("void")) {
-      orderStatus = "voided";
-    }
-
-    // Set detailed warnings for already done/completed/cancelled orders
-    if (orderStatus === "served") {
-      setSearchError(
-        "ℹ️ Order Already Done: This order has already been completed and served. Opening read-only details.",
-      );
-    } else if (orderStatus === "cancelled" || orderStatus === "voided") {
-      setSearchError(
-        `ℹ️ Order ${
-          orderStatus.charAt(0).toUpperCase() + orderStatus.slice(1)
-        }: This order is marked as ${orderStatus.toUpperCase()} and cannot be updated. Opening read-only details.`,
-      );
-    }
-
-    // Mock data - replace with real API call later
-    const mockOrder: OrderData = {
-      id: orderId.trim(),
-      table_number: Math.floor(Math.random() * 15) + 1,
-      status: orderStatus,
-      total_price: 450.75,
-      payment_status: orderStatus === "served" ? "paid" : "unpaid",
-      payment_method: orderStatus === "served" ? "cash" : undefined,
-      created_at: new Date(Date.now() - 15 * 60000).toISOString(),
-      updated_at: new Date().toISOString(),
-      qr_hash: "QR_" + orderId.trim(),
-      order_items: [
-        {
-          id: "item-1",
-          quantity: 2,
-          unit_price: 125.0,
-          customization_notes: "Extra crispy",
-          menu_items: {
-            id: "menu-1",
-            name: "Fried Chicken",
-            description: "Crispy fried chicken",
-          },
-          order_item_modifiers: [
-            {
-              id: "mod-1",
-              modifier_options: {
-                name: "Extra spicy",
-                additional_price: 15.0,
-              },
-            },
-          ],
-        },
-        {
-          id: "item-2",
-          quantity: 1,
-          unit_price: 65.0,
-          customization_notes: undefined,
-          menu_items: {
-            id: "menu-2",
-            name: "Rice",
-            description: "Garlic fried rice",
-          },
-          order_item_modifiers: [],
-        },
-        {
-          id: "item-3",
-          quantity: 2,
-          unit_price: 55.0,
-          customization_notes: "Lightly sweet",
-          menu_items: {
-            id: "menu-3",
-            name: "Mango Shake",
-            description: "Fresh mango shake",
-          },
-          order_item_modifiers: [
-            {
-              id: "mod-2",
-              modifier_options: {
-                name: "Extra ice",
-                additional_price: 0,
-              },
-            },
-          ],
-        },
-      ],
-    };
-
-    setFoundOrder(mockOrder);
-    setSearchLoading(false);
   };
 
   const handleCloseOrderDetails = () => {
     setFoundOrder(null);
     setOrderId("");
     setSearchError("");
+    setScanState("idle");
   };
 
   const handleClose = () => {
@@ -499,7 +489,7 @@ export const QrScanner = (): JSX.Element => {
           width: 100%;
           position: relative;
           border: 1px solid rgba(255, 255, 255, 0.4);
-          /* Added outer glow behind the card */
+          /* added outer glow behind the card */
           box-shadow:
             0 24px 64px -12px rgba(0, 0, 0, 0.08),
             0 0 0 1px rgba(255, 198, 112, 0.3),
@@ -507,7 +497,7 @@ export const QrScanner = (): JSX.Element => {
             inset 0 2px 0 rgba(255, 255, 255, 1);
         }
         
-        /* Inner container that contains hiding overflow so the outer glow remains visible */
+        /* inner container that contains hiding overflow so the outer glow remains visible */
         .qrs-wrap-inner {
           position: absolute; inset: 0;
           border-radius: 32px;
@@ -515,7 +505,7 @@ export const QrScanner = (): JSX.Element => {
           pointer-events: none;
         }
 
-        /* Techy animated dot texture on the outer card */
+        /* techy animated dot texture on the outer card */
         .qrs-dots {
           position: absolute; inset: 0; pointer-events: none; border-radius: 32px;
           background-image: 
@@ -526,7 +516,7 @@ export const QrScanner = (): JSX.Element => {
           opacity: 0.8;
         }
 
-        /* Ambient floating glow behind the card content */
+        /* ambient floating glow behind the card content */
         .qrs-ambient-glow {
           position: absolute;
           top: -30%; left: -20%;
@@ -572,7 +562,7 @@ export const QrScanner = (): JSX.Element => {
           margin: 0; letter-spacing: -0.015em;
         }
 
-        /* Close button — modernized */
+        /* close button — modernized */
         .qrs-close {
           background: rgba(255,255,255,0.8);
           border: 1px solid rgba(112,112,112,0.1);
@@ -603,7 +593,7 @@ export const QrScanner = (): JSX.Element => {
             0 12px 32px -12px rgba(255,198,112,0.2);
         }
 
-        /* Ambient floating shapes inside viewport */
+        /* ambient floating shapes inside viewport */
         .qrs-vp-blob-amber {
           position: absolute; pointer-events: none; border-radius: 50%;
           top: -20%; right: -20%;
@@ -635,7 +625,7 @@ export const QrScanner = (): JSX.Element => {
           100% { transform: translate(-2%, 2%) scale(0.98); }
         }
 
-        /* Techy Grid overlay inside viewport */
+        /* techy Grid overlay inside viewport */
         .qrs-vp-grid {
           position: absolute; inset: 0; pointer-events: none;
           background-image:
@@ -653,7 +643,7 @@ export const QrScanner = (): JSX.Element => {
         }
         .qrs-video.live { opacity: 1; }
 
-        /* Scan line */
+        /* scan line */
         @keyframes qrsScanDown {
           0%   { top: 12px; opacity: 0; }
           8%   { opacity: 1; }
@@ -670,7 +660,7 @@ export const QrScanner = (): JSX.Element => {
           pointer-events: none;
         }
 
-        /* Scanning status pill */
+        /* scanning status pill */
         .qrs-pill {
           position: absolute; top: 18px; left: 50%; transform: translateX(-50%);
           background: rgba(255,255,255,0.85);
@@ -690,7 +680,7 @@ export const QrScanner = (): JSX.Element => {
           animation: qrsDotPulse 1s ease-in-out infinite;
         }
 
-        /* Torch */
+        /* torch */
         .qrs-torch {
           position: absolute; bottom: 14px; right: 14px;
           width: 38px; height: 38px; border-radius: 50%;
@@ -711,7 +701,7 @@ export const QrScanner = (): JSX.Element => {
           border-color: var(--color-brand-primary);
         }
 
-        /* State overlays */
+        /* state overlays */
         .qrs-state {
           position: absolute; inset: 0;
           display: flex; flex-direction: column;
@@ -812,7 +802,7 @@ export const QrScanner = (): JSX.Element => {
           <div className="qrs-dots" />
         </div>
 
-        {/* Hidden decode canvas */}
+        {/* hidden decode canvas */}
         <canvas
           ref={canvasRef}
           style={{ display: "none" }}
@@ -837,24 +827,24 @@ export const QrScanner = (): JSX.Element => {
             }}
           >
             <div>
-              {/* Badge uses accent color */}
+              {/* badge uses accent color */}
               <div className="qrs-badge">
                 <div className="qrs-badge-dot" />
                 <span className="qrs-badge-label">Order Scanner</span>
               </div>
-              {/* Title — "QR" same color as the rest, no accent emphasis */}
+              {/* title — "QR" same color as the rest, no accent emphasis */}
               <h2 className="qrs-title">Scan QR Code</h2>
             </div>
           </div>
 
           {/* ── Viewport — blobs live inside here ── */}
           <div className="qrs-viewport">
-            {/* Blobs inside the viewport card */}
+            {/* blobs inside the viewport card */}
             <div className="qrs-vp-blob-amber" />
             <div className="qrs-vp-blob-accent" />
             <div className="qrs-vp-blob-mid" />
 
-            {/* Grid on top of blobs */}
+            {/* grid on top of blobs */}
             <div className="qrs-vp-grid" />
 
             <video
@@ -893,7 +883,7 @@ export const QrScanner = (): JSX.Element => {
               </div>
             )}
 
-            {/* Idle */}
+            {/* idle */}
             {scanState === "idle" && (
               <div className="qrs-state">
                 <QrPlaceholder />
@@ -901,7 +891,7 @@ export const QrScanner = (): JSX.Element => {
               </div>
             )}
 
-            {/* Requesting */}
+            {/* requesting */}
             {scanState === "requesting" && (
               <div className="qrs-state">
                 <Loader2
@@ -913,7 +903,7 @@ export const QrScanner = (): JSX.Element => {
               </div>
             )}
 
-            {/* Success */}
+            {/* success */}
             {scanState === "success" && (
               <div className="qrs-state qrs-state-success">
                 <svg
@@ -948,18 +938,10 @@ export const QrScanner = (): JSX.Element => {
                   />
                 </svg>
                 <p className="qrs-success-title">QR Code detected!</p>
-                <button
-                  type="button"
-                  onClick={handleScanAgain}
-                  className="qrs-rescan"
-                  style={{ color: "var(--color-success-primary)" }}
-                >
-                  <RotateCcw size={12} /> Scan again
-                </button>
               </div>
             )}
 
-            {/* Error */}
+            {/* error */}
             {scanState === "error" && (
               <div className="qrs-state qrs-state-error">
                 <XCircle
@@ -1062,7 +1044,7 @@ export const QrScanner = (): JSX.Element => {
             </Button>
           </div>
 
-          {/* Search Error Message */}
+          {/* search Error Message */}
           {searchError &&
             (() => {
               const isInfo = searchError.startsWith("ℹ️");
@@ -1111,7 +1093,7 @@ export const QrScanner = (): JSX.Element => {
         </div>
       </div>
 
-      {/* Order Details Modal */}
+      {/* order Details Modal */}
       {foundOrder && (
         <OrderDetails
           order={foundOrder}

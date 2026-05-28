@@ -34,7 +34,7 @@ export const SearchFilterbarv2 = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const [selectedDate, setSelectedDate] = useState<number | null>(null);
 
-  // Close dropdown when clicking outside
+  // close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -95,7 +95,7 @@ export const SearchFilterbarv2 = ({
           />
         </button>
 
-        {/* Calendar Dropdown UI */}
+        {/* calendar Dropdown UI */}
         {activeDropdown === "calendar" && (
           <div className="absolute top-[110%] left-0 w-[300px] z-50 bg-white border-2 border-[#E5E5E5] rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 p-4">
             <div className="flex items-center justify-between mb-4">
@@ -110,7 +110,7 @@ export const SearchFilterbarv2 = ({
               </button>
             </div>
 
-            {/* Minimal Calendar mock grid */}
+            {/* minimal Calendar mock grid */}
             <div className="grid grid-cols-7 gap-1 text-center mb-2">
               {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((day) => (
                 <div key={day} className="b5 font-semibold text-text-secondary">
@@ -119,7 +119,7 @@ export const SearchFilterbarv2 = ({
               ))}
             </div>
             <div className="grid grid-cols-7 gap-1 text-center">
-              {/* Dummy month days to visualize a calendar structure */}
+              {/* dummy month days to visualize a calendar structure */}
               {Array.from({ length: 31 }).map((_, i) => {
                 const day = i + 1;
                 const isSelected = selectedDate === day;
@@ -169,7 +169,7 @@ export const SearchFilterbarv2 = ({
           />
         </button>
 
-        {/* Users / Roles Dropdown UI */}
+        {/* users / Roles Dropdown UI */}
         {activeDropdown === "users" && (
           <div className="absolute top-[110%] left-0 w-[240px] z-50 bg-white border-2 border-[#E5E5E5] rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             <div className="px-5 py-3 border-b border-[#E5E5E5] bg-slate-50">

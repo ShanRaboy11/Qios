@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { fetchTenantCustomerMenu } from "@/lib/customerMenu";
 
 const GEMINI_MODEL = process.env.GOOGLE_GEMINI_MODEL ?? "gemini-2.5-flash";
 
@@ -73,6 +74,28 @@ function buildConversationPrompt({
     .join("\n");
 }
 
+function buildTenantMenuContext({
+  categories,
+  items,
+  currency,
+}: {
+  categories: { name: string }[];
+  items: { name: string; price: number; available: boolean; category: string }[];
+  currency: string;
+}) {
+  const categoryList = categories.map((category) => category.name).filter(Boolean);
+  const itemLines = items.map((item) => {
+    const availability = item.available ? "available" : "sold out";
+    return `- ${item.name} (${item.category}) - ${currency} ${item.price.toFixed(2)} - ${availability}`;
+  });
+
+  return [
+    categoryList.length > 0 ? `Categories: ${categoryList.join(", ")}` : "Categories: none",
+    itemLines.length > 0 ? `Menu items:\n${itemLines.join("\n")}` : "Menu items: none",
+    `Currency: ${currency}`,
+  ].join("\n");
+}
+
 export async function POST(request: NextRequest) {
   try {
     const apiKey = process.env.GOOGLE_GEMINI_API_KEY;
@@ -84,11 +107,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { prompt, context, messages, storeName } = (await request.json()) as {
+    const { prompt, context, messages, storeName, tenantId } = (await request.json()) as {
       prompt?: string;
       context?: string;
       messages?: ChatMessage[];
       storeName?: string;
+      tenantId?: string;
     };
 
     const latestPrompt = prompt?.trim() || messages?.at(-1)?.message.trim();
@@ -100,11 +124,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    let resolvedContext = context;
+    let resolvedStoreName = storeName;
+
+    if (tenantId) {
+      const tenantMenu = await fetchTenantCustomerMenu(tenantId);
+      resolvedContext = buildTenantMenuContext({
+        categories: tenantMenu.categories,
+        items: tenantMenu.items,
+        currency: tenantMenu.currency,
+      });
+      resolvedStoreName = tenantMenu.storeName || resolvedStoreName;
+    }
+
     const combinedPrompt = buildConversationPrompt({
       prompt: latestPrompt,
-      context,
+      context: resolvedContext,
       messages,
-      storeName,
+      storeName: resolvedStoreName,
     });
 
     const response = await fetch(

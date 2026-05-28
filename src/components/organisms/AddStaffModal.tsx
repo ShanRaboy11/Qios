@@ -29,13 +29,13 @@ export const AddStaffModal = ({ isOpen, onClose, onSave }: AddStaffModalProps) =
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-      {/* Backdrop */}
+      {/* backdrop */}
       <div 
         className="fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity" 
         onClick={onClose}
       />
       
-      {/* Modal Content */}
+      {/* modal Content */}
       <div className="bg-white rounded-[24px] w-full max-w-md shadow-2xl relative z-10 animate-in fade-in zoom-in-95 duration-200">
         <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
           <h2 className="text-xl font-bold text-text-primary">Add New Staff</h2>

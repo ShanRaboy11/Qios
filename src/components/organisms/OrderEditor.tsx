@@ -19,7 +19,7 @@ const OrderEditor = ({ menuItem, onClose }: OrderEditorProps) => {
   const { addToCart } = useCart();
 
   const [quantity, setQuantity] = useState(1);
-  // Map of modifierGroupId -> Set of selected optionIds
+  // map of modifierGroupId -> Set of selected optionIds
   const [selectionByGroup, setSelectionByGroup] = useState<
     Map<string, Set<string>>
   >(
@@ -29,7 +29,7 @@ const OrderEditor = ({ menuItem, onClose }: OrderEditorProps) => {
   const [instructions, setInstructions] = useState("");
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-  // Flatten selected options across all groups for price + display
+  // flatten selected options across all groups for price + display
   const selectedOptions = useMemo<SelectedModifierOption[]>(() => {
     const result: SelectedModifierOption[] = [];
     for (const group of menuItem.modifierGroups) {
@@ -65,10 +65,10 @@ const OrderEditor = ({ menuItem, onClose }: OrderEditorProps) => {
       const current = new Set(next.get(group.id) ?? []);
 
       if (group.maxSelections === 1) {
-        // Radio behaviour: only one allowed
+        // radio behaviour: only one allowed
         next.set(group.id, new Set([option.id]));
       } else {
-        // Checkbox behaviour: toggle, but respect maxSelections
+        // checkbox behaviour: toggle, but respect maxSelections
         if (current.has(option.id)) {
           current.delete(option.id);
         } else if (current.size < group.maxSelections) {
@@ -187,7 +187,7 @@ const OrderEditor = ({ menuItem, onClose }: OrderEditorProps) => {
 
           <div className="h-px bg-[var(--kds-border-warm)] mx-2 md:mx-4" />
 
-          {/* Dynamic modifier groups */}
+          {/* dynamic modifier groups */}
           {menuItem.modifierGroups.length > 0 ? (
             menuItem.modifierGroups.map((group) => {
               const isRadio = group.maxSelections === 1;

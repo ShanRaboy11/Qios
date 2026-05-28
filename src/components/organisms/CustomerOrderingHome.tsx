@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronRight, Search, X } from "lucide-react";
+import { ChevronRight, Search } from "lucide-react";
 import { ChatbotLogo } from "@/components/molecules/ChatbotLogo";
 import { cn } from "@/lib/utils";
 
@@ -14,6 +14,7 @@ import OrderEditor from "@/components/organisms/OrderEditor";
 import { CartDrawer } from "@/components/organisms/CartDrawer";
 import { FloatingOrderStatus } from "@/components/organisms/FloatingOrderStatus";
 import { GuestProfileDrawer } from "@/components/organisms/GuestProfileDrawer";
+import { ChatbotUI } from "@/components/organisms/ChatbotUI";
 import { CartProvider, useCart } from "@/contexts/CartContext";
 import { MenuItemData } from "@/components/organisms/MenuCatalog";
 import { useTenantBranding } from "@/components/providers/TenantBrandingProvider";
@@ -30,11 +31,15 @@ function CustomerOrderingHomeInner({
   initialItems,
   currency = "PHP",
   guestNumber = 1,
+  tenantId,
+  storeName,
 }: {
   initialCategories: { id: string; name: string; icon: string }[];
   initialItems: MenuItemData[];
   currency?: string;
   guestNumber?: number;
+  tenantId: string;
+  storeName?: string;
 }) {
   const { setIsCartOpen } = useCart();
   const { branding } = useTenantBranding();
@@ -43,7 +48,6 @@ function CustomerOrderingHomeInner({
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<MenuItemData | null>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [isChatOpen, setIsChatOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
   const categories = initialCategories;
@@ -338,76 +342,16 @@ function CustomerOrderingHomeInner({
           guestNumber={guestNumber}
         />
 
-        {/* FLOATING CHATBOT */}
-        <div className="fixed bottom-6 right-4 sm:right-6 z-50 flex flex-col items-end gap-4">
-          <AnimatePresence>
-            {isChatOpen && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.85, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.85, y: 20 }}
-                transition={smoothTransition}
-                className="w-[min(360px,calc(100vw-2rem))] h-[450px] bg-white rounded-2xl shadow-2xl border border-black/5 overflow-hidden flex flex-col"
-              >
-                {/* Chat Header */}
-                <div
-                  className="p-4 text-white flex items-center justify-between shadow-sm"
-                  style={{ backgroundColor: accentColor }}
-                >
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                    <span className="font-semibold text-sm">Store Concierge</span>
-                  </div>
-                  <button
-                    onClick={() => setIsChatOpen(false)}
-                    className="p-1 hover:bg-white/10 rounded-full transition-colors cursor-pointer"
-                  >
-                    <X size={18} />
-                  </button>
-                </div>
-
-                {/* Chat Body */}
-                <div className="flex-grow p-4 overflow-y-auto bg-neutral-50/50 flex flex-col gap-3 text-sm">
-                  <div className="bg-neutral-200/60 text-neutral-800 self-start p-3 rounded-2xl rounded-tl-none max-w-[80%] shadow-sm">
-                    Hello! 👋 How can I assist you with your order today?
-                  </div>
-                </div>
-
-                {/* Chat Input */}
-                <div className="p-3 bg-white border-t border-black/5 flex items-center gap-2">
-                  <input
-                    type="text"
-                    placeholder="Ask about ingredients, status..."
-                    className="flex-grow px-4 py-2 border border-black/5 bg-neutral-50 rounded-full focus:outline-none text-sm"
-                  />
-                  <button
-                    className="text-white px-4 py-2 rounded-full text-xs font-semibold hover:opacity-90 transition-opacity cursor-pointer"
-                    style={{ backgroundColor: accentColor }}
-                  >
-                    Send
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Chatbot Trigger Button */}
-          <div
-            role="button"
-            tabIndex={0}
-            onClick={() => setIsChatOpen((prev) => !prev)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") setIsChatOpen((prev) => !prev);
-            }}
-            className="w-16 h-16 rounded-full flex items-center justify-center shadow-xl hover:shadow-2xl hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer select-none overflow-hidden outline-none"
-            style={{ backgroundColor: primaryColor }}
-            aria-label="Toggle live helper assistant chat window"
-          >
-            <div className="transform translate-y-[15px] transition-transform duration-200">
-              <ChatbotLogo size={42} />
+        <ChatbotUI
+          mode="floating"
+          tenantId={tenantId}
+          storeName={storeName}
+          triggerContent={
+            <div className="flex h-full w-full items-center justify-center overflow-hidden scale-[0.56] origin-center translate-y-[2px]">
+              <ChatbotLogo size={44} />
             </div>
-          </div>
-        </div>
+          }
+        />
       </motion.main>
   );
 }
@@ -417,11 +361,15 @@ export default function CustomerOrderingHome({
   initialItems,
   currency = "PHP",
   guestNumber = 1,
+  tenantId,
+  storeName,
 }: {
   initialCategories: { id: string; name: string; icon: string }[];
   initialItems: MenuItemData[];
   currency?: string;
   guestNumber?: number;
+  tenantId: string;
+  storeName?: string;
 }) {
   return (
     <CartProvider currency={currency}>
@@ -430,6 +378,8 @@ export default function CustomerOrderingHome({
         initialItems={initialItems}
         currency={currency}
         guestNumber={guestNumber}
+        tenantId={tenantId}
+        storeName={storeName}
       />
     </CartProvider>
   );

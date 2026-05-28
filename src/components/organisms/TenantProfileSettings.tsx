@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { Upload, Save, CheckCircle2, Edit2 } from "lucide-react";
+import React, { useEffect, useRef, useState } from "react";
+import { Upload, Save, CheckCircle2, Edit2, Download } from "lucide-react";
+import QRCode from "react-qr-code";
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
 import { SectionHeader } from "@/components/molecules/SectionHeader";
@@ -15,6 +16,74 @@ import {
 interface TenantProfileSettingsProps {
   tenantId: string;
   initialData: TenantProfileSettingsData;
+}
+
+const AdminQrCard = ({
+  title,
+  qrValue,
+  fileName,
+}: {
+  title: string;
+  qrValue: string;
+  fileName: string;
+}) => {
+  const qrCardRef = useRef<HTMLDivElement>(null);
+
+  const handleDownload = () => {
+    const svg = qrCardRef.current?.querySelector("svg");
+    if (!svg) return;
+
+    const serialized = new XMLSerializer().serializeToString(svg);
+    const blob = new Blob([serialized], {
+      type: "image/svg+xml;charset=utf-8",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = fileName;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <div className="mt-3 rounded-2xl border border-brand-primary/10 bg-bg-primary/40 p-4 flex flex-col sm:flex-row sm:items-center gap-4">
+      <div
+        ref={qrCardRef}
+        className="w-20 h-20 rounded-xl bg-white border border-brand-primary/10 p-2 flex items-center justify-center shrink-0"
+      >
+        <QRCode
+          value={qrValue}
+          size={64}
+          style={{ width: "100%", height: "100%" }}
+        />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold text-text-primary">{title}</p>
+        <p className="text-xs text-text-secondary mt-1">
+          Scan this QR to authorize void/cancel actions.
+        </p>
+      </div>
+      <Button
+        type="button"
+        variant="accent"
+        shape="rounded"
+        className="shrink-0 h-10 px-3 text-sm font-semibold shadow-sm"
+        onClick={handleDownload}
+        leftIcon={<Download size={16} />}
+      >
+        Download QR
+      </Button>
+    </div>
+  );
+};
+
+function toSafeFileName(value: string) {
+  return value
+    .trim()
+    .replace(/[<>:"/\\|?*]+/g, "")
+    .replace(/\s+/g, " ")
+    .replace(/\.+$/g, "")
+    .trim();
 }
 
 export const TenantProfileSettings = ({
@@ -57,6 +126,7 @@ export const TenantProfileSettings = ({
       : (formData.name.trim().charAt(0) || "U").toUpperCase();
 
   const currentAvatar = avatarPreview || formData.avatarUrl;
+  const adminQrFileName = `${toSafeFileName(formData.name) || "tenant-admin"}.svg`;
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 w-full">
@@ -206,6 +276,7 @@ export const TenantProfileSettings = ({
                       {fieldErrors.email}
                     </p>
                   )}
+
                 </div>
 
                 <div className="space-y-1.5 w-full">
@@ -252,7 +323,13 @@ export const TenantProfileSettings = ({
                   )}
                 </div>
 
-                <div className="pt-4 flex justify-end w-full">
+                <AdminQrCard
+                  title="Tenant Admin QR"
+                  qrValue={formData.adminQrValue}
+                  fileName={adminQrFileName}
+                />
+
+                <div className="flex justify-end pt-1">
                   {!isEditing ? (
                     <Button
                       type="button"

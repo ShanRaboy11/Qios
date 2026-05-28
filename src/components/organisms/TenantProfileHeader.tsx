@@ -38,7 +38,7 @@ export const TenantProfileHeader = ({
 
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
         <div className="flex items-start gap-6">
-          {/* Minimalist Icon Block */}
+          {/* minimalist Icon Block */}
           <div className="w-20 h-20 rounded-[20px] bg-white border border-gray-200 shadow-sm flex items-center justify-center shrink-0">
             <Building2 className="w-10 h-10 text-brand-primary" />
           </div>
@@ -73,7 +73,7 @@ export const TenantProfileHeader = ({
           </div>
         </div>
 
-        {/* Action Buttons */}
+        {/* action Buttons */}
         <div className="flex flex-wrap items-center gap-3">
           {(tenant.status === "Pending" || tenant.status === "Onboarding") && (
             <>

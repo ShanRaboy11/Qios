@@ -91,7 +91,7 @@ export const StaffAnalyticsChart = ({ data }: StaffAnalyticsChartProps) => {
               wrapperStyle={{ fontSize: 12, paddingTop: 20, fontFamily: "var(--font-brand-secondary, sans-serif)" }}
             />
 
-            {/* The active area highlighted in the image */}
+            {/* the active area highlighted in the image */}
             <ReferenceArea
               yAxisId="left"
               x1="11:30"

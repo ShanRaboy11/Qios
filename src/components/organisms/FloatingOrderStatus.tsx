@@ -11,7 +11,7 @@ import {
   ChevronUp,
   ChevronDown,
   Clock,
-  X
+  X,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -47,7 +47,11 @@ export const FloatingOrderStatus = () => {
     if (currentStep === 3) {
       setIsReadyNotified(true);
       if (!isExpanded) setIsExpanded(true); // Auto expand when ready!
-      if (typeof window !== "undefined" && window.navigator && window.navigator.vibrate) {
+      if (
+        typeof window !== "undefined" &&
+        window.navigator &&
+        window.navigator.vibrate
+      ) {
         window.navigator.vibrate([200, 100, 200]);
       }
     } else {
@@ -57,7 +61,8 @@ export const FloatingOrderStatus = () => {
 
   if (!isOrderPlaced || !isVisible) return null;
 
-  const currentLabel = STEPS.find(s => s.id === currentStep)?.label || "Processing";
+  const currentLabel =
+    STEPS.find((s) => s.id === currentStep)?.label || "Processing";
   const progress = (currentStep / (STEPS.length - 1)) * 100;
 
   return (
@@ -76,22 +81,37 @@ export const FloatingOrderStatus = () => {
             className="pointer-events-auto bg-white/90 backdrop-blur-xl border border-white shadow-[0_8px_30px_rgb(0,0,0,0.12)] rounded-full px-5 py-3 flex items-center gap-4 cursor-pointer relative overflow-hidden max-w-sm w-full"
           >
             {/* Progress Bar background in pill */}
-            <div className="absolute bottom-0 left-0 h-1 bg-brand-primary transition-all duration-500 ease-out" style={{ width: `${progress}%` }} />
-            
-            <div className={cn(
-              "w-10 h-10 rounded-full flex items-center justify-center text-white shrink-0 shadow-inner",
-              currentStep === 3 ? "bg-brand-accent animate-pulse" : "bg-brand-primary"
-            )}>
-              {currentStep === 3 ? <BellRing size={20} /> : <ChefHat size={20} />}
+            <div
+              className="absolute bottom-0 left-0 h-1 bg-brand-primary transition-all duration-500 ease-out"
+              style={{ width: `${progress}%` }}
+            />
+
+            <div
+              className={cn(
+                "w-10 h-10 rounded-full flex items-center justify-center text-white shrink-0 shadow-inner",
+                currentStep === 3
+                  ? "bg-brand-accent animate-pulse"
+                  : "bg-brand-primary",
+              )}
+            >
+              {currentStep === 3 ? (
+                <BellRing size={20} />
+              ) : (
+                <ChefHat size={20} />
+              )}
             </div>
-            
+
             <div className="flex flex-col flex-1">
-              <span className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Active Order</span>
+              <span className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">
+                Active Order
+              </span>
               <span className="text-sm font-black text-text-primary truncate">
-                {currentStep === 3 ? "Order is Ready!" : `Status: ${currentLabel}`}
+                {currentStep === 3
+                  ? "Order is Ready!"
+                  : `Status: ${currentLabel}`}
               </span>
             </div>
-            
+
             <ChevronUp size={20} className="text-gray-400" />
           </motion.div>
         ) : (
@@ -105,21 +125,29 @@ export const FloatingOrderStatus = () => {
           >
             {/* Header: Order & Total (Requested by User) */}
             <div className="bg-bg-primary p-6 pb-5 relative">
-              <button 
+              <button
                 onClick={() => setIsExpanded(false)}
                 className="absolute top-4 right-4 w-8 h-8 bg-white rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 shadow-sm"
               >
                 <ChevronDown size={20} />
               </button>
-              
+
               <div className="flex items-end justify-between pr-8 mb-4 font-brand-secondary">
                 <div>
-                  <span className="text-xs font-brand font-bold text-gray-500 uppercase tracking-widest mb-1 block">Order Details</span>
-                  <h2 className="text-2xl font-brand font-black text-text-primary">#ORD-2847</h2>
+                  <span className="text-xs font-brand font-bold text-gray-500 uppercase tracking-widest mb-1 block">
+                    Order Details
+                  </span>
+                  <h2 className="text-2xl font-brand font-black text-text-primary">
+                    #ORD-2847
+                  </h2>
                 </div>
                 <div className="text-right">
-                  <span className="text-xs font-brand font-bold text-gray-500 uppercase tracking-widest mb-1 block">Total</span>
-                  <span className="text-2xl font-brand font-black text-brand-accent">{currency} {(cartTotal * 1.12).toFixed(2)}</span>
+                  <span className="text-xs font-brand font-bold text-gray-500 uppercase tracking-widest mb-1 block">
+                    Order Total
+                  </span>
+                  <span className="text-2xl font-brand font-black text-brand-accent">
+                    {currency} {cartTotal.toFixed(2)}
+                  </span>
                 </div>
               </div>
             </div>
@@ -135,7 +163,7 @@ export const FloatingOrderStatus = () => {
                     animate={{ scale: 1, opacity: 1 }}
                     className="bg-brand-accent rounded-3xl p-6 text-center text-white shadow-lg relative overflow-hidden"
                   >
-                    <motion.div 
+                    <motion.div
                       className="absolute inset-0 bg-white/10"
                       animate={{ scale: [1, 1.1, 1], opacity: [0, 0.4, 0] }}
                       transition={{ duration: 1.5, repeat: Infinity }}
@@ -147,8 +175,12 @@ export const FloatingOrderStatus = () => {
                     >
                       <ShoppingBag size={32} />
                     </motion.div>
-                    <h3 className="text-2xl font-brand font-black mb-1">It's Ready!</h3>
-                    <p className="text-white/90 text-sm font-brand-secondary">Please present your receipt at the counter.</p>
+                    <h3 className="text-2xl font-brand font-black mb-1">
+                      It's Ready!
+                    </h3>
+                    <p className="text-white/90 text-sm font-brand-secondary">
+                      Please present your receipt at the counter.
+                    </p>
                   </motion.div>
                 ) : (
                   // Horizontal StepperBar State
@@ -163,14 +195,14 @@ export const FloatingOrderStatus = () => {
                       <Clock size={14} />
                       Est. Time: 12 min
                     </div>
-                    
+
                     {/* Horizontal StepperBar wrapper to handle overflow cleanly on mobile */}
                     <div className="w-full overflow-x-auto pb-4 scrollbar-hide">
                       <div className="min-w-[300px]">
-                        <StepperBar 
-                          steps={STEPS} 
-                          currentStep={currentStep} 
-                          orientation="horizontal" 
+                        <StepperBar
+                          steps={STEPS}
+                          currentStep={currentStep}
+                          orientation="horizontal"
                         />
                       </div>
                     </div>
@@ -179,7 +211,7 @@ export const FloatingOrderStatus = () => {
               </AnimatePresence>
 
               {currentStep === 4 && (
-                <button 
+                <button
                   onClick={() => setIsVisible(false)}
                   className="w-full mt-4 py-3 bg-gray-100 text-gray-600 font-bold rounded-xl"
                 >

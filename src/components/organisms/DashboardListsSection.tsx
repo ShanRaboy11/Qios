@@ -13,7 +13,7 @@ export const DashboardListsSection = () => {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full">
-      {/* Top Selling Products */}
+      {/* top Selling Products */}
       <div className="bg-white rounded-[24px] p-6 shadow-[0px_4px_20px_rgba(0,0,0,0.03)] border border-gray-100 flex flex-col">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
@@ -42,7 +42,7 @@ export const DashboardListsSection = () => {
           <ListCardItem
             imageSlot={
               <div className="w-full h-full bg-orange-100 rounded-xl" />
-            } // Replace with image
+            } // replace with image
             title="Chicken McDo"
             subtitle="$187 • 247+ Sales"
             rightSlot={
@@ -100,7 +100,7 @@ export const DashboardListsSection = () => {
         </div>
       </div>
 
-      {/* Low Stock Products */}
+      {/* low Stock Products */}
       <div className="bg-white rounded-[24px] p-6 shadow-[0px_4px_20px_rgba(0,0,0,0.03)] border border-gray-100 flex flex-col">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
@@ -178,7 +178,7 @@ export const DashboardListsSection = () => {
         </div>
       </div>
 
-      {/* Recent Orders */}
+      {/* recent Orders */}
       <div className="bg-white rounded-[24px] p-6 shadow-[0px_4px_20px_rgba(0,0,0,0.03)] border border-gray-100 flex flex-col">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">

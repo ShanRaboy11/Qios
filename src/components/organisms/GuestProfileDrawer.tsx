@@ -20,7 +20,7 @@ export const GuestProfileDrawer = ({ isOpen, onClose, guestNumber = 1 }: GuestPr
   const [isEditingName, setIsEditingName] = useState(false);
   const [tempName, setTempName] = useState(displayName);
 
-  // Update if guestNumber changes from upstream
+  // update if guestNumber changes from upstream
   useEffect(() => {
     setDisplayName(`Guest #${guestNumber}`);
     setTempName(`Guest #${guestNumber}`);
@@ -42,7 +42,7 @@ export const GuestProfileDrawer = ({ isOpen, onClose, guestNumber = 1 }: GuestPr
           className="fixed inset-0 z-[200] flex justify-end bg-black/40 backdrop-blur-sm font-figtree"
           onClick={onClose}
         >
-          {/* Drawer Panel */}
+          {/* drawer Panel */}
           <motion.div
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
@@ -51,7 +51,7 @@ export const GuestProfileDrawer = ({ isOpen, onClose, guestNumber = 1 }: GuestPr
             className="w-full max-w-md h-full bg-bg-primary shadow-2xl flex flex-col rounded-l-[32px] md:rounded-l-[40px] overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header */}
+            {/* header */}
             <div className="bg-brand-primary px-6 py-6 pb-8 flex flex-col gap-3 relative rounded-bl-[40px]">
               <button
                 onClick={onClose}
@@ -71,10 +71,10 @@ export const GuestProfileDrawer = ({ isOpen, onClose, guestNumber = 1 }: GuestPr
               </div>
             </div>
 
-            {/* Content Area */}
+            {/* content Area */}
             <div className="flex-1 overflow-y-auto px-6 py-6 space-y-8">
               
-              {/* Name Edit Section */}
+              {/* name Edit Section */}
               <section>
                 <h3 className="text-lg font-bold text-text-primary mb-3">Display Name</h3>
                 <div className="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm flex items-center justify-between">
@@ -111,7 +111,7 @@ export const GuestProfileDrawer = ({ isOpen, onClose, guestNumber = 1 }: GuestPr
                 </div>
               </section>
 
-              {/* Past Orders Summary */}
+              {/* past Orders Summary */}
               <section>
                 <div className="flex items-center gap-2 mb-3">
                   <History size={20} className="text-brand-primary" />
@@ -124,7 +124,7 @@ export const GuestProfileDrawer = ({ isOpen, onClose, guestNumber = 1 }: GuestPr
                         <p className="font-bold text-text-primary">Active Order</p>
                         <p className="text-sm text-gray-500">Just now</p>
                       </div>
-                      <span className="font-bold text-brand-accent">{currency} {(cartTotal * 1.12).toFixed(2)}</span>
+                      <span className="font-bold text-brand-accent">{currency} {cartTotal.toFixed(2)}</span>
                     </div>
                   ) : (
                     <div className="text-sm text-gray-500 text-center py-2">
@@ -134,7 +134,7 @@ export const GuestProfileDrawer = ({ isOpen, onClose, guestNumber = 1 }: GuestPr
                 </div>
               </section>
 
-              {/* Actions */}
+              {/* actions */}
               <section className="pt-2 pb-8 flex gap-3">
                 <Button 
                   variant="outline" 

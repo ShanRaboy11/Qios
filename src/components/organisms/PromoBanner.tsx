@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
 
-// Register GSAP plugin
+// register GSAP plugin
 gsap.registerPlugin(useGSAP);
 
 export interface PromoItem {
@@ -39,15 +39,15 @@ export const PromoBanner = ({ className }: { className?: string }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const sliderRef = useRef<HTMLDivElement>(null);
 
-  // Animation Logic
+  // animation Logic
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentIndex((prevIndex) =>
         prevIndex === PROMO_DATA.length - 1 ? 0 : prevIndex + 1,
       );
-    }, 5000); // Changes every 5 seconds
+    }, 5000); // changes every 5 seconds
 
-    // Clean up the timer when the component unmounts
+    // clean up the timer when the component unmounts
     return () => clearInterval(timer);
   }, []);
 
@@ -55,7 +55,7 @@ export const PromoBanner = ({ className }: { className?: string }) => {
   useGSAP(() => {
     gsap.to(sliderRef.current, {
       xPercent: -currentIndex * 100,
-      duration: 1, // Smooth slide
+      duration: 1, // smooth slide
       ease: "power2.inOut",
     });
   }, [currentIndex]);
@@ -67,19 +67,19 @@ export const PromoBanner = ({ className }: { className?: string }) => {
         className,
       )}
     >
-      {/* Banner Container */}
+      {/* banner Container */}
       <div
         ref={containerRef}
         className="w-full relative bg-brand-accent rounded-[32px] overflow-hidden shadow-sm min-h-[160px] md:min-h-[200px]"
       >
-        {/* The "Sliding" Wrapper */}
+        {/* the "Sliding" Wrapper */}
         <div ref={sliderRef} className="flex h-full w-full">
           {PROMO_DATA.map((item) => (
             <div
               key={item.id}
               className="w-full flex-shrink-0 flex min-h-[160px] md:min-h-[200px]"
             >
-              {/* Left Section */}
+              {/* left Section */}
               <div className="w-1/2 relative p-6 flex flex-col justify-center items-center text-center z-10">
                 <div className="absolute -top-10 -left-6 w-24 h-24 rounded-full border-[6px] border-white blur-[5px]" />
                 <div className="absolute -bottom-8 right-4 w-20 h-20 rounded-full border-[8px] border-white blur-[5px]" />
@@ -94,7 +94,7 @@ export const PromoBanner = ({ className }: { className?: string }) => {
                 </div>
               </div>
 
-              {/* Right Section */}
+              {/* right Section */}
               <div className="w-1/2 relative">
                 <img
                   src={item.image}
@@ -107,7 +107,7 @@ export const PromoBanner = ({ className }: { className?: string }) => {
         </div>
       </div>
 
-      {/* Carousel Dots (Clickable) */}
+      {/* carousel Dots (Clickable) */}
       <div className="flex gap-2 mt-6">
         {PROMO_DATA.map((_, index) => (
           <button

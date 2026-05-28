@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, KeyboardEvent } from "react";
 import { createPortal } from "react-dom";
 import {
   Clock,
@@ -11,11 +11,15 @@ import {
   Trash2,
   X,
   AlertCircle,
+  Loader2,
 } from "lucide-react";
+import jsQR from "jsqr";
 import { Button } from "@/components/atoms/Button";
 import { Badge, BadgeColor } from "@/components/atoms/Badge";
 import { Radio } from "@/components/atoms/Radio";
 import { QuantityStepper } from "@/components/molecules/QuantityStepper";
+import { updateOrderFromScanner } from "@/app/(employee)/[id]/employee/scanner/actions";
+import { updateOrderPaymentStatus } from "@/app/(employee)/[id]/employee/queue/actions";
 
 interface OrderItemModifier {
   id: string;
@@ -42,6 +46,7 @@ interface OrderItem {
 
 interface OrderDetailsData {
   id: string;
+  tenant_id?: string;
   table_number?: number;
   status: "pending" | "preparing" | "ready" | "cancelled" | "voided" | "served";
   total_price: number;
@@ -88,10 +93,23 @@ export default function OrderDetails({
   const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [paymentCompleted, setPaymentCompleted] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authStatus, setAuthStatus] = useState<
+    "idle" | "requesting" | "scanning" | "processing" | "error"
+  >("idle");
+  const [authError, setAuthError] = useState("");
+  const [pendingCancelOpen, setPendingCancelOpen] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState<"cancelled" | null>(null);
+  const [scanAttempt, setScanAttempt] = useState(0);
+  const authVideoRef = useRef<HTMLVideoElement>(null);
+  const authCanvasRef = useRef<HTMLCanvasElement>(null);
+  const authStreamRef = useRef<MediaStream | null>(null);
+  const authFrameRef = useRef<number | null>(null);
+  const authScanLockedRef = useRef(false);
 
   useEffect(() => {
     setMounted(true);
-    // Prevent background scrolling while the modal is open
+    // prevent background scrolling while the modal is open
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = "unset";
@@ -99,7 +117,7 @@ export default function OrderDetails({
     };
   }, []);
 
-  // Sync state if order prop updates
+  // sync state if order prop updates
   useEffect(() => {
     setLocalOrder(order);
   }, [order]);
@@ -180,17 +198,38 @@ export default function OrderDetails({
 
   const handleProcessPayment = async () => {
     setPaymentProcessing(true);
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    setPaymentCompleted(true);
+    try {
+      if (!localOrder.tenant_id) {
+        throw new Error("Tenant ID is missing for this order.");
+      }
 
-    const updatedOrder: OrderDetailsData = {
-      ...localOrder,
-      payment_status: "paid",
-      payment_method: selectedPaymentMethod,
-    };
-    setLocalOrder(updatedOrder);
-    onUpdateOrder?.(updatedOrder);
-    setPaymentProcessing(false);
+      await updateOrderPaymentStatus(
+        localOrder.id,
+        localOrder.tenant_id,
+        "paid",
+        selectedPaymentMethod,
+      );
+
+      setPaymentCompleted(true);
+
+      const updatedOrder: OrderDetailsData = {
+        ...localOrder,
+        status: "pending",
+        payment_status: "paid",
+        payment_method: selectedPaymentMethod,
+      };
+      setLocalOrder(updatedOrder);
+      onUpdateOrder?.(updatedOrder);
+    } catch (error) {
+      console.error("Failed to process payment:", error);
+      setAuthError(
+        error instanceof Error
+          ? error.message
+          : "Unable to process this payment.",
+      );
+    } finally {
+      setPaymentProcessing(false);
+    }
   };
 
   const handleConfirmAndQueue = () => {
@@ -207,18 +246,177 @@ export default function OrderDetails({
     !paymentCompleted &&
     !paymentProcessing;
 
+  const displayOrderCode =
+    localOrder.qr_hash?.trim() || localOrder.id.substring(0, 8).toUpperCase();
+  const adminQrValue = localOrder.tenant_id
+    ? `ADMIN_AUTH:${localOrder.tenant_id}`
+    : "";
+
+  const stopAuthScanner = () => {
+    if (authFrameRef.current !== null) {
+      cancelAnimationFrame(authFrameRef.current);
+      authFrameRef.current = null;
+    }
+    if (authStreamRef.current) {
+      authStreamRef.current.getTracks().forEach((track) => track.stop());
+      authStreamRef.current = null;
+    }
+    if (authVideoRef.current) {
+      authVideoRef.current.srcObject = null;
+    }
+  };
+
+  const closeAuthModal = () => {
+    stopAuthScanner();
+    authScanLockedRef.current = false;
+    setAuthModalOpen(false);
+    setAuthStatus("idle");
+    setAuthError("");
+    setPendingStatus(null);
+  };
+
+  useEffect(() => {
+    if (!authModalOpen || !pendingStatus) return;
+
+    let cancelled = false;
+    const expectedValue = adminQrValue;
+
+    const start = async () => {
+      try {
+        setAuthStatus("requesting");
+        setAuthError("");
+        authScanLockedRef.current = false;
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "environment" },
+        });
+
+        if (cancelled) {
+          stream.getTracks().forEach((track) => track.stop());
+          return;
+        }
+
+        authStreamRef.current = stream;
+        if (authVideoRef.current) {
+          authVideoRef.current.srcObject = stream;
+          await authVideoRef.current.play();
+        }
+
+        const scan = () => {
+          const video = authVideoRef.current;
+          const canvas = authCanvasRef.current;
+          if (
+            !video ||
+            !canvas ||
+            video.readyState !== video.HAVE_ENOUGH_DATA
+          ) {
+            authFrameRef.current = requestAnimationFrame(scan);
+            return;
+          }
+
+          const width = video.videoWidth;
+          const height = video.videoHeight;
+          const context = canvas.getContext("2d");
+          if (!context || !width || !height) {
+            authFrameRef.current = requestAnimationFrame(scan);
+            return;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          context.drawImage(video, 0, 0, width, height);
+          const imageData = context.getImageData(0, 0, width, height);
+          const code = jsQR(imageData.data, imageData.width, imageData.height, {
+            inversionAttempts: "dontInvert",
+          });
+
+          if (authScanLockedRef.current) {
+            return;
+          }
+
+          if (code?.data?.trim() === expectedValue) {
+            authScanLockedRef.current = true;
+            setAuthStatus("processing");
+            stopAuthScanner();
+            (async () => {
+              if (!localOrder.tenant_id || !pendingStatus) return;
+              await updateOrderFromScanner(
+                localOrder.tenant_id,
+                localOrder.id,
+                pendingStatus,
+                `Order ${pendingStatus} after admin QR verification`,
+              );
+              const updatedOrder = { ...localOrder, status: pendingStatus };
+              setLocalOrder(updatedOrder);
+              onUpdateOrder?.(updatedOrder);
+              closeAuthModal();
+            })().catch((error) => {
+              authScanLockedRef.current = false;
+              setAuthStatus("error");
+              setAuthError(
+                error instanceof Error
+                  ? error.message
+                  : "Unable to update this order.",
+              );
+            });
+            return;
+          }
+
+          authFrameRef.current = requestAnimationFrame(scan);
+        };
+
+        setAuthStatus("scanning");
+        authFrameRef.current = requestAnimationFrame(scan);
+      } catch (error) {
+        setAuthStatus("error");
+        setAuthError(
+          error instanceof DOMException && error.name === "NotAllowedError"
+            ? "Camera access denied. Please allow camera permissions and try again."
+            : "Unable to start the admin QR scanner.",
+        );
+      }
+    };
+
+    start();
+
+    return () => {
+      cancelled = true;
+      stopAuthScanner();
+    };
+  }, [
+    authModalOpen,
+    adminQrValue,
+    localOrder,
+    pendingStatus,
+    onUpdateOrder,
+    scanAttempt,
+  ]);
+
+  const openAdminAuthModal = () => {
+    if (!localOrder.tenant_id) {
+      setAuthError("Tenant ID is missing for this order.");
+      setAuthModalOpen(true);
+      return;
+    }
+
+    setPendingStatus("cancelled");
+    setAuthError("");
+    setAuthStatus("idle");
+    setAuthModalOpen(true);
+    setScanAttempt((previous) => previous + 1);
+  };
+
   if (!mounted) return null;
 
   return createPortal(
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50 transition-all duration-300">
-      {/* Outer Card: Now cleanly sets structural limits using flex-col without scroll bars */}
+      {/* outer Card: Now cleanly sets structural limits using flex-col without scroll bars */}
       <div className="bg-bg-primary rounded-[32px] border border-brand-primary/20 shadow-[0_24px_64px_rgba(255,198,112,0.15)] max-w-2xl w-full max-h-[90vh] font-inter flex flex-col overflow-hidden">
-        {/* Header: Fixed at top */}
+        {/* header: Fixed at top */}
         <div className="bg-white border-b border-brand-primary/10 p-6 flex items-start justify-between z-10 rounded-t-[32px] shrink-0">
           <div className="flex-1">
             <div className="flex items-center flex-wrap gap-3 mb-1.5">
               <span className="font-figtree text-2xl font-bold text-text-primary">
-                Order #{localOrder.id.substring(0, 8).toUpperCase()}
+                Order #{displayOrderCode}
               </span>
               <div className="flex gap-2">
                 <Badge
@@ -257,10 +455,10 @@ export default function OrderDetails({
           </Button>
         </div>
 
-        {/* Scrollable Container Container: Isolate scrollable content entirely here */}
+        {/* scrollable Container Container: Isolate scrollable content entirely here */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden style-scrollbar">
-          {/* Info Grid Cards */}
-          <div className="p-6 grid grid-cols-2 sm:grid-cols-4 gap-4 bg-white/50 border-b border-brand-primary/10">
+          {/* info Grid Cards */}
+          <div className="p-6 grid grid-cols-1 sm:grid-cols-3 gap-4 bg-white/50 border-b border-brand-primary/10">
             <div className="bg-white border border-brand-primary/15 rounded-[20px] p-4 flex flex-col items-center justify-center text-center shadow-sm">
               <div className="w-9 h-9 bg-brand-primary/10 rounded-full flex items-center justify-center mb-2">
                 <Package size={18} className="text-brand-primary" />
@@ -286,7 +484,7 @@ export default function OrderDetails({
             </div>
 
             {localOrder.table_number && (
-              <div className="bg-white border border-brand-primary/15 rounded-[20px] p-4 flex flex-col items-center justify-center text-center shadow-sm">
+              <div className="bg-white border border-brand-primary/15 rounded-[20px] p-4 flex flex-col items-center justify-center text-center shadow-sm sm:col-span-3">
                 <div className="w-9 h-9 bg-success-primary/10 rounded-full flex items-center justify-center mb-2">
                   <Receipt size={18} className="text-success-primary" />
                 </div>
@@ -312,7 +510,7 @@ export default function OrderDetails({
             </div>
           </div>
 
-          {/* Order Items Section */}
+          {/* order Items Section */}
           <div className="p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-figtree font-bold text-xl text-text-primary">
@@ -371,7 +569,7 @@ export default function OrderDetails({
                           </p>
                         )}
 
-                        {/* Modifiers List */}
+                        {/* modifiers List */}
                         {item.order_item_modifiers.length > 0 && (
                           <div className="text-xs text-text-secondary space-y-1.5 mt-2 bg-bg-primary/45 p-2.5 rounded-[12px] border border-brand-primary/5">
                             {item.order_item_modifiers.map((mod) => (
@@ -415,7 +613,7 @@ export default function OrderDetails({
                       </div>
                     </div>
 
-                    {/* Editable Fields for Cashier */}
+                    {/* editable Fields for Cashier */}
                     {isEditable ? (
                       <div className="mt-4 pt-4 border-t border-brand-primary/5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div className="flex items-center gap-3">
@@ -459,7 +657,7 @@ export default function OrderDetails({
             </div>
           </div>
 
-          {/* Pricing Subtotal Area */}
+          {/* pricing Subtotal Area */}
           <div className="p-6 bg-white border-t border-brand-primary/10">
             <div className="space-y-3 font-inter">
               <div className="flex justify-between items-center b2 font-medium">
@@ -487,7 +685,7 @@ export default function OrderDetails({
             </div>
           </div>
 
-          {/* Finalized Status Alert */}
+          {/* finalized Status Alert */}
           {isOrderCompleted && (
             <div className="p-6 border-t border-brand-primary/10 bg-white/40">
               <div className="bg-brand-primary/10 border border-brand-primary/20 rounded-[20px] p-5 flex items-start gap-4">
@@ -507,7 +705,7 @@ export default function OrderDetails({
             </div>
           )}
 
-          {/* Payment Select Section for cashier */}
+          {/* payment Select Section for cashier */}
           {!paymentCompleted && !isOrderCompleted && (
             <div className="p-6 border-t border-brand-primary/10 bg-white">
               <h3 className="font-figtree font-bold text-[18px] text-text-primary mb-4">
@@ -550,7 +748,7 @@ export default function OrderDetails({
           )}
         </div>
 
-        {/* Actions Footer: Fixed at bottom */}
+        {/* actions Footer: Fixed at bottom */}
         <div className="p-6 border-t border-brand-primary/10 bg-white rounded-b-[32px] shrink-0">
           {isOrderCompleted ? (
             <Button
@@ -562,26 +760,39 @@ export default function OrderDetails({
               Close
             </Button>
           ) : !paymentCompleted ? (
-            <div className="flex gap-3">
-              <Button
-                onClick={onClose}
-                variant="ghost"
-                shape="pill"
-                className="flex-1 h-[52px] font-bold"
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleProcessPayment}
-                disabled={localOrder.order_items.length === 0}
-                loading={paymentProcessing}
-                variant="accent"
-                shape="pill"
-                className="flex-1 h-[52px] font-figtree font-bold"
-                leftIcon={<DollarSign size={18} />}
-              >
-                Process Payment
-              </Button>
+            <div className="space-y-3">
+              <div className="grid grid-cols-1 gap-3">
+                <Button
+                  type="button"
+                  onClick={() => setPendingCancelOpen(true)}
+                  variant="outline"
+                  shape="pill"
+                  className="h-[48px] font-bold border-red-200 text-red-600 hover:bg-red-50"
+                  disabled={!localOrder.tenant_id}
+                >
+                  Cancel Order
+                </Button>
+              </div>
+              <div className="flex gap-3">
+                <Button
+                  onClick={onClose}
+                  variant="ghost"
+                  shape="pill"
+                  className="flex-1 h-[52px] font-bold"
+                >
+                  Close
+                </Button>
+                <Button
+                  onClick={handleProcessPayment}
+                  disabled={localOrder.order_items.length === 0}
+                  loading={paymentProcessing}
+                  variant="accent"
+                  shape="pill"
+                  className="flex-1 h-[52px] font-figtree font-bold"
+                >
+                  Process Payment
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="space-y-4">
@@ -612,6 +823,140 @@ export default function OrderDetails({
           )}
         </div>
       </div>
+
+      {authModalOpen && (
+        <div className="fixed inset-0 z-[90] bg-black/55 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-white rounded-[28px] overflow-hidden shadow-2xl border border-black/5">
+            <div className="p-5 border-b border-black/5 flex items-start justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-[0.24em] text-text-secondary font-bold">
+                  Admin authorization
+                </p>
+                <h3 className="text-xl font-bold text-text-primary mt-1">
+                  Scan tenant admin QR
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={closeAuthModal}
+                className="w-9 h-9 rounded-full bg-gray-100 text-text-secondary flex items-center justify-center"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-4">
+              <div className="relative rounded-[20px] overflow-hidden border border-brand-primary/15 bg-black min-h-[280px]">
+                <video
+                  ref={authVideoRef}
+                  muted
+                  playsInline
+                  className="w-full h-full object-cover"
+                />
+                <canvas ref={authCanvasRef} className="hidden" />
+                {authStatus === "processing" && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/45 text-white gap-3 px-6 text-center">
+                    <Loader2 size={34} className="animate-spin" />
+                    <p className="text-sm font-medium">
+                      QR captured. Processing cancellation...
+                    </p>
+                  </div>
+                )}
+                {authStatus === "scanning" && (
+                  <div
+                    className="absolute left-4 right-4 h-[3px] rounded-full bg-gradient-to-r from-transparent via-[#FF5269] to-transparent shadow-[0_0_18px_rgba(255,82,105,0.65)] pointer-events-none"
+                    style={{
+                      animation:
+                        "adminQrScanDown 2.8s cubic-bezier(0.4,0,0.6,1) infinite",
+                    }}
+                    aria-hidden="true"
+                  />
+                )}
+              </div>
+
+              <p className="text-sm text-text-secondary">
+                Use the tenant admin QR from Profile Settings to authorize this
+                action.
+              </p>
+
+              {authError && (
+                <p className="text-sm text-red-600 font-medium">{authError}</p>
+              )}
+
+              <div className="flex gap-3">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  shape="rounded"
+                  className="flex-1 h-12 font-bold"
+                  onClick={closeAuthModal}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  variant="accent"
+                  shape="rounded"
+                  className="flex-1 h-12 font-bold"
+                  onClick={() => {
+                    setAuthError("");
+                    setAuthStatus("idle");
+                    setScanAttempt((previous) => previous + 1);
+                  }}
+                >
+                  Retry Scan
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {pendingCancelOpen && (
+        <div className="fixed inset-0 z-[85] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-sm bg-white rounded-[24px] p-6 shadow-2xl border border-black/5">
+            <h3 className="text-lg font-extrabold text-text-primary mb-2">
+              Cancel Order?
+            </h3>
+            <p className="text-sm text-text-secondary mb-5">
+              You will need to scan the tenant admin QR before this action can
+              be completed.
+            </p>
+            <div className="flex gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                shape="rounded"
+                className="flex-1 h-11 font-bold"
+                onClick={() => setPendingCancelOpen(false)}
+              >
+                Back
+              </Button>
+              <Button
+                type="button"
+                variant="accent"
+                shape="rounded"
+                className="flex-1 h-11 font-bold"
+                onClick={() => {
+                  setPendingCancelOpen(false);
+                  openAdminAuthModal();
+                }}
+              >
+                Continue
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes adminQrScanDown {
+          0% { top: 12px; opacity: 0; }
+          8% { opacity: 1; }
+          92% { opacity: 1; }
+          100% { top: calc(100% - 12px); opacity: 0; }
+        }
+      `}</style>
     </div>,
     document.body,
   );

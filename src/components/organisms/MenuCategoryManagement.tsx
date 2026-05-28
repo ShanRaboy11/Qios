@@ -63,6 +63,7 @@ import {
   Addon,
   Size,
 } from "@/hooks/useMenuManagement";
+import { useInventoryManagement } from "@/hooks/useInventoryManagement";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -308,6 +309,8 @@ const MenuCategoryManagement = () => {
     uploadImage,
   } = useMenuManagement();
 
+  const { items: inventoryItems } = useInventoryManagement();
+
   const [activeCatId, setActiveCatId] = useState<string>("");
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [isLocalLoading, setIsLocalLoading] = useState(false);
@@ -329,6 +332,7 @@ const MenuCategoryManagement = () => {
   const [originalItem, setOriginalItem] = useState<MenuItem | null>(null);
   const [draftItem, setDraftItem] = useState<MenuItem | null>(null);
   const [isLinkDropdownOpen, setIsLinkDropdownOpen] = useState(false);
+  const [isRecipeDropdownOpen, setIsRecipeDropdownOpen] = useState(false);
 
   const [draggedCategoryId, setDraggedCategoryId] = useState<string | null>(
     null,
@@ -506,7 +510,9 @@ const MenuCategoryManagement = () => {
   const handleOpenModal = (item: MenuItem) => {
     setLocalError(null);
     setOriginalItem(item);
-    setDraftItem(JSON.parse(JSON.stringify(item)));
+    setDraftItem(
+      JSON.parse(JSON.stringify({ ...item, recipe: item.recipe || [] })),
+    );
   };
   const handleCloseModal = () => {
     setLocalError(null);
@@ -556,6 +562,7 @@ const MenuCategoryManagement = () => {
       addonsEnabled: false,
       addons: [],
       sizes: [],
+      recipe: [],
     });
   };
 
@@ -660,7 +667,7 @@ const MenuCategoryManagement = () => {
     <div className="w-full">
       {/* ── Main View Toggle ────────────────────────────────────────────── */}
       {isEmptyMenu ? (
-        <div className="font-inter relative flex w-full min-h-[700px] bg-gradient-to-br from-[#FFF8EE] via-transparent to-[#FFF1F3] p-4 md:p-0">
+        <div className="font-inter relative flex w-full min-h-[700px] p-4 md:p-0">
           <div className="flex-1 flex items-center justify-center px-4 py-8 md:px-8 md:py-12">
             <div className="w-full max-w-5xl rounded-[36px] border border-black/10 ring-1 ring-black/5 bg-gradient-to-br from-white/95 via-white/85 to-[#FFF7EC] shadow-[0_32px_100px_rgba(0,0,0,0.12)] overflow-hidden">
               <div className="grid gap-0 lg:grid-cols-[1.05fr_0.95fr]">
@@ -741,9 +748,9 @@ const MenuCategoryManagement = () => {
           </div>
         </div>
       ) : (
-        <div className="font-inter relative flex w-full flex-col md:flex-row gap-6 min-h-[700px] bg-gradient-to-br from-[#FFF8EE] via-transparent to-[#FFF1F3] p-4 md:p-0">
+        <div className="font-inter relative flex w-full flex-col md:flex-row gap-6 min-h-[700px] p-4 md:p-0">
           {/* ── Sidebar ─────────────────────────────────────────────────── */}
-          <aside className="w-full md:w-[290px] flex-shrink-0 flex flex-col gap-4 bg-white/70 backdrop-blur-sm rounded-[24px] border border-white/70 shadow-sm p-4 md:p-5">
+          <aside className="w-full md:w-[290px] flex-shrink-0 flex flex-col gap-4 bg-white/50 backdrop-blur-sm rounded-[24px] border border-white/60 shadow-sm p-4 md:p-5">
             <div className="flex flex-col gap-3">
               <div>
                 <p className="b3 font-bold text-text-primary">Categories</p>
@@ -831,7 +838,7 @@ const MenuCategoryManagement = () => {
 
           {/* ── Main content ─────────────────────────────────────────────── */}
           <div className="flex-1 flex flex-col min-w-0 bg-white/50 backdrop-blur-sm rounded-[24px] overflow-hidden border border-white/60 shadow-sm">
-            {/* Header bar */}
+            {/* header bar */}
             <div className="relative overflow-hidden flex-shrink-0 border-b border-[#ffd08a]/30">
               <div className="pointer-events-none absolute -top-16 -right-10 w-52 h-52 rounded-full bg-brand-accent/[0.06]" />
               <div className="pointer-events-none absolute -bottom-10 right-28 w-40 h-40 rounded-full bg-brand-primary/[0.10]" />
@@ -896,7 +903,7 @@ const MenuCategoryManagement = () => {
               </div>
             </div>
 
-            {/* Toolbar */}
+            {/* toolbar */}
             <div className="flex-shrink-0 px-4 lg:px-6 py-3 border-b border-black/[0.05] bg-white/30 flex flex-col gap-2">
               <div className="flex items-center gap-3 flex-wrap">
                 <div className="w-80 flex-shrink-0">
@@ -985,7 +992,7 @@ const MenuCategoryManagement = () => {
               )}
             </div>
 
-            {/* Item Area */}
+            {/* item Area */}
             <div className="flex-1 overflow-y-auto px-4 lg:px-6 py-6 custom-scrollbar bg-white/25">
               {isLoading ? (
                 viewMode === "grid" ? (
@@ -1063,7 +1070,7 @@ const MenuCategoryManagement = () => {
 
       {/* ── GLOBAL MODALS (Always rendered to support animations) ───────── */}
 
-      {/* Item modal */}
+      {/* item modal */}
       {draftItem && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 modal-overlay">
           <div className="bg-bg-primary rounded-[28px] w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl border border-white/50 overflow-hidden modal-panel">
@@ -1467,6 +1474,139 @@ const MenuCategoryManagement = () => {
                     </div>
                   </div>
                 )}
+              </section>
+
+              <Divider />
+
+              <section>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <SectionLabel title="Recipe / Ingredients" />
+                    <span className="text-[9px] px-1.5 py-0.5 uppercase font-bold rounded-full border border-black/10 text-text-secondary bg-black/3 -mt-3">
+                      Optional
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-3 animate-in fade-in duration-200">
+                  {draftItem.recipe?.map((ing, index) => (
+                    <div
+                      key={ing.inventory_item_id}
+                      className="flex items-start gap-2 p-3.5 bg-transparent rounded-2xl border border-black/5 shadow-none"
+                    >
+                      <div className="flex-1 flex flex-col sm:flex-row gap-2">
+                        <div className="flex-1">
+                          <p className="b4 font-bold text-text-primary mb-1">
+                            {ing.name}
+                          </p>
+                          <p className="b5 text-text-secondary uppercase">
+                            Unit: {ing.unit_type}
+                          </p>
+                        </div>
+                        <div className="flex flex-col">
+                          <label className="b5 text-text-secondary uppercase mb-1">
+                            Required Qty
+                          </label>
+                          <Input
+                            type="number"
+                            value={ing.quantity_required}
+                            onChange={(e) => {
+                              const nr = [...draftItem.recipe!];
+                              nr[index].quantity_required =
+                                parseFloat(e.target.value) || 0;
+                              updateDraft("recipe", nr);
+                            }}
+                            className="!py-2 w-full sm:w-28 b4"
+                          />
+                        </div>
+                      </div>
+                      <button
+                        onClick={() =>
+                          updateDraft(
+                            "recipe",
+                            draftItem.recipe!.filter(
+                              (r) =>
+                                r.inventory_item_id !== ing.inventory_item_id,
+                            ),
+                          )
+                        }
+                        className="p-2 text-text-secondary hover:bg-brand-accent/10 hover:text-brand-accent rounded-xl transition-colors mt-4"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+                  ))}
+
+                  <div
+                    className="relative"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <button
+                      onClick={() =>
+                        setIsRecipeDropdownOpen(!isRecipeDropdownOpen)
+                      }
+                      className={cn(
+                        "w-full flex items-center justify-between py-3 px-4 border border-dashed rounded-2xl transition-all b4 font-medium",
+                        isRecipeDropdownOpen
+                          ? "border-brand-accent text-brand-accent bg-brand-accent/5"
+                          : "border-black/15 text-text-secondary hover:border-brand-accent hover:text-brand-accent hover:bg-brand-accent/5",
+                      )}
+                    >
+                      <span>+ Add Ingredient...</span>
+                      <ChevronDown
+                        size={14}
+                        className={cn(
+                          "transition-transform",
+                          isRecipeDropdownOpen && "rotate-180",
+                        )}
+                      />
+                    </button>
+                    {isRecipeDropdownOpen && (
+                      <div className="absolute bottom-[calc(100%+6px)] left-0 z-50 bg-white border-2 border-[#E5E5E5] rounded-2xl shadow-xl overflow-hidden w-full animate-in fade-in zoom-in-95 duration-200">
+                        <ul className="max-h-[200px] overflow-y-auto custom-scrollbar">
+                          {inventoryItems.length === 0 ? (
+                            <li className="px-4 py-3 b4 text-text-secondary text-center">
+                              No ingredients available
+                            </li>
+                          ) : (
+                            inventoryItems.map((inv) => {
+                              const isSelected = !!draftItem.recipe?.find(
+                                (r) => r.inventory_item_id === inv.id,
+                              );
+                              return (
+                                <li
+                                  key={inv.id}
+                                  onClick={() => {
+                                    if (!isSelected) {
+                                      updateDraft("recipe", [
+                                        ...(draftItem.recipe || []),
+                                        {
+                                          inventory_item_id: inv.id,
+                                          quantity_required: 1,
+                                          name: inv.name,
+                                          unit_type: inv.unit_type,
+                                        },
+                                      ]);
+                                    }
+                                    setIsRecipeDropdownOpen(false);
+                                  }}
+                                  className={cn(
+                                    "px-4 py-2.5 b4 border-b border-black/5 last:border-0 transition-colors",
+                                    isSelected
+                                      ? "text-text-secondary/50 cursor-not-allowed bg-black/5"
+                                      : "cursor-pointer hover:bg-brand-secondary/30 text-text-primary",
+                                  )}
+                                >
+                                  {inv.name} ({inv.unit_type})
+                                </li>
+                              );
+                            })
+                          )}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </section>
             </div>
 

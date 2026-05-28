@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from "next/server";
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
-  // Default redirect is the homepage, or user's specific requested URL
+  // default redirect is the homepage, or user's specific requested URL
   const next = requestUrl.searchParams.get("next") ?? "/";
 
   if (code) {

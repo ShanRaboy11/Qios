@@ -18,7 +18,7 @@ import {
 import { cn } from "@/lib/utils";
 
 // ---------------------------------------------------------------------------
-// Types
+// types
 // ---------------------------------------------------------------------------
 interface Message {
   id: string;
@@ -51,13 +51,21 @@ export interface ChatbotUIProps {
    */
   menuContext?: string;
   /**
+   * Tenant id used by floating mode to fetch live tenant data on the backend.
+   */
+  tenantId?: string;
+  /**
    * Optional store / tenant name shown in the greeting.
    */
   storeName?: string;
+  /**
+   * Custom trigger content for the floating button when closed.
+   */
+  triggerContent?: React.ReactNode;
 }
 
 // ---------------------------------------------------------------------------
-// Constants
+// constants
 // ---------------------------------------------------------------------------
 const QUICK_TAGS = [
   { label: "What's on the menu?", emoji: "🍽️" },
@@ -67,12 +75,13 @@ const QUICK_TAGS = [
 ];
 
 // ---------------------------------------------------------------------------
-// Helpers
+// helpers
 // ---------------------------------------------------------------------------
 async function getGeminiReply(
   messages: Message[],
   menuContext?: string,
   storeName?: string,
+  tenantId?: string,
 ): Promise<string> {
   const latestMessage = messages.at(-1)?.message ?? "";
   const response = await fetch("/api/ai", {
@@ -83,6 +92,7 @@ async function getGeminiReply(
       messages: messages.map(({ role, message }) => ({ role, message })),
       context: menuContext,
       storeName,
+        tenantId,
     }),
   });
 
@@ -115,11 +125,12 @@ function makeGreeting(storeName?: string): string {
 }
 
 // ---------------------------------------------------------------------------
-// Inner chat panel (shared between page and floating modes)
+// inner chat panel (shared between page and floating modes)
 // ---------------------------------------------------------------------------
 interface ChatPanelProps {
   storeName?: string;
   menuContext?: string;
+  tenantId?: string;
   /** Callback fired when the ✕ button is pressed (floating mode only) */
   onClose?: () => void;
   /** Show the close (✕) button in the header */
@@ -130,6 +141,7 @@ interface ChatPanelProps {
 function ChatPanel({
   storeName,
   menuContext,
+  tenantId,
   onClose,
   showClose,
   className,
@@ -146,7 +158,7 @@ function ChatPanel({
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Populate initial greeting client-side to avoid SSR/hydration mismatch
+  // populate initial greeting client-side to avoid SSR/hydration mismatch
   useEffect(() => {
     setMessages([
       {
@@ -159,7 +171,7 @@ function ChatPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Auto-focus input when panel opens
+  // auto-focus input when panel opens
   useEffect(() => {
     const t = setTimeout(() => inputRef.current?.focus(), 300);
     return () => clearTimeout(t);
@@ -196,7 +208,12 @@ function ChatPanel({
     setIsTyping(true);
 
     try {
-      const reply = await getGeminiReply(nextMessages, menuContext, storeName);
+      const reply = await getGeminiReply(
+        nextMessages,
+        menuContext,
+        storeName,
+        tenantId,
+      );
       setMessages((prev) => [
         ...prev,
         {
@@ -272,7 +289,7 @@ function ChatPanel({
         style={{ boxShadow: "0px 24px 34px rgba(174,10,10,0.35)" }}
       >
         <div className="flex items-center gap-[10px]">
-          {/* Logo circle */}
+          {/* logo circle */}
           <div
             className="w-11 h-11 rounded-full bg-[#FFB347] flex items-center justify-center flex-shrink-0"
             style={{ filter: "drop-shadow(0px 2px 4px rgba(0,0,0,0.3))" }}
@@ -310,7 +327,7 @@ function ChatPanel({
             </svg>
           </div>
 
-          {/* Brand name + status */}
+          {/* brand name + status */}
           <div className="flex flex-col justify-center items-start">
             <div className="flex items-center gap-1.5">
               <span className="text-white font-bold text-[22px] leading-tight">
@@ -327,7 +344,7 @@ function ChatPanel({
           </div>
         </div>
 
-        {/* Action buttons */}
+        {/* action buttons */}
         <div className="flex items-center gap-2">
           <button
             onClick={resetChat}
@@ -348,7 +365,7 @@ function ChatPanel({
         </div>
       </div>
 
-      {/* Shadow strip below header */}
+      {/* shadow strip below header */}
       <div
         className="absolute top-[80px] left-0 w-full h-6 pointer-events-none z-10"
         style={{
@@ -377,7 +394,7 @@ function ChatPanel({
           />
         ))}
 
-        {/* Typing indicator */}
+        {/* typing indicator */}
         {isTyping && (
           <div className="pb-10">
             <div className="bg-[#2D2D2D] rounded-[12px_12px_12px_0px] px-5 py-4 inline-block shadow-[0px_2px_1px_rgba(0,0,0,0.05)]">
@@ -393,7 +410,7 @@ function ChatPanel({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Scroll-to-bottom FAB */}
+      {/* scroll-to-bottom FAB */}
       <AnimatePresence>
         {showScrollBtn && (
           <motion.div
@@ -417,7 +434,7 @@ function ChatPanel({
         className="flex-shrink-0 bg-white rounded-b-[20px] px-4 pt-3 pb-4 flex flex-col gap-2 z-10"
         style={{ boxShadow: "0px -4px 16px rgba(0, 0, 0, 0.06)" }}
       >
-        {/* Quick-reply tags — only before first customer message */}
+        {/* quick-reply tags — only before first customer message */}
         {!hasCustomerMessage && (
           <motion.div
             initial={{ opacity: 0, y: 6 }}
@@ -439,7 +456,7 @@ function ChatPanel({
           </motion.div>
         )}
 
-        {/* Input row */}
+        {/* input row */}
         <div className="bg-[#E8EBF0] rounded-[14px] px-4 py-3 flex items-center gap-3">
           <input
             ref={inputRef}
@@ -469,21 +486,23 @@ function ChatPanel({
 }
 
 // ---------------------------------------------------------------------------
-// Floating FAB + Panel
+// floating FAB + Panel
 // ---------------------------------------------------------------------------
 function FloatingChatbot({
   menuContext,
   storeName,
-}: Pick<ChatbotUIProps, "menuContext" | "storeName">) {
+  tenantId,
+  triggerContent,
+}: Pick<ChatbotUIProps, "menuContext" | "storeName" | "tenantId" | "triggerContent">) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
     <>
-      {/* Chat panel — rendered inside a fixed overlay */}
+      {/* chat panel — rendered inside a fixed overlay */}
       <AnimatePresence>
         {isOpen && (
           <>
-            {/* Backdrop (mobile) */}
+            {/* backdrop (mobile) */}
             <motion.div
               key="backdrop"
               initial={{ opacity: 0 }}
@@ -493,7 +512,7 @@ function FloatingChatbot({
               onClick={() => setIsOpen(false)}
             />
 
-            {/* Slide-up panel */}
+            {/* slide-up panel */}
             <motion.div
               key="panel"
               initial={{ opacity: 0, y: 60, scale: 0.96 }}
@@ -502,9 +521,9 @@ function FloatingChatbot({
               transition={{ type: "spring", stiffness: 400, damping: 32 }}
               className={cn(
                 "fixed z-[100]",
-                // Mobile: full-width bottom sheet
+                // mobile: full-width bottom sheet
                 "bottom-[88px] left-3 right-3",
-                // Desktop: fixed-size panel above the FAB
+                // desktop: fixed-size panel above the FAB
                 "md:bottom-[88px] md:right-6 md:left-auto md:w-[380px]",
               )}
               style={{ maxHeight: "calc(100dvh - 120px)" }}
@@ -512,6 +531,7 @@ function FloatingChatbot({
               <ChatPanel
                 storeName={storeName}
                 menuContext={menuContext}
+                tenantId={tenantId}
                 onClose={() => setIsOpen(false)}
                 showClose
                 className="h-full max-h-[620px]"
@@ -521,13 +541,11 @@ function FloatingChatbot({
         )}
       </AnimatePresence>
 
-      {/* FAB button */}
+      {/* fAB button */}
       <motion.button
         onClick={() => setIsOpen((v) => !v)}
-        whileHover={{ scale: 1.08 }}
-        whileTap={{ scale: 0.93 }}
         className={cn(
-          "fixed bottom-6 right-6 z-[100] w-14 h-14 rounded-full flex items-center justify-center shadow-2xl transition-colors duration-200",
+          "fixed bottom-6 right-6 z-[100] w-14 h-14 rounded-full flex items-center justify-center shadow-2xl transition-colors duration-200 overflow-hidden",
           isOpen ? "bg-[#2D2D2D]" : "bg-[#FFC670]",
         )}
         style={{
@@ -536,6 +554,7 @@ function FloatingChatbot({
             : "0 8px 32px rgba(255,198,112,0.5)",
         }}
         aria-label={isOpen ? "Close chat" : "Open chat assistant"}
+        type="button"
       >
         <AnimatePresence mode="wait" initial={false}>
           {isOpen ? (
@@ -556,39 +575,44 @@ function FloatingChatbot({
               exit={{ rotate: -90, opacity: 0 }}
               transition={{ duration: 0.18 }}
             >
-              <MessageCircle size={24} className="text-white" />
+              {triggerContent ?? <MessageCircle size={24} className="text-white" />}
             </motion.div>
           )}
         </AnimatePresence>
-
-        {/* Pulse ring when closed */}
-        {!isOpen && (
-          <span className="absolute inset-0 rounded-full bg-[#FFC670]/50 animate-ping" />
-        )}
       </motion.button>
     </>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Public export — ChatbotUI
+// public export — ChatbotUI
 // ---------------------------------------------------------------------------
 export function ChatbotUI({
   mode = "page",
   menuContext,
   storeName,
+  tenantId,
+  triggerContent,
   onClose,
 }: ChatbotUIProps) {
   if (mode === "floating") {
-    return <FloatingChatbot menuContext={menuContext} storeName={storeName} />;
+    return (
+      <FloatingChatbot
+        menuContext={menuContext}
+        storeName={storeName}
+        tenantId={tenantId}
+        triggerContent={triggerContent}
+      />
+    );
   }
 
-  // Page mode — original full-page centred layout
+  // page mode — original full-page centred layout
   return (
     <div className="flex items-center justify-center w-full min-h-screen bg-[#FFF8E1] p-4">
       <ChatPanel
         storeName={storeName}
         menuContext={menuContext}
+        tenantId={tenantId}
         onClose={onClose}
         showClose={!!onClose}
         className="w-full max-w-[400px] h-[750px]"

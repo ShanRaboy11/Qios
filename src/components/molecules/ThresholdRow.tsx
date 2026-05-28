@@ -56,7 +56,7 @@ export const ThresholdRow = ({
       case "Critical":
         return { color: "error" as const, text: "Critical" };
       case "Low":
-        return { color: "primary" as const, text: "Low" }; // Yellow/Orange
+        return { color: "primary" as const, text: "Low" }; // yellow/Orange
       case "Enough":
       default:
         return { color: "success" as const, text: "Enough" };
@@ -70,7 +70,7 @@ export const ThresholdRow = ({
         className,
       )}
     >
-      {/* Mobile Header: Name & Status */}
+      {/* mobile Header: Name & Status */}
       <div className="flex md:hidden w-full justify-between items-center mb-2">
         <span className="b3 text-text-primary font-bold">{ingredientName}</span>
         <Badge color={badgeProps.color} variant="subtle" shape="rounded">
@@ -78,14 +78,14 @@ export const ThresholdRow = ({
         </Badge>
       </div>
 
-      {/* Ingredient Name (Desktop) */}
+      {/* ingredient Name (Desktop) */}
       <div className="hidden md:flex items-center">
         <span className="b3 text-text-primary font-medium">
           {ingredientName}
         </span>
       </div>
 
-      {/* Unit & On Hand */}
+      {/* unit & On Hand */}
       <div className="flex w-full md:w-auto items-center justify-between md:justify-start gap-2">
         <span className="b5 md:hidden text-text-secondary font-medium">
           On Hand
@@ -96,7 +96,7 @@ export const ThresholdRow = ({
         </div>
       </div>
 
-      {/* Low Threshold */}
+      {/* low Threshold */}
       <div className="w-full flex flex-col gap-1">
         <span className="b5 md:hidden text-text-secondary font-medium mb-1">
           Low Level
@@ -112,7 +112,7 @@ export const ThresholdRow = ({
         />
       </div>
 
-      {/* Critical Threshold */}
+      {/* critical Threshold */}
       <div className="w-full flex flex-col gap-1">
         <span className="b5 md:hidden text-text-secondary font-medium mb-1">
           Critical Level
@@ -133,7 +133,7 @@ export const ThresholdRow = ({
         )}
       </div>
 
-      {/* Status (Desktop) */}
+      {/* status (Desktop) */}
       <div className="hidden md:flex justify-end w-full">
         <Badge
           color={badgeProps.color}

@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, ReactNode } from "react";
 import { MenuItemData } from "@/components/organisms/MenuCatalog";
 
-// Snapshot of a selected modifier option stored inside a cart item
+// snapshot of a selected modifier option stored inside a cart item
 export interface SelectedModifierOption {
   id: string;
   modifierGroupId: string;
@@ -45,7 +45,7 @@ export const CartProvider = ({ children, currency = "PHP" }: { children: ReactNo
 
   const addToCart = (newItemInput: Omit<CartItem, "id">) => {
     setCart((prevCart) => {
-      // Find if an identical item configuration already exists
+      // find if an identical item configuration already exists
       const existingItemIndex = prevCart.findIndex(
         (item) =>
           item.menuItem.id === newItemInput.menuItem.id &&
