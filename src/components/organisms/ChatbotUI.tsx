@@ -545,14 +545,9 @@ function FloatingChatbot({
       <motion.button
         onClick={() => setIsOpen((v) => !v)}
         className={cn(
-          "fixed bottom-6 right-6 z-[100] w-14 h-14 rounded-full flex items-center justify-center shadow-2xl transition-colors duration-200 overflow-visible",
+          "fixed bottom-6 right-6 z-[100] w-14 h-14 rounded-full flex items-center justify-center transition-colors duration-200 overflow-visible",
           isOpen ? "bg-[#2D2D2D]" : "bg-[#FFC670]",
         )}
-        style={{
-          boxShadow: isOpen
-            ? "0 8px 32px rgba(0,0,0,0.35)"
-            : "0 8px 32px rgba(255,198,112,0.5)",
-        }}
         aria-label={isOpen ? "Close chat" : "Open chat assistant"}
         type="button"
       >
