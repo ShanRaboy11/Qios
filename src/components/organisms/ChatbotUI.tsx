@@ -545,7 +545,7 @@ function FloatingChatbot({
       <motion.button
         onClick={() => setIsOpen((v) => !v)}
         className={cn(
-          "fixed bottom-6 right-6 z-[100] w-14 h-14 rounded-full flex items-center justify-center shadow-2xl transition-colors duration-200 overflow-hidden",
+          "fixed bottom-6 right-6 z-[100] w-14 h-14 rounded-full flex items-center justify-center shadow-2xl transition-colors duration-200 overflow-visible",
           isOpen ? "bg-[#2D2D2D]" : "bg-[#FFC670]",
         )}
         style={{
