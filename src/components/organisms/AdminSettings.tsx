@@ -56,7 +56,9 @@ const SettingsCardSkeleton = ({
   lines?: number;
   className?: string;
 }) => (
-  <div className={cn("rounded-xl border border-gray-100 p-5 space-y-3", className)}>
+  <div
+    className={cn("rounded-xl border border-gray-100 p-5 space-y-3", className)}
+  >
     <SkeletonLine className="h-5 w-40" />
     {Array.from({ length: lines }).map((_, idx) => (
       <SkeletonLine
@@ -830,6 +832,7 @@ const IntegrationSettings = () => {
   const [smtpPassword, setSmtpPassword] = useState("");
   const [smtpFromName, setSmtpFromName] = useState("Qios");
   const [smtpFromEmail, setSmtpFromEmail] = useState("");
+  const [showSmtpSettings, setShowSmtpSettings] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -939,7 +942,8 @@ const IntegrationSettings = () => {
           Integrations & API
         </h2>
         <p className="text-sm text-text-secondary">
-          Configure Nodemailer SMTP for system emails and API-connected services.
+          Configure Nodemailer SMTP for system emails and API-connected
+          services.
         </p>
       </div>
 
@@ -951,6 +955,7 @@ const IntegrationSettings = () => {
           iconBgColor="bg-[#F0F5FA]"
           iconTextColor="text-[#1A82E2]"
           status={isConfigured ? "Connected" : "Not Configured"}
+          onAction={() => setShowSmtpSettings(true)}
         />
 
         <IntegrationCard
@@ -963,7 +968,12 @@ const IntegrationSettings = () => {
         />
       </div>
 
-      {loading ? (
+      {!showSmtpSettings ? (
+        <div className="rounded-[24px] border border-dashed border-gray-200 bg-white/70 p-6 text-sm text-text-secondary">
+          Click <span className="font-medium text-text-primary">Connect</span>{" "}
+          to configure an API settings.
+        </div>
+      ) : loading ? (
         <div className="rounded-[24px] border border-gray-100 bg-white p-6 space-y-4">
           <SettingsHeaderSkeleton />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1082,7 +1092,11 @@ const IntegrationSettings = () => {
               variant="accent"
               shape="rounded"
               leftIcon={
-                saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />
+                saving ? (
+                  <Loader2 size={18} className="animate-spin" />
+                ) : (
+                  <Save size={18} />
+                )
               }
               onClick={() => setShowConfirmModal(true)}
               disabled={saving}
