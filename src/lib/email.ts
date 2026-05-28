@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 const isDevelopment = process.env.NODE_ENV !== "production";
 
@@ -84,6 +85,52 @@ const createTransporter = (config: SmtpConfig) =>
     secure: config.secure,
     auth: { user: config.user, pass: config.pass },
   });
+
+/**
+ * Resolve SMTP config from DB (platform_settings) falling back to env.
+ */
+const resolveSmtpConfig = async (): Promise<SmtpConfig | null> => {
+  try {
+    const supabase = createSupabaseAdminClient();
+    const { data, error } = await supabase
+      .from("platform_settings")
+      .select(
+        "smtp_host, smtp_port, smtp_secure, smtp_user, smtp_password, smtp_from_name, smtp_from_email",
+      )
+      .limit(1)
+      .single();
+
+    if (error) {
+      console.warn("Could not load SMTP settings from DB, falling back to env:", error.message || error);
+      return readSmtpConfig();
+    }
+    if (!data) return readSmtpConfig();
+
+    const host = data.smtp_host;
+    const user = data.smtp_user;
+    const pass = data.smtp_password;
+    const fromName = data.smtp_from_name || process.env.SMTP_FROM_NAME || "Qios";
+    const fromAddress = data.smtp_from_email || process.env.SMTP_FROM_EMAIL || user || "";
+
+    if (!host || !user || !pass || !fromAddress) return readSmtpConfig();
+
+    const port = data.smtp_port ? Number(data.smtp_port) : Number(process.env.SMTP_PORT || 587);
+    const secure =
+      data.smtp_secure !== null && data.smtp_secure !== undefined ? !!data.smtp_secure : port === 465;
+
+    return {
+      host,
+      port: Number.isNaN(port) ? 587 : port,
+      secure,
+      user,
+      pass,
+      from: { name: fromName, address: fromAddress },
+    };
+  } catch (err) {
+    console.warn("Error resolving SMTP config from DB, falling back to env:", err);
+    return readSmtpConfig();
+  }
+};
 
 const normalizePublicBaseUrl = (value?: string) => {
   if (!value) return "";
@@ -307,7 +354,7 @@ export const sendContactVerificationEmail = async ({
   businessName: string;
   code: string;
 }) => {
-  const smtp = readSmtpConfig();
+  const smtp = await resolveSmtpConfig();
   if (!smtp) {
     return {
       success: false,
@@ -442,7 +489,7 @@ export const sendSecurityVerificationEmail = async ({
   businessName: string;
   code: string;
 }) => {
-  const smtp = readSmtpConfig();
+  const smtp = await resolveSmtpConfig();
   if (!smtp) {
     return {
       success: false,
@@ -568,7 +615,7 @@ export const sendBusinessVerificationEmail = async ({
   comments?: string | null;
   tenantId?: string;
 }) => {
-  const smtp = readSmtpConfig();
+  const smtp = await resolveSmtpConfig();
   if (!smtp) {
     return {
       success: false,
@@ -767,7 +814,7 @@ export const sendRegistrationSuccessEmail = async ({
   adminName: string;
   businessName: string;
 }) => {
-  const smtp = readSmtpConfig();
+  const smtp = await resolveSmtpConfig();
   if (!smtp) {
     return {
       success: false,
@@ -863,7 +910,7 @@ export const sendAdminNotificationEmail = async ({
   adminName: string;
   notificationsEnabled: boolean;
 }) => {
-  const smtp = readSmtpConfig();
+  const smtp = await resolveSmtpConfig();
   if (!smtp) {
     return {
       success: false,

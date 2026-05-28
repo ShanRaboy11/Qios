@@ -11,6 +11,7 @@ import {
   Bell,
   Moon,
   Key,
+  Mail,
   Laptop,
   Smartphone,
   Loader2,
@@ -822,6 +823,115 @@ const TeamSettings = () => {
 };
 
 const IntegrationSettings = () => {
+  const [smtpHost, setSmtpHost] = useState("");
+  const [smtpPort, setSmtpPort] = useState("587");
+  const [smtpSecure, setSmtpSecure] = useState(false);
+  const [smtpUser, setSmtpUser] = useState("");
+  const [smtpPassword, setSmtpPassword] = useState("");
+  const [smtpFromName, setSmtpFromName] = useState("Qios");
+  const [smtpFromEmail, setSmtpFromEmail] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const supabase = createSupabaseBrowserClient();
+
+  useEffect(() => {
+    async function loadSettings() {
+      const { data } = await supabase
+        .from("platform_settings")
+        .select(
+          "smtp_host, smtp_port, smtp_secure, smtp_user, smtp_from_name, smtp_from_email",
+        )
+        .eq("id", 1)
+        .single();
+
+      if (data) {
+        setSmtpHost(data.smtp_host || "");
+        setSmtpPort(data.smtp_port?.toString() || "587");
+        setSmtpSecure(Boolean(data.smtp_secure));
+        setSmtpUser(data.smtp_user || "");
+        setSmtpFromName(data.smtp_from_name || "Qios");
+        setSmtpFromEmail(data.smtp_from_email || "");
+      }
+
+      setLoading(false);
+    }
+
+    loadSettings();
+  }, [supabase]);
+
+  const isConfigured =
+    Boolean(smtpHost.trim()) &&
+    Boolean(smtpUser.trim()) &&
+    Boolean(smtpFromEmail.trim());
+
+  const handleSave = async () => {
+    setShowConfirmModal(false);
+    setSaving(true);
+
+    try {
+      const payload: Record<string, unknown> = {
+        smtp_host: smtpHost.trim(),
+        smtp_port: Number.parseInt(smtpPort, 10) || 587,
+        smtp_secure: smtpSecure,
+        smtp_user: smtpUser.trim(),
+        smtp_from_name: smtpFromName.trim() || "Qios",
+        smtp_from_email: smtpFromEmail.trim(),
+      };
+
+      if (smtpPassword.trim()) {
+        payload.smtp_password = smtpPassword;
+      }
+
+      const { error } = await supabase
+        .from("platform_settings")
+        .update(payload)
+        .eq("id", 1);
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      const { data: userData } = await supabase.auth.getUser();
+      if (userData?.user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("full_name")
+          .eq("id", userData.user.id)
+          .single();
+
+        await logActivity({
+          supabase,
+          actorId: userData.user.id,
+          actorName: profile?.full_name || "Admin",
+          actionType: "UPDATE",
+          description: "Updated Nodemailer SMTP integration settings",
+          metadata: {
+            smtp_host: smtpHost,
+            smtp_port: Number.parseInt(smtpPort, 10) || 587,
+            smtp_secure: smtpSecure,
+            smtp_user: smtpUser,
+            smtp_from_name: smtpFromName,
+            smtp_from_email: smtpFromEmail,
+          },
+        });
+      }
+
+      setSmtpPassword("");
+      setSaving(false);
+      setShowSuccessModal(true);
+    } catch (error) {
+      console.error("[IntegrationSettings] Save failed:", error);
+      setSaving(false);
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Failed to save Nodemailer settings.",
+      );
+    }
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div>
@@ -829,18 +939,18 @@ const IntegrationSettings = () => {
           Integrations & API
         </h2>
         <p className="text-sm text-text-secondary">
-          Connect Qios with third-party services and manage API keys.
+          Configure Nodemailer SMTP for system emails and API-connected services.
         </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <IntegrationCard
-          name="SendGrid"
-          description="System emails, password resets, and notifications."
-          icon={<Globe className="w-5 h-5" />}
+          name="Nodemailer"
+          description="System emails, password resets, and notifications through SMTP."
+          icon={<Mail className="w-5 h-5" />}
           iconBgColor="bg-[#F0F5FA]"
           iconTextColor="text-[#1A82E2]"
-          status="Connected"
+          status={isConfigured ? "Connected" : "Not Configured"}
         />
 
         <IntegrationCard
@@ -852,6 +962,155 @@ const IntegrationSettings = () => {
           status="Not Configured"
         />
       </div>
+
+      {loading ? (
+        <div className="rounded-[24px] border border-gray-100 bg-white p-6 space-y-4">
+          <SettingsHeaderSkeleton />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <SkeletonLine className="h-11 w-full" />
+            <SkeletonLine className="h-11 w-full" />
+          </div>
+          <SkeletonLine className="h-11 w-full" />
+          <SkeletonLine className="h-11 w-full" />
+          <SkeletonLine className="h-11 w-40 rounded-full ml-auto" />
+        </div>
+      ) : (
+        <div className="rounded-[24px] border border-gray-100 bg-white p-6 space-y-6">
+          <div className="flex flex-col gap-2">
+            <h3 className="text-lg font-bold text-text-primary">
+              Nodemailer SMTP Settings
+            </h3>
+            <p className="text-sm text-text-secondary">
+              Save your SMTP details here so Qios can send notifications without
+              relying on environment variables.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-text-primary">
+                SMTP Host
+              </label>
+              <Input
+                value={smtpHost}
+                onChange={(e) => setSmtpHost(e.target.value)}
+                placeholder="smtp.gmail.com"
+                className="py-2.5 rounded-xl"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-text-primary">
+                SMTP Port
+              </label>
+              <Input
+                value={smtpPort}
+                onChange={(e) => setSmtpPort(e.target.value)}
+                type="number"
+                placeholder="587"
+                className="py-2.5 rounded-xl"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-text-primary">
+              SMTP Username
+            </label>
+            <Input
+              value={smtpUser}
+              onChange={(e) => setSmtpUser(e.target.value)}
+              placeholder="example@company.com"
+              className="py-2.5 rounded-xl"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-text-primary">
+              SMTP Password
+            </label>
+            <Input
+              value={smtpPassword}
+              onChange={(e) => setSmtpPassword(e.target.value)}
+              type="password"
+              placeholder="Leave blank to keep the existing password"
+              className="py-2.5 rounded-xl"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-text-primary">
+                From Name
+              </label>
+              <Input
+                value={smtpFromName}
+                onChange={(e) => setSmtpFromName(e.target.value)}
+                placeholder="Qios"
+                className="py-2.5 rounded-xl"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-text-primary">
+                From Email
+              </label>
+              <Input
+                value={smtpFromEmail}
+                onChange={(e) => setSmtpFromEmail(e.target.value)}
+                type="email"
+                placeholder="no-reply@qios.com"
+                className="py-2.5 rounded-xl"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between gap-4 p-4 rounded-xl border border-gray-100">
+            <div>
+              <h4 className="font-medium text-text-primary">Use Secure SMTP</h4>
+              <p className="text-sm text-text-secondary">
+                Enable SSL/TLS for providers that require it.
+              </p>
+            </div>
+            <Toggle
+              variant="accent"
+              isOn={smtpSecure}
+              onChange={setSmtpSecure}
+            />
+          </div>
+
+          <div className="flex justify-end">
+            <Button
+              variant="accent"
+              shape="rounded"
+              leftIcon={
+                saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />
+              }
+              onClick={() => setShowConfirmModal(true)}
+              disabled={saving}
+            >
+              {saving ? "Saving..." : "Save Nodemailer Settings"}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      <ActionConfirmationModal
+        isOpen={showConfirmModal}
+        action="save"
+        title="Save Nodemailer Settings?"
+        message="Are you sure you want to update the Nodemailer SMTP configuration?"
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={handleSave}
+        saving={saving}
+      />
+
+      <ActionConfirmationModal
+        isOpen={showSuccessModal}
+        action="success"
+        title="Nodemailer Settings Saved"
+        message="The SMTP configuration has been updated successfully."
+        onClose={() => setShowSuccessModal(false)}
+        onConfirm={() => setShowSuccessModal(false)}
+      />
     </div>
   );
 };
