@@ -345,7 +345,7 @@ function CustomerOrderingHomeInner({
           tenantId={tenantId}
           storeName={storeName}
           triggerContent={
-            <div className="flex h-full w-full items-center justify-center overflow-hidden scale-[0.56] origin-center translate-y-[2px]">
+            <div className="flex h-full w-full items-center justify-center overflow-visible scale-[0.56] origin-center translate-y-[2px]">
               <ChatbotLogo size={44} />
             </div>
           }
