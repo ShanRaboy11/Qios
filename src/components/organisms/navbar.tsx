@@ -354,12 +354,8 @@ export const Navbar = ({
         }}
         className="shrink-0 relative cursor-pointer flex items-center"
       >
-        {type === "tenant" && tenantLogoUrl ? (
-          <img
-            src={tenantLogoUrl}
-            alt="Tenant Logo"
-            className="h-10 w-auto object-contain"
-          />
+        {(type === "tenant" || type === "employee") && tenantLogoUrl ? (
+          <img src={tenantLogoUrl} alt="Tenant Logo" className="h-10 w-auto object-contain" />
         ) : (
           <span
             className="font-ibrand"
