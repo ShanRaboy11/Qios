@@ -37,8 +37,142 @@ type SettingsTab =
   | "integrations"
   | "security";
 
+const SkeletonLine = ({ className = "" }: { className?: string }) => (
+  <div className={cn("h-4 rounded-md skeleton-shimmer", className)} />
+);
+
+const SettingsHeaderSkeleton = () => (
+  <div className="space-y-2">
+    <SkeletonLine className="h-7 w-56" />
+    <SkeletonLine className="h-4 w-80 max-w-full" />
+  </div>
+);
+
+const SettingsCardSkeleton = ({
+  lines = 3,
+  className,
+}: {
+  lines?: number;
+  className?: string;
+}) => (
+  <div className={cn("rounded-xl border border-gray-100 p-5 space-y-3", className)}>
+    <SkeletonLine className="h-5 w-40" />
+    {Array.from({ length: lines }).map((_, idx) => (
+      <SkeletonLine
+        key={`settings-card-skeleton-line-${idx}`}
+        className={cn("h-4", idx === lines - 1 ? "w-2/3" : "w-full")}
+      />
+    ))}
+  </div>
+);
+
+const AccountSettingsSkeleton = () => (
+  <div className="space-y-8">
+    <SettingsHeaderSkeleton />
+    <div className="space-y-6">
+      <div className="space-y-4">
+        <SkeletonLine className="h-5 w-36" />
+        <div className="flex flex-col sm:flex-row gap-6 pt-2">
+          <div className="w-24 h-24 rounded-full skeleton-shimmer" />
+          <div className="flex-1 space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <SkeletonLine className="h-11 w-full" />
+              <SkeletonLine className="h-11 w-full" />
+            </div>
+            <SkeletonLine className="h-11 w-full" />
+          </div>
+        </div>
+      </div>
+      <SettingsCardSkeleton lines={2} />
+      <div className="pt-4 flex justify-end">
+        <SkeletonLine className="h-10 w-36 rounded-full" />
+      </div>
+    </div>
+  </div>
+);
+
+const PlatformSettingsSkeleton = () => (
+  <div className="space-y-8">
+    <SettingsHeaderSkeleton />
+    <div className="space-y-4">
+      <SettingsCardSkeleton lines={2} />
+      <SettingsCardSkeleton lines={2} />
+      <SettingsCardSkeleton lines={2} />
+      <div className="pt-4 flex justify-end">
+        <SkeletonLine className="h-10 w-44 rounded-full" />
+      </div>
+    </div>
+  </div>
+);
+
+const TeamSettingsSkeleton = () => (
+  <div className="space-y-8">
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <SettingsHeaderSkeleton />
+      <SkeletonLine className="h-10 w-32 rounded-full" />
+    </div>
+    <div className="rounded-xl border border-gray-100 overflow-hidden">
+      <div className="grid grid-cols-4 gap-4 p-4 border-b border-gray-100">
+        <SkeletonLine className="h-4 w-16" />
+        <SkeletonLine className="h-4 w-12" />
+        <SkeletonLine className="h-4 w-14" />
+        <SkeletonLine className="h-4 w-16" />
+      </div>
+      {Array.from({ length: 4 }).map((_, idx) => (
+        <div
+          key={`team-settings-skeleton-row-${idx}`}
+          className="grid grid-cols-4 gap-4 p-4 border-b border-gray-50 last:border-0"
+        >
+          <SkeletonLine className="h-4 w-32" />
+          <SkeletonLine className="h-4 w-20" />
+          <SkeletonLine className="h-4 w-16" />
+          <SkeletonLine className="h-4 w-14 justify-self-end" />
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+const IntegrationsSettingsSkeleton = () => (
+  <div className="space-y-8">
+    <SettingsHeaderSkeleton />
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <SettingsCardSkeleton lines={3} className="min-h-[138px]" />
+      <SettingsCardSkeleton lines={3} className="min-h-[138px]" />
+    </div>
+  </div>
+);
+
+const SecuritySettingsSkeleton = () => (
+  <div className="space-y-8">
+    <SettingsHeaderSkeleton />
+    <div className="space-y-4">
+      <SettingsCardSkeleton lines={2} />
+      <SettingsCardSkeleton lines={4} />
+      <div className="pt-4 flex justify-end">
+        <SkeletonLine className="h-10 w-36 rounded-full" />
+      </div>
+    </div>
+  </div>
+);
+
+const TabContentSkeleton = ({ tab }: { tab: SettingsTab }) => {
+  if (tab === "account") return <AccountSettingsSkeleton />;
+  if (tab === "platform") return <PlatformSettingsSkeleton />;
+  if (tab === "team") return <TeamSettingsSkeleton />;
+  if (tab === "integrations") return <IntegrationsSettingsSkeleton />;
+  return <SecuritySettingsSkeleton />;
+};
+
 export const AdminSettings = () => {
   const [activeTab, setActiveTab] = useState<SettingsTab>("account");
+  const [isTabLoading, setIsTabLoading] = useState(true);
+
+  useEffect(() => {
+    setIsTabLoading(true);
+    const timeout = setTimeout(() => setIsTabLoading(false), 250);
+    return () => clearTimeout(timeout);
+  }, [activeTab]);
 
   const tabs = [
     { id: "account", label: "Account & Profile", icon: User },
@@ -83,11 +217,17 @@ export const AdminSettings = () => {
 
       {/* content Area */}
       <div className="flex-1 bg-white rounded-[24px] shadow-sm border border-gray-100 p-6 md:p-8 overflow-hidden">
-        {activeTab === "account" && <AccountSettings />}
-        {activeTab === "platform" && <PlatformSettings />}
-        {activeTab === "team" && <TeamSettings />}
-        {activeTab === "integrations" && <IntegrationSettings />}
-        {activeTab === "security" && <SecuritySettings />}
+        {isTabLoading ? (
+          <TabContentSkeleton tab={activeTab} />
+        ) : (
+          <>
+            {activeTab === "account" && <AccountSettings />}
+            {activeTab === "platform" && <PlatformSettings />}
+            {activeTab === "team" && <TeamSettings />}
+            {activeTab === "integrations" && <IntegrationSettings />}
+            {activeTab === "security" && <SecuritySettings />}
+          </>
+        )}
       </div>
     </div>
   );
@@ -153,11 +293,7 @@ const AccountSettings = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-brand-primary" />
-      </div>
-    );
+    return <AccountSettingsSkeleton />;
   }
 
   return (
@@ -360,11 +496,7 @@ const PlatformSettings = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-brand-primary" />
-      </div>
-    );
+    return <PlatformSettingsSkeleton />;
   }
 
   return (
@@ -541,11 +673,7 @@ const TeamSettings = () => {
   }, [supabase]);
 
   if (loading) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-brand-primary" />
-      </div>
-    );
+    return <TeamSettingsSkeleton />;
   }
 
   return (
@@ -813,11 +941,7 @@ const SecuritySettings = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-brand-primary" />
-      </div>
-    );
+    return <SecuritySettingsSkeleton />;
   }
 
   return (
