@@ -464,16 +464,16 @@ export default function SubscriptionManagement() {
 
   if (loading) {
     return (
-      <div className="flex flex-col md:flex-row gap-6 min-h-[700px] animate-pulse">
+      <div className="flex flex-col md:flex-row gap-6 min-h-[700px]">
         {/* ── Sidebar Skeleton ── */}
         <div className="w-full md:w-[280px] flex-shrink-0 flex flex-col gap-3">
-          <div className="h-11 bg-black/5 rounded-full w-full" />
-          <div className="h-11 bg-black/5 rounded-xl w-full" />
+          <div className="h-11 rounded-full w-full skeleton-shimmer" />
+          <div className="h-11 rounded-xl w-full skeleton-shimmer" />
           <div className="flex flex-col gap-2 mt-1">
             {[...Array(5)].map((_, i) => (
               <div
                 key={i}
-                className="flex items-center gap-3 p-3 rounded-2xl bg-black/5 h-14"
+                className="flex items-center gap-3 p-3 rounded-2xl h-14 skeleton-shimmer"
               />
             ))}
           </div>
@@ -485,23 +485,23 @@ export default function SubscriptionManagement() {
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="flex-1 w-full max-w-2xl flex gap-4 md:gap-6">
                 <div className="flex-1">
-                  <div className="h-4 bg-black/5 rounded w-24 mb-2" />
-                  <div className="h-10 bg-black/5 rounded-xl w-full" />
+                  <div className="h-4 rounded w-24 mb-2 skeleton-shimmer" />
+                  <div className="h-10 rounded-xl w-full skeleton-shimmer" />
                 </div>
                 <div className="flex-1">
-                  <div className="h-4 bg-black/5 rounded w-32 mb-2" />
-                  <div className="h-10 bg-black/5 rounded-xl w-full" />
+                  <div className="h-4 rounded w-32 mb-2 skeleton-shimmer" />
+                  <div className="h-10 rounded-xl w-full skeleton-shimmer" />
                 </div>
               </div>
             </div>
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="flex-1">
-                <div className="h-4 bg-black/5 rounded w-24 mb-2" />
-                <div className="h-10 bg-black/5 rounded-xl w-full" />
+                <div className="h-4 rounded w-24 mb-2 skeleton-shimmer" />
+                <div className="h-10 rounded-xl w-full skeleton-shimmer" />
               </div>
               <div className="flex-1">
-                <div className="h-4 bg-black/5 rounded w-32 mb-2" />
-                <div className="h-10 bg-black/5 rounded-xl w-full" />
+                <div className="h-4 rounded w-32 mb-2 skeleton-shimmer" />
+                <div className="h-10 rounded-xl w-full skeleton-shimmer" />
               </div>
             </div>
           </div>
@@ -510,11 +510,11 @@ export default function SubscriptionManagement() {
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-x-8 gap-y-12">
               {[...Array(4)].map((_, i) => (
                 <div key={i} className="flex flex-col gap-4">
-                  <div className="h-6 bg-black/5 rounded w-1/3 mb-2" />
+                  <div className="h-6 rounded w-1/3 mb-2 skeleton-shimmer" />
                   {[...Array(4)].map((_, j) => (
                     <div
                       key={j}
-                      className="h-12 bg-black/5 rounded-xl w-full"
+                      className="h-12 rounded-xl w-full skeleton-shimmer"
                     />
                   ))}
                 </div>
