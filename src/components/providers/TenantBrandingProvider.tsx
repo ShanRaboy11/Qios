@@ -62,9 +62,19 @@ export const TenantBrandingProvider = ({
         className={cn("w-full h-full", className)}
         style={
           {
-            ...(primaryColor && { "--brand-primary": primaryColor }),
-            ...(secondaryColor && { "--brand-secondary": secondaryColor }),
-            ...(accentColor && { "--brand-accent": accentColor }),
+            ...(primaryColor && {
+              "--brand-primary": primaryColor,
+              "--color-brand-primary": primaryColor,
+            }),
+            ...(secondaryColor && {
+              "--brand-secondary": secondaryColor,
+              "--color-brand-secondary": secondaryColor,
+              "--brand-bg": secondaryColor,
+            }),
+            ...(accentColor && {
+              "--brand-accent": accentColor,
+              "--color-brand-accent": accentColor,
+            }),
             ...(primaryFontStr && { "--font-brand-primary": primaryFontStr }),
             ...(secondaryFontStr && { "--font-brand-secondary": secondaryFontStr }),
           } as React.CSSProperties
