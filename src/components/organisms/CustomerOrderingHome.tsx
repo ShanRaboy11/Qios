@@ -43,6 +43,8 @@ function CustomerOrderingHomeInner({
 }) {
   const { setIsCartOpen } = useCart();
   const { branding } = useTenantBranding();
+  const accentColor = branding?.accentColor || "#FF5269";
+  const primaryColor = branding?.primaryColor || "#FFC670";
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<MenuItemData | null>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -86,7 +88,7 @@ function CustomerOrderingHomeInner({
   return (
     <motion.main
         layout
-        animate={{ backgroundColor: isCategoryView ? "#FF5269" : "#FFDC72" }}
+        animate={{ backgroundColor: isCategoryView ? accentColor : primaryColor }}
         className="flex flex-col min-h-screen w-full overflow-x-hidden relative transition-colors duration-500"
       >
         <div className="w-full max-w-[500px] md:max-w-none mx-auto flex-grow flex flex-col relative pb-0 md:pb-10 overflow-x-hidden">

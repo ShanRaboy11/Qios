@@ -73,7 +73,7 @@ export default function EmployeeDashboard() {
           description="Served"
           percentageChange={5}
           icon={<CheckCircle2 size={24} />}
-          color="secondary"
+          color="accent"
         />
         <KPICard
           title="Avg Prep Time"
@@ -81,7 +81,7 @@ export default function EmployeeDashboard() {
           description="Mins per order"
           percentageChange={-2}
           icon={<ChefHat size={24} />}
-          color="accent"
+          color="primary"
         />
       </div>
 

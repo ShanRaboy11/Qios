@@ -7,10 +7,19 @@ html {
 }
 
 :root {
+  /* ─── Tailwind brand tokens (read by bg-brand-*, text-brand-*, etc.) ─── */
+  /* These are the defaults for pages NOT wrapped in a TenantBrandingProvider. */
+  /* TenantBrandingProvider overrides these inline, scoped to its own subtree. */
+  --brand-primary: #ffc670;
+  --brand-secondary: #ffd77a;
+  --brand-accent: #ff5269;
+  --brand-bg: #fff9ef;
+
+  /* ─── Legacy color-prefixed vars (kept for direct CSS usage) ─── */
   --color-brand-primary: #ffc670;
   --color-brand-secondary: #ffd77a;
   --color-brand-accent: #ff5269;
-  --color-bg-primary: #fff9ef;
+  --color-bg-primary: var(--brand-bg, #fff9ef);
 
   --color-text-primary: #2d2d2d;
   --color-text-secondary: #707070;
@@ -202,8 +211,8 @@ h4,
 
 /* kds design tokens */
 :root {
-  --kds-gold: #ffd77a;
-  --kds-gold-soft: #fff3da;
+  --kds-gold: var(--brand-primary, #ffd77a);
+  --kds-gold-soft: var(--brand-secondary, #fff3da);
   --kds-gold-mid: #c07a00;
   --kds-gold-dark: #9a6200;
   --kds-gold-deeper: #7a5800;
@@ -211,7 +220,7 @@ h4,
   --kds-border-warm: #f0e6d3;
   --kds-brown-dark: #5a3a1a;
   --kds-brown-mid: #8b6f47;
-  --kds-coral: #ff5269;
+  --kds-coral: var(--brand-accent, #ff5269);
   --kds-coral-soft: #ffe4e8;
   --kds-coral-glow: rgba(255, 82, 105, 0.22);
   --kds-green: #1fad66;
