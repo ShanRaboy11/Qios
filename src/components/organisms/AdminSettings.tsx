@@ -237,6 +237,8 @@ const AccountSettings = () => {
   const [firstName, setFirstName] = useState("Admin");
   const [lastName, setLastName] = useState("User");
   const [email, setEmail] = useState("");
+  const [emailNotificationsEnabled, setEmailNotificationsEnabled] =
+    useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -248,16 +250,26 @@ const AccountSettings = () => {
       const { data: userData } = await supabase.auth.getUser();
       if (userData?.user) {
         setEmail(userData.user.email || "");
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("full_name")
-          .eq("id", userData.user.id)
-          .single();
+        const [{ data: profile }, { data: settings }] = await Promise.all([
+          supabase
+            .from("profiles")
+            .select("full_name")
+            .eq("id", userData.user.id)
+            .single(),
+          supabase
+            .from("platform_settings")
+            .select("email_notifications_enabled")
+            .eq("id", 1)
+            .single(),
+        ]);
         if (profile) {
           const parts = profile.full_name.split(" ");
           setFirstName(parts[0] || "");
           setLastName(parts.slice(1).join(" ") || "");
         }
+        setEmailNotificationsEnabled(
+          Boolean(settings?.email_notifications_enabled),
+        );
       }
       setLoading(false);
     }
@@ -267,29 +279,64 @@ const AccountSettings = () => {
   const handleSave = async () => {
     setShowConfirmModal(false);
     setSaving(true);
-    const { data: userData } = await supabase.auth.getUser();
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
 
-    if (userData?.user) {
-      const fullName = `${firstName} ${lastName}`.trim();
+      if (!accessToken) {
+        throw new Error("Your session expired. Please sign in again.");
+      }
 
-      // 1. Update Profile
-      await supabase
-        .from("profiles")
-        .update({ full_name: fullName })
-        .eq("id", userData.user.id);
-
-      // 2. Log the activity using our new schema
-      await logActivity({
-        supabase,
-        actorId: userData.user.id,
-        actorName: fullName,
-        actionType: "UPDATE",
-        description: "Updated personal account profile settings",
-        metadata: { email, first_name: firstName, last_name: lastName },
+      const response = await fetch("/api/admin/account-settings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          fullName: `${firstName} ${lastName}`.trim(),
+          emailNotificationsEnabled,
+        }),
       });
+
+      const payload = (await response.json().catch(() => ({}))) as {
+        error?: string;
+      };
+
+      if (!response.ok) {
+        throw new Error(payload.error || `Request failed (${response.status})`);
+      }
+
+      const { data: userData } = await supabase.auth.getUser();
+      if (userData?.user) {
+        const fullName = `${firstName} ${lastName}`.trim();
+
+        await logActivity({
+          supabase,
+          actorId: userData.user.id,
+          actorName: fullName,
+          actionType: "UPDATE",
+          description: "Updated personal account profile settings",
+          metadata: {
+            email,
+            first_name: firstName,
+            last_name: lastName,
+            email_notifications_enabled: emailNotificationsEnabled,
+          },
+        });
+      }
+
+      setSaving(false);
+      setShowSuccessModal(true);
+    } catch (error) {
+      console.error("[AccountSettings] Save failed:", error);
+      setSaving(false);
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Failed to save account settings.",
+      );
     }
-    setSaving(false);
-    setShowSuccessModal(true);
   };
 
   if (loading) {
@@ -377,7 +424,11 @@ const AccountSettings = () => {
                   </p>
                 </div>
               </div>
-              <Toggle variant="accent" defaultIsOn={true} />
+              <Toggle
+                variant="accent"
+                isOn={emailNotificationsEnabled}
+                onChange={setEmailNotificationsEnabled}
+              />
             </div>
           </div>
         </div>
