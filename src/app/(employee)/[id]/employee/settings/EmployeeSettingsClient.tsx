@@ -171,6 +171,10 @@ export function EmployeeSettingsClient({
       return;
     }
 
+    await savePreferences();
+  };
+
+  const savePreferences = async () => {
     setPreferencesSaving(true);
     setPreferencesState(emptySettingsActionState);
 
@@ -775,9 +779,17 @@ export function EmployeeSettingsClient({
                       on your email.
                     </p>
                   </div>
-                  <Badge color="accent" variant="subtle">
-                    {operationalData.notifyEmail ? "On" : "Off"}
-                  </Badge>
+                  <Toggle
+                    variant="accent"
+                    isOn={operationalData.notifyEmail}
+                    onChange={(next) =>
+                      setOperationalData((previous) => ({
+                        ...previous,
+                        notifyEmail: next,
+                      }))
+                    }
+                    disabled={!preferencesEditMode}
+                  />
                 </div>
 
                 <div className="flex items-center justify-between p-5 border border-brand-primary/10 rounded-[24px] bg-white/50 hover:bg-white/80 transition-all">
@@ -791,10 +803,48 @@ export function EmployeeSettingsClient({
                       messages or priority tasks.
                     </p>
                   </div>
-                  <Badge color="accent" variant="subtle">
-                    {operationalData.notifyPush ? "On" : "Off"}
-                  </Badge>
+                  <Toggle
+                    variant="accent"
+                    isOn={operationalData.notifyPush}
+                    onChange={(next) =>
+                      setOperationalData((previous) => ({
+                        ...previous,
+                        notifyPush: next,
+                      }))
+                    }
+                    disabled={!preferencesEditMode}
+                  />
                 </div>
+              </div>
+
+              <div className="mt-8 pt-6 border-t border-brand-primary/10 flex justify-end gap-3">
+                <Button
+                  type={preferencesEditMode ? "button" : "button"}
+                  onClick={
+                    preferencesEditMode
+                      ? async () => {
+                          await savePreferences();
+                        }
+                      : () => setPreferencesEditMode(true)
+                  }
+                  disabled={preferencesSaving}
+                  variant="accent"
+                  shape="pill"
+                  className="w-full sm:w-auto h-[50px] px-8 text-base font-bold font-figtree"
+                  leftIcon={
+                    preferencesSaving ? (
+                      <Loader2 size={18} className="animate-spin opacity-90" />
+                    ) : (
+                      <Check size={18} className="opacity-90" />
+                    )
+                  }
+                >
+                  {preferencesEditMode
+                    ? preferencesSaving
+                      ? "Saving..."
+                      : "Save Preferences"
+                    : "Edit Preferences"}
+                </Button>
               </div>
             </div>
           )}
