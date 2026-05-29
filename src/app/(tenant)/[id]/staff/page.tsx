@@ -44,7 +44,9 @@ export default function StaffPage() {
           </Button>
         </div>
       </div>
-      <StaffManagement />
+      <div id="tutorial-staff-table">
+        <StaffManagement />
+      </div>
     </>
   );
 }

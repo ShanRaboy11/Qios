@@ -379,6 +379,7 @@ export const Navbar = ({
       </Link>
 
       <div
+        id="tutorial-nav"
         className={cn(
           "hidden md:flex items-center shrink-0",
           "gap-x-6 lg:gap-x-12",

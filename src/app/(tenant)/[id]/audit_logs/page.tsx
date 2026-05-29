@@ -14,7 +14,9 @@ export default function AuditLogsPage() {
           </p>
         </div>
       </div>
-      <AuditLogsManagement />
+      <div id="tutorial-audit-table">
+        <AuditLogsManagement />
+      </div>
     </>
   );
 }

@@ -29,6 +29,16 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export default function BrandingSetupPage() {
   const router = useRouter();
+  const [queryTenantId, setQueryTenantId] = useState("");
+
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const tid = params.get("tenantId") || "";
+      setQueryTenantId(tid);
+    }
+  }, []);
+
   const presetThemes = [
     { primary: "#FFC670", secondary: "#FFF9F0", accent: "#00FFFF" },
     { primary: "#3B82F6", secondary: "#EFF6FF", accent: "#F59E0B" },
@@ -295,10 +305,10 @@ export default function BrandingSetupPage() {
         .maybeSingle();
 
       const profileTenantId = profile?.tenant_id ?? "";
+      const tenantId = profileTenantId || queryTenantId;
 
-      const tenantId = profileTenantId;
       if (!tenantId) {
-        throw new Error("Tenant context not found for current user.");
+        throw new Error("Tenant context not found. Please log in or provide a valid tenant ID.");
       }
 
       const customThemesToSave = customThemes.filter((customTheme) => {
@@ -339,7 +349,7 @@ export default function BrandingSetupPage() {
       }
 
       setIsSaving(false);
-      router.push(`/${tenantId}/home`);
+      router.push(`/${tenantId}/dashboard?startTutorial=true`);
     } catch (err: any) {
       console.error(err);
       setIsSaving(false);

@@ -20,7 +20,9 @@ export default async function SalesPage({
           </p>
         </div>
       </div>
-      <SalesManagement tenantId={tenantId} storeName={storeName} />
+      <div id="tutorial-sales-analytics">
+        <SalesManagement tenantId={tenantId} storeName={storeName} />
+      </div>
     </>
   );
 }

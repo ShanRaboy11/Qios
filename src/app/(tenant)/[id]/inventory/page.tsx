@@ -14,7 +14,7 @@ export default function InventoryPage() {
           </p>
         </div>
       </div>
-      <div className="flex flex-col gap-8 w-full">
+      <div id="tutorial-inventory-table" className="flex flex-col gap-8 w-full">
         <IngredientsInventory />
       </div>
     </>
