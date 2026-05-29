@@ -1,11 +1,13 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { Badge } from "@/components/atoms/Badge";
 import { Input } from "@/components/atoms/Input";
 import { Button } from "@/components/atoms/Button";
-import { ChevronDown, ChevronLeft, ChevronRight, Download, Filter, Search } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, Download, Filter, Search, X } from "lucide-react";
 import { jsPDF } from "jspdf";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   formatMoney,
   type SalesTransactionRecord,
@@ -19,7 +21,6 @@ interface TransactionTableProps {
 
 const STATUS_OPTIONS = ["all", "pending", "preparing", "ready", "served", "cancelled", "voided"] as const;
 const PAYMENT_STATUS_OPTIONS = ["all", "unpaid", "paid", "refunded"] as const;
-const METHOD_OPTIONS = ["all", "cash", "gcash", "card", "other"] as const;
 
 function capitalize(value: string) {
   if (!value) return value;
@@ -29,9 +30,180 @@ function capitalize(value: string) {
 function buildFilterSummary(
   status: (typeof STATUS_OPTIONS)[number],
   paymentStatus: (typeof PAYMENT_STATUS_OPTIONS)[number],
-  method: (typeof METHOD_OPTIONS)[number],
 ) {
-  return [status, paymentStatus, method].filter((value) => value !== "all").length;
+  return [status, paymentStatus].filter((value) => value !== "all").length;
+}
+
+function formatDateTime(value: string) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(date);
+}
+
+function parseItems(items: string) {
+  return items
+    .split(/\n|\|/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+type TransactionDetailsModalProps = {
+  transaction: SalesTransactionRecord | null;
+  isOpen: boolean;
+  onClose: () => void;
+};
+
+function TransactionDetailsModal({ transaction, isOpen, onClose }: TransactionDetailsModalProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [isOpen, onClose]);
+
+  if (!mounted) return null;
+
+  return createPortal(
+    <AnimatePresence>
+      {isOpen && transaction ? (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="fixed inset-0 z-[150] bg-black/40 backdrop-blur-sm"
+          />
+          <div className="fixed inset-0 z-[160] flex items-center justify-center p-4 sm:p-6 pointer-events-none">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              className="w-full max-w-3xl max-h-[90vh] overflow-hidden rounded-[28px] bg-white shadow-2xl pointer-events-auto flex flex-col"
+            >
+              <div className="flex items-start justify-between gap-4 border-b border-gray-100 bg-gray-50/60 p-6">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-accent">
+                    Transaction Details
+                  </p>
+                  <h3 className="mt-2 text-2xl font-bold text-text-primary">
+                    Order {transaction.orderNumber}
+                  </h3>
+                  <p className="mt-1 text-sm text-text-secondary">
+                    {formatDateTime(transaction.createdAt)}
+                  </p>
+                </div>
+                <button
+                  onClick={onClose}
+                  className="flex h-11 w-11 items-center justify-center rounded-full border border-gray-100 bg-white text-text-secondary shadow-sm transition-colors hover:bg-gray-50 hover:text-text-primary"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="overflow-y-auto p-6 space-y-6">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                  {[
+                    { label: "Order ID", value: transaction.orderNumber },
+                    { label: "Date", value: transaction.date },
+                    { label: "Time", value: transaction.time },
+                    { label: "Table", value: transaction.tableNumber || "Walk-in" },
+                    { label: "Status", value: capitalize(transaction.status) },
+                    { label: "Payment Status", value: capitalize(transaction.paymentStatus) },
+                    { label: "Method", value: capitalize(transaction.method) },
+                    { label: "Total", value: formatMoney(transaction.total) },
+                  ].map((field) => (
+                    <div key={field.label} className="rounded-2xl border border-gray-100 bg-gray-50/60 p-4">
+                      <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-text-secondary">
+                        {field.label}
+                      </p>
+                      <p className="mt-2 text-sm font-semibold text-text-primary">{field.value}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.3fr_0.7fr]">
+                  <div className="rounded-[24px] border border-gray-100 bg-white shadow-sm overflow-hidden">
+                    <div className="border-b border-gray-100 px-5 py-4">
+                      <h4 className="text-sm font-bold text-text-primary">Items</h4>
+                      <p className="mt-1 text-xs text-text-secondary">All items included in this order</p>
+                    </div>
+                    <div className="divide-y divide-gray-100">
+                      {parseItems(transaction.items).length > 0 ? (
+                        parseItems(transaction.items).map((item, index) => (
+                          <div key={`${transaction.id}-item-${index}`} className="px-5 py-4 flex items-start gap-3">
+                            <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-primary/10 text-xs font-bold text-brand-accent">
+                              {index + 1}
+                            </div>
+                            <p className="text-sm text-text-primary leading-relaxed">{item}</p>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="px-5 py-8 text-sm text-text-secondary">No item details available.</div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="rounded-[24px] border border-gray-100 bg-gray-50/60 p-5">
+                      <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-text-secondary">
+                        Order Summary
+                      </p>
+                      <div className="mt-4 space-y-3 text-sm">
+                        <div className="flex items-center justify-between gap-4">
+                          <span className="text-text-secondary">Created at</span>
+                          <span className="font-medium text-text-primary text-right">{formatDateTime(transaction.createdAt)}</span>
+                        </div>
+                        <div className="flex items-center justify-between gap-4">
+                          <span className="text-text-secondary">Transaction ID</span>
+                          <span className="font-medium text-text-primary text-right break-all">{transaction.id}</span>
+                        </div>
+                        <div className="flex items-center justify-between gap-4">
+                          <span className="text-text-secondary">Table number</span>
+                          <span className="font-medium text-text-primary text-right">{transaction.tableNumber || "Walk-in"}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="rounded-[24px] border border-gray-100 bg-brand-primary/5 p-5">
+                      <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-brand-accent">
+                        Amount Due
+                      </p>
+                      <p className="mt-3 text-3xl font-bold text-text-primary">{formatMoney(transaction.total)}</p>
+                      <p className="mt-2 text-sm text-text-secondary">Includes all listed items and charges for this order.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </>
+      ) : null}
+    </AnimatePresence>,
+    document.body,
+  );
 }
 
 export const TransactionTable = ({ tenantId, businessName }: TransactionTableProps) => {
@@ -39,25 +211,29 @@ export const TransactionTable = ({ tenantId, businessName }: TransactionTablePro
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<(typeof STATUS_OPTIONS)[number]>("all");
   const [paymentStatusFilter, setPaymentStatusFilter] = useState<(typeof PAYMENT_STATUS_OPTIONS)[number]>("all");
-  const [methodFilter, setMethodFilter] = useState<(typeof METHOD_OPTIONS)[number]>("all");
   const [page, setPage] = useState(1);
-  const [limit] = useState(8);
+  const [limit] = useState(6);
   const [transactions, setTransactions] = useState<SalesTransactionRecord[]>([]);
   const [total, setTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState<SalesTransactionRecord | null>(null);
 
-  const applySearch = () => {
-    const nextQuery = searchInput.trim();
+  useEffect(() => {
+    const query = searchInput.trim();
 
-    if (!nextQuery) {
+    if (!query) {
       return;
     }
 
-    setPage(1);
-    setSearchQuery(nextQuery);
-  };
+    const timeout = window.setTimeout(() => {
+      setPage(1);
+      setSearchQuery(query);
+    }, 300);
+
+    return () => window.clearTimeout(timeout);
+  }, [searchInput]);
 
   useEffect(() => {
     if (!tenantId) {
@@ -77,7 +253,6 @@ export const TransactionTable = ({ tenantId, businessName }: TransactionTablePro
           search: searchQuery,
           status: statusFilter,
           paymentStatus: paymentStatusFilter,
-          method: methodFilter,
         });
 
         const response = await fetch(`/api/tenants/${tenantId}/sales?${params.toString()}`, {
@@ -108,15 +283,15 @@ export const TransactionTable = ({ tenantId, businessName }: TransactionTablePro
     void loadTransactions();
 
     return () => controller.abort();
-  }, [limit, methodFilter, page, paymentStatusFilter, searchQuery, statusFilter, tenantId]);
+  }, [limit, page, paymentStatusFilter, searchQuery, statusFilter, tenantId]);
 
   const totalPages = Math.max(1, Math.ceil(total / limit));
   const startIndex = total === 0 ? 0 : (page - 1) * limit + 1;
   const endIndex = Math.min(total, page * limit);
 
   const filterSummary = useMemo(
-    () => buildFilterSummary(statusFilter, paymentStatusFilter, methodFilter),
-    [methodFilter, paymentStatusFilter, statusFilter],
+    () => buildFilterSummary(statusFilter, paymentStatusFilter),
+    [paymentStatusFilter, statusFilter],
   );
 
   const exportTransactions = async () => {
@@ -133,7 +308,6 @@ export const TransactionTable = ({ tenantId, businessName }: TransactionTablePro
         search: searchQuery,
         status: statusFilter,
         paymentStatus: paymentStatusFilter,
-        method: methodFilter,
       });
 
       const response = await fetch(`/api/tenants/${tenantId}/sales?${params.toString()}`);
@@ -163,7 +337,7 @@ export const TransactionTable = ({ tenantId, businessName }: TransactionTablePro
           68,
         );
         doc.text(
-          `Filters: ${searchQuery || "All orders"}${statusFilter !== "all" ? ` • Status: ${capitalize(statusFilter)}` : ""}${paymentStatusFilter !== "all" ? ` • Payment: ${capitalize(paymentStatusFilter)}` : ""}${methodFilter !== "all" ? ` • Method: ${capitalize(methodFilter)}` : ""}`,
+          `Filters: ${searchQuery || "All orders"}${statusFilter !== "all" ? ` • Status: ${capitalize(statusFilter)}` : ""}${paymentStatusFilter !== "all" ? ` • Payment: ${capitalize(paymentStatusFilter)}` : ""}`,
           margin,
           84,
           { maxWidth: width - margin * 2 },
@@ -237,13 +411,12 @@ export const TransactionTable = ({ tenantId, businessName }: TransactionTablePro
     setSearchQuery("");
     setStatusFilter("all");
     setPaymentStatusFilter("all");
-    setMethodFilter("all");
     setPage(1);
     setIsFilterOpen(false);
   };
 
   return (
-    <div className="bg-white rounded-[24px] shadow-sm border border-gray-100 overflow-hidden flex flex-col h-full w-full">
+    <div className="relative bg-white rounded-[24px] shadow-sm border border-gray-100 overflow-visible flex flex-col h-auto w-full">
       <div className="p-6 border-b border-gray-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h3 className="font-bold text-xl text-text-primary">
@@ -254,31 +427,14 @@ export const TransactionTable = ({ tenantId, businessName }: TransactionTablePro
           </p>
         </div>
         <div className="flex items-center gap-3 w-full sm:w-auto">
-          <div className="flex w-full sm:w-auto items-center gap-2">
-            <div className="relative w-full sm:w-72">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <Input
-                placeholder="Search order, item, or table"
-                className="pl-11 pr-4 py-2.5 text-sm rounded-2xl border-gray-200 bg-gray-50/80 focus:bg-white"
-                value={searchInput}
-                onChange={(event) => setSearchInput(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") {
-                    event.preventDefault();
-                    applySearch();
-                  }
-                }}
-              />
-            </div>
-            <Button
-              variant="outline"
-              shape="rounded"
-              className="px-4 py-2.5 text-sm"
-              onClick={applySearch}
-              disabled={!searchInput.trim()}
-            >
-              Search
-            </Button>
+          <div className="relative w-full sm:w-72">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Input
+              placeholder="Search order, item, or table"
+              className="pl-11 pr-4 py-2.5 text-sm rounded-2xl border-gray-200 bg-gray-50/80 focus:bg-white"
+              value={searchInput}
+              onChange={(event) => setSearchInput(event.target.value)}
+            />
           </div>
           <div className="relative">
             <Button
@@ -354,26 +510,6 @@ export const TransactionTable = ({ tenantId, businessName }: TransactionTablePro
                       <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                     </div>
                   </label>
-                  <label className="space-y-1.5">
-                    <span className="text-text-secondary text-[11px] font-bold uppercase tracking-[0.16em]">Payment Method</span>
-                    <div className="relative">
-                      <select
-                        value={methodFilter}
-                        onChange={(event) => {
-                          setMethodFilter(event.target.value as (typeof METHOD_OPTIONS)[number]);
-                          setPage(1);
-                        }}
-                        className="w-full appearance-none rounded-2xl border border-gray-200 bg-gray-50/80 px-4 py-3 pr-10 text-sm text-text-primary outline-none transition-colors focus:border-brand-primary focus:bg-white"
-                      >
-                        {METHOD_OPTIONS.map((option) => (
-                          <option key={option} value={option}>
-                            {capitalize(option)}
-                          </option>
-                        ))}
-                      </select>
-                      <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                    </div>
-                  </label>
                   <div className="flex justify-end gap-2 pt-2">
                     <Button
                       variant="outline"
@@ -434,7 +570,8 @@ export const TransactionTable = ({ tenantId, businessName }: TransactionTablePro
               transactions.map((tx) => (
                 <tr
                   key={tx.id}
-                  className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors"
+                  className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors cursor-pointer"
+                  onClick={() => setSelectedTransaction(tx)}
                 >
                   <td className="py-4 px-6 font-bold text-text-primary text-sm text-center">
                     {tx.orderNumber}
@@ -465,7 +602,7 @@ export const TransactionTable = ({ tenantId, businessName }: TransactionTablePro
               ))
             ) : (
               <tr>
-                <td colSpan={7} className="py-16 text-center text-sm text-text-secondary">
+                <td colSpan={6} className="py-16 text-center text-sm text-text-secondary">
                   No transactions found for the selected filters.
                 </td>
               </tr>
@@ -473,7 +610,7 @@ export const TransactionTable = ({ tenantId, businessName }: TransactionTablePro
           </tbody>
         </table>
       </div>
-      <div className="p-4 border-t border-gray-50 flex justify-between items-center text-sm text-text-secondary">
+      <div className="border-t border-gray-50 flex justify-between items-center px-4 py-4 text-sm text-text-secondary">
         <span>
           {total <= limit ? `Showing ${total} of ${total} transactions` : `Showing ${startIndex} to ${endIndex} of ${total} transactions`}
         </span>
@@ -497,6 +634,11 @@ export const TransactionTable = ({ tenantId, businessName }: TransactionTablePro
           </button>
         </div>
       </div>
+      <TransactionDetailsModal
+        transaction={selectedTransaction}
+        isOpen={selectedTransaction !== null}
+        onClose={() => setSelectedTransaction(null)}
+      />
     </div>
   );
 };
