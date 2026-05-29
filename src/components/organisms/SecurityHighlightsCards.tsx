@@ -14,6 +14,10 @@ interface HighlightCardProps {
   isAlert?: boolean;
 }
 
+interface SecurityHighlightsCardsProps {
+  isLoading?: boolean;
+}
+
 const HighlightCard = ({
   title,
   value,
@@ -60,7 +64,29 @@ const HighlightCard = ({
   );
 };
 
-export const SecurityHighlightsCards = () => {
+export const SecurityHighlightsCards = ({ isLoading = false }: SecurityHighlightsCardsProps) => {
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 w-full">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <div
+            key={`audit-highlight-skeleton-${index}`}
+            className="rounded-[16px] sm:rounded-[24px] shadow-sm border border-gray-100 bg-white p-4 sm:p-6 flex flex-col justify-between min-w-0"
+          >
+            <div className="flex justify-between items-start mb-3 sm:mb-4 gap-2">
+              <div className="space-y-2 min-w-0">
+                <div className="h-4 w-28 rounded skeleton-shimmer" />
+                <div className="h-8 w-20 rounded skeleton-shimmer" />
+              </div>
+              <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full skeleton-shimmer shrink-0" />
+            </div>
+            <div className="h-4 w-32 rounded skeleton-shimmer" />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 w-full">
       <HighlightCard

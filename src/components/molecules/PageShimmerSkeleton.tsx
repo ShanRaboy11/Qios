@@ -218,6 +218,13 @@ export function SalesPageSkeleton() {
 
       <CardGridSkeleton cards={4} />
 
+      {/* period selector skeleton */}
+      <div className="flex items-center gap-3">
+        <ShimmerBlock className="h-9 w-28 rounded-lg" />
+        <ShimmerBlock className="h-9 w-28 rounded-lg" />
+        <ShimmerBlock className="h-9 w-28 rounded-lg" />
+      </div>
+
       <div className="grid gap-6 xl:grid-cols-[1.35fr_0.65fr]">
         <SectionShell
           titleWidth="w-56"
@@ -273,6 +280,15 @@ export function InventoryPageSkeleton() {
           </div>
         </div>
       </SectionShell>
+
+      {/* tabs + primary action skeleton (Measurement / Unit + Add) */}
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-2">
+          <ShimmerBlock className="h-10 w-36 rounded-xl" />
+          <ShimmerBlock className="h-10 w-32 rounded-xl" />
+        </div>
+        <ShimmerBlock className="h-11 w-48 rounded-2xl" />
+      </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {Array.from({ length: 4 }).map((_, index) => (
@@ -487,13 +503,20 @@ export function TenantSettingsPageSkeleton() {
 export function RolesManagementPageSkeleton() {
   return (
     <div className="grid gap-6 md:grid-cols-[280px_1fr] pb-10">
-      <SectionShell titleWidth="w-32" subtitleWidth="w-48" className="min-h-[760px]">
+      <SectionShell
+        titleWidth="w-32"
+        subtitleWidth="w-48"
+        className="min-h-[760px]"
+      >
         <div className="space-y-4">
           <ShimmerBlock className="h-11 w-full rounded-2xl" />
           <ShimmerBlock className="h-11 w-full rounded-2xl" />
           <div className="space-y-2">
             {Array.from({ length: 7 }).map((_, index) => (
-              <div key={`roles-nav-${index}`} className="flex items-center gap-3 rounded-2xl border border-gray-100 p-3">
+              <div
+                key={`roles-nav-${index}`}
+                className="flex items-center gap-3 rounded-2xl border border-gray-100 p-3"
+              >
                 <ShimmerBlock className="h-3 w-3 rounded-full" />
                 <ShimmerBlock className="h-10 w-10 rounded-full" />
                 <div className="flex-1 space-y-2">
@@ -506,7 +529,11 @@ export function RolesManagementPageSkeleton() {
         </div>
       </SectionShell>
 
-      <SectionShell titleWidth="w-48" subtitleWidth="w-72" className="min-h-[760px]">
+      <SectionShell
+        titleWidth="w-48"
+        subtitleWidth="w-72"
+        className="min-h-[760px]"
+      >
         <div className="space-y-5">
           <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
             <div className="grid gap-4 md:grid-cols-2 flex-1">
@@ -535,7 +562,10 @@ export function RolesManagementPageSkeleton() {
             </div>
             <div className="grid gap-4 lg:grid-cols-2">
               {Array.from({ length: 4 }).map((_, index) => (
-                <div key={`role-permission-${index}`} className="rounded-2xl border border-gray-100 p-4 space-y-3">
+                <div
+                  key={`role-permission-${index}`}
+                  className="rounded-2xl border border-gray-100 p-4 space-y-3"
+                >
                   <ShimmerBlock className="h-5 w-36" />
                   <ShimmerBlock className="h-3.5 w-full" />
                   <ShimmerBlock className="h-3.5 w-5/6" />
@@ -563,34 +593,48 @@ export function StaffManagementPageSkeleton() {
           ))}
         </div>
 
-        <SectionShell titleWidth="w-48" subtitleWidth="w-72" className="min-h-[560px]">
+        {/* staff directory header (search + add) skeleton */}
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex-1">
+            <ShimmerBlock className="h-6 w-56" />
+            <ShimmerBlock className="h-4 w-[24rem] mt-2" />
+          </div>
+          <div className="flex items-center gap-3">
+            <ShimmerBlock className="h-11 w-64 rounded-2xl" />
+            <ShimmerBlock className="h-11 w-36 rounded-2xl" />
+          </div>
+        </div>
+
+        <SectionShell
+          titleWidth="w-48"
+          subtitleWidth="w-72"
+          className="min-h-[560px]"
+        >
           <div className="space-y-4">
             <ShimmerBlock className="h-[320px] w-full rounded-[22px]" />
             <div className="grid gap-3 md:grid-cols-2">
               <ShimmerBlock className="h-12 rounded-2xl" />
               <ShimmerBlock className="h-12 rounded-2xl" />
             </div>
-            <div className="space-y-3">
-              {Array.from({ length: 4 }).map((_, index) => (
-                <div key={`staff-row-${index}`} className="flex items-center gap-3 rounded-2xl border border-gray-100 p-3">
-                  <ShimmerBlock className="h-12 w-12 rounded-2xl" />
-                  <div className="flex-1 space-y-2">
-                    <ShimmerBlock className="h-4 w-32" />
-                    <ShimmerBlock className="h-3 w-24" />
-                  </div>
-                  <ShimmerBlock className="h-8 w-20 rounded-full" />
-                </div>
-              ))}
+            <div>
+              <TableSkeleton rows={4} />
             </div>
           </div>
         </SectionShell>
       </div>
 
       <div className="space-y-6">
-        <SectionShell titleWidth="w-40" subtitleWidth="w-56" className="min-h-[320px]">
+        <SectionShell
+          titleWidth="w-40"
+          subtitleWidth="w-56"
+          className="min-h-[320px]"
+        >
           <div className="space-y-3">
             {Array.from({ length: 5 }).map((_, index) => (
-              <div key={`staff-leader-${index}`} className="flex items-center gap-3 rounded-2xl border border-gray-100 p-3">
+              <div
+                key={`staff-leader-${index}`}
+                className="flex items-center gap-3 rounded-2xl border border-gray-100 p-3"
+              >
                 <ShimmerBlock className="h-10 w-10 rounded-full" />
                 <div className="flex-1 space-y-2">
                   <ShimmerBlock className="h-4 w-28" />
@@ -601,10 +645,17 @@ export function StaffManagementPageSkeleton() {
           </div>
         </SectionShell>
 
-        <SectionShell titleWidth="w-44" subtitleWidth="w-64" className="min-h-[280px]">
+        <SectionShell
+          titleWidth="w-44"
+          subtitleWidth="w-64"
+          className="min-h-[280px]"
+        >
           <div className="space-y-3">
             {Array.from({ length: 5 }).map((_, index) => (
-              <div key={`staff-activity-${index}`} className="flex items-start gap-3 rounded-2xl border border-gray-100 p-3">
+              <div
+                key={`staff-activity-${index}`}
+                className="flex items-start gap-3 rounded-2xl border border-gray-100 p-3"
+              >
                 <ShimmerBlock className="h-10 w-10 rounded-full" />
                 <div className="flex-1 space-y-2">
                   <ShimmerBlock className="h-4 w-32" />
@@ -623,7 +674,11 @@ export function StaffManagementPageSkeleton() {
 export function AuditLogsPageSkeleton() {
   return (
     <div className="space-y-6 pb-10">
-      <SectionShell titleWidth="w-48" subtitleWidth="w-80" className="p-6 md:p-8">
+      <SectionShell
+        titleWidth="w-48"
+        subtitleWidth="w-80"
+        className="p-6 md:p-8"
+      >
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div className="space-y-3">
             <ShimmerBlock className="h-9 w-56" />
@@ -636,6 +691,14 @@ export function AuditLogsPageSkeleton() {
           </div>
         </div>
       </SectionShell>
+
+      {/* filters/search skeleton */}
+      <div className="flex items-center gap-4">
+        <ShimmerBlock className="h-11 w-72 rounded-2xl" />
+        <ShimmerBlock className="h-11 w-32 rounded-2xl" />
+        <div className="flex-1" />
+        <ShimmerBlock className="h-11 w-24 rounded-2xl" />
+      </div>
 
       <TableSkeleton rows={7} />
     </div>

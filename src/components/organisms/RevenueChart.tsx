@@ -64,7 +64,7 @@ export const RevenueChart = ({
 
       <div className="w-full h-[300px] mt-4 font-brand-secondary">
         {isLoading ? (
-          <div className="h-full w-full rounded-[20px] bg-gray-50 animate-pulse" />
+          <div className="h-full w-full rounded-[20px] skeleton-shimmer" />
         ) : (
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart

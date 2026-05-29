@@ -560,12 +560,27 @@ export const TransactionTable = ({ tenantId, businessName }: TransactionTablePro
           <tbody>
             {isLoading ? (
               Array.from({ length: limit }).map((_, index) => (
-                <tr key={`transaction-skeleton-${index}`} className="border-b border-gray-50">
-                  <td className="py-4 px-6" colSpan={6}>
-                    <div className="h-4 rounded bg-gray-100 animate-pulse" />
-                  </td>
-                </tr>
-              ))
+                  <tr key={`transaction-skeleton-${index}`} className="border-b border-gray-50">
+                    <td className="py-4 px-6 text-center">
+                      <div className="h-4 rounded skeleton-shimmer w-24 mx-auto" />
+                    </td>
+                    <td className="py-4 px-6 text-center">
+                      <div className="h-4 rounded skeleton-shimmer w-20 mx-auto" />
+                    </td>
+                    <td className="py-4 px-6 text-center">
+                      <div className="h-4 rounded skeleton-shimmer w-20 mx-auto" />
+                    </td>
+                    <td className="py-4 px-6 text-center">
+                      <div className="h-4 rounded skeleton-shimmer w-44 mx-auto" />
+                    </td>
+                    <td className="py-4 px-6 text-center">
+                      <div className="h-4 rounded skeleton-shimmer w-20 mx-auto" />
+                    </td>
+                    <td className="py-4 px-6 text-right">
+                      <div className="h-4 rounded skeleton-shimmer w-24 ml-auto" />
+                    </td>
+                  </tr>
+                ))
             ) : transactions.length > 0 ? (
               transactions.map((tx) => (
                 <tr

@@ -83,9 +83,9 @@ export const SalesMetricCards = ({
             key={`sales-metric-skeleton-${index}`}
             className="bg-white rounded-[16px] sm:rounded-[24px] shadow-sm border border-gray-100 p-4 sm:p-6 min-w-0"
           >
-            <div className="h-4 w-24 rounded bg-gray-100 animate-pulse mb-4" />
-            <div className="h-8 w-32 rounded bg-gray-100 animate-pulse mb-4" />
-            <div className="h-4 w-28 rounded bg-gray-100 animate-pulse" />
+            <div className="h-4 w-24 rounded skeleton-shimmer mb-4" />
+            <div className="h-8 w-32 rounded skeleton-shimmer mb-4" />
+            <div className="h-4 w-28 rounded skeleton-shimmer" />
           </div>
         ))}
       </div>
