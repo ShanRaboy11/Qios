@@ -273,6 +273,27 @@ const ActivityCard = ({ act }: { act: ActivityData }) => {
   );
 };
 
+const ActivityCardSkeleton = () => (
+  <div className="rounded-2xl border-2 border-[#E5E5E5] overflow-hidden bg-white">
+    <div className="w-full flex items-center justify-between px-4 py-3 gap-3 bg-[var(--color-bg-primary)]">
+      <div className="flex items-center gap-3 min-w-0 flex-1">
+        <div className="w-10 h-10 rounded-full skeleton-shimmer" />
+        <div className="flex-1 space-y-2">
+          <div className="h-3 w-28 rounded-md skeleton-shimmer" />
+          <div className="h-2.5 w-16 rounded-md skeleton-shimmer" />
+        </div>
+      </div>
+      <div className="h-6 w-16 rounded-full skeleton-shimmer" />
+    </div>
+    <div className="px-4 py-4 border-t-2 border-[#E5E5E5] space-y-3">
+      <div className="h-4 w-full rounded-md skeleton-shimmer" />
+      <div className="h-4 w-5/6 rounded-md skeleton-shimmer" />
+      <div className="h-12 w-full rounded-xl skeleton-shimmer" />
+      <div className="h-3 w-1/2 rounded-md ml-auto skeleton-shimmer" />
+    </div>
+  </div>
+);
+
 // --- Main Component ---
 
 export const SystemActivity = () => {
@@ -280,8 +301,10 @@ export const SystemActivity = () => {
   const [selectedRole, setSelectedRole] = useState("All Roles");
   const [selectedDate, setSelectedDate] = useState<number | null>(null);
   const [activities, setActivities] = useState<ActivityData[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const fetchActivities = useCallback(async () => {
+    setLoading(true);
     try {
       const supabase = createSupabaseBrowserClient();
       const {
@@ -313,6 +336,8 @@ export const SystemActivity = () => {
       setActivities((json.data ?? []).map(mapRow));
     } catch (err) {
       console.error("[SystemActivity] Failed to load:", err);
+    } finally {
+      setLoading(false);
     }
   }, [searchTerm, selectedRole, selectedDate]);
 
@@ -333,7 +358,11 @@ export const SystemActivity = () => {
 
       {/* 2a. Mobile: Collapsible Cards */}
       <div className="flex md:hidden flex-col gap-3">
-        {activities.length > 0 ? (
+        {loading ? (
+          Array.from({ length: 4 }).map((_, idx) => (
+            <ActivityCardSkeleton key={`activity-mobile-skeleton-${idx}`} />
+          ))
+        ) : activities.length > 0 ? (
           activities.map((act) => <ActivityCard key={act.id} act={act} />)
         ) : (
           <div
@@ -375,7 +404,36 @@ export const SystemActivity = () => {
               </tr>
             </thead>
             <tbody className="divide-y-2 divide-[#E5E5E5] bg-white">
-              {activities.length > 0 ? (
+              {loading ? (
+                Array.from({ length: 6 }).map((_, idx) => (
+                  <tr key={`activity-desktop-skeleton-${idx}`}>
+                    <td className="pl-12 pr-6 py-4 min-w-[220px]">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full skeleton-shimmer" />
+                        <div className="space-y-2">
+                          <div className="h-3 w-28 rounded-md skeleton-shimmer" />
+                          <div className="h-2.5 w-16 rounded-md skeleton-shimmer" />
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <div className="h-6 w-20 rounded-full mx-auto skeleton-shimmer" />
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <div className="h-4 w-32 rounded-md mx-auto skeleton-shimmer" />
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <div className="h-6 w-20 rounded-full mx-auto skeleton-shimmer" />
+                    </td>
+                    <td className="px-6 py-4 min-w-[300px]">
+                      <div className="h-4 w-full rounded-md skeleton-shimmer" />
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <div className="h-3 w-28 rounded-md mx-auto skeleton-shimmer" />
+                    </td>
+                  </tr>
+                ))
+              ) : activities.length > 0 ? (
                 activities.map((act) => (
                   <tr
                     key={act.id}

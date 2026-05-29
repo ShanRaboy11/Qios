@@ -2,46 +2,7 @@ import { NextRequest } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { logEmployeeActivity } from "@/lib/employeeAuditLogger";
 
-async function requireAdminForTenant(
-  admin: any,
-  token: string | null,
-  tenantId: string,
-) {
-  if (!token) {
-    return { ok: false, status: 401, message: "missing access token" };
-  }
-
-  const { data: userData, error: userErr } = await admin.auth.getUser(token);
-  if (userErr || !userData?.user) {
-    return { ok: false, status: 401, message: "invalid access token" };
-  }
-
-  const userId = userData.user.id;
-
-  const { data: profile, error: profileErr } = await admin
-    .from("profiles")
-    .select("role, tenant_id, full_name")
-    .eq("id", userId)
-    .single();
-
-  if (profileErr || !profile) {
-    return {
-      ok: false,
-      status: 403,
-      message: "not authorized for this tenant",
-    };
-  }
-
-  if (profile.role === "super_admin") {
-    return { ok: true, userId, actorName: profile.full_name as string, actorRole: profile.role as string };
-  }
-
-  if (profile.role === "admin" && profile.tenant_id === tenantId) {
-    return { ok: true, userId, actorName: profile.full_name as string, actorRole: profile.role as string };
-  }
-
-  return { ok: false, status: 403, message: "insufficient privileges" };
-}
+import { requireEmployeePermission } from "@/lib/serverPermissions";
 
 export async function POST(
   req: NextRequest,
@@ -52,7 +13,7 @@ export async function POST(
 
   const token = req.headers.get("authorization")?.split(" ")[1] ?? null;
 
-  const auth = await requireAdminForTenant(admin, token, tenantId);
+  const auth = await requireEmployeePermission(tenantId, "Employee Account Management", token);
   if (!auth.ok) {
     return new Response(JSON.stringify({ error: auth.message }), {
       status: auth.status,
@@ -151,6 +112,7 @@ export async function POST(
   const fullName = name
     ? String(name).trim()
     : String(normalizedEmail.split("@")[0]);
+  const username = normalizedEmail.split("@")[0];
 
   const { data: authData, error: authError } =
     await admin.auth.admin.createUser({
@@ -161,6 +123,7 @@ export async function POST(
         full_name: fullName,
         tenant_id: tenantId,
         app_role_id: roleId,
+        username,
       },
     });
 
@@ -174,6 +137,7 @@ export async function POST(
     {
       id: authData.user.id,
       full_name: fullName,
+      username,
       role: "employee",
       tenant_id: tenantId,
       app_role_id: roleId,

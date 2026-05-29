@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Figtree, Inter } from "next/font/google";
 import localFont from "next/font/local";
+import { CookieConsent } from "@/components/organisms/CookieConsent";
 import "./globals.css";
 
 const figtree = Figtree({
@@ -49,6 +50,7 @@ export default function RootLayout({
           warning from cascading down to the children components.
         */}
         <div suppressHydrationWarning>{children}</div>
+        <CookieConsent />
       </body>
     </html>
   );

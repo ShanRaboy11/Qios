@@ -10,6 +10,10 @@ import { AuditLogDetailsModal, AuditLogEntry } from "./AuditLogDetailsModal";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useParams } from "next/navigation";
 
+interface AuditLogTableProps {
+  isLoading?: boolean;
+}
+
 // ---------------------------------------------------------------------------
 // API response shape from employee_audit_logs
 // ---------------------------------------------------------------------------
@@ -94,7 +98,7 @@ function mapToEntry(raw: RawAuditLog): AuditLogEntry {
 
 const PAGE_SIZE = 20;
 
-export const AuditLogTable = () => {
+export const AuditLogTable = ({ isLoading: propIsLoading }: AuditLogTableProps) => {
   const params = useParams();
   const tenantId = params?.id as string | undefined;
 
@@ -104,6 +108,7 @@ export const AuditLogTable = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const showLoading = propIsLoading !== undefined ? propIsLoading : isLoading;
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [moduleFilter, setModuleFilter] = useState("all");
@@ -272,100 +277,115 @@ export const AuditLogTable = () => {
           </div>
         </div>
 
-        {/* Table body */}
-        <div className="overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-          <table className="w-full text-left border-collapse whitespace-nowrap">
-            <thead>
-              <tr className="bg-gray-50 text-text-secondary text-[11px] font-bold uppercase tracking-wider">
-                <th className="py-3 px-6">Timestamp</th>
-                <th className="py-3 px-6">Actor</th>
-                <th className="py-3 px-6">Action</th>
-                <th className="py-3 px-6">Target</th>
-                <th className="py-3 px-6 text-center">Type</th>
-                <th className="py-3 px-6 text-center">Details</th>
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading ? (
-                // Loading skeleton
-                Array.from({ length: 6 }).map((_, i) => (
-                  <tr key={i} className="border-b border-gray-50">
-                    {Array.from({ length: 6 }).map((__, j) => (
-                      <td key={j} className="py-4 px-6">
-                        <div className="h-4 bg-gray-100 rounded animate-pulse w-full" />
+        {showLoading ? (
+          <div className="overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            <table className="w-full text-left border-collapse whitespace-nowrap">
+              <thead>
+                <tr className="bg-gray-50 text-text-secondary text-[11px] font-bold uppercase tracking-wider">
+                  <th className="py-3 px-6"><div className="h-3 w-20 rounded skeleton-shimmer" /></th>
+                  <th className="py-3 px-6"><div className="h-3 w-16 rounded skeleton-shimmer" /></th>
+                  <th className="py-3 px-6"><div className="h-3 w-16 rounded skeleton-shimmer" /></th>
+                  <th className="py-3 px-6"><div className="h-3 w-16 rounded skeleton-shimmer" /></th>
+                  <th className="py-3 px-6 text-center"><div className="h-3 w-12 rounded skeleton-shimmer mx-auto" /></th>
+                  <th className="py-3 px-6 text-center"><div className="h-3 w-14 rounded skeleton-shimmer mx-auto" /></th>
+                </tr>
+              </thead>
+              <tbody>
+                {Array.from({ length: 7 }).map((_, rowIndex) => (
+                  <tr key={`audit-log-skeleton-${rowIndex}`} className="border-b border-gray-50 last:border-0">
+                    <td className="py-4 px-6"><div className="h-4 w-28 rounded skeleton-shimmer" /></td>
+                    <td className="py-4 px-6"><div className="h-4 w-28 rounded skeleton-shimmer" /></td>
+                    <td className="py-4 px-6"><div className="h-4 w-32 rounded skeleton-shimmer" /></td>
+                    <td className="py-4 px-6"><div className="h-4 w-44 max-w-full rounded skeleton-shimmer" /></td>
+                    <td className="py-4 px-6 text-center"><div className="h-6 w-20 rounded-full skeleton-shimmer mx-auto" /></td>
+                    <td className="py-4 px-6 text-center"><div className="h-9 w-9 rounded-lg skeleton-shimmer mx-auto" /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            <table className="w-full text-left border-collapse whitespace-nowrap">
+              <thead>
+                <tr className="bg-gray-50 text-text-secondary text-[11px] font-bold uppercase tracking-wider">
+                  <th className="py-3 px-6">Timestamp</th>
+                  <th className="py-3 px-6">Actor</th>
+                  <th className="py-3 px-6">Action</th>
+                  <th className="py-3 px-6">Target</th>
+                  <th className="py-3 px-6 text-center">Type</th>
+                  <th className="py-3 px-6 text-center">Details</th>
+                </tr>
+              </thead>
+              <tbody>
+                {error ? (
+                  <tr>
+                    <td colSpan={6} className="py-8 text-center text-sm text-error-primary">
+                      {error}
+                    </td>
+                  </tr>
+                ) : logs.length > 0 ? (
+                  logs.map((log) => (
+                    <tr
+                      key={log.id}
+                      className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors"
+                    >
+                      <td className="py-4 px-6 text-[13px] font-medium text-text-secondary">
+                        {log.timestamp}
                       </td>
-                    ))}
-                  </tr>
-                ))
-              ) : error ? (
-                <tr>
-                  <td colSpan={6} className="py-8 text-center text-sm text-error-primary">
-                    {error}
-                  </td>
-                </tr>
-              ) : logs.length > 0 ? (
-                logs.map((log) => (
-                  <tr
-                    key={log.id}
-                    className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors"
-                  >
-                    <td className="py-4 px-6 text-[13px] font-medium text-text-secondary">
-                      {log.timestamp}
-                    </td>
-                    <td className="py-4 px-6">
-                      <p className="font-bold text-text-primary text-sm">{log.actor}</p>
-                      <p className="text-[11px] text-text-tertiary">{log.role}</p>
-                    </td>
-                    <td className="py-4 px-6 font-medium text-text-primary text-sm">
-                      {log.action}
-                    </td>
-                    <td className="py-4 px-6 text-sm text-text-secondary truncate max-w-[200px]">
-                      {log.target}
-                    </td>
-                    <td className="py-4 px-6 text-center">
-                      <Badge
-                        color={
-                          log.actionType === "DELETE" || log.actionType === "REFUND"
-                            ? "error"
-                            : log.actionType === "UPDATE"
-                              ? "warning"
-                              : log.actionType === "CREATE"
-                                ? "success"
-                                : "info"
-                        }
-                        variant="subtle"
-                        shape="pill"
-                        className="justify-center text-[10px] py-0.5"
-                      >
-                        {log.actionType}
-                      </Badge>
-                    </td>
-                    <td className="py-4 px-6 text-center">
-                      <button
-                        onClick={() => setSelectedLog(log)}
-                        className="p-2 rounded-lg bg-gray-50 hover:bg-brand-primary/10 hover:text-brand-accent text-gray-500 transition-colors inline-flex"
-                        title="View Details"
-                      >
-                        <Eye size={16} />
-                      </button>
+                      <td className="py-4 px-6">
+                        <p className="font-bold text-text-primary text-sm">{log.actor}</p>
+                        <p className="text-[11px] text-text-tertiary">{log.role}</p>
+                      </td>
+                      <td className="py-4 px-6 font-medium text-text-primary text-sm">
+                        {log.action}
+                      </td>
+                      <td className="py-4 px-6 text-sm text-text-secondary truncate max-w-[200px]">
+                        {log.target}
+                      </td>
+                      <td className="py-4 px-6 text-center">
+                        <Badge
+                          color={
+                            log.actionType === "DELETE" || log.actionType === "REFUND"
+                              ? "error"
+                              : log.actionType === "UPDATE"
+                                ? "warning"
+                                : log.actionType === "CREATE"
+                                  ? "success"
+                                  : "info"
+                          }
+                          variant="subtle"
+                          shape="pill"
+                          className="justify-center text-[10px] py-0.5"
+                        >
+                          {log.actionType}
+                        </Badge>
+                      </td>
+                      <td className="py-4 px-6 text-center">
+                        <button
+                          onClick={() => setSelectedLog(log)}
+                          className="p-2 rounded-lg bg-gray-50 hover:bg-brand-primary/10 hover:text-brand-accent text-gray-500 transition-colors inline-flex"
+                          title="View Details"
+                        >
+                          <Eye size={16} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={6} className="py-8 text-center text-sm text-text-secondary">
+                      No audit logs found matching your filters.
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={6} className="py-8 text-center text-sm text-text-secondary">
-                    No audit logs found matching your filters.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Pagination footer */}
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
         <div className="p-4 border-t border-gray-50 flex justify-between items-center text-sm text-text-secondary">
           <span>
-            {isLoading
+            {showLoading
               ? "Loading…"
               : `Showing ${logs.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1}–${Math.min(page * PAGE_SIZE, total)} of ${total} logs`}
           </span>
@@ -373,7 +393,7 @@ export const AuditLogTable = () => {
             <button
               className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page <= 1 || isLoading}
+              disabled={page <= 1 || showLoading}
               aria-label="Previous page"
             >
               <ChevronLeft size={16} />
@@ -384,7 +404,7 @@ export const AuditLogTable = () => {
             <button
               className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page >= totalPages || isLoading}
+              disabled={page >= totalPages || showLoading}
               aria-label="Next page"
             >
               <ChevronRight size={16} />

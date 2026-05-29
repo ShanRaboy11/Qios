@@ -89,14 +89,6 @@ export function ChatbotLogo({ size = 180 }: { size?: number }) {
           <circle cx="150.5" cy="234" r="7.5" fill="#1a1a1a"/>
         </svg>
       </div>
-
-      <div className="shadow-el" style={{
-        width: size * 0.9,
-        height: 24,
-        marginTop: 10,
-        borderRadius: '50%',
-        background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 40%, rgba(0,0,0,0.1) 65%, transparent 80%)',
-      }}/>
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 interface FooterProps {
   hideSocials?: boolean;
@@ -153,19 +154,21 @@ export const Footer = ({ hideSocials, variant = "default", tenantName = "Tenant"
             </div>
           )}
 
-          <div
-            className="text-text-primary font-inter shrink-0 text-center md:text-right"
-            style={{
-              fontSize: "20px",
-              fontWeight: 400,
-            }}
-          >
-            {variant === "tenant" ? (
-              <>© 2026 {tenantName}. <span className="text-text-secondary/60 text-[16px]">Powered by Qios.</span></>
-            ) : (
-              "© 2026 Qios. All rights reserved."
-            )}
-          </div>
+        </div>
+
+
+        <div
+          className="absolute bottom-8 right-[25px] md:right-[79px] text-text-primary font-inter text-right z-10"
+          style={{
+            fontSize: "20px",
+            fontWeight: 400,
+          }}
+        >
+          {variant === "tenant" ? (
+            <>© 2026 {tenantName}. <span className="text-text-secondary/60 text-[16px]">Powered by Qios.</span></>
+          ) : (
+            "© 2026 Qios. All rights reserved."
+          )}
         </div>
       </div>
     </footer>

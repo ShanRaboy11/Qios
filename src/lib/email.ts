@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 const isDevelopment = process.env.NODE_ENV !== "production";
 
@@ -83,7 +84,80 @@ const createTransporter = (config: SmtpConfig) =>
     port: config.port,
     secure: config.secure,
     auth: { user: config.user, pass: config.pass },
+    tls: {
+      rejectUnauthorized: false,
+    },
   });
+
+/**
+ * Resolve SMTP config from DB (platform_settings) with field-by-field and complete fallbacks to environment variables.
+ */
+const resolveSmtpConfig = async (): Promise<SmtpConfig | null> => {
+  const envConfig = readSmtpConfig();
+
+  try {
+    const supabase = createSupabaseAdminClient();
+    if (!supabase) {
+      console.warn("Supabase admin client not initialized. Falling back completely to environment variables.");
+      return envConfig;
+    }
+
+    const { data, error } = await supabase
+      .from("platform_settings")
+      .select(
+        "smtp_host, smtp_port, smtp_secure, smtp_user, smtp_password, smtp_from_name, smtp_from_email"
+      )
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      console.warn("Could not load SMTP settings from DB, falling back to env:", error.message || error);
+      return envConfig;
+    }
+
+    if (!data) {
+      console.warn("No platform_settings row found, falling back to env.");
+      return envConfig;
+    }
+
+    // Blend DB settings with environment variables as fallbacks
+    const host = data.smtp_host || envConfig?.host;
+    const user = data.smtp_user || envConfig?.user;
+    const pass = data.smtp_password || envConfig?.pass;
+    const fromName = data.smtp_from_name || envConfig?.from?.name || "Qios";
+    const fromAddress = data.smtp_from_email || envConfig?.from?.address || user || "";
+
+    if (!host || !user || !pass || !fromAddress) {
+      console.warn("Incomplete SMTP settings in both DB and env configurations.");
+      return null;
+    }
+
+    const portVal = data.smtp_port !== null && data.smtp_port !== undefined
+      ? Number(data.smtp_port)
+      : envConfig?.port ?? 587;
+
+    const port = Number.isNaN(portVal) ? 587 : portVal;
+
+    // Force secure connection when using standard SSL port 465 to prevent handshake socket closures
+    const secure = port === 465 || (
+      data.smtp_secure !== null && data.smtp_secure !== undefined
+        ? !!data.smtp_secure
+        : envConfig?.secure ?? false
+    );
+
+    return {
+      host,
+      port,
+      secure,
+      user,
+      pass,
+      from: { name: fromName, address: fromAddress },
+    };
+  } catch (err: any) {
+    console.warn("Error resolving SMTP config from DB, falling back completely to env:", err?.message || err);
+    return envConfig;
+  }
+};
 
 const normalizePublicBaseUrl = (value?: string) => {
   if (!value) return "";
@@ -307,7 +381,7 @@ export const sendContactVerificationEmail = async ({
   businessName: string;
   code: string;
 }) => {
-  const smtp = readSmtpConfig();
+  const smtp = await resolveSmtpConfig();
   if (!smtp) {
     return {
       success: false,
@@ -442,7 +516,7 @@ export const sendSecurityVerificationEmail = async ({
   businessName: string;
   code: string;
 }) => {
-  const smtp = readSmtpConfig();
+  const smtp = await resolveSmtpConfig();
   if (!smtp) {
     return {
       success: false,
@@ -568,7 +642,7 @@ export const sendBusinessVerificationEmail = async ({
   comments?: string | null;
   tenantId?: string;
 }) => {
-  const smtp = readSmtpConfig();
+  const smtp = await resolveSmtpConfig();
   if (!smtp) {
     return {
       success: false,
@@ -767,7 +841,7 @@ export const sendRegistrationSuccessEmail = async ({
   adminName: string;
   businessName: string;
 }) => {
-  const smtp = readSmtpConfig();
+  const smtp = await resolveSmtpConfig();
   if (!smtp) {
     return {
       success: false,
@@ -844,6 +918,88 @@ export const sendRegistrationSuccessEmail = async ({
     return { success: true as const, messageId: info.messageId };
   } catch (error) {
     console.error("Error sending registration success email:", error);
+    return {
+      success: false as const,
+      reason: "SMTP_SEND_FAILED" as const,
+      error,
+    };
+  }
+};
+
+// ─── 4. Admin Account Notification Email ────────────────────────────────────
+
+export const sendAdminNotificationEmail = async ({
+  to,
+  adminName,
+  notificationsEnabled,
+}: {
+  to: string;
+  adminName: string;
+  notificationsEnabled: boolean;
+}) => {
+  const smtp = await resolveSmtpConfig();
+  if (!smtp) {
+    return {
+      success: false,
+      reason: "SMTP_NOT_CONFIGURED" as const,
+      error: new Error("SMTP is not fully configured."),
+    };
+  }
+
+  const subject = notificationsEnabled
+    ? "Account notifications enabled — Qios"
+    : "Account notifications updated — Qios";
+
+  const html = emailWrapper(`
+    ${brandHeader({
+      title: "Account settings updated",
+      subtitle: "Your admin notification preference was saved",
+      pillLabel: notificationsEnabled ? "Notifications On" : "Notifications Off",
+      pillBg: notificationsEnabled ? B.greenSoft : B.coralSoft,
+      pillBorder: notificationsEnabled ? "#a3e8c6" : "#ffb3bd",
+      pillColor: notificationsEnabled ? "#0a5c34" : B.coral,
+    })}
+
+    <tr>
+      <td style="padding:32px 40px 28px;background:#fffdf8;">
+        <p style="margin:0 0 10px;font-size:15px;color:${B.textPrimary};">
+          Hi <strong>${adminName}</strong>,
+        </p>
+        <p style="margin:0 0 16px;font-size:14px;color:${B.textSecondary};line-height:1.7;">
+          Your account settings were updated in Qios.
+        </p>
+        <table width="100%" cellpadding="0" cellspacing="0" role="presentation"
+               style="background:${notificationsEnabled ? B.greenSoft : B.coralSoft};border:1px solid ${notificationsEnabled ? "#a3e8c6" : "#ffb3bd"};border-radius:12px;margin:0 0 20px;">
+          <tr>
+            <td style="padding:16px 18px;">
+              <p style="margin:0;font-size:13px;color:${notificationsEnabled ? "#0a5c34" : "#9b1c33"};line-height:1.6;">
+                ${notificationsEnabled
+                  ? "Email notifications are now enabled. You will receive future admin notifications at the configured mailbox."
+                  : "Email notifications are currently disabled. You will not receive future admin notification emails until this setting is turned back on."}
+              </p>
+            </td>
+          </tr>
+        </table>
+        <p style="margin:0;font-size:13px;color:#b8a898;line-height:1.6;">
+          This notice was sent after your preferences were saved in the Qios admin settings.
+        </p>
+      </td>
+    </tr>
+
+    ${emailFooter(`Notification email sent for <strong style="color:${B.textPrimary};">${adminName}</strong> &mdash; <strong style="color:${B.goldMid};">Qios</strong>`)}
+  `);
+
+  const transporter = createTransporter(smtp);
+  try {
+    const info = await transporter.sendMail({
+      from: smtp.from,
+      to,
+      subject,
+      html,
+    });
+    return { success: true as const, messageId: info.messageId };
+  } catch (error) {
+    console.error("Error sending admin notification email:", error);
     return {
       success: false as const,
       reason: "SMTP_SEND_FAILED" as const,

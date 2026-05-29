@@ -36,16 +36,16 @@ const EMPLOYEE_ROUTE_REQUIREMENTS: Record<string, string[]> = {
 };
 
 const EMPLOYEE_ROUTE_PRIORITY = [
-  "dashboard",
   "queue",
   "kitchen",
   "scanner",
   "inventory_audit",
   "transactions",
   "settings",
+  "dashboard",
 ];
 
-function hasPermission(
+export function hasPermission(
   permissions: RolePermissions | null,
   permissionName: string,
 ) {
@@ -62,6 +62,10 @@ export function canAccessEmployeeRoute(
 ) {
   if (routeName === "dashboard") {
     return true;
+  }
+
+  if (!permissions) {
+    return false;
   }
 
   const requiredPermissions = EMPLOYEE_ROUTE_REQUIREMENTS[routeName];
@@ -85,4 +89,10 @@ export function getFirstAccessibleEmployeeRoute(
   }
 
   return "dashboard";
+}
+
+export function canUpdateEmployeeOrderStatus(
+  permissions: RolePermissions | null,
+) {
+  return !!permissions && hasPermission(permissions, "Order Status Updating");
 }

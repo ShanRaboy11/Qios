@@ -477,14 +477,14 @@ export default function TenantManagement({
 
 function TenantCardSkeleton() {
   return (
-    <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-sm animate-pulse">
+    <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-sm">
       <div className="flex items-start md:items-center gap-4">
-        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gray-100" />
+        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl skeleton-shimmer" />
         <div className="flex-1 min-w-0 space-y-2">
-          <div className="h-4 sm:h-5 w-2/3 bg-gray-100 rounded-lg" />
-          <div className="h-3 w-1/2 bg-gray-100 rounded-lg" />
+          <div className="h-4 sm:h-5 w-2/3 rounded-lg skeleton-shimmer" />
+          <div className="h-3 w-1/2 rounded-lg skeleton-shimmer" />
         </div>
-        <div className="h-6 w-20 bg-gray-100 rounded-full" />
+        <div className="h-6 w-20 rounded-full skeleton-shimmer" />
       </div>
     </div>
   );

@@ -11,6 +11,7 @@ import {
   Bell,
   Moon,
   Key,
+  Mail,
   Laptop,
   Smartphone,
   Loader2,
@@ -37,8 +38,144 @@ type SettingsTab =
   | "integrations"
   | "security";
 
+const SkeletonLine = ({ className = "" }: { className?: string }) => (
+  <div className={cn("h-4 rounded-md skeleton-shimmer", className)} />
+);
+
+const SettingsHeaderSkeleton = () => (
+  <div className="space-y-2">
+    <SkeletonLine className="h-7 w-56" />
+    <SkeletonLine className="h-4 w-80 max-w-full" />
+  </div>
+);
+
+const SettingsCardSkeleton = ({
+  lines = 3,
+  className,
+}: {
+  lines?: number;
+  className?: string;
+}) => (
+  <div
+    className={cn("rounded-xl border border-gray-100 p-5 space-y-3", className)}
+  >
+    <SkeletonLine className="h-5 w-40" />
+    {Array.from({ length: lines }).map((_, idx) => (
+      <SkeletonLine
+        key={`settings-card-skeleton-line-${idx}`}
+        className={cn("h-4", idx === lines - 1 ? "w-2/3" : "w-full")}
+      />
+    ))}
+  </div>
+);
+
+const AccountSettingsSkeleton = () => (
+  <div className="space-y-8">
+    <SettingsHeaderSkeleton />
+    <div className="space-y-6">
+      <div className="space-y-4">
+        <SkeletonLine className="h-5 w-36" />
+        <div className="flex flex-col sm:flex-row gap-6 pt-2">
+          <div className="w-24 h-24 rounded-full skeleton-shimmer" />
+          <div className="flex-1 space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <SkeletonLine className="h-11 w-full" />
+              <SkeletonLine className="h-11 w-full" />
+            </div>
+            <SkeletonLine className="h-11 w-full" />
+          </div>
+        </div>
+      </div>
+      <SettingsCardSkeleton lines={2} />
+      <div className="pt-4 flex justify-end">
+        <SkeletonLine className="h-10 w-36 rounded-full" />
+      </div>
+    </div>
+  </div>
+);
+
+const PlatformSettingsSkeleton = () => (
+  <div className="space-y-8">
+    <SettingsHeaderSkeleton />
+    <div className="space-y-4">
+      <SettingsCardSkeleton lines={2} />
+      <SettingsCardSkeleton lines={2} />
+      <SettingsCardSkeleton lines={2} />
+      <div className="pt-4 flex justify-end">
+        <SkeletonLine className="h-10 w-44 rounded-full" />
+      </div>
+    </div>
+  </div>
+);
+
+const TeamSettingsSkeleton = () => (
+  <div className="space-y-8">
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <SettingsHeaderSkeleton />
+      <SkeletonLine className="h-10 w-32 rounded-full" />
+    </div>
+    <div className="rounded-xl border border-gray-100 overflow-hidden">
+      <div className="grid grid-cols-4 gap-4 p-4 border-b border-gray-100">
+        <SkeletonLine className="h-4 w-16" />
+        <SkeletonLine className="h-4 w-12" />
+        <SkeletonLine className="h-4 w-14" />
+        <SkeletonLine className="h-4 w-16" />
+      </div>
+      {Array.from({ length: 4 }).map((_, idx) => (
+        <div
+          key={`team-settings-skeleton-row-${idx}`}
+          className="grid grid-cols-4 gap-4 p-4 border-b border-gray-50 last:border-0"
+        >
+          <SkeletonLine className="h-4 w-32" />
+          <SkeletonLine className="h-4 w-20" />
+          <SkeletonLine className="h-4 w-16" />
+          <SkeletonLine className="h-4 w-14 justify-self-end" />
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+const IntegrationsSettingsSkeleton = () => (
+  <div className="space-y-8">
+    <SettingsHeaderSkeleton />
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <SettingsCardSkeleton lines={3} className="min-h-[138px]" />
+      <SettingsCardSkeleton lines={3} className="min-h-[138px]" />
+    </div>
+  </div>
+);
+
+const SecuritySettingsSkeleton = () => (
+  <div className="space-y-8">
+    <SettingsHeaderSkeleton />
+    <div className="space-y-4">
+      <SettingsCardSkeleton lines={2} />
+      <SettingsCardSkeleton lines={4} />
+      <div className="pt-4 flex justify-end">
+        <SkeletonLine className="h-10 w-36 rounded-full" />
+      </div>
+    </div>
+  </div>
+);
+
+const TabContentSkeleton = ({ tab }: { tab: SettingsTab }) => {
+  if (tab === "account") return <AccountSettingsSkeleton />;
+  if (tab === "platform") return <PlatformSettingsSkeleton />;
+  if (tab === "team") return <TeamSettingsSkeleton />;
+  if (tab === "integrations") return <IntegrationsSettingsSkeleton />;
+  return <SecuritySettingsSkeleton />;
+};
+
 export const AdminSettings = () => {
   const [activeTab, setActiveTab] = useState<SettingsTab>("account");
+  const [isTabLoading, setIsTabLoading] = useState(true);
+
+  useEffect(() => {
+    setIsTabLoading(true);
+    const timeout = setTimeout(() => setIsTabLoading(false), 250);
+    return () => clearTimeout(timeout);
+  }, [activeTab]);
 
   const tabs = [
     { id: "account", label: "Account & Profile", icon: User },
@@ -83,11 +220,17 @@ export const AdminSettings = () => {
 
       {/* content Area */}
       <div className="flex-1 bg-white rounded-[24px] shadow-sm border border-gray-100 p-6 md:p-8 overflow-hidden">
-        {activeTab === "account" && <AccountSettings />}
-        {activeTab === "platform" && <PlatformSettings />}
-        {activeTab === "team" && <TeamSettings />}
-        {activeTab === "integrations" && <IntegrationSettings />}
-        {activeTab === "security" && <SecuritySettings />}
+        {isTabLoading ? (
+          <TabContentSkeleton tab={activeTab} />
+        ) : (
+          <>
+            {activeTab === "account" && <AccountSettings />}
+            {activeTab === "platform" && <PlatformSettings />}
+            {activeTab === "team" && <TeamSettings />}
+            {activeTab === "integrations" && <IntegrationSettings />}
+            {activeTab === "security" && <SecuritySettings />}
+          </>
+        )}
       </div>
     </div>
   );
@@ -97,6 +240,8 @@ const AccountSettings = () => {
   const [firstName, setFirstName] = useState("Admin");
   const [lastName, setLastName] = useState("User");
   const [email, setEmail] = useState("");
+  const [emailNotificationsEnabled, setEmailNotificationsEnabled] =
+    useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -108,16 +253,26 @@ const AccountSettings = () => {
       const { data: userData } = await supabase.auth.getUser();
       if (userData?.user) {
         setEmail(userData.user.email || "");
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("full_name")
-          .eq("id", userData.user.id)
-          .single();
+        const [{ data: profile }, { data: settings }] = await Promise.all([
+          supabase
+            .from("profiles")
+            .select("full_name")
+            .eq("id", userData.user.id)
+            .single(),
+          supabase
+            .from("platform_settings")
+            .select("email_notifications_enabled")
+            .eq("id", 1)
+            .single(),
+        ]);
         if (profile) {
           const parts = profile.full_name.split(" ");
           setFirstName(parts[0] || "");
           setLastName(parts.slice(1).join(" ") || "");
         }
+        setEmailNotificationsEnabled(
+          Boolean(settings?.email_notifications_enabled),
+        );
       }
       setLoading(false);
     }
@@ -127,37 +282,68 @@ const AccountSettings = () => {
   const handleSave = async () => {
     setShowConfirmModal(false);
     setSaving(true);
-    const { data: userData } = await supabase.auth.getUser();
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
 
-    if (userData?.user) {
-      const fullName = `${firstName} ${lastName}`.trim();
+      if (!accessToken) {
+        throw new Error("Your session expired. Please sign in again.");
+      }
 
-      // 1. Update Profile
-      await supabase
-        .from("profiles")
-        .update({ full_name: fullName })
-        .eq("id", userData.user.id);
-
-      // 2. Log the activity using our new schema
-      await logActivity({
-        supabase,
-        actorId: userData.user.id,
-        actorName: fullName,
-        actionType: "UPDATE",
-        description: "Updated personal account profile settings",
-        metadata: { email, first_name: firstName, last_name: lastName },
+      const response = await fetch("/api/admin/account-settings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          fullName: `${firstName} ${lastName}`.trim(),
+          emailNotificationsEnabled,
+        }),
       });
+
+      const payload = (await response.json().catch(() => ({}))) as {
+        error?: string;
+      };
+
+      if (!response.ok) {
+        throw new Error(payload.error || `Request failed (${response.status})`);
+      }
+
+      const { data: userData } = await supabase.auth.getUser();
+      if (userData?.user) {
+        const fullName = `${firstName} ${lastName}`.trim();
+
+        await logActivity({
+          supabase,
+          actorId: userData.user.id,
+          actorName: fullName,
+          actionType: "UPDATE",
+          description: "Updated personal account profile settings",
+          metadata: {
+            email,
+            first_name: firstName,
+            last_name: lastName,
+            email_notifications_enabled: emailNotificationsEnabled,
+          },
+        });
+      }
+
+      setSaving(false);
+      setShowSuccessModal(true);
+    } catch (error) {
+      console.error("[AccountSettings] Save failed:", error);
+      setSaving(false);
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Failed to save account settings.",
+      );
     }
-    setSaving(false);
-    setShowSuccessModal(true);
   };
 
   if (loading) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-brand-primary" />
-      </div>
-    );
+    return <AccountSettingsSkeleton />;
   }
 
   return (
@@ -241,7 +427,11 @@ const AccountSettings = () => {
                   </p>
                 </div>
               </div>
-              <Toggle variant="accent" defaultIsOn={true} />
+              <Toggle
+                variant="accent"
+                isOn={emailNotificationsEnabled}
+                onChange={setEmailNotificationsEnabled}
+              />
             </div>
           </div>
         </div>
@@ -360,11 +550,7 @@ const PlatformSettings = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-brand-primary" />
-      </div>
-    );
+    return <PlatformSettingsSkeleton />;
   }
 
   return (
@@ -541,11 +727,7 @@ const TeamSettings = () => {
   }, [supabase]);
 
   if (loading) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-brand-primary" />
-      </div>
-    );
+    return <TeamSettingsSkeleton />;
   }
 
   return (
@@ -643,6 +825,116 @@ const TeamSettings = () => {
 };
 
 const IntegrationSettings = () => {
+  const [smtpHost, setSmtpHost] = useState("");
+  const [smtpPort, setSmtpPort] = useState("587");
+  const [smtpSecure, setSmtpSecure] = useState(false);
+  const [smtpUser, setSmtpUser] = useState("");
+  const [smtpPassword, setSmtpPassword] = useState("");
+  const [smtpFromName, setSmtpFromName] = useState("Qios");
+  const [smtpFromEmail, setSmtpFromEmail] = useState("");
+  const [showSmtpSettings, setShowSmtpSettings] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const supabase = createSupabaseBrowserClient();
+
+  useEffect(() => {
+    async function loadSettings() {
+      const { data } = await supabase
+        .from("platform_settings")
+        .select(
+          "smtp_host, smtp_port, smtp_secure, smtp_user, smtp_from_name, smtp_from_email",
+        )
+        .eq("id", 1)
+        .single();
+
+      if (data) {
+        setSmtpHost(data.smtp_host || "");
+        setSmtpPort(data.smtp_port?.toString() || "587");
+        setSmtpSecure(Boolean(data.smtp_secure));
+        setSmtpUser(data.smtp_user || "");
+        setSmtpFromName(data.smtp_from_name || "Qios");
+        setSmtpFromEmail(data.smtp_from_email || "");
+      }
+
+      setLoading(false);
+    }
+
+    loadSettings();
+  }, [supabase]);
+
+  const isConfigured =
+    Boolean(smtpHost.trim()) &&
+    Boolean(smtpUser.trim()) &&
+    Boolean(smtpFromEmail.trim());
+
+  const handleSave = async () => {
+    setShowConfirmModal(false);
+    setSaving(true);
+
+    try {
+      const payload: Record<string, unknown> = {
+        smtp_host: smtpHost.trim(),
+        smtp_port: Number.parseInt(smtpPort, 10) || 587,
+        smtp_secure: smtpSecure,
+        smtp_user: smtpUser.trim(),
+        smtp_from_name: smtpFromName.trim() || "Qios",
+        smtp_from_email: smtpFromEmail.trim(),
+      };
+
+      if (smtpPassword.trim()) {
+        payload.smtp_password = smtpPassword;
+      }
+
+      const { error } = await supabase
+        .from("platform_settings")
+        .update(payload)
+        .eq("id", 1);
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      const { data: userData } = await supabase.auth.getUser();
+      if (userData?.user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("full_name")
+          .eq("id", userData.user.id)
+          .single();
+
+        await logActivity({
+          supabase,
+          actorId: userData.user.id,
+          actorName: profile?.full_name || "Admin",
+          actionType: "UPDATE",
+          description: "Updated Nodemailer SMTP integration settings",
+          metadata: {
+            smtp_host: smtpHost,
+            smtp_port: Number.parseInt(smtpPort, 10) || 587,
+            smtp_secure: smtpSecure,
+            smtp_user: smtpUser,
+            smtp_from_name: smtpFromName,
+            smtp_from_email: smtpFromEmail,
+          },
+        });
+      }
+
+      setSmtpPassword("");
+      setSaving(false);
+      setShowSuccessModal(true);
+    } catch (error) {
+      console.error("[IntegrationSettings] Save failed:", error);
+      setSaving(false);
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Failed to save Nodemailer settings.",
+      );
+    }
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div>
@@ -650,18 +942,20 @@ const IntegrationSettings = () => {
           Integrations & API
         </h2>
         <p className="text-sm text-text-secondary">
-          Connect Qios with third-party services and manage API keys.
+          Configure Nodemailer SMTP for system emails and API-connected
+          services.
         </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <IntegrationCard
-          name="SendGrid"
-          description="System emails, password resets, and notifications."
-          icon={<Globe className="w-5 h-5" />}
+          name="Nodemailer"
+          description="System emails, password resets, and notifications through SMTP."
+          icon={<Mail className="w-5 h-5" />}
           iconBgColor="bg-[#F0F5FA]"
           iconTextColor="text-[#1A82E2]"
-          status="Connected"
+          status={isConfigured ? "Connected" : "Not Configured"}
+          onAction={() => setShowSmtpSettings(true)}
         />
 
         <IntegrationCard
@@ -673,6 +967,164 @@ const IntegrationSettings = () => {
           status="Not Configured"
         />
       </div>
+
+      {!showSmtpSettings ? (
+        <div className="rounded-[24px] border border-dashed border-gray-200 bg-white/70 p-6 text-sm text-text-secondary">
+          Click <span className="font-medium text-text-primary">Connect</span>{" "}
+          to configure an API settings.
+        </div>
+      ) : loading ? (
+        <div className="rounded-[24px] border border-gray-100 bg-white p-6 space-y-4">
+          <SettingsHeaderSkeleton />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <SkeletonLine className="h-11 w-full" />
+            <SkeletonLine className="h-11 w-full" />
+          </div>
+          <SkeletonLine className="h-11 w-full" />
+          <SkeletonLine className="h-11 w-full" />
+          <SkeletonLine className="h-11 w-40 rounded-full ml-auto" />
+        </div>
+      ) : (
+        <div className="rounded-[24px] border border-gray-100 bg-white p-6 space-y-6">
+          <div className="flex flex-col gap-2">
+            <h3 className="text-lg font-bold text-text-primary">
+              Nodemailer SMTP Settings
+            </h3>
+            <p className="text-sm text-text-secondary">
+              Save your SMTP details here so Qios can send notifications without
+              relying on environment variables.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-text-primary">
+                SMTP Host
+              </label>
+              <Input
+                value={smtpHost}
+                onChange={(e) => setSmtpHost(e.target.value)}
+                placeholder="smtp.gmail.com"
+                className="py-2.5 rounded-xl"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-text-primary">
+                SMTP Port
+              </label>
+              <Input
+                value={smtpPort}
+                onChange={(e) => setSmtpPort(e.target.value)}
+                type="number"
+                placeholder="587"
+                className="py-2.5 rounded-xl"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-text-primary">
+              SMTP Username
+            </label>
+            <Input
+              value={smtpUser}
+              onChange={(e) => setSmtpUser(e.target.value)}
+              placeholder="example@company.com"
+              className="py-2.5 rounded-xl"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-text-primary">
+              SMTP Password
+            </label>
+            <Input
+              value={smtpPassword}
+              onChange={(e) => setSmtpPassword(e.target.value)}
+              type="password"
+              placeholder="Leave blank to keep the existing password"
+              className="py-2.5 rounded-xl"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-text-primary">
+                From Name
+              </label>
+              <Input
+                value={smtpFromName}
+                onChange={(e) => setSmtpFromName(e.target.value)}
+                placeholder="Qios"
+                className="py-2.5 rounded-xl"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-text-primary">
+                From Email
+              </label>
+              <Input
+                value={smtpFromEmail}
+                onChange={(e) => setSmtpFromEmail(e.target.value)}
+                type="email"
+                placeholder="no-reply@qios.com"
+                className="py-2.5 rounded-xl"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between gap-4 p-4 rounded-xl border border-gray-100">
+            <div>
+              <h4 className="font-medium text-text-primary">Use Secure SMTP</h4>
+              <p className="text-sm text-text-secondary">
+                Enable SSL/TLS for providers that require it.
+              </p>
+            </div>
+            <Toggle
+              variant="accent"
+              isOn={smtpSecure}
+              onChange={setSmtpSecure}
+            />
+          </div>
+
+          <div className="flex justify-end">
+            <Button
+              variant="accent"
+              shape="rounded"
+              leftIcon={
+                saving ? (
+                  <Loader2 size={18} className="animate-spin" />
+                ) : (
+                  <Save size={18} />
+                )
+              }
+              onClick={() => setShowConfirmModal(true)}
+              disabled={saving}
+            >
+              {saving ? "Saving..." : "Save Nodemailer Settings"}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      <ActionConfirmationModal
+        isOpen={showConfirmModal}
+        action="save"
+        title="Save Nodemailer Settings?"
+        message="Are you sure you want to update the Nodemailer SMTP configuration?"
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={handleSave}
+        saving={saving}
+      />
+
+      <ActionConfirmationModal
+        isOpen={showSuccessModal}
+        action="success"
+        title="Nodemailer Settings Saved"
+        message="The SMTP configuration has been updated successfully."
+        onClose={() => setShowSuccessModal(false)}
+        onConfirm={() => setShowSuccessModal(false)}
+      />
     </div>
   );
 };
@@ -813,11 +1265,7 @@ const SecuritySettings = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-brand-primary" />
-      </div>
-    );
+    return <SecuritySettingsSkeleton />;
   }
 
   return (

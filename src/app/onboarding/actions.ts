@@ -541,7 +541,7 @@ export async function saveBusinessInformation(
 
     const { error: profileUpdateError } = await supabase
       .from("profiles")
-      .update({ tenant_id: tenantId, role: "admin" })
+      .update({ tenant_id: tenantId, role: "admin", accepted_tos: true, accepted_privacy: true })
       .eq("id", userId);
 
     if (profileUpdateError) {
@@ -603,7 +603,7 @@ export async function saveBusinessInformation(
   if (existingProfile) {
     const { error: profileUpdateError } = await supabase
       .from("profiles")
-      .update({ tenant_id: finalTenantId, role: "admin" })
+      .update({ tenant_id: finalTenantId, role: "admin", accepted_tos: true, accepted_privacy: true })
       .eq("id", userId);
 
     if (profileUpdateError) {
@@ -620,6 +620,8 @@ export async function saveBusinessInformation(
         tenant_id: finalTenantId,
         role: "admin",
         full_name: fallbackName,
+        accepted_tos: true,
+        accepted_privacy: true,
       });
 
     if (profileInsertError) {

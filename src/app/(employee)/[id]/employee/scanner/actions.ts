@@ -3,19 +3,29 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { logActivity } from "@/lib/activityLogger";
 import { revalidatePath } from "next/cache";
+import { requireEmployeePermission } from "@/lib/serverPermissions";
 
-export async function processScannedQr(
-  tenantId: string,
-  qrData: string
-) {
+export async function processScannedQr(tenantId: string, qrData: string) {
+  const auth = await requireEmployeePermission(tenantId, "QR Code Scanning");
+  if (!auth.ok) {
+    throw new Error(auth.message);
+  }
+
   const supabase = await createSupabaseServerClient();
-  const normalizedQrData = qrData.trim().replace(/^Order\s*#\s*/i, "").replace(/^#\s*/, "");
-  const isUUID = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(normalizedQrData);
-  const tenantIsUUID = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(tenantId.trim());
-  
-  let query = supabase
-    .from("orders")
-    .select(`
+  const normalizedQrData = qrData
+    .trim()
+    .replace(/^Order\s*#\s*/i, "")
+    .replace(/^#\s*/, "");
+  const isUUID =
+    /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(
+      normalizedQrData,
+    );
+  const tenantIsUUID =
+    /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(
+      tenantId.trim(),
+    );
+
+  let query = supabase.from("orders").select(`
       id,
       tenant_id,
       table_number,
@@ -63,7 +73,9 @@ export async function processScannedQr(
   }
 
   if (!data) {
-    throw new Error("Invalid QR Code: Order not found or doesn't belong to your restaurant.");
+    throw new Error(
+      "Invalid QR Code: Order not found or doesn't belong to your restaurant.",
+    );
   }
 
   return data;
@@ -73,23 +85,28 @@ export async function updateOrderFromScanner(
   tenantId: string,
   orderId: string,
   newStatus: string,
-  actionDesc: string
+  actionDesc: string,
 ) {
-  const supabase = await createSupabaseServerClient();
-  const tenantIsUUID = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(
-    tenantId.trim(),
-  );
+  const auth = await requireEmployeePermission(tenantId, "QR Code Scanning");
+  if (!auth.ok) {
+    throw new Error(auth.message);
+  }
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error("Unauthorized");
-  
+  const supabase = await createSupabaseServerClient();
+  const tenantIsUUID =
+    /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(
+      tenantId.trim(),
+    );
+
   const { data: profile } = await supabase
     .from("profiles")
     .select("first_name, last_name, role")
-    .eq("id", user.id)
+    .eq("id", auth.userId)
     .single();
 
-  const actorName = profile ? `${profile.first_name} ${profile.last_name}` : "Unknown System User";
+  const actorName = profile
+    ? `${profile.first_name} ${profile.last_name}`
+    : "Unknown System User";
   const actorRole = profile?.role ?? "employee";
 
   let updateQuery = supabase
@@ -106,7 +123,7 @@ export async function updateOrderFromScanner(
   if (error) throw new Error(error.message);
 
   await logActivity({
-    actorId: user.id,
+    actorId: auth.userId,
     actorName,
     actorRole,
     actionType: "UPDATE",

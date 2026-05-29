@@ -14,6 +14,10 @@ import {
   sendLoginEmailCode,
   verifyLoginTwoFactorCode,
 } from "@/app/login/actions";
+import {
+  getFirstAccessibleEmployeeRoute,
+  type RolePermissions,
+} from "@/lib/employeePermissions";
 
 // decode a jwt payload for client-side inspection only; this does not verify the token or its claims.
 function decodeJwtPayload(token: string): Record<string, unknown> {
@@ -210,11 +214,19 @@ export const LoginForm = () => {
     }
   };
 
-  const determineRouteDestination = (role: string, tenantId?: string) => {
+  const determineRouteDestination = (
+    role: string,
+    tenantId?: string,
+    employeePermissions?: RolePermissions | null,
+  ) => {
     if (role === "super_admin") return "/admin/dashboard";
     if (role === "admin" && tenantId) return `/${tenantId}/dashboard`;
-    if (role === "employee" && tenantId)
-      return `/${tenantId}/employee/dashboard`;
+    if (role === "employee" && tenantId) {
+      const employeeRoute = getFirstAccessibleEmployeeRoute(
+        employeePermissions ?? null,
+      );
+      return `/${tenantId}/employee/${employeeRoute}`;
+    }
     return "";
   };
 
@@ -317,6 +329,7 @@ export const LoginForm = () => {
       let role = profile?.role;
       let tenantId = profile?.tenant_id;
       const appRoleId = profile?.app_role_id;
+      let employeePermissions: RolePermissions | null = null;
 
       // fallback to jwt claims if profile data is missing
       if (!role) {
@@ -367,6 +380,18 @@ export const LoginForm = () => {
         }
       }
 
+      if (role === "employee" && tenantId && appRoleId) {
+        const { data: roleData } = await supabase
+          .from("roles")
+          .select("permissions")
+          .eq("id", appRoleId)
+          .eq("tenant_id", tenantId)
+          .maybeSingle();
+
+        employeePermissions =
+          (roleData?.permissions as RolePermissions | null) ?? null;
+      }
+
       tenantId = tenantId || "";
 
       // check maintenance mode before allowing further access
@@ -413,6 +438,7 @@ export const LoginForm = () => {
       const routeDestination = determineRouteDestination(
         role || "employee",
         tenantId || undefined,
+        employeePermissions,
       );
 
       if (tfaCheck?.required) {

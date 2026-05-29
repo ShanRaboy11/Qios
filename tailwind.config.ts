@@ -15,7 +15,7 @@ const config: Config = {
           accent: "var(--brand-accent, #FF5269)",
         },
         bg: {
-          primary: "#FFF9EF",
+          primary: "var(--brand-bg, #FFF9EF)",
         },
         text: {
           primary: "#2D2D2D",
