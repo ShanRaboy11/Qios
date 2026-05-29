@@ -75,7 +75,10 @@ function toNumber(value: number | string | null | undefined): number {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
-function aggregateMoney(orders: OrderRow[], predicate?: (order: OrderRow) => boolean) {
+function aggregateMoney(
+  orders: OrderRow[],
+  predicate?: (order: OrderRow) => boolean,
+) {
   return orders.reduce((sum, order) => {
     if (predicate && !predicate(order)) {
       return sum;
@@ -85,14 +88,21 @@ function aggregateMoney(orders: OrderRow[], predicate?: (order: OrderRow) => boo
   }, 0);
 }
 
-function buildSeries(orders: OrderRow[], period: SalesPeriod, startIso: string, endIso: string) {
+function buildSeries(
+  orders: OrderRow[],
+  period: SalesPeriod,
+  startIso: string,
+  endIso: string,
+) {
   if (period === "today") {
     const slots = Array.from({ length: 24 }, (_, hour) => ({
       label: new Intl.DateTimeFormat("en-US", {
         timeZone: "Asia/Manila",
         hour: "numeric",
         hour12: true,
-      }).format(new Date(`2026-01-01T${String(hour).padStart(2, "0")}:00:00+08:00`)),
+      }).format(
+        new Date(`2026-01-01T${String(hour).padStart(2, "0")}:00:00+08:00`),
+      ),
       sales: 0,
       orders: 0,
     }));
@@ -116,7 +126,12 @@ function buildSeries(orders: OrderRow[], period: SalesPeriod, startIso: string, 
     return slots;
   }
 
-  const labels: Array<{ key: string; label: string; sales: number; orders: number }> = [];
+  const labels: Array<{
+    key: string;
+    label: string;
+    sales: number;
+    orders: number;
+  }> = [];
   const cursor = new Date(startIso);
   const end = new Date(endIso);
 
@@ -136,7 +151,9 @@ function buildSeries(orders: OrderRow[], period: SalesPeriod, startIso: string, 
   }
 
   for (const order of orders) {
-    const slot = labels.find((item) => item.key === getManilaDateKey(order.created_at));
+    const slot = labels.find(
+      (item) => item.key === getManilaDateKey(order.created_at),
+    );
     if (slot) {
       slot.sales += toNumber(order.total_price);
       slot.orders += 1;
@@ -151,11 +168,17 @@ function buildTopItems(
   previousOrders: OrderRow[],
   categoryMap: Map<string, string>,
 ) {
-  const current = new Map<string, { name: string; category: string; sales: number; revenue: number }>();
+  const current = new Map<
+    string,
+    { name: string; category: string; sales: number; revenue: number }
+  >();
   const previous = new Map<string, { sales: number; revenue: number }>();
 
   const accumulate = (
-    target: Map<string, { name?: string; category?: string; sales: number; revenue: number }>,
+    target: Map<
+      string,
+      { name?: string; category?: string; sales: number; revenue: number }
+    >,
     orders: OrderRow[],
   ) => {
     for (const order of orders) {
@@ -171,7 +194,8 @@ function buildTopItems(
 
         const sales = Number(item.quantity ?? 0);
         const revenue = sales * toNumber(item.unit_price);
-        const category = categoryMap.get(menuItem.category_id) ?? "Uncategorized";
+        const category =
+          categoryMap.get(menuItem.category_id) ?? "Uncategorized";
         const existing = target.get(menuItem.id) ?? {
           name: menuItem.name,
           category,
@@ -183,7 +207,15 @@ function buildTopItems(
         existing.category = category;
         existing.sales += sales;
         existing.revenue += revenue;
-        target.set(menuItem.id, existing as { name?: string; category?: string; sales: number; revenue: number });
+        target.set(
+          menuItem.id,
+          existing as {
+            name?: string;
+            category?: string;
+            sales: number;
+            revenue: number;
+          },
+        );
       }
     }
   };
@@ -210,7 +242,10 @@ function buildTopItems(
 function buildTransactions(orders: OrderRow[]) {
   return orders.map((order) => {
     const items = (order.order_items ?? [])
-      .map((item) => `${item.quantity}x ${item.menu_items?.name ?? "Unknown Item"}`)
+      .map(
+        (item) =>
+          `${item.quantity}x ${item.menu_items?.name ?? "Unknown Item"}`,
+      )
       .join(", ");
 
     return {
@@ -234,14 +269,20 @@ async function getOverview(
   tenantId: string,
   period: SalesPeriod,
 ) {
-  const { currentStartIso, currentEndIso, previousStartIso, previousEndIso } = getPeriodRange(period);
+  const { currentStartIso, currentEndIso, previousStartIso, previousEndIso } =
+    getPeriodRange(period);
 
-  const [tenantResult, currentResult, previousResult, categoriesResult] = await Promise.all([
-    admin.from("tenants").select("business_name").eq("id", tenantId).maybeSingle(),
-    admin
-      .from("orders")
-      .select(
-        `
+  const [tenantResult, currentResult, previousResult, categoriesResult] =
+    await Promise.all([
+      admin
+        .from("tenants")
+        .select("business_name")
+        .eq("id", tenantId)
+        .maybeSingle(),
+      admin
+        .from("orders")
+        .select(
+          `
         id,
         qr_hash,
         status,
@@ -261,15 +302,15 @@ async function getOverview(
           )
         )
       `,
-      )
-      .eq("tenant_id", tenantId)
-      .gte("created_at", currentStartIso)
-      .lte("created_at", currentEndIso)
-      .order("created_at", { ascending: false }),
-    admin
-      .from("orders")
-      .select(
-        `
+        )
+        .eq("tenant_id", tenantId)
+        .gte("created_at", currentStartIso)
+        .lte("created_at", currentEndIso)
+        .order("created_at", { ascending: false }),
+      admin
+        .from("orders")
+        .select(
+          `
         id,
         qr_hash,
         status,
@@ -289,34 +330,60 @@ async function getOverview(
           )
         )
       `,
-      )
-      .eq("tenant_id", tenantId)
-      .gte("created_at", previousStartIso)
-      .lte("created_at", previousEndIso)
-      .order("created_at", { ascending: false }),
-    admin.from("categories").select("id, name").eq("tenant_id", tenantId),
-  ]);
+        )
+        .eq("tenant_id", tenantId)
+        .gte("created_at", previousStartIso)
+        .lte("created_at", previousEndIso)
+        .order("created_at", { ascending: false }),
+      admin.from("categories").select("id, name").eq("tenant_id", tenantId),
+    ]);
 
   const currentOrders = (currentResult.data ?? []) as OrderRow[];
   const previousOrders = (previousResult.data ?? []) as OrderRow[];
   const categoryMap = new Map<string, string>(
-    (categoriesResult.data ?? []).map((row: { id: string; name: string }) => [row.id, row.name]),
+    (categoriesResult.data ?? []).map((row: { id: string; name: string }) => [
+      row.id,
+      row.name,
+    ]),
   );
 
-  const currentPaidOrders = currentOrders.filter((order) => order.payment_status === "paid");
-  const previousPaidOrders = previousOrders.filter((order) => order.payment_status === "paid");
+  const currentPaidOrders = currentOrders.filter(
+    (order) => order.payment_status === "paid",
+  );
+  const previousPaidOrders = previousOrders.filter(
+    (order) => order.payment_status === "paid",
+  );
 
-  const grossSales = aggregateMoney(currentOrders, (order) => order.payment_status === "paid");
-  const previousGrossSales = aggregateMoney(previousOrders, (order) => order.payment_status === "paid");
-  const refundedSales = aggregateMoney(currentOrders, (order) => order.payment_status === "refunded");
-  const previousRefundedSales = aggregateMoney(previousOrders, (order) => order.payment_status === "refunded");
+  const grossSales = aggregateMoney(
+    currentOrders,
+    (order) => order.payment_status === "paid",
+  );
+  const previousGrossSales = aggregateMoney(
+    previousOrders,
+    (order) => order.payment_status === "paid",
+  );
+  const refundedSales = aggregateMoney(
+    currentOrders,
+    (order) => order.payment_status === "refunded",
+  );
+  const previousRefundedSales = aggregateMoney(
+    previousOrders,
+    (order) => order.payment_status === "refunded",
+  );
   const totalOrders = currentOrders.length;
   const previousTotalOrders = previousOrders.length;
-  const averageOrderValue = currentPaidOrders.length > 0 ? grossSales / currentPaidOrders.length : 0;
-  const previousAverageOrderValue = previousPaidOrders.length > 0 ? previousGrossSales / previousPaidOrders.length : 0;
+  const averageOrderValue =
+    currentPaidOrders.length > 0 ? grossSales / currentPaidOrders.length : 0;
+  const previousAverageOrderValue =
+    previousPaidOrders.length > 0
+      ? previousGrossSales / previousPaidOrders.length
+      : 0;
 
   return {
-    businessName: typeof tenantResult.data?.business_name === "string" ? tenantResult.data.business_name : "",
+    businessName:
+      typeof tenantResult.data?.business_name === "string"
+        ? tenantResult.data.business_name
+        : "",
     period,
     generatedAt: new Date().toISOString(),
     metrics: {
@@ -325,11 +392,22 @@ async function getOverview(
       totalOrders,
       averageOrderValue,
       grossTrend: trendPercent(grossSales, previousGrossSales),
-      netTrend: trendPercent(grossSales - refundedSales, previousGrossSales - previousRefundedSales),
+      netTrend: trendPercent(
+        grossSales - refundedSales,
+        previousGrossSales - previousRefundedSales,
+      ),
       totalOrdersTrend: trendPercent(totalOrders, previousTotalOrders),
-      averageOrderValueTrend: trendPercent(averageOrderValue, previousAverageOrderValue),
+      averageOrderValueTrend: trendPercent(
+        averageOrderValue,
+        previousAverageOrderValue,
+      ),
     },
-    revenueSeries: buildSeries(currentPaidOrders, period, currentStartIso, currentEndIso),
+    revenueSeries: buildSeries(
+      currentPaidOrders,
+      period,
+      currentStartIso,
+      currentEndIso,
+    ),
     topItems: buildTopItems(currentOrders, previousOrders, categoryMap),
   };
 }
@@ -371,7 +449,9 @@ async function getTransactions(
     .order("created_at", { ascending: false });
 
   if (search) {
-    query = query.or(`qr_hash.ilike.%${search}%,table_number.ilike.%${search}%`);
+    query = query.or(
+      `qr_hash.ilike.%${search}%,table_number.ilike.%${search}%`,
+    );
   }
 
   if (status && status !== "all") {
@@ -427,8 +507,14 @@ export async function GET(
     const status = searchParams.get("status")?.trim() ?? "all";
     const method = searchParams.get("method")?.trim() ?? "all";
     const paymentStatus = searchParams.get("paymentStatus")?.trim() ?? "all";
-    const page = Math.max(1, Number.parseInt(searchParams.get("page") ?? "1", 10));
-    const limit = Math.max(1, Math.min(100, Number.parseInt(searchParams.get("limit") ?? "10", 10)));
+    const page = Math.max(
+      1,
+      Number.parseInt(searchParams.get("page") ?? "1", 10),
+    );
+    const limit = Math.max(
+      1,
+      Math.min(100, Number.parseInt(searchParams.get("limit") ?? "10", 10)),
+    );
     const includeAll = searchParams.get("all") === "true";
 
     try {
@@ -451,14 +537,16 @@ export async function GET(
         .maybeSingle();
 
       return NextResponse.json({
-        businessName: typeof tenant?.business_name === "string" ? tenant.business_name : "",
+        businessName:
+          typeof tenant?.business_name === "string" ? tenant.business_name : "",
         data: result.data,
         total: result.total,
         page: includeAll ? 1 : page,
         limit: includeAll ? Math.max(result.data.length, 1) : limit,
       });
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to load transactions";
+      const message =
+        error instanceof Error ? error.message : "Failed to load transactions";
       return NextResponse.json({ error: message }, { status: 500 });
     }
   }
@@ -469,7 +557,8 @@ export async function GET(
     const result = await getOverview(admin, tenantId, period);
     return NextResponse.json(result);
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Failed to load sales overview";
+    const message =
+      error instanceof Error ? error.message : "Failed to load sales overview";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

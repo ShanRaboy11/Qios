@@ -25,13 +25,18 @@ export const RevenueChart = ({
   onPeriodChange,
   isLoading = false,
 }: RevenueChartProps) => {
-  const chartData = data.map((point) => ({ time: point.label, sales: point.sales }));
+  const chartData = data.map((point) => ({
+    time: point.label,
+    sales: point.sales,
+  }));
 
   return (
     <div className="bg-white rounded-[24px] shadow-sm border border-gray-100 p-6 flex flex-col h-full w-full font-brand-secondary">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
         <div>
-          <h3 className="font-brand font-bold text-xl text-text-primary">Revenue Trend</h3>
+          <h3 className="font-brand font-bold text-xl text-text-primary">
+            Revenue Trend
+          </h3>
           <p className="font-brand-secondary text-sm text-text-secondary mt-1">
             Sales performance over time
           </p>
@@ -66,43 +71,67 @@ export const RevenueChart = ({
               data={chartData}
               margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
             >
-            <defs>
-              <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="var(--brand-primary, #FFC670)" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="var(--brand-primary, #FFC670)" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E5E5" />
-            <XAxis
-              dataKey="time"
-              axisLine={false}
-              tickLine={false}
-              tick={{ fill: "#A1A1AA", fontSize: 12, fontFamily: "var(--font-brand-secondary, sans-serif)" }}
-              dy={10}
-            />
-            <YAxis
-              axisLine={false}
-              tickLine={false}
-              tick={{ fill: "#A1A1AA", fontSize: 12, fontFamily: "var(--font-brand-secondary, sans-serif)" }}
-              tickFormatter={(value) => `₱${value / 1000}k`}
-            />
-            <Tooltip
-              contentStyle={{
-                borderRadius: "16px",
-                border: "none",
-                fontFamily: "var(--font-brand-secondary, sans-serif)",
-                boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
-              }}
-              formatter={(value: any) => [`₱${Number(value).toLocaleString()}`, "Sales"]}
-            />
-            <Area
-              type="monotone"
-              dataKey="sales"
-              stroke="var(--brand-primary, #FFC670)"
-              strokeWidth={3}
-              fillOpacity={1}
-              fill="url(#colorSales)"
-            />
+              <defs>
+                <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
+                  <stop
+                    offset="5%"
+                    stopColor="var(--brand-primary, #FFC670)"
+                    stopOpacity={0.3}
+                  />
+                  <stop
+                    offset="95%"
+                    stopColor="var(--brand-primary, #FFC670)"
+                    stopOpacity={0}
+                  />
+                </linearGradient>
+              </defs>
+              <CartesianGrid
+                strokeDasharray="3 3"
+                vertical={false}
+                stroke="#E5E5E5"
+              />
+              <XAxis
+                dataKey="time"
+                axisLine={false}
+                tickLine={false}
+                tick={{
+                  fill: "#A1A1AA",
+                  fontSize: 12,
+                  fontFamily: "var(--font-brand-secondary, sans-serif)",
+                }}
+                dy={10}
+              />
+              <YAxis
+                axisLine={false}
+                tickLine={false}
+                tick={{
+                  fill: "#A1A1AA",
+                  fontSize: 12,
+                  fontFamily: "var(--font-brand-secondary, sans-serif)",
+                }}
+                tickFormatter={(value) => `₱${value / 1000}k`}
+              />
+              <Tooltip
+                contentStyle={{
+                  borderRadius: "16px",
+                  border: "none",
+                  fontFamily: "var(--font-brand-secondary, sans-serif)",
+                  boxShadow:
+                    "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
+                }}
+                formatter={(value: any) => [
+                  `₱${Number(value).toLocaleString()}`,
+                  "Sales",
+                ]}
+              />
+              <Area
+                type="monotone"
+                dataKey="sales"
+                stroke="var(--brand-primary, #FFC670)"
+                strokeWidth={3}
+                fillOpacity={1}
+                fill="url(#colorSales)"
+              />
             </AreaChart>
           </ResponsiveContainer>
         )}

@@ -15,7 +15,10 @@ interface SalesManagementProps {
   storeName: string;
 }
 
-export default function SalesManagement({ tenantId, storeName }: SalesManagementProps) {
+export default function SalesManagement({
+  tenantId,
+  storeName,
+}: SalesManagementProps) {
   const [period, setPeriod] = useState<SalesPeriod>("month");
   const [overview, setOverview] = useState<SalesOverviewResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -39,7 +42,9 @@ export default function SalesManagement({ tenantId, storeName }: SalesManagement
             signal: controller.signal,
           },
         );
-        const payload = (await response.json()) as SalesOverviewResponse & { error?: string };
+        const payload = (await response.json()) as SalesOverviewResponse & {
+          error?: string;
+        };
 
         if (!response.ok) {
           throw new Error(payload.error || "Failed to load sales overview");
@@ -52,7 +57,11 @@ export default function SalesManagement({ tenantId, storeName }: SalesManagement
         }
 
         setOverview(null);
-        setError(fetchError instanceof Error ? fetchError.message : "Failed to load sales overview");
+        setError(
+          fetchError instanceof Error
+            ? fetchError.message
+            : "Failed to load sales overview",
+        );
       } finally {
         if (!controller.signal.aborted) {
           setIsLoading(false);
@@ -74,7 +83,10 @@ export default function SalesManagement({ tenantId, storeName }: SalesManagement
       ) : null}
 
       {/* top row: kpis */}
-      <SalesMetricCards metrics={overview?.metrics ?? null} isLoading={isLoading} />
+      <SalesMetricCards
+        metrics={overview?.metrics ?? null}
+        isLoading={isLoading}
+      />
 
       {/* middle row: charts */}
       <div className="w-full">
@@ -89,7 +101,10 @@ export default function SalesManagement({ tenantId, storeName }: SalesManagement
       {/* bottom row: top items & transactions */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 w-full">
         <div className="lg:col-span-1">
-          <TopSellingItems items={overview?.topItems ?? []} isLoading={isLoading} />
+          <TopSellingItems
+            items={overview?.topItems ?? []}
+            isLoading={isLoading}
+          />
         </div>
         <div className="lg:col-span-2">
           <TransactionTable
