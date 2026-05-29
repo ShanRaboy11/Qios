@@ -128,9 +128,9 @@ export default function StockAudit() {
   }, [searchQuery]);
 
   return (
-    <div className="w-full min-h-screen pb-40 bg-bg-primary kds-fade-in">
+    <div className="w-full pb-40 kds-fade-in">
       {/* ─── header ─── */}
-      <header className="sticky top-0 z-30 bg-brand-primary backdrop-blur-md border-b border-kds-border-warm px-4 py-6 md:px-12 md:py-8">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-black/5">
         <div className="max-w-6xl mx-auto space-y-8 md:space-y-6">
           <div className="flex items-center justify-between gap-4">
             <div className="min-w-0">

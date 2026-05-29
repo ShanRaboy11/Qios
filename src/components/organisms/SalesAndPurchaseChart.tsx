@@ -124,7 +124,7 @@ export const SalesAndPurchaseChart = () => {
             <Bar
               dataKey="sales"
               stackId="a"
-              fill="var(--brand-secondary, #FFEDBA)"
+              fill="var(--brand-accent, #FFEDBA)"
               radius={[4, 4, 0, 0]}
             />
           </BarChart>
