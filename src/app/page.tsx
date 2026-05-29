@@ -30,5 +30,3 @@ export default function HomePage() {
     </motion.main>
   );
 }
-
-// fix bcs giguba ni gio + add like a privacy sht notice

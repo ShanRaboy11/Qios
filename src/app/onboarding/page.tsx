@@ -104,6 +104,7 @@ export default function OnboardingPage() {
     email: "",
     password: "",
     confirm: "",
+    acceptedLegal: false,
   });
   const [subscriptionData, setSubscriptionData] = useState({
     packageName: "",
@@ -150,7 +151,7 @@ export default function OnboardingPage() {
         // ignore
       }
 
-      setAuthData({ email: "", password: "", confirm: "" });
+      setAuthData({ email: "", password: "", confirm: "", acceptedLegal: false });
       setTenantId("");
       setUserId("");
       setVerificationCode("");
@@ -280,7 +281,7 @@ export default function OnboardingPage() {
           // no-op
         }
 
-        setAuthData({ email: "", password: "", confirm: "" });
+        setAuthData({ email: "", password: "", confirm: "", acceptedLegal: false });
         setTenantId("");
         setUserId("");
         setVerificationCode("");
@@ -373,6 +374,9 @@ export default function OnboardingPage() {
     if (authData.password !== authData.confirm) {
       return setError("Passwords do not match.");
     }
+    if (!authData.acceptedLegal) {
+      return setError("You must agree to the Terms of Service and Privacy Policy to continue.");
+    }
 
     setLoading(true);
     try {
@@ -386,7 +390,7 @@ export default function OnboardingPage() {
           // no-op
         }
 
-        setAuthData({ ...authData, password: "", confirm: "" });
+        setAuthData({ ...authData, password: "", confirm: "", acceptedLegal: false });
         setTenantId("");
         setUserId("");
         setVerificationCode("");
