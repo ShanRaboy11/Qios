@@ -21,6 +21,7 @@ import {
 } from "@/components/organisms/StaffAnalyticsChart";
 import { AddStaffModal } from "@/components/organisms/AddStaffModal";
 import { StaffProfileModal } from "@/components/organisms/StaffProfileModal";
+import { StaffManagementPageSkeleton } from "@/components/molecules/PageShimmerSkeleton";
 
 // mock data
 const INITIAL_STAFF: StaffEntry[] = [
@@ -209,6 +210,10 @@ export default function StaffManagement() {
     setStaffData([newStaff, ...staffData]);
   };
 
+  if (isLoading) {
+    return <StaffManagementPageSkeleton />;
+  }
+
   return (
     <div className="flex flex-col w-full">
       {/* dashboard kpis / mini analytics */}
@@ -276,15 +281,11 @@ export default function StaffManagement() {
                 />
               </div>
             </div>
-            {isLoading ? (
-              <div className="bg-white rounded-[24px] shadow-sm border border-gray-100 min-h-[400px] animate-pulse" />
-            ) : (
-              <StaffTable
-                data={filteredStaff}
-                onClearFilters={() => setSearchQuery("")}
-                onViewProfile={(staff) => setSelectedStaffProfile(staff)}
-              />
-            )}
+            <StaffTable
+              data={filteredStaff}
+              onClearFilters={() => setSearchQuery("")}
+              onViewProfile={(staff) => setSelectedStaffProfile(staff)}
+            />
           </div>
         </div>
 

@@ -11,8 +11,7 @@ type OrderStatus =
   | "ready"
   | "completed"
   | "served"
-  | "cancelled"
-  | "voided";
+  | "cancelled";
 
 interface OrderItem {
   id: string;

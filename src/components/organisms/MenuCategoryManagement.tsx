@@ -164,11 +164,11 @@ const uid = () => `_${Math.random().toString(36).slice(2, 8)}`;
 
 const CategorySkeleton = () => (
   <div className="flex items-center gap-3 p-3 rounded-2xl border border-transparent">
-    <div className="w-4 h-4 rounded bg-black/10 animate-pulse flex-shrink-0" />
-    <div className="w-8 h-8 rounded-xl bg-black/10 animate-pulse flex-shrink-0" />
+    <div className="w-4 h-4 rounded skeleton-shimmer flex-shrink-0" />
+    <div className="w-8 h-8 rounded-xl skeleton-shimmer flex-shrink-0" />
     <div className="flex flex-col gap-2 flex-1 min-w-0">
-      <div className="h-4 rounded bg-black/10 animate-pulse w-24" />
-      <div className="h-3 rounded bg-black/10 animate-pulse w-16" />
+      <div className="h-4 rounded skeleton-shimmer w-24" />
+      <div className="h-3 rounded skeleton-shimmer w-16" />
     </div>
   </div>
 );
@@ -176,7 +176,7 @@ const CategorySkeleton = () => (
 const Shimmer = ({ className }: { className?: string }) => (
   <div
     className={cn(
-      "animate-pulse bg-transparent rounded-xl border border-black/5",
+      "skeleton-shimmer bg-transparent rounded-xl border border-black/5",
       className,
     )}
   />
@@ -184,7 +184,7 @@ const Shimmer = ({ className }: { className?: string }) => (
 
 const GridCardSkeleton = () => (
   <div className="bg-transparent rounded-2xl border border-black/5 overflow-hidden shadow-none flex flex-col">
-    <div className="aspect-[4/3] bg-black/[0.06] animate-pulse" />
+    <div className="aspect-[4/3] skeleton-shimmer" />
     <div className="p-3.5 flex flex-col gap-2.5">
       <div className="flex items-center justify-between gap-2">
         <Shimmer className="h-3.5 w-2/3" />
@@ -839,16 +839,10 @@ const MenuCategoryManagement = () => {
           {/* ── Main content ─────────────────────────────────────────────── */}
           <div className="flex-1 flex flex-col min-w-0 bg-white/50 backdrop-blur-sm rounded-[24px] overflow-hidden border border-white/60 shadow-sm">
             {/* header bar */}
-            <div className="relative overflow-hidden flex-shrink-0 border-b border-[#ffd08a]/30">
+            <div className="relative overflow-hidden flex-shrink-0 border-b border-brand-secondary/30">
               <div className="pointer-events-none absolute -top-16 -right-10 w-52 h-52 rounded-full bg-brand-accent/[0.06]" />
               <div className="pointer-events-none absolute -bottom-10 right-28 w-40 h-40 rounded-full bg-brand-primary/[0.10]" />
-              <div
-                className="relative z-10 flex items-center gap-0 px-6 md:px-8 py-5"
-                style={{
-                  background:
-                    "linear-gradient(135deg, #FFF3DA 0%, #FFE8EC 100%)",
-                }}
-              >
+              <div className="relative z-10 flex items-center gap-0 px-6 md:px-8 py-5 bg-gradient-to-br from-brand-secondary/30 to-brand-accent/10">
                 {activeCat && (
                   <div className="flex items-center gap-4 flex-1 min-w-0">
                     <div className="w-[54px] h-[54px] rounded-[18px] bg-brand-secondary/70 border border-brand-primary/30 flex items-center justify-center flex-shrink-0 text-brand-accent shadow-sm">

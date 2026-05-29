@@ -149,13 +149,12 @@ export async function updateOrderStatus(
   orderId: string,
   tenantId: string,
   newStatus:
-    | "pending"
-    | "preparing"
-    | "ready"
-    | "completed"
-    | "served"
-    | "cancelled"
-    | "voided",
+      | "pending"
+      | "preparing"
+      | "ready"
+      | "completed"
+      | "served"
+      | "cancelled",
 ) {
   const { supabase, admin, user, profile, permissions } =
     await getEmployeeQueueContext(tenantId);
