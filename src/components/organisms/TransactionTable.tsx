@@ -460,26 +460,24 @@ export const TransactionTable = ({ tenantId, businessName }: TransactionTablePro
                     <p className="text-sm font-bold text-text-primary">Filters</p>
                     <p className="text-xs text-text-secondary mt-0.5">Refine the transaction list</p>
                   </div>
-                  <Button
-                    variant="ghost"
-                    shape="rounded"
-                    className="px-3 py-2 text-xs"
+                  <button
                     onClick={clearFilters}
+                    className="text-xs font-medium text-brand-primary hover:text-brand-primary/80 transition-colors duration-200"
                   >
                     Clear all
-                  </Button>
+                  </button>
                 </div>
-                <div className="mt-4 grid grid-cols-1 gap-4 text-sm">
-                  <label className="space-y-1.5">
+                <div className="mt-4 space-y-4">
+                  <div>
                     <span className="text-text-secondary text-[11px] font-bold uppercase tracking-[0.16em]">Order Status</span>
-                    <div className="relative">
+                    <div className="relative mt-1.5">
                       <select
                         value={statusFilter}
                         onChange={(event) => {
                           setStatusFilter(event.target.value as (typeof STATUS_OPTIONS)[number]);
                           setPage(1);
                         }}
-                        className="w-full rounded-2xl border-2 border-[#E5E5E5] bg-white px-6 py-3.5 text-sm text-text-primary outline-none focus:border-brand-primary focus:shadow-[0_0_0_4px_rgba(255,198,112,0.08)]"
+                        className="w-full rounded-2xl border-2 border-[#E5E5E5] bg-white px-6 py-3.5 text-sm text-text-primary outline-none focus:border-brand-primary focus:shadow-[0_0_0_4px_rgba(255,198,112,0.08)] appearance-none cursor-pointer transition-colors"
                       >
                         {STATUS_OPTIONS.map((option) => (
                           <option key={option} value={option}>
@@ -489,17 +487,17 @@ export const TransactionTable = ({ tenantId, businessName }: TransactionTablePro
                       </select>
                       <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                     </div>
-                  </label>
-                  <label className="space-y-1.5">
+                  </div>
+                  <div>
                     <span className="text-text-secondary text-[11px] font-bold uppercase tracking-[0.16em]">Payment Status</span>
-                    <div className="relative">
+                    <div className="relative mt-1.5">
                       <select
                         value={paymentStatusFilter}
                         onChange={(event) => {
                           setPaymentStatusFilter(event.target.value as (typeof PAYMENT_STATUS_OPTIONS)[number]);
                           setPage(1);
                         }}
-                        className="w-full rounded-2xl border-2 border-[#E5E5E5] bg-white px-6 py-3.5 text-sm text-text-primary outline-none focus:border-brand-primary focus:shadow-[0_0_0_4px_rgba(255,198,112,0.08)]"
+                        className="w-full rounded-2xl border-2 border-[#E5E5E5] bg-white px-6 py-3.5 text-sm text-text-primary outline-none focus:border-brand-primary focus:shadow-[0_0_0_4px_rgba(255,198,112,0.08)] appearance-none cursor-pointer transition-colors"
                       >
                         {PAYMENT_STATUS_OPTIONS.map((option) => (
                           <option key={option} value={option}>
@@ -509,12 +507,12 @@ export const TransactionTable = ({ tenantId, businessName }: TransactionTablePro
                       </select>
                       <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                     </div>
-                  </label>
-                  <div className="flex justify-end gap-2 pt-2">
+                  </div>
+                  <div className="flex justify-end gap-2 pt-4 border-t border-gray-100">
                     <Button
                       variant="outline"
                       shape="rounded"
-                      className="px-4 py-2.5 text-sm"
+                      size="sm"
                       onClick={clearFilters}
                     >
                       Clear
@@ -522,7 +520,7 @@ export const TransactionTable = ({ tenantId, businessName }: TransactionTablePro
                     <Button
                       variant="primary"
                       shape="rounded"
-                      className="px-4 py-2.5 text-sm"
+                      size="sm"
                       onClick={() => setIsFilterOpen(false)}
                     >
                       Apply
