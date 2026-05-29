@@ -35,49 +35,51 @@ export const CookieConsent = () => {
       <div className="bg-white/90 backdrop-blur-xl border border-black/10 shadow-[0_20px_50px_rgba(0,0,0,0.15)] rounded-t-3xl md:rounded-3xl p-6 relative overflow-hidden">
         {/* Soft decorative background element */}
         <div className="absolute -top-12 -right-12 w-32 h-32 bg-brand-primary/10 rounded-full blur-2xl pointer-events-none" />
-        
+
         <div className="flex flex-col gap-4 relative z-10">
           <div className="flex items-start justify-between gap-4">
             <div className="w-10 h-10 rounded-2xl bg-brand-primary/10 flex items-center justify-center shrink-0">
               <Cookie className="w-5 h-5 text-brand-primary" />
             </div>
-            <button 
+            <button
               onClick={() => setIsVisible(false)}
               className="text-text-secondary hover:text-text-primary transition-colors p-1"
             >
               <X size={18} />
             </button>
           </div>
-          
+
           <div>
             <h3 className="font-figtree font-bold text-lg text-text-primary mb-1">
               We value your privacy
             </h3>
-            <p className="b2 text-text-secondary leading-relaxed text-[14px]">
-              We use cookies to enhance your browsing experience, serve personalized content, and analyze our traffic. By clicking &quot;Accept All&quot;, you consent to our use of cookies.
+            <p className="b2 text-text-secondary leading-relaxed text-[13px] md:text-[13.5px]">
+              We use cookies to enhance your browsing experience, serve
+              personalized content, and analyze our traffic. By clicking
+              &quot;Accept All&quot;, you consent to our use of cookies.
             </p>
           </div>
-          
+
           <div className="flex flex-col sm:flex-row items-center gap-3 mt-2">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="w-full sm:flex-1 h-11"
               onClick={handleDecline}
             >
               Reject All
             </Button>
-            <Button 
-              variant="primary" 
+            <Button
+              variant="primary"
               className="w-full sm:flex-1 h-11 bg-brand-primary text-white hover:bg-brand-primary/90"
               onClick={handleAccept}
             >
               Accept All
             </Button>
           </div>
-          
+
           <div className="text-center mt-1">
-            <Link 
-              href="/legal/cookie-policy" 
+            <Link
+              href="/legal/cookie-policy"
               className="text-[12px] font-medium text-text-secondary hover:text-brand-accent transition-colors underline underline-offset-2"
             >
               Read our Cookie Policy

@@ -80,12 +80,9 @@ export const LegalDocument = ({
         </Link>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-12 lg:gap-28 relative">
+      <div className="flex flex-col lg:flex-row lg:items-start gap-12 lg:gap-28 relative">
         {/* Sidebar Table of Contents */}
-        <div
-          className="hidden lg:block w-72 shrink-0 self-start"
-          style={{ position: "sticky", top: "8rem" }}
-        >
+        <div className="hidden lg:block w-72 shrink-0 self-start sticky top-32">
           <div className="flex flex-col gap-1">
             <h4 className="text-xs font-bold uppercase tracking-widest text-text-secondary mb-4 ml-4">
               Contents
@@ -111,7 +108,7 @@ export const LegalDocument = ({
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 max-w-3xl lg:pl-4">
+        <div className="flex-1 max-w-3xl lg:pl-8">
           <div className="mb-10 md:mb-14">
             <h1 className="h2 text-text-primary tracking-tight leading-tight mb-4">
               <span style={gradientHeaderStyle}>{title}</span>
