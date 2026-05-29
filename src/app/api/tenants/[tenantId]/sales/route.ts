@@ -338,8 +338,30 @@ async function getOverview(
       admin.from("categories").select("id, name").eq("tenant_id", tenantId),
     ]);
 
-  const currentOrders = (currentResult.data ?? []) as OrderRow[];
-  const previousOrders = (previousResult.data ?? []) as OrderRow[];
+  // Supabase returns nested relation arrays for joined rows. Normalize the shape
+  // so `order_items.menu_items` is a single object (or null) to match `OrderRow`.
+  const normalizeOrder = (raw: any): OrderRow => ({
+    id: String(raw.id),
+    qr_hash: raw.qr_hash ?? null,
+    status: String(raw.status ?? ""),
+    payment_status: String(raw.payment_status ?? ""),
+    payment_method: raw.payment_method ?? null,
+    total_price: raw.total_price ?? 0,
+    created_at: String(raw.created_at ?? new Date().toISOString()),
+    table_number: raw.table_number ?? null,
+    order_items: (raw.order_items ?? []).map((it: any) => ({
+      id: String(it.id),
+      quantity: Number(it.quantity ?? 0),
+      unit_price: it.unit_price ?? null,
+      // `menu_items` may be returned as an array; take the first item if present.
+      menu_items: Array.isArray(it.menu_items)
+        ? it.menu_items[0]
+        : it.menu_items ?? null,
+    })),
+  });
+
+  const currentOrders = (currentResult.data ?? []).map((row: any) => normalizeOrder(row)) as OrderRow[];
+  const previousOrders = (previousResult.data ?? []).map((row: any) => normalizeOrder(row)) as OrderRow[];
   const categoryMap = new Map<string, string>(
     (categoriesResult.data ?? []).map((row: { id: string; name: string }) => [
       row.id,
@@ -479,7 +501,26 @@ async function getTransactions(
     throw new Error(error.message);
   }
 
-  const transactions = buildTransactions((data ?? []) as OrderRow[]);
+  // Normalize Supabase response to match OrderRow shape expected by buildTransactions
+  const normalizeOrderForList = (raw: any): OrderRow => ({
+    id: String(raw.id),
+    qr_hash: raw.qr_hash ?? null,
+    status: String(raw.status ?? ""),
+    payment_status: String(raw.payment_status ?? ""),
+    payment_method: raw.payment_method ?? null,
+    total_price: raw.total_price ?? 0,
+    created_at: String(raw.created_at ?? new Date().toISOString()),
+    table_number: raw.table_number ?? null,
+    order_items: (raw.order_items ?? []).map((it: any) => ({
+      id: String(it.id),
+      quantity: Number(it.quantity ?? 0),
+      unit_price: it.unit_price ?? null,
+      menu_items: Array.isArray(it.menu_items) ? it.menu_items[0] : it.menu_items ?? null,
+    })),
+  });
+
+  const normalized = (data ?? []).map((row: any) => normalizeOrderForList(row)) as OrderRow[];
+  const transactions = buildTransactions(normalized);
 
   return {
     data: transactions,
