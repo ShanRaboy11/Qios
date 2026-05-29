@@ -5,13 +5,16 @@ import { Navbar } from "@/components/organisms/navbar";
 import { Footer } from "@/components/organisms/footer";
 import { motion } from "framer-motion";
 import { usePathname, useRouter, useParams } from "next/navigation";
+import { type RolePermissions } from "@/lib/employeePermissions";
 
 export function EmployeeDashboardShell({
   children,
   storeName,
+  initialEmployeePermissions,
 }: {
   children: React.ReactNode;
   storeName: string;
+  initialEmployeePermissions: RolePermissions | null;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -37,18 +40,45 @@ export function EmployeeDashboardShell({
       {/* Background moving blobs */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
         <motion.div
-          animate={{ x: [0, 100, -50, 0], y: [0, -100, 50, 0], scale: [1, 1.2, 0.8, 1] }}
-          transition={{ duration: 60, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
+          animate={{
+            x: [0, 100, -50, 0],
+            y: [0, -100, 50, 0],
+            scale: [1, 1.2, 0.8, 1],
+          }}
+          transition={{
+            duration: 60,
+            repeat: Infinity,
+            repeatType: "reverse",
+            ease: "easeInOut",
+          }}
           className="absolute top-[10%] left-[20%] w-[500px] h-[500px] bg-brand-primary rounded-full mix-blend-multiply filter blur-[80px] opacity-15"
         />
         <motion.div
-          animate={{ x: [0, -120, 80, 0], y: [0, 80, -120, 0], scale: [1, 0.8, 1.2, 1] }}
-          transition={{ duration: 75, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
+          animate={{
+            x: [0, -120, 80, 0],
+            y: [0, 80, -120, 0],
+            scale: [1, 0.8, 1.2, 1],
+          }}
+          transition={{
+            duration: 75,
+            repeat: Infinity,
+            repeatType: "reverse",
+            ease: "easeInOut",
+          }}
           className="absolute top-[40%] right-[10%] w-[600px] h-[600px] bg-brand-secondary rounded-full mix-blend-multiply filter blur-[100px] opacity-20"
         />
         <motion.div
-          animate={{ x: [0, 150, -100, 0], y: [0, 100, -150, 0], scale: [1, 1.3, 0.9, 1] }}
-          transition={{ duration: 66, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
+          animate={{
+            x: [0, 150, -100, 0],
+            y: [0, 100, -150, 0],
+            scale: [1, 1.3, 0.9, 1],
+          }}
+          transition={{
+            duration: 66,
+            repeat: Infinity,
+            repeatType: "reverse",
+            ease: "easeInOut",
+          }}
           className="absolute bottom-[-10%] left-[40%] w-[700px] h-[700px] bg-brand-accent rounded-full mix-blend-multiply filter blur-[120px] opacity-15"
         />
       </div>
@@ -59,6 +89,7 @@ export function EmployeeDashboardShell({
           type="employee"
           activeView={currentView}
           onNavigate={handleNavigation}
+          initialEmployeePermissions={initialEmployeePermissions}
         />
       </div>
 

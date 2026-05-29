@@ -60,12 +60,12 @@ export function canAccessEmployeeRoute(
   permissions: RolePermissions | null,
   routeName: string,
 ) {
-  if (!permissions) {
+  if (routeName === "dashboard") {
     return true;
   }
 
-  if (routeName === "dashboard") {
-    return true;
+  if (!permissions) {
+    return false;
   }
 
   const requiredPermissions = EMPLOYEE_ROUTE_REQUIREMENTS[routeName];
@@ -94,9 +94,5 @@ export function getFirstAccessibleEmployeeRoute(
 export function canUpdateEmployeeOrderStatus(
   permissions: RolePermissions | null,
 ) {
-  if (!permissions) {
-    return true;
-  }
-
-  return hasPermission(permissions, "Order Status Updating");
+  return !!permissions && hasPermission(permissions, "Order Status Updating");
 }

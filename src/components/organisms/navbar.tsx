@@ -27,6 +27,7 @@ interface NavbarProps {
   activeView?: string;
   onNavigate?: (view: string) => void;
   className?: string;
+  initialEmployeePermissions?: RolePermissions | null;
 }
 
 export const Navbar = ({
@@ -35,6 +36,7 @@ export const Navbar = ({
   activeView,
   onNavigate,
   className,
+  initialEmployeePermissions = null,
 }: NavbarProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -48,7 +50,7 @@ export const Navbar = ({
     useState("tenant@qios.com");
   const [tenantAvatarInitials, setTenantAvatarInitials] = useState("TU");
   const [employeePermissions, setEmployeePermissions] =
-    useState<RolePermissions | null>(null);
+    useState<RolePermissions | null>(initialEmployeePermissions);
   const router = useRouter();
   const params = useParams();
   const pathname = usePathname();
@@ -58,6 +60,10 @@ export const Navbar = ({
   const tenantLogoUrl = branding?.dashboardLogoUrl;
 
   useEffect(() => {
+    if (type === "employee" && initialEmployeePermissions) {
+      setEmployeePermissions(initialEmployeePermissions);
+    }
+
     if (type !== "tenant") return;
 
     let isMounted = true;
@@ -116,7 +122,7 @@ export const Navbar = ({
     return () => {
       isMounted = false;
     };
-  }, [type]);
+  }, [type, initialEmployeePermissions]);
 
   useEffect(() => {
     if (type !== "employee") {
