@@ -2,6 +2,7 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 interface FooterProps {
   hideSocials?: boolean;
@@ -154,6 +155,7 @@ export const Footer = ({ hideSocials, variant = "default", tenantName = "Tenant"
           )}
 
         </div>
+
 
         <div
           className="absolute bottom-8 right-[25px] md:right-[79px] text-text-primary font-inter text-right z-10"

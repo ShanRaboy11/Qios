@@ -64,7 +64,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       accent:
         "bg-brand-accent text-white hover:bg-brand-accent/90 transition-all duration-300 transform hover:scale-105 shadow-lg cursor-pointer active:scale-[0.98]",
       outline:
-        "border-brand-primary border-2 text-brand-primary hover:bg-brand-secondary hover:border-brand-secondary hover:text-brand-accent transition-all duration-300 transform hover:scale-105 shadow-lg cursor-pointer active:scale-[0.98]",
+        "border-brand-primary border-2 text-brand-primary hover:bg-brand-secondary hover:border-brand-secondary hover:text-white transition-all duration-300 transform hover:scale-105 shadow-lg cursor-pointer active:scale-[0.98]",
       dark: "bg-text-primary text-white hover:bg-text-primary/90 transition-all duration-300 transform hover:scale-105 shadow-lg cursor-pointer active:scale-[0.98]",
       warning:
         "bg-warning-secondary text-warning-primary border-2 border-transparent hover:border-warning-primary transition-all duration-300 transform hover:scale-105 shadow-lg cursor-pointer active:scale-[0.98]",
