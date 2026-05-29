@@ -21,6 +21,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { InventoryPageSkeleton } from "@/components/molecules/PageShimmerSkeleton";
 
 function ModalOverlay({
   onClose,
@@ -178,11 +179,7 @@ export default function IngredientsInventory() {
   };
 
   if (isLoading) {
-    return (
-      <div className="w-full h-[400px] flex items-center justify-center">
-        <div className="w-10 h-10 border-4 border-brand-accent border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
+    return <InventoryPageSkeleton />;
   }
 
   return (
