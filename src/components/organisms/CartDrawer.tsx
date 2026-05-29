@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useParams } from "next/navigation";
 import { OrderReceiptModal } from "./OrderReceiptModal";
 import { placeOrder } from "@/lib/actions/order";
+import { triggerQueueSound } from "@/lib/sounds";
 
 export const CartDrawer = () => {
   const {
@@ -285,6 +286,7 @@ export const CartDrawer = () => {
                       );
                       setIsConfirmOpen(false);
                       setIsCartOpen(false);
+                      triggerQueueSound();
                       setIsOrderPlaced(true); // <--- Add this
                       clearCart();
                       setTimeout(() => setIsReceiptOpen(true), 250);
@@ -301,6 +303,7 @@ export const CartDrawer = () => {
                       setPlacedOrderId(result.qrHash);
                       setIsConfirmOpen(false);
                       setIsCartOpen(false);
+                      triggerQueueSound();
                       setIsOrderPlaced(true);
                       clearCart();
                       setTimeout(() => setIsReceiptOpen(true), 250);

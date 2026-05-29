@@ -122,6 +122,84 @@ export function EmployeeSettingsClient({
     setPreferencesState(emptySettingsActionState);
   }, [initialData]);
 
+  // Sound playback: synthesize tones via WebAudio and listen for global events.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioCtx) return;
+
+    const ctx = new AudioCtx();
+
+    const playTone = (
+      freq: number,
+      duration = 0.15,
+      type: OscillatorType = "sine",
+      gain = 0.12,
+    ) => {
+      try {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = type;
+        o.frequency.value = freq;
+        g.gain.value = gain;
+        o.connect(g);
+        g.connect(ctx.destination);
+        const now = ctx.currentTime;
+        o.start(now);
+        g.gain.setValueAtTime(gain, now);
+        g.gain.exponentialRampToValueAtTime(0.001, now + duration);
+        o.stop(now + duration + 0.02);
+      } catch (e) {
+        // ignore audio errors in restrictive browsers
+      }
+    };
+
+    const playQueue = () => {
+      // pleasant rising chime
+      playTone(440, 0.14, "sine", 0.08);
+      setTimeout(() => playTone(660, 0.2, "sine", 0.06), 120);
+    };
+
+    const playScan = () => {
+      playTone(1200, 0.08, "square", 0.08);
+    };
+
+    const playStock = () => {
+      // low-frequency alert
+      playTone(220, 0.3, "sawtooth", 0.12);
+      setTimeout(() => playTone(180, 0.2, "sawtooth", 0.1), 220);
+    };
+
+    const onQueue = () => {
+      if (operationalData.soundQueue) playQueue();
+    };
+
+    const onScan = () => {
+      if (operationalData.soundScan) playScan();
+    };
+
+    const onStock = () => {
+      if (operationalData.soundStock) playStock();
+    };
+
+    window.addEventListener("qios:sound:queue", onQueue as EventListener);
+    window.addEventListener("qios:sound:scan", onScan as EventListener);
+    window.addEventListener("qios:sound:stock", onStock as EventListener);
+
+    return () => {
+      window.removeEventListener("qios:sound:queue", onQueue as EventListener);
+      window.removeEventListener("qios:sound:scan", onScan as EventListener);
+      window.removeEventListener("qios:sound:stock", onStock as EventListener);
+      try {
+        ctx.close();
+      } catch (e) {
+        /* noop */
+      }
+    };
+    // operationalData intentionally in dependency array so toggles take effect
+  }, [operationalData]);
+
   const tabs = [
     { id: "profile", label: "Profile Details", icon: <User size={18} /> },
     { id: "shift", label: "Shift & Operations", icon: <Sliders size={18} /> },
