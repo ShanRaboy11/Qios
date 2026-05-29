@@ -20,7 +20,10 @@ export default function Loading() {
           <Block className="h-10 w-full rounded-2xl" />
           <div className="space-y-2">
             {Array.from({ length: 8 }).map((_, index) => (
-              <div key={`menu-cat-${index}`} className="flex items-center gap-3 rounded-2xl border border-gray-100 p-3">
+              <div
+                key={`menu-cat-${index}`}
+                className="flex items-center gap-3 rounded-2xl border border-gray-100 p-3"
+              >
                 <Block className="h-5 w-5 rounded" />
                 <Block className="h-10 w-10 rounded-xl" />
                 <div className="flex-1 space-y-2">
@@ -44,7 +47,10 @@ export default function Loading() {
           <Block className="h-11 w-full rounded-2xl" />
           <div className="grid gap-4 lg:grid-cols-2 2xl:grid-cols-3">
             {Array.from({ length: 9 }).map((_, index) => (
-              <div key={`menu-item-${index}`} className="rounded-[24px] border border-gray-100 bg-white p-4 space-y-4">
+              <div
+                key={`menu-item-${index}`}
+                className="rounded-[24px] border border-gray-100 bg-white p-4 space-y-4"
+              >
                 <Block className="h-40 w-full rounded-[18px]" />
                 <div className="space-y-2">
                   <Block className="h-5 w-40 rounded-md" />
