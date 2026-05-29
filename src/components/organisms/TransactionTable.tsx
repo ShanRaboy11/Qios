@@ -462,7 +462,7 @@ export const TransactionTable = ({ tenantId, businessName }: TransactionTablePro
                   </div>
                   <button
                     onClick={clearFilters}
-                    className="text-xs font-medium text-brand-primary hover:text-brand-primary/80 transition-colors duration-200"
+                    className="text-xs font-medium text-brand-primary hover:text-brand-primary/80 hover:underline transition-colors duration-200"
                   >
                     Clear all
                   </button>
