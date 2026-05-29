@@ -48,7 +48,7 @@ interface OrderDetailsData {
   id: string;
   tenant_id?: string;
   table_number?: number;
-  status: "pending" | "preparing" | "ready" | "cancelled" | "voided" | "served";
+  status: "pending" | "preparing" | "ready" | "cancelled" | "served";
   total_price: number;
   payment_status: "unpaid" | "paid";
   payment_method?: "cash" | "gcash" | "card" | "other";
@@ -72,15 +72,13 @@ const statusConfig: Record<string, { label: string; badgeColor: BadgeColor }> =
     preparing: { label: "Preparing", badgeColor: "accent" },
     ready: { label: "Ready", badgeColor: "success" },
     cancelled: { label: "Cancelled", badgeColor: "error" },
-    voided: { label: "Voided", badgeColor: "error" },
     served: { label: "Served", badgeColor: "success" },
   };
 
-const completionMessages: Record<string, string> = {
-  served: "This order has already been served to the customer",
-  cancelled: "This order was cancelled",
-  voided: "This order has been voided",
-};
+  const completionMessages: Record<string, string> = {
+    served: "This order has already been served to the customer",
+    cancelled: "This order was cancelled",
+  };
 
 export default function OrderDetails({
   order,
@@ -236,9 +234,7 @@ export default function OrderDetails({
     onClose();
   };
 
-  const isOrderCompleted = ["served", "cancelled", "voided"].includes(
-    localOrder.status,
-  );
+  const isOrderCompleted = ["served", "cancelled"].includes(localOrder.status);
 
   const isEditable =
     localOrder.payment_status === "unpaid" &&

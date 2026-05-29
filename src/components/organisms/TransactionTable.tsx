@@ -19,7 +19,7 @@ interface TransactionTableProps {
   businessName: string;
 }
 
-const STATUS_OPTIONS = ["all", "pending", "preparing", "ready", "served", "cancelled", "voided"] as const;
+const STATUS_OPTIONS = ["all", "pending", "preparing", "ready", "served", "cancelled"] as const;
 const PAYMENT_STATUS_OPTIONS = ["all", "unpaid", "paid", "refunded"] as const;
 
 function capitalize(value: string) {
@@ -454,7 +454,7 @@ export const TransactionTable = ({ tenantId, businessName }: TransactionTablePro
             </Button>
 
             {isFilterOpen ? (
-              <div className="absolute right-0 top-12 z-20 w-[22rem] rounded-[22px] border border-gray-100 bg-white p-5 shadow-[0_18px_45px_rgba(15,23,42,0.12)] backdrop-blur-sm">
+              <div className="absolute right-0 top-full mt-3 z-50 min-w-[20rem] rounded-2xl border border-gray-100 bg-white p-5 shadow-lg">
                 <div className="flex items-center justify-between border-b border-gray-100 pb-4">
                   <div>
                     <p className="text-sm font-bold text-text-primary">Filters</p>
@@ -479,7 +479,7 @@ export const TransactionTable = ({ tenantId, businessName }: TransactionTablePro
                           setStatusFilter(event.target.value as (typeof STATUS_OPTIONS)[number]);
                           setPage(1);
                         }}
-                        className="w-full appearance-none rounded-2xl border border-gray-200 bg-gray-50/80 px-4 py-3 pr-10 text-sm text-text-primary outline-none transition-colors focus:border-brand-primary focus:bg-white"
+                        className="w-full rounded-2xl border-2 border-[#E5E5E5] bg-white px-6 py-3.5 text-sm text-text-primary outline-none focus:border-brand-primary focus:shadow-[0_0_0_4px_rgba(255,198,112,0.08)]"
                       >
                         {STATUS_OPTIONS.map((option) => (
                           <option key={option} value={option}>
@@ -487,7 +487,7 @@ export const TransactionTable = ({ tenantId, businessName }: TransactionTablePro
                           </option>
                         ))}
                       </select>
-                      <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                      <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                     </div>
                   </label>
                   <label className="space-y-1.5">
@@ -499,7 +499,7 @@ export const TransactionTable = ({ tenantId, businessName }: TransactionTablePro
                           setPaymentStatusFilter(event.target.value as (typeof PAYMENT_STATUS_OPTIONS)[number]);
                           setPage(1);
                         }}
-                        className="w-full appearance-none rounded-2xl border border-gray-200 bg-gray-50/80 px-4 py-3 pr-10 text-sm text-text-primary outline-none transition-colors focus:border-brand-primary focus:bg-white"
+                        className="w-full rounded-2xl border-2 border-[#E5E5E5] bg-white px-6 py-3.5 text-sm text-text-primary outline-none focus:border-brand-primary focus:shadow-[0_0_0_4px_rgba(255,198,112,0.08)]"
                       >
                         {PAYMENT_STATUS_OPTIONS.map((option) => (
                           <option key={option} value={option}>
@@ -507,7 +507,7 @@ export const TransactionTable = ({ tenantId, businessName }: TransactionTablePro
                           </option>
                         ))}
                       </select>
-                      <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                      <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                     </div>
                   </label>
                   <div className="flex justify-end gap-2 pt-2">
@@ -587,7 +587,7 @@ export const TransactionTable = ({ tenantId, businessName }: TransactionTablePro
                   </td>
                   <td className="py-4 px-6 text-center">
                     <Badge
-                      color={tx.status === "cancelled" || tx.status === "voided" ? "error" : tx.status === "ready" || tx.status === "served" ? "success" : "warning"}
+                      color={tx.status === "cancelled" ? "error" : tx.status === "ready" || tx.status === "served" ? "success" : "warning"}
                       variant="subtle"
                       shape="pill"
                       className="justify-center text-[11px] py-0.5"

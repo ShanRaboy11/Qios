@@ -24,7 +24,7 @@ interface OrderData {
   id: string;
   tenant_id?: string;
   table_number?: number;
-  status: "pending" | "preparing" | "ready" | "cancelled" | "voided" | "served";
+  status: "pending" | "preparing" | "ready" | "cancelled" | "served";
   total_price: number;
   payment_status: "unpaid" | "paid";
   payment_method?: "cash" | "gcash" | "card" | "other";
