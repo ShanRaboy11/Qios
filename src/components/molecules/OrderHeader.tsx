@@ -3,7 +3,7 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 
-export type OrderStatus = "validated" | "voided" | "pending" | "processing";
+export type OrderStatus = "validated" | "pending" | "processing";
 
 interface OrderHeaderProps {
   orderId: string;
@@ -24,7 +24,6 @@ export const OrderHeader = ({
 }: OrderHeaderProps) => {
   const statusStyles = {
     validated: "bg-[#10B981] text-white",
-    voided: "bg-[#EF4444] text-white",
     pending: "bg-[#F59E0B] text-white",
     processing: "bg-brand-primary text-text-primary",
   };

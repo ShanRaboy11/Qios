@@ -8,6 +8,10 @@ import { Button } from "@/components/atoms/Button";
 import { Dropdown } from "@/components/molecules/Dropdown";
 import { AuditLogDetailsModal, AuditLogEntry } from "./AuditLogDetailsModal";
 
+interface AuditLogTableProps {
+  isLoading?: boolean;
+}
+
 const mockAuditLogs: AuditLogEntry[] = [
   {
     id: "LOG-9021",
@@ -75,7 +79,7 @@ const mockAuditLogs: AuditLogEntry[] = [
   }
 ];
 
-export const AuditLogTable = () => {
+export const AuditLogTable = ({ isLoading = false }: AuditLogTableProps) => {
   const [search, setSearch] = useState("");
   const [moduleFilter, setModuleFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
@@ -153,6 +157,34 @@ export const AuditLogTable = () => {
           </div>
         </div>
 
+        {isLoading ? (
+          <div className="overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            <table className="w-full text-left border-collapse whitespace-nowrap">
+              <thead>
+                <tr className="bg-gray-50 text-text-secondary text-[11px] font-bold uppercase tracking-wider">
+                  <th className="py-3 px-6"><div className="h-3 w-20 rounded skeleton-shimmer" /></th>
+                  <th className="py-3 px-6"><div className="h-3 w-16 rounded skeleton-shimmer" /></th>
+                  <th className="py-3 px-6"><div className="h-3 w-16 rounded skeleton-shimmer" /></th>
+                  <th className="py-3 px-6"><div className="h-3 w-16 rounded skeleton-shimmer" /></th>
+                  <th className="py-3 px-6 text-center"><div className="h-3 w-12 rounded skeleton-shimmer mx-auto" /></th>
+                  <th className="py-3 px-6 text-center"><div className="h-3 w-14 rounded skeleton-shimmer mx-auto" /></th>
+                </tr>
+              </thead>
+              <tbody>
+                {Array.from({ length: 7 }).map((_, rowIndex) => (
+                  <tr key={`audit-log-skeleton-${rowIndex}`} className="border-b border-gray-50 last:border-0">
+                    <td className="py-4 px-6"><div className="h-4 w-28 rounded skeleton-shimmer" /></td>
+                    <td className="py-4 px-6"><div className="h-4 w-28 rounded skeleton-shimmer" /></td>
+                    <td className="py-4 px-6"><div className="h-4 w-32 rounded skeleton-shimmer" /></td>
+                    <td className="py-4 px-6"><div className="h-4 w-44 max-w-full rounded skeleton-shimmer" /></td>
+                    <td className="py-4 px-6 text-center"><div className="h-6 w-20 rounded-full skeleton-shimmer mx-auto" /></td>
+                    <td className="py-4 px-6 text-center"><div className="h-9 w-9 rounded-lg skeleton-shimmer mx-auto" /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
         <div className="overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           <table className="w-full text-left border-collapse whitespace-nowrap">
             <thead>
@@ -220,6 +252,7 @@ export const AuditLogTable = () => {
             </tbody>
           </table>
         </div>
+        )}
         <div className="p-4 border-t border-gray-50 flex justify-between items-center text-sm text-text-secondary">
            <span>Showing {filteredLogs.length} of {mockAuditLogs.length} logs</span>
            <div className="flex gap-2">

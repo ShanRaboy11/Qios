@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ActionConfirmationModal } from "@/components/molecules/ConfirmationModal";
+import { RolesManagementPageSkeleton } from "@/components/molecules/PageShimmerSkeleton";
 import { useParams } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
@@ -825,11 +826,7 @@ export default function RolesManagement() {
   );
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[500px]">
-        <Loader2 className="w-8 h-8 animate-spin text-[var(--color-brand-primary)]" />
-      </div>
-    );
+    return <RolesManagementPageSkeleton />;
   }
 
   return (
