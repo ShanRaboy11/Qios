@@ -30,9 +30,12 @@ async function getEmployeeQueueContext(tenantId: string) {
   const supabase = await createSupabaseServerClient();
   const admin = createSupabaseAdminClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const [{ data: userData }, { data: sessionData }] = await Promise.all([
+    supabase.auth.getUser(),
+    supabase.auth.getSession(),
+  ]);
+
+  const user = userData.user ?? sessionData.session?.user ?? null;
 
   if (!user) {
     throw new Error("Unauthorized");

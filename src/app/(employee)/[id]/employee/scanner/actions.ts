@@ -4,18 +4,22 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { logActivity } from "@/lib/activityLogger";
 import { revalidatePath } from "next/cache";
 
-export async function processScannedQr(
-  tenantId: string,
-  qrData: string
-) {
+export async function processScannedQr(tenantId: string, qrData: string) {
   const supabase = await createSupabaseServerClient();
-  const normalizedQrData = qrData.trim().replace(/^Order\s*#\s*/i, "").replace(/^#\s*/, "");
-  const isUUID = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(normalizedQrData);
-  const tenantIsUUID = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(tenantId.trim());
-  
-  let query = supabase
-    .from("orders")
-    .select(`
+  const normalizedQrData = qrData
+    .trim()
+    .replace(/^Order\s*#\s*/i, "")
+    .replace(/^#\s*/, "");
+  const isUUID =
+    /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(
+      normalizedQrData,
+    );
+  const tenantIsUUID =
+    /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(
+      tenantId.trim(),
+    );
+
+  let query = supabase.from("orders").select(`
       id,
       tenant_id,
       table_number,
@@ -63,7 +67,9 @@ export async function processScannedQr(
   }
 
   if (!data) {
-    throw new Error("Invalid QR Code: Order not found or doesn't belong to your restaurant.");
+    throw new Error(
+      "Invalid QR Code: Order not found or doesn't belong to your restaurant.",
+    );
   }
 
   return data;
@@ -73,23 +79,31 @@ export async function updateOrderFromScanner(
   tenantId: string,
   orderId: string,
   newStatus: string,
-  actionDesc: string
+  actionDesc: string,
 ) {
   const supabase = await createSupabaseServerClient();
-  const tenantIsUUID = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(
-    tenantId.trim(),
-  );
+  const tenantIsUUID =
+    /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(
+      tenantId.trim(),
+    );
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const [{ data: userData }, { data: sessionData }] = await Promise.all([
+    supabase.auth.getUser(),
+    supabase.auth.getSession(),
+  ]);
+
+  const user = userData.user ?? sessionData.session?.user ?? null;
   if (!user) throw new Error("Unauthorized");
-  
+
   const { data: profile } = await supabase
     .from("profiles")
     .select("first_name, last_name, role")
     .eq("id", user.id)
     .single();
 
-  const actorName = profile ? `${profile.first_name} ${profile.last_name}` : "Unknown System User";
+  const actorName = profile
+    ? `${profile.first_name} ${profile.last_name}`
+    : "Unknown System User";
   const actorRole = profile?.role ?? "employee";
 
   let updateQuery = supabase
