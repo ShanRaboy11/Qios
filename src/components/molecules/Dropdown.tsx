@@ -20,6 +20,7 @@ interface DropdownProps {
   isError?: boolean;
   className?: string;
   size?: "default" | "sm";
+  disabled?: boolean;
 }
 
 export const Dropdown = ({
@@ -32,6 +33,7 @@ export const Dropdown = ({
   isError,
   className,
   size = "default",
+  disabled = false,
 }: DropdownProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -81,16 +83,20 @@ export const Dropdown = ({
 
       {/* trigger Button - Reusing Input styles logic */}
       <div
-        className="relative group cursor-pointer"
-        onClick={() => setIsOpen(!isOpen)}
+        className={cn("relative group", disabled ? "cursor-not-allowed" : "cursor-pointer")}
+        onClick={() => {
+          if (disabled) return;
+          setIsOpen(!isOpen);
+        }}
       >
         <Input
           readOnly
           placeholder={placeholder}
           value={selectedOption?.label || ""}
           isError={isError}
+          disabled={disabled}
           className={cn(
-            "cursor-pointer",
+            disabled ? "cursor-not-allowed" : "cursor-pointer",
             size === "sm"
               ? "px-3 pr-8 text-ellipsis text-xs md:text-sm"
               : "pr-12",
@@ -111,7 +117,7 @@ export const Dropdown = ({
       </div>
 
       {/* flexible Dropdown List */}
-      {isOpen && (
+      {isOpen && !disabled && (
         <div
           className={cn(
             "absolute top-[calc(85%)] left-0 z-20 bg-white border-2 border-[#E5E5E5] rounded-2xl shadow-xl overflow-hidden animate-in zoom-in-95 duration-300",
