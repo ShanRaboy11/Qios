@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import {
   AreaChart,
   Area,
@@ -10,20 +10,22 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { type RevenuePoint, type SalesPeriod } from "@/lib/salesDashboard";
 
-const data = [
-  { time: "08:00", sales: 1200 },
-  { time: "10:00", sales: 3000 },
-  { time: "12:00", sales: 8500 },
-  { time: "14:00", sales: 5200 },
-  { time: "16:00", sales: 4100 },
-  { time: "18:00", sales: 9800 },
-  { time: "20:00", sales: 11000 },
-  { time: "22:00", sales: 4500 },
-];
+interface RevenueChartProps {
+  data: RevenuePoint[];
+  period: SalesPeriod;
+  onPeriodChange: (period: SalesPeriod) => void;
+  isLoading?: boolean;
+}
 
-export const RevenueChart = () => {
-  const [filter, setFilter] = useState("Today");
+export const RevenueChart = ({
+  data,
+  period,
+  onPeriodChange,
+  isLoading = false,
+}: RevenueChartProps) => {
+  const chartData = data.map((point) => ({ time: point.label, sales: point.sales }));
 
   return (
     <div className="bg-white rounded-[24px] shadow-sm border border-gray-100 p-6 flex flex-col h-full w-full font-brand-secondary">
@@ -35,28 +37,35 @@ export const RevenueChart = () => {
           </p>
         </div>
         <div className="flex bg-gray-50 p-1 rounded-xl w-fit border border-gray-100 font-brand-secondary">
-          {["Today", "Week", "Month"].map((item) => (
+          {[
+            { label: "Today", value: "today" as SalesPeriod },
+            { label: "Week", value: "week" as SalesPeriod },
+            { label: "Month", value: "month" as SalesPeriod },
+          ].map((item) => (
             <button
-              key={item}
-              onClick={() => setFilter(item)}
+              key={item.label}
+              onClick={() => onPeriodChange(item.value)}
               className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-colors ${
-                filter === item
+                period === item.value
                   ? "bg-white text-brand-accent shadow-sm"
                   : "text-text-secondary hover:text-text-primary"
               }`}
             >
-              {item}
+              {item.label}
             </button>
           ))}
         </div>
       </div>
 
       <div className="w-full h-[300px] mt-4 font-brand-secondary">
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart
-            data={data}
-            margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-          >
+        {isLoading ? (
+          <div className="h-full w-full rounded-[20px] bg-gray-50 animate-pulse" />
+        ) : (
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart
+              data={chartData}
+              margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+            >
             <defs>
               <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="var(--brand-primary, #FFC670)" stopOpacity={0.3} />
@@ -94,8 +103,9 @@ export const RevenueChart = () => {
               fillOpacity={1}
               fill="url(#colorSales)"
             />
-          </AreaChart>
-        </ResponsiveContainer>
+            </AreaChart>
+          </ResponsiveContainer>
+        )}
       </div>
     </div>
   );

@@ -1,52 +1,37 @@
 "use client";
 
 import React from "react";
-import Image from "next/image";
+import { formatMoney, type TopSellingItem } from "@/lib/salesDashboard";
 
-const mockTopItems = [
-  {
-    id: 1,
-    name: "Truffle Burger",
-    category: "Mains",
-    sales: 342,
-    revenue: 125000,
-    trend: "+12%",
-  },
-  {
-    id: 2,
-    name: "Sweet Potato Fries",
-    category: "Sides",
-    sales: 289,
-    revenue: 43350,
-    trend: "+5%",
-  },
-  {
-    id: 3,
-    name: "Iced Caramel Macchiato",
-    category: "Beverages",
-    sales: 256,
-    revenue: 51200,
-    trend: "+18%",
-  },
-  {
-    id: 4,
-    name: "Classic Cheeseburger",
-    category: "Mains",
-    sales: 210,
-    revenue: 63000,
-    trend: "-2%",
-  },
-  {
-    id: 5,
-    name: "Onion Rings",
-    category: "Sides",
-    sales: 185,
-    revenue: 27750,
-    trend: "+8%",
-  },
-];
+interface TopSellingItemsProps {
+  items: TopSellingItem[];
+  isLoading?: boolean;
+}
 
-export const TopSellingItems = () => {
+export const TopSellingItems = ({ items, isLoading = false }: TopSellingItemsProps) => {
+  if (isLoading) {
+    return (
+      <div className="bg-white rounded-[24px] shadow-sm border border-gray-100 overflow-hidden flex flex-col h-full w-full">
+        <div className="p-6 border-b border-gray-50 flex justify-between items-center">
+          <div>
+            <div className="h-6 w-40 rounded bg-gray-100 animate-pulse" />
+            <div className="h-4 w-56 rounded bg-gray-100 animate-pulse mt-3" />
+          </div>
+        </div>
+        <div className="p-4 space-y-4">
+          {Array.from({ length: 5 }).map((_, index) => (
+            <div
+              key={`top-item-skeleton-${index}`}
+              className="h-14 rounded-2xl bg-gray-50 animate-pulse"
+            />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  const hasItems = items.length > 0;
+
   return (
     <div className="bg-white rounded-[24px] shadow-sm border border-gray-100 overflow-hidden flex flex-col h-full w-full">
       <div className="p-6 border-b border-gray-50 flex justify-between items-center">
@@ -74,7 +59,7 @@ export const TopSellingItems = () => {
               </tr>
             </thead>
             <tbody>
-              {mockTopItems.map((item, idx) => (
+              {hasItems ? items.map((item, idx) => (
                 <tr
                   key={item.id}
                   className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors"
@@ -99,16 +84,22 @@ export const TopSellingItems = () => {
                   </td>
                   <td className="py-4 px-2 sm:px-4 text-right">
                     <p className="font-bold text-text-primary text-sm">
-                      ₱{item.revenue.toLocaleString()}
+                      {formatMoney(item.revenue)}
                     </p>
                     <p
-                      className={`text-[11px] font-medium ${item.trend.startsWith("+") ? "text-success-primary" : "text-error-primary"}`}
+                      className={`text-[11px] font-medium ${item.trend >= 0 ? "text-success-primary" : "text-error-primary"}`}
                     >
-                      {item.trend}
+                      {item.trend >= 0 ? "+" : ""}{item.trend.toFixed(0)}%
                     </p>
                   </td>
                 </tr>
-              ))}
+              )) : (
+                <tr>
+                  <td colSpan={3} className="py-12 text-center text-sm text-text-secondary">
+                    No sales data available for the selected period.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

@@ -3,6 +3,7 @@
 import React from "react";
 import { DollarSign, TrendingUp, ShoppingBag, CreditCard } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatMoney, type SalesMetrics } from "@/lib/salesDashboard";
 
 interface MetricCardProps {
   title: string;
@@ -63,37 +64,59 @@ const MetricCard = ({
   );
 };
 
-export const SalesMetricCards = () => {
+interface SalesMetricCardsProps {
+  metrics: SalesMetrics | null;
+  isLoading?: boolean;
+}
+
+export const SalesMetricCards = ({ metrics, isLoading = false }: SalesMetricCardsProps) => {
+  if (isLoading || !metrics) {
+    return (
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 w-full">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <div
+            key={`sales-metric-skeleton-${index}`}
+            className="bg-white rounded-[16px] sm:rounded-[24px] shadow-sm border border-gray-100 p-4 sm:p-6 min-w-0"
+          >
+            <div className="h-4 w-24 rounded bg-gray-100 animate-pulse mb-4" />
+            <div className="h-8 w-32 rounded bg-gray-100 animate-pulse mb-4" />
+            <div className="h-4 w-28 rounded bg-gray-100 animate-pulse" />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 w-full">
       <MetricCard
         title="Gross Sales"
-        value="₱124,500.00"
-        trend={12.5}
+        value={formatMoney(metrics.grossSales)}
+        trend={metrics.grossTrend}
         icon={<DollarSign size={24} />}
         iconBgColor="bg-green-100"
         iconTextColor="text-green-600"
       />
       <MetricCard
         title="Net Sales"
-        value="₱118,250.00"
-        trend={11.2}
+        value={formatMoney(metrics.netSales)}
+        trend={metrics.netTrend}
         icon={<TrendingUp size={24} />}
         iconBgColor="bg-brand-primary/20"
         iconTextColor="text-brand-accent"
       />
       <MetricCard
         title="Total Orders"
-        value="1,452"
-        trend={8.4}
+        value={metrics.totalOrders.toLocaleString()}
+        trend={metrics.totalOrdersTrend}
         icon={<ShoppingBag size={24} />}
         iconBgColor="bg-blue-100"
         iconTextColor="text-blue-600"
       />
       <MetricCard
         title="Average Order Value"
-        value="₱85.74"
-        trend={-2.1}
+        value={formatMoney(metrics.averageOrderValue)}
+        trend={metrics.averageOrderValueTrend}
         icon={<CreditCard size={24} />}
         iconBgColor="bg-purple-100"
         iconTextColor="text-purple-600"
