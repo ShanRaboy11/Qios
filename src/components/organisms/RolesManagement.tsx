@@ -361,19 +361,19 @@ export default function RolesManagement() {
     JSON.stringify(
       activeRole
         ? {
-            name: activeRole.name,
-            color: activeRole.color,
-            permissions: activeRole.permissions,
-          }
+          name: activeRole.name,
+          color: activeRole.color,
+          permissions: activeRole.permissions,
+        }
         : null,
     ) !==
     JSON.stringify(
       draftRole
         ? {
-            name: draftRole.name,
-            color: draftRole.color,
-            permissions: draftRole.permissions,
-          }
+          name: draftRole.name,
+          color: draftRole.color,
+          permissions: draftRole.permissions,
+        }
         : null,
     );
 
@@ -432,7 +432,7 @@ export default function RolesManagement() {
         try {
           const errData = await res.json();
           if (errData.error) errMessage = errData.error;
-        } catch (_) {}
+        } catch (_) { }
         if (res.status === 403)
           throw new Error(errMessage || "insufficient privileges");
         throw new Error(errMessage);
@@ -534,7 +534,7 @@ export default function RolesManagement() {
         try {
           const errData = await res.json();
           if (errData.error) errMessage = errData.error;
-        } catch (_) {}
+        } catch (_) { }
         if (res.status === 403)
           throw new Error(errMessage || "insufficient privileges");
         throw new Error(errMessage);
@@ -659,7 +659,7 @@ export default function RolesManagement() {
         try {
           const errData = await res.json();
           if (errData.error) errMessage = errData.error;
-        } catch (_) {}
+        } catch (_) { }
         throw new Error(errMessage);
       }
 
@@ -728,7 +728,7 @@ export default function RolesManagement() {
           try {
             const errData = await res.json();
             if (errData.error) errMessage = errData.error;
-          } catch (_) {}
+          } catch (_) { }
           throw new Error(errMessage);
         }
       }
@@ -783,7 +783,7 @@ export default function RolesManagement() {
           try {
             const errData = await res.json();
             if (errData.error) errMessage = errData.error;
-          } catch (_) {}
+          } catch (_) { }
           if (res.status === 403)
             throw new Error(errMessage || "insufficient privileges");
           throw new Error(errMessage);
@@ -870,7 +870,7 @@ export default function RolesManagement() {
                     ? "bg-white shadow-md border border-white/60 scale-[1.02]"
                     : "hover:bg-white/40 border border-transparent",
                   draggedRoleId === role.id &&
-                    "opacity-50 border-dashed border-2 border-brand-primary",
+                  "opacity-50 border-dashed border-2 border-brand-primary",
                 )}
               >
                 <div className="flex items-center gap-3 min-w-0">
@@ -938,7 +938,7 @@ export default function RolesManagement() {
                             "w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0 rounded-full shadow-md transition-transform duration-200 hover:scale-110 flex items-center justify-center",
                             color,
                             draftRole.color === color &&
-                              "ring-4 ring-brand-primary/30 scale-110",
+                            "ring-4 ring-brand-primary/30 scale-110",
                           )}
                         >
                           {draftRole.color === color && (

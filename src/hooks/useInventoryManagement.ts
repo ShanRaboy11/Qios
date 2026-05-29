@@ -56,6 +56,40 @@ export const useInventoryManagement = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [actionError, setActionError] = useState<string | null>(null);
 
+  // ---------------------------------------------------------------------------
+  // Audit logging helper — posts to the server-side log endpoint (non-fatal)
+  // ---------------------------------------------------------------------------
+  const logAuditEvent = async (payload: {
+    actionType: "CREATE" | "UPDATE" | "DELETE";
+    description: string;
+    targetId?: string;
+    targetName?: string;
+    metadata?: Record<string, unknown>;
+    tenantId: string;
+  }) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) return;
+      await fetch(`/api/tenants/${payload.tenantId}/audit-logs/log`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          actionType: payload.actionType,
+          description: payload.description,
+          targetType: "inventory",
+          targetId: payload.targetId,
+          targetName: payload.targetName,
+          metadata: payload.metadata,
+        }),
+      });
+    } catch {
+      // Non-fatal — never block primary operation
+    }
+  };
+
   const toUiInventoryMode = (mode: InventoryModeDb): InventoryModeUI =>
     mode === "unit" ? "unit" : "measurement";
 
@@ -213,6 +247,14 @@ export const useInventoryManagement = () => {
         if (error) throw error;
         const mapped = mapRowToItem(data as InventoryItemRow);
         setItems((prev) => [...prev, mapped]);
+        void logAuditEvent({
+          tenantId,
+          actionType: "CREATE",
+          description: `Added inventory item: ${mapped.name}`,
+          targetId: mapped.id,
+          targetName: mapped.name,
+          metadata: { unit_type: mapped.unit_type, current_stock: mapped.current_stock },
+        });
         return { item: mapped, error: null as string | null };
       } else {
         if (!draft.id) throw new Error("Missing id for update");
@@ -246,6 +288,14 @@ export const useInventoryManagement = () => {
         if (error) throw error;
         const mapped = mapRowToItem(data as InventoryItemRow);
         setItems((prev) => prev.map((i) => (i.id === draft.id ? mapped : i)));
+        void logAuditEvent({
+          tenantId,
+          actionType: "UPDATE",
+          description: `Updated inventory item: ${mapped.name}`,
+          targetId: mapped.id,
+          targetName: mapped.name,
+          metadata: { unit_type: mapped.unit_type, current_stock: mapped.current_stock },
+        });
         return { item: mapped, error: null as string | null };
       }
     } catch (e) {
@@ -260,6 +310,7 @@ export const useInventoryManagement = () => {
     setActionError(null);
     try {
       const tenantId = await getCurrentTenantId();
+      const deletedItem = items.find((i) => i.id === id);
       const { error } = await supabase
         .from("inventory_items")
         .delete()
@@ -268,6 +319,14 @@ export const useInventoryManagement = () => {
 
       if (error) throw error;
       setItems((prev) => prev.filter((i) => i.id !== id));
+      void logAuditEvent({
+        tenantId,
+        actionType: "DELETE",
+        description: `Deleted inventory item: ${deletedItem?.name ?? id}`,
+        targetId: id,
+        targetName: deletedItem?.name,
+        metadata: { unit_type: deletedItem?.unit_type },
+      });
       return true;
     } catch (e) {
       setActionError(getErrorMessage(e, "Failed to delete inventory item."));

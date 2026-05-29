@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { logEmployeeActivity } from "@/lib/employeeAuditLogger";
 
 import { requireEmployeePermission } from "@/lib/serverPermissions";
 
@@ -156,6 +157,20 @@ export async function POST(
     name: fullName,
     email: normalizedEmail,
   };
+
+  // Log the new employee creation to employee audit logs
+  void logEmployeeActivity({
+    tenantId,
+    actorId: auth.userId,
+    actorName: auth.actorName ?? "Unknown",
+    actorRole: auth.actorRole ?? "admin",
+    actionType: "CREATE",
+    description: `Added staff member: ${fullName}`,
+    targetType: "staff",
+    targetId: authData.user.id,
+    targetName: fullName,
+    metadata: { email: normalizedEmail, roleId },
+  });
 
   return new Response(JSON.stringify(newEmployee), { status: 201 });
 }

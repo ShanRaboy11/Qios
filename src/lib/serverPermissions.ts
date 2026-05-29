@@ -7,6 +7,8 @@ type PermissionCheckResult =
       ok: true;
       admin: ReturnType<typeof createSupabaseAdminClient>;
       userId: string;
+      actorName?: string | null;
+      actorRole?: string | null;
     }
   | { ok: false; status: number; message: string };
 
@@ -41,7 +43,7 @@ export async function requireEmployeePermission(
 
   const { data: profile, error: profileError } = await admin
     .from("profiles")
-    .select("role, tenant_id, app_role_id")
+    .select("role, tenant_id, app_role_id, full_name")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -50,7 +52,7 @@ export async function requireEmployeePermission(
   }
 
   if (profile.role === "super_admin") {
-    return { ok: true, admin, userId: user.id };
+    return { ok: true, admin, userId: user.id, actorName: profile.full_name, actorRole: profile.role };
   }
 
   if (profile.tenant_id !== tenantId) {
@@ -58,7 +60,7 @@ export async function requireEmployeePermission(
   }
 
   if (profile.role === "admin") {
-    return { ok: true, admin, userId: user.id };
+    return { ok: true, admin, userId: user.id, actorName: profile.full_name, actorRole: profile.role };
   }
 
   if (profile.role === "employee" && requiredPermission) {
@@ -89,7 +91,7 @@ export async function requireEmployeePermission(
     }
   }
 
-  return { ok: true, admin, userId: user.id };
+  return { ok: true, admin, userId: user.id, actorName: profile.full_name, actorRole: profile.role };
 }
 
 export async function getEmployeePermissionsForTenant(

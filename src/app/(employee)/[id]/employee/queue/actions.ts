@@ -3,6 +3,7 @@
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { logActivity } from "@/lib/activityLogger";
+import { logEmployeeActivity } from "@/lib/employeeAuditLogger";
 import {
   canAccessEmployeeRoute,
   canUpdateEmployeeOrderStatus,
@@ -235,6 +236,20 @@ export async function updateOrderPaymentStatus(
     actionType: "UPDATE",
     description: `Updated order ${orderId} payment status to ${paymentStatus}`,
     targetTenantId: tenantId,
+  });
+
+  // Log payment collection to employee_audit_logs (sales)
+  void logEmployeeActivity({
+    tenantId,
+    actorId: user.id,
+    actorName,
+    actorRole,
+    actionType: "CREATE",
+    description: `Payment collected for order #${orderId.substring(0, 8).toUpperCase()} via ${paymentMethod}`,
+    targetType: "order",
+    targetId: orderId,
+    targetName: `Order #${orderId.substring(0, 8).toUpperCase()}`,
+    metadata: { paymentMethod, paymentStatus },
   });
 
   revalidatePath(`/(employee)/[id]/employee/queue`, "page");

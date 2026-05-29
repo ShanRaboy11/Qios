@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { logEmployeeActivity } from "@/lib/employeeAuditLogger";
 
 import { requireEmployeePermission } from "@/lib/serverPermissions";
 
@@ -118,6 +119,18 @@ export async function DELETE(
       status: 500,
     });
   }
+
+  // Log the role deletion to employee audit logs
+  void logEmployeeActivity({
+    tenantId,
+    actorId: auth.userId,
+    actorName: auth.actorName ?? "Unknown",
+    actorRole: auth.actorRole ?? "admin",
+    actionType: "DELETE",
+    description: `Deleted role: ${roleId}`,
+    targetType: "role",
+    targetId: roleId,
+  });
 
   return new Response(null, { status: 204 });
 }

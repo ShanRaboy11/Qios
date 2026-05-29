@@ -17,6 +17,8 @@ import {
 interface TransactionTableProps {
   tenantId: string;
   businessName: string;
+  /** Override the fetch endpoint. Defaults to /api/tenants/{tenantId}/sales */
+  apiPath?: string;
 }
 
 const STATUS_OPTIONS = ["all", "pending", "preparing", "ready", "served", "cancelled"] as const;
@@ -206,7 +208,8 @@ function TransactionDetailsModal({ transaction, isOpen, onClose }: TransactionDe
   );
 }
 
-export const TransactionTable = ({ tenantId, businessName }: TransactionTableProps) => {
+export const TransactionTable = ({ tenantId, businessName, apiPath }: TransactionTableProps) => {
+  const resolvedApiPath = apiPath ?? `/api/tenants/${tenantId}/sales`;
   const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<(typeof STATUS_OPTIONS)[number]>("all");
@@ -255,7 +258,7 @@ export const TransactionTable = ({ tenantId, businessName }: TransactionTablePro
           paymentStatus: paymentStatusFilter,
         });
 
-        const response = await fetch(`/api/tenants/${tenantId}/sales?${params.toString()}`, {
+        const response = await fetch(`${resolvedApiPath}?${params.toString()}`, {
           signal: controller.signal,
         });
         const payload = (await response.json()) as SalesTransactionResponse & { error?: string };
@@ -310,7 +313,7 @@ export const TransactionTable = ({ tenantId, businessName }: TransactionTablePro
         paymentStatus: paymentStatusFilter,
       });
 
-      const response = await fetch(`/api/tenants/${tenantId}/sales?${params.toString()}`);
+      const response = await fetch(`${resolvedApiPath}?${params.toString()}`);
       const payload = (await response.json()) as SalesTransactionResponse & { error?: string };
 
       if (!response.ok) {
