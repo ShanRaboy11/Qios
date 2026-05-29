@@ -15,7 +15,9 @@ export default function MenuPage() {
           </p>
         </div>
       </div>
-      <MenuCategoryManagement />
+      <div id="tutorial-menu-grid">
+        <MenuCategoryManagement />
+      </div>
     </>
   );
 }

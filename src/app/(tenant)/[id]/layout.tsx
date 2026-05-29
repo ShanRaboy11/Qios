@@ -2,6 +2,7 @@ import React from "react";
 import { TenantBrandingProvider } from "@/components/providers/TenantBrandingProvider";
 import { TenantDashboardShell } from "@/components/organisms/TenantDashboardShell";
 import { fetchTenantBranding } from "@/lib/tenantBranding";
+import { TutorialProvider } from "@/components/providers/TutorialProvider";
 
 export default async function TenantLayout({
   children,
@@ -15,9 +16,11 @@ export default async function TenantLayout({
 
   return (
     <TenantBrandingProvider branding={branding}>
-      <TenantDashboardShell storeName={storeName}>
-        {children}
-      </TenantDashboardShell>
+      <TutorialProvider>
+        <TenantDashboardShell storeName={storeName}>
+          {children}
+        </TenantDashboardShell>
+      </TutorialProvider>
     </TenantBrandingProvider>
   );
 }

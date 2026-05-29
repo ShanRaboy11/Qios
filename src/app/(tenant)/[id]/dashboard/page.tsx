@@ -82,13 +82,15 @@ export default function TenantDashboardPage() {
         onClose={() => {}}
       />
 
-      <TenantMetricsSection />
+      <div id="tutorial-metrics">
+        <TenantMetricsSection />
+      </div>
 
       <div className="flex flex-col lg:flex-row gap-6">
-        <div className="w-full lg:w-[65%]">
+        <div id="tutorial-charts" className="w-full lg:w-[65%]">
           <SalesAndPurchaseChart />
         </div>
-        <div className="w-full lg:w-[35%]">
+        <div id="tutorial-overall" className="w-full lg:w-[35%]">
           <OverallInformation />
         </div>
       </div>

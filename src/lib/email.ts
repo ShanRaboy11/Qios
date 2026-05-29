@@ -84,51 +84,78 @@ const createTransporter = (config: SmtpConfig) =>
     port: config.port,
     secure: config.secure,
     auth: { user: config.user, pass: config.pass },
+    tls: {
+      rejectUnauthorized: false,
+    },
   });
 
 /**
- * Resolve SMTP config from DB (platform_settings) falling back to env.
+ * Resolve SMTP config from DB (platform_settings) with field-by-field and complete fallbacks to environment variables.
  */
 const resolveSmtpConfig = async (): Promise<SmtpConfig | null> => {
+  const envConfig = readSmtpConfig();
+
   try {
     const supabase = createSupabaseAdminClient();
+    if (!supabase) {
+      console.warn("Supabase admin client not initialized. Falling back completely to environment variables.");
+      return envConfig;
+    }
+
     const { data, error } = await supabase
       .from("platform_settings")
       .select(
-        "smtp_host, smtp_port, smtp_secure, smtp_user, smtp_password, smtp_from_name, smtp_from_email",
+        "smtp_host, smtp_port, smtp_secure, smtp_user, smtp_password, smtp_from_name, smtp_from_email"
       )
       .limit(1)
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.warn("Could not load SMTP settings from DB, falling back to env:", error.message || error);
-      return readSmtpConfig();
+      return envConfig;
     }
-    if (!data) return readSmtpConfig();
 
-    const host = data.smtp_host;
-    const user = data.smtp_user;
-    const pass = data.smtp_password;
-    const fromName = data.smtp_from_name || process.env.SMTP_FROM_NAME || "Qios";
-    const fromAddress = data.smtp_from_email || process.env.SMTP_FROM_EMAIL || user || "";
+    if (!data) {
+      console.warn("No platform_settings row found, falling back to env.");
+      return envConfig;
+    }
 
-    if (!host || !user || !pass || !fromAddress) return readSmtpConfig();
+    // Blend DB settings with environment variables as fallbacks
+    const host = data.smtp_host || envConfig?.host;
+    const user = data.smtp_user || envConfig?.user;
+    const pass = data.smtp_password || envConfig?.pass;
+    const fromName = data.smtp_from_name || envConfig?.from?.name || "Qios";
+    const fromAddress = data.smtp_from_email || envConfig?.from?.address || user || "";
 
-    const port = data.smtp_port ? Number(data.smtp_port) : Number(process.env.SMTP_PORT || 587);
-    const secure =
-      data.smtp_secure !== null && data.smtp_secure !== undefined ? !!data.smtp_secure : port === 465;
+    if (!host || !user || !pass || !fromAddress) {
+      console.warn("Incomplete SMTP settings in both DB and env configurations.");
+      return null;
+    }
+
+    const portVal = data.smtp_port !== null && data.smtp_port !== undefined
+      ? Number(data.smtp_port)
+      : envConfig?.port ?? 587;
+
+    const port = Number.isNaN(portVal) ? 587 : portVal;
+
+    // Force secure connection when using standard SSL port 465 to prevent handshake socket closures
+    const secure = port === 465 || (
+      data.smtp_secure !== null && data.smtp_secure !== undefined
+        ? !!data.smtp_secure
+        : envConfig?.secure ?? false
+    );
 
     return {
       host,
-      port: Number.isNaN(port) ? 587 : port,
+      port,
       secure,
       user,
       pass,
       from: { name: fromName, address: fromAddress },
     };
-  } catch (err) {
-    console.warn("Error resolving SMTP config from DB, falling back to env:", err);
-    return readSmtpConfig();
+  } catch (err: any) {
+    console.warn("Error resolving SMTP config from DB, falling back completely to env:", err?.message || err);
+    return envConfig;
   }
 };
 
