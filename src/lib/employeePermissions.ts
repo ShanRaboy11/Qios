@@ -36,16 +36,16 @@ const EMPLOYEE_ROUTE_REQUIREMENTS: Record<string, string[]> = {
 };
 
 const EMPLOYEE_ROUTE_PRIORITY = [
-  "dashboard",
   "queue",
   "kitchen",
   "scanner",
   "inventory_audit",
   "transactions",
   "settings",
+  "dashboard",
 ];
 
-function hasPermission(
+export function hasPermission(
   permissions: RolePermissions | null,
   permissionName: string,
 ) {

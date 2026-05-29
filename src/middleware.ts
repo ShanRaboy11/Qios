@@ -51,6 +51,7 @@ export async function middleware(request: NextRequest) {
     "auth",
     "contact",
     "draft",
+    "legal",
     "login",
     "onboarding",
     "services",

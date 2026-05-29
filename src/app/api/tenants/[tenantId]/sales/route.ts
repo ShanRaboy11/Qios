@@ -33,34 +33,7 @@ type OrderRow = {
   order_items?: OrderItemRow[] | null;
 };
 
-async function requireTenantAccess(tenantId: string) {
-  const supabase = await createSupabaseServerClient();
-  const admin = createSupabaseAdminClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { ok: false as const, status: 401, message: "Unauthorized" };
-  }
-
-  const { data: profile, error } = await admin
-    .from("profiles")
-    .select("role, tenant_id")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if (error || !profile) {
-    return { ok: false as const, status: 403, message: "Profile not found" };
-  }
-
-  if (profile.role !== "super_admin" && profile.tenant_id !== tenantId) {
-    return { ok: false as const, status: 403, message: "Unauthorized" };
-  }
-
-  return { ok: true as const, admin };
-}
+import { requireEmployeePermission } from "@/lib/serverPermissions";
 
 function parsePeriod(value: string | null): SalesPeriod {
   if (value === "today" || value === "week" || value === "month") {
@@ -533,7 +506,7 @@ export async function GET(
   context: { params: Promise<{ tenantId: string }> },
 ) {
   const { tenantId } = await context.params;
-  const auth = await requireTenantAccess(tenantId);
+  const auth = await requireEmployeePermission(tenantId, "Revenue Dashboard");
 
   if (!auth.ok) {
     return NextResponse.json({ error: auth.message }, { status: auth.status });

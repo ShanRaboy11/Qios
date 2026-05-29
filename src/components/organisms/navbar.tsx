@@ -310,7 +310,11 @@ export const Navbar = ({
       ? employeeLinks.filter((link) =>
           canAccessEmployeeRoute(employeePermissions, link.id),
         )
-      : employeeLinks;
+      : type === "employee"
+        ? employeeLinks.filter((link) =>
+            canAccessEmployeeRoute(employeePermissions, link.id),
+          )
+        : employeeLinks;
 
   const links =
     type === "admin"
@@ -356,7 +360,11 @@ export const Navbar = ({
         className="shrink-0 relative cursor-pointer flex items-center"
       >
         {(type === "tenant" || type === "employee") && tenantLogoUrl ? (
-          <img src={tenantLogoUrl} alt="Tenant Logo" className="h-10 w-auto object-contain" />
+          <img
+            src={tenantLogoUrl}
+            alt="Tenant Logo"
+            className="h-10 w-auto object-contain"
+          />
         ) : (
           <span
             className="font-ibrand"
