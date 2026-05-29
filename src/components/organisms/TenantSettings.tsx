@@ -14,8 +14,10 @@ import {
   LogOut,
   Trash2,
   Palette,
+  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { TenantProfileSettings } from "./TenantProfileSettings";
 import { TenantStoreSettings } from "./TenantStoreSettings";
@@ -48,11 +50,17 @@ export const TenantSettings = ({
   initialTab = "profile",
   scrollToQrSection = false,
 }: TenantSettingsProps) => {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<SettingsTab>(initialTab);
 
   useEffect(() => {
     setActiveTab(initialTab);
   }, [initialTab]);
+
+  const handleRestartTutorial = () => {
+    // Redirects to dashboard and triggers the interactive tour automatically
+    router.push(`/${tenantId}/dashboard?startTutorial=true`);
+  };
 
   const tabs = [
     { id: "profile", label: "Profile Settings", icon: User },
@@ -103,6 +111,19 @@ export const TenantSettings = ({
             </button>
           );
         })}
+
+        <div className="h-px bg-gray-100 my-2" />
+
+        <button
+          onClick={handleRestartTutorial}
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-brand-accent/5 to-amber-500/5 border border-brand-accent/20 text-brand-accent hover:from-brand-accent/10 hover:to-amber-500/10 hover:scale-[1.01] active:scale-[0.99] transition-all duration-200 text-left group shadow-sm shadow-brand-accent/5"
+        >
+          <Sparkles
+            size={20}
+            className="flex-shrink-0 text-brand-accent animate-pulse"
+          />
+          <span className="font-bold text-[15px]">Restart Portal Tour</span>
+        </button>
       </div>
 
       {/* content area */}
