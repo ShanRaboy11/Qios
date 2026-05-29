@@ -83,7 +83,10 @@ export const Dropdown = ({
 
       {/* trigger Button - Reusing Input styles logic */}
       <div
-        className={cn("relative group", disabled ? "cursor-not-allowed" : "cursor-pointer")}
+        className={cn(
+          "relative group",
+          disabled ? "cursor-not-allowed" : "cursor-pointer",
+        )}
         onClick={() => {
           if (disabled) return;
           setIsOpen(!isOpen);

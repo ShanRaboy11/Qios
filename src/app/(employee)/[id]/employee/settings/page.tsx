@@ -9,5 +9,7 @@ export default async function EmployeeSettingsPage({
   const { id: tenantId } = await params;
   const initialData = await getEmployeeSettingsPageData(tenantId);
 
-  return <EmployeeSettingsClient tenantId={tenantId} initialData={initialData} />;
+  return (
+    <EmployeeSettingsClient tenantId={tenantId} initialData={initialData} />
+  );
 }

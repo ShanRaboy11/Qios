@@ -19,7 +19,11 @@ import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
 import { Toggle } from "@/components/atoms/Toggle";
 import { Dropdown } from "@/components/molecules/Dropdown";
-import { saveEmployeeOperationalSettings, saveEmployeeProfileSettings, updateEmployeePassword } from "./actions";
+import {
+  saveEmployeeOperationalSettings,
+  saveEmployeeProfileSettings,
+  updateEmployeePassword,
+} from "./actions";
 import {
   emptySettingsActionState,
   type EmployeeSettingsPageData,
@@ -86,7 +90,9 @@ export function EmployeeSettingsClient({
   const [preferencesEditMode, setPreferencesEditMode] = useState(false);
 
   const [profileData, setProfileData] = useState(initialData.profile);
-  const [operationalData, setOperationalData] = useState(initialData.operational);
+  const [operationalData, setOperationalData] = useState(
+    initialData.operational,
+  );
 
   const [profileState, setProfileState] = useState<SettingsActionState>(
     emptySettingsActionState,
@@ -119,7 +125,11 @@ export function EmployeeSettingsClient({
   const tabs = [
     { id: "profile", label: "Profile Details", icon: <User size={18} /> },
     { id: "shift", label: "Shift & Operations", icon: <Sliders size={18} /> },
-    { id: "security", label: "Security & Passwords", icon: <Shield size={18} /> },
+    {
+      id: "security",
+      label: "Security & Passwords",
+      icon: <Shield size={18} />,
+    },
     { id: "notifications", label: "Sounds & Alerts", icon: <Bell size={18} /> },
   ] as const;
 
@@ -139,7 +149,11 @@ export function EmployeeSettingsClient({
       formData.set("displayName", profileData.displayName);
       formData.set("phoneNumber", profileData.phoneNumber);
 
-      const result = await saveEmployeeProfileSettings(tenantId, profileState, formData);
+      const result = await saveEmployeeProfileSettings(
+        tenantId,
+        profileState,
+        formData,
+      );
       setProfileState(result);
 
       if (result.success) {
@@ -204,7 +218,11 @@ export function EmployeeSettingsClient({
       formData.set("newPassword", newPassword);
       formData.set("confirmPassword", confirmPassword);
 
-      const result = await updateEmployeePassword(tenantId, securityState, formData);
+      const result = await updateEmployeePassword(
+        tenantId,
+        securityState,
+        formData,
+      );
       setSecurityState(result);
 
       if (result.success) {
@@ -250,7 +268,10 @@ export function EmployeeSettingsClient({
 
         <div className="flex-1 w-full bg-white/70 backdrop-blur-md border border-brand-primary/10 rounded-[32px] p-6 md:p-8 shadow-sm">
           {activeTab === "profile" && (
-            <form onSubmit={submitProfile} className="space-y-6 animate-in fade-in duration-300">
+            <form
+              onSubmit={submitProfile}
+              className="space-y-6 animate-in fade-in duration-300"
+            >
               <div className="flex items-center gap-4 flex-wrap pb-4 border-b border-brand-primary/5">
                 <div className="w-16 h-16 rounded-full bg-brand-accent/10 border border-brand-accent/20 flex items-center justify-center text-brand-accent font-figtree text-2xl font-bold">
                   {(profileData.fullName || profileData.displayName || "E")
@@ -263,7 +284,9 @@ export function EmployeeSettingsClient({
                     .toUpperCase()}
                 </div>
                 <div>
-                  <h3 className="h3 text-text-primary font-figtree">Personal Profile</h3>
+                  <h3 className="h3 text-text-primary font-figtree">
+                    Personal Profile
+                  </h3>
                   <div className="flex gap-2 mt-1.5 flex-wrap">
                     <Badge color="accent" variant="subtle">
                       Role: {profileData.roleLabel}
@@ -317,7 +340,12 @@ export function EmployeeSettingsClient({
                   <label className="b4 text-text-secondary font-bold uppercase tracking-wider font-inter ml-1">
                     Email Address
                   </label>
-                  <Input type="email" value={profileData.email} disabled readOnly />
+                  <Input
+                    type="email"
+                    value={profileData.email}
+                    disabled
+                    readOnly
+                  />
                 </div>
 
                 <div className="space-y-2">
@@ -341,7 +369,9 @@ export function EmployeeSettingsClient({
               <div className="mt-8 pt-6 border-t border-brand-primary/10 flex justify-end gap-3">
                 <Button
                   type={profileEditMode ? "submit" : "button"}
-                  onClick={profileEditMode ? undefined : () => setProfileEditMode(true)}
+                  onClick={
+                    profileEditMode ? undefined : () => setProfileEditMode(true)
+                  }
                   disabled={profileSaving}
                   variant="accent"
                   shape="pill"
@@ -354,18 +384,28 @@ export function EmployeeSettingsClient({
                     )
                   }
                 >
-                  {profileEditMode ? (profileSaving ? "Saving..." : "Save Profile") : "Edit Profile"}
+                  {profileEditMode
+                    ? profileSaving
+                      ? "Saving..."
+                      : "Save Profile"
+                    : "Edit Profile"}
                 </Button>
               </div>
             </form>
           )}
 
           {activeTab === "shift" && (
-            <form onSubmit={submitPreferences} className="space-y-6 animate-in fade-in duration-300">
+            <form
+              onSubmit={submitPreferences}
+              className="space-y-6 animate-in fade-in duration-300"
+            >
               <div className="pb-4 border-b border-brand-primary/5">
-                <h3 className="h3 text-text-primary font-figtree">Shift & Operational Defaults</h3>
+                <h3 className="h3 text-text-primary font-figtree">
+                  Shift & Operational Defaults
+                </h3>
                 <p className="b4 text-text-secondary mt-1 font-inter">
-                  Manage your active terminal, quick dashboard routing, and screen lock behavior.
+                  Manage your active terminal, quick dashboard routing, and
+                  screen lock behavior.
                 </p>
               </div>
 
@@ -415,9 +455,15 @@ export function EmployeeSettingsClient({
                 />
 
                 <div className="p-4 bg-brand-primary/5 rounded-[18px] border border-brand-primary/10 flex items-start gap-3 mt-4">
-                  <Terminal size={18} className="text-brand-accent flex-shrink-0 mt-0.5" />
+                  <Terminal
+                    size={18}
+                    className="text-brand-accent flex-shrink-0 mt-0.5"
+                  />
                   <p className="text-xs text-text-secondary leading-relaxed font-inter">
-                    <strong>Station Binding Alert:</strong> Changing your counter/terminal session will direct all transactions, printable receipts, and active queue logs to the selected hardware hub.
+                    <strong>Station Binding Alert:</strong> Changing your
+                    counter/terminal session will direct all transactions,
+                    printable receipts, and active queue logs to the selected
+                    hardware hub.
                   </p>
                 </div>
               </div>
@@ -427,7 +473,10 @@ export function EmployeeSettingsClient({
               <div className="space-y-5">
                 <div className="space-y-2 max-w-sm">
                   <label className="b4 text-text-secondary font-bold uppercase tracking-wider font-inter ml-1 flex items-center gap-1.5">
-                    <Lock size={14} className="text-brand-accent animate-pulse" />
+                    <Lock
+                      size={14}
+                      className="text-brand-accent animate-pulse"
+                    />
                     4-Digit Terminal Quick PIN
                   </label>
                   <Input
@@ -450,59 +499,7 @@ export function EmployeeSettingsClient({
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {[
-                    {
-                      label: "Queue Placement Chime",
-                      description: "Play a gentle chime when a customer places a new order or updates queue status.",
-                      value: operationalData.soundQueue,
-                      setter: (next: boolean) =>
-                        setOperationalData((previous) => ({ ...previous, soundQueue: next })),
-                    },
-                    {
-                      label: "Scan Matching Beep",
-                      description: "Play a success beep once a customer ticket QR code scan finishes.",
-                      value: operationalData.soundScan,
-                      setter: (next: boolean) =>
-                        setOperationalData((previous) => ({ ...previous, soundScan: next })),
-                    },
-                    {
-                      label: "Critical Stock Alerts",
-                      description: "Play a low-frequency alert beep if an item scanned falls below inventory levels.",
-                      value: operationalData.soundStock,
-                      setter: (next: boolean) =>
-                        setOperationalData((previous) => ({ ...previous, soundStock: next })),
-                    },
-                    {
-                      label: "Mobile Push indicators",
-                      description: "Get fast notification banner alerts on emergency store messages or priority tasks.",
-                      value: operationalData.notifyPush,
-                      setter: (next: boolean) =>
-                        setOperationalData((previous) => ({ ...previous, notifyPush: next })),
-                    },
-                  ].map((item) => (
-                    <div
-                      key={item.label}
-                      className="flex items-center justify-between p-5 border border-brand-primary/10 rounded-[24px] bg-white/50 hover:bg-white/80 transition-all"
-                    >
-                      <div className="flex-1 pr-4">
-                        <p className="b2 font-bold text-text-primary font-figtree flex items-center gap-1.5">
-                          <Volume2 size={16} className="text-brand-accent" />
-                          {item.label}
-                        </p>
-                        <p className="text-xs text-text-secondary mt-0.5 leading-relaxed font-inter">
-                          {item.description}
-                        </p>
-                      </div>
-                      <Toggle
-                        variant="accent"
-                        isOn={item.value}
-                        onChange={item.setter}
-                        disabled={!preferencesEditMode}
-                      />
-                    </div>
-                  ))}
-                </div>
+                {/* Sound effects moved to Sounds & Alerts tab */}
 
                 <div className="flex items-center justify-between p-5 border border-brand-primary/10 rounded-[24px] bg-white/50 hover:bg-white/80 transition-all">
                   <div className="flex-1 pr-4">
@@ -511,14 +508,18 @@ export function EmployeeSettingsClient({
                       Email shift updates
                     </p>
                     <p className="text-xs text-text-secondary mt-0.5 leading-relaxed font-inter">
-                      Receive scheduling, roster modifications, or store reports on your email.
+                      Receive scheduling, roster modifications, or store reports
+                      on your email.
                     </p>
                   </div>
                   <Toggle
                     variant="accent"
                     isOn={operationalData.notifyEmail}
                     onChange={(next) =>
-                      setOperationalData((previous) => ({ ...previous, notifyEmail: next }))
+                      setOperationalData((previous) => ({
+                        ...previous,
+                        notifyEmail: next,
+                      }))
                     }
                     disabled={!preferencesEditMode}
                   />
@@ -528,7 +529,11 @@ export function EmployeeSettingsClient({
               <div className="mt-8 pt-6 border-t border-brand-primary/10 flex justify-end gap-3">
                 <Button
                   type={preferencesEditMode ? "submit" : "button"}
-                  onClick={preferencesEditMode ? undefined : () => setPreferencesEditMode(true)}
+                  onClick={
+                    preferencesEditMode
+                      ? undefined
+                      : () => setPreferencesEditMode(true)
+                  }
                   disabled={preferencesSaving}
                   variant="accent"
                   shape="pill"
@@ -552,9 +557,14 @@ export function EmployeeSettingsClient({
           )}
 
           {activeTab === "security" && (
-            <form onSubmit={submitPassword} className="space-y-6 animate-in fade-in duration-300">
+            <form
+              onSubmit={submitPassword}
+              className="space-y-6 animate-in fade-in duration-300"
+            >
               <div className="pb-4 border-b border-brand-primary/5">
-                <h3 className="h3 text-text-primary font-figtree">Security & Credentials</h3>
+                <h3 className="h3 text-text-primary font-figtree">
+                  Security & Credentials
+                </h3>
                 <p className="b4 text-text-secondary mt-1 font-inter">
                   Manage active logins and change your password credentials.
                 </p>
@@ -576,7 +586,9 @@ export function EmployeeSettingsClient({
                       type="password"
                       placeholder="••••••••"
                       value={currentPassword}
-                      onChange={(event) => setCurrentPassword(event.target.value)}
+                      onChange={(event) =>
+                        setCurrentPassword(event.target.value)
+                      }
                       required
                     />
                   </div>
@@ -602,7 +614,9 @@ export function EmployeeSettingsClient({
                       type="password"
                       placeholder="••••••••"
                       value={confirmPassword}
-                      onChange={(event) => setConfirmPassword(event.target.value)}
+                      onChange={(event) =>
+                        setConfirmPassword(event.target.value)
+                      }
                       required
                     />
                   </div>
@@ -616,7 +630,12 @@ export function EmployeeSettingsClient({
                   <Lock size={14} className="text-brand-accent animate-pulse" />
                   Active Session Email
                 </label>
-                <Input type="email" value={profileData.email} disabled readOnly />
+                <Input
+                  type="email"
+                  value={profileData.email}
+                  disabled
+                  readOnly
+                />
                 <p className="text-[11px] text-text-secondary font-inter ml-1">
                   Password updates are tied to the signed-in account email.
                 </p>
@@ -625,7 +644,11 @@ export function EmployeeSettingsClient({
               <div className="mt-8 pt-6 border-t border-brand-primary/10 flex justify-end gap-3">
                 <Button
                   type={securityEditMode ? "submit" : "button"}
-                  onClick={securityEditMode ? undefined : () => setSecurityEditMode(true)}
+                  onClick={
+                    securityEditMode
+                      ? undefined
+                      : () => setSecurityEditMode(true)
+                  }
                   disabled={securitySaving}
                   variant="accent"
                   shape="pill"
@@ -638,7 +661,11 @@ export function EmployeeSettingsClient({
                     )
                   }
                 >
-                  {securityEditMode ? (securitySaving ? "Saving..." : "Save Password") : "Edit Password"}
+                  {securityEditMode
+                    ? securitySaving
+                      ? "Saving..."
+                      : "Save Password"
+                    : "Edit Password"}
                 </Button>
               </div>
             </form>
@@ -647,56 +674,88 @@ export function EmployeeSettingsClient({
           {activeTab === "notifications" && (
             <div className="space-y-6 animate-in fade-in duration-300">
               <div className="pb-4 border-b border-brand-primary/5">
-                <h3 className="h3 text-text-primary font-figtree">Sound Effects & Alerts</h3>
+                <h3 className="h3 text-text-primary font-figtree">
+                  Sound Effects & Alerts
+                </h3>
                 <p className="b4 text-text-secondary mt-1 font-inter">
-                  These alerts are synced with the operational preferences you save in Shift & Operations.
+                  These alerts are synced with the operational preferences you
+                  save in Shift & Operations.
                 </p>
               </div>
 
               <div className="space-y-4">
-                <div className="flex items-center justify-between p-5 border border-brand-primary/10 rounded-[24px] bg-white/50 hover:bg-white/80 transition-all">
-                  <div className="flex-1 pr-4">
-                    <p className="b2 font-bold text-text-primary font-figtree flex items-center gap-1.5">
-                      <Volume2 size={16} className="text-brand-accent" />
-                      Queue Placement Chime
-                    </p>
-                    <p className="text-xs text-text-secondary mt-0.5 leading-relaxed font-inter">
-                      Play a gentle chime when a customer places a new order or updates queue status.
-                    </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex items-center justify-between p-5 border border-brand-primary/10 rounded-[24px] bg-white/50 hover:bg-white/80 transition-all">
+                    <div className="flex-1 pr-4">
+                      <p className="b2 font-bold text-text-primary font-figtree flex items-center gap-1.5">
+                        <Volume2 size={16} className="text-brand-accent" />
+                        Queue Placement Chime
+                      </p>
+                      <p className="text-xs text-text-secondary mt-0.5 leading-relaxed font-inter">
+                        Play a gentle chime when a customer places a new order
+                        or updates queue status.
+                      </p>
+                    </div>
+                    <Toggle
+                      variant="accent"
+                      isOn={operationalData.soundQueue}
+                      onChange={(next) =>
+                        setOperationalData((previous) => ({
+                          ...previous,
+                          soundQueue: next,
+                        }))
+                      }
+                      disabled={!preferencesEditMode}
+                    />
                   </div>
-                  <Badge color="accent" variant="subtle">
-                    {operationalData.soundQueue ? "On" : "Off"}
-                  </Badge>
-                </div>
 
-                <div className="flex items-center justify-between p-5 border border-brand-primary/10 rounded-[24px] bg-white/50 hover:bg-white/80 transition-all">
-                  <div className="flex-1 pr-4">
-                    <p className="b2 font-bold text-text-primary font-figtree flex items-center gap-1.5">
-                      <Volume2 size={16} className="text-brand-accent" />
-                      Scan Matching Beep
-                    </p>
-                    <p className="text-xs text-text-secondary mt-0.5 leading-relaxed font-inter">
-                      Play a success beep once a customer ticket QR code scan finishes.
-                    </p>
+                  <div className="flex items-center justify-between p-5 border border-brand-primary/10 rounded-[24px] bg-white/50 hover:bg-white/80 transition-all">
+                    <div className="flex-1 pr-4">
+                      <p className="b2 font-bold text-text-primary font-figtree flex items-center gap-1.5">
+                        <Volume2 size={16} className="text-brand-accent" />
+                        Scan Matching Beep
+                      </p>
+                      <p className="text-xs text-text-secondary mt-0.5 leading-relaxed font-inter">
+                        Play a success beep once a customer ticket QR code scan
+                        finishes.
+                      </p>
+                    </div>
+                    <Toggle
+                      variant="accent"
+                      isOn={operationalData.soundScan}
+                      onChange={(next) =>
+                        setOperationalData((previous) => ({
+                          ...previous,
+                          soundScan: next,
+                        }))
+                      }
+                      disabled={!preferencesEditMode}
+                    />
                   </div>
-                  <Badge color="accent" variant="subtle">
-                    {operationalData.soundScan ? "On" : "Off"}
-                  </Badge>
-                </div>
 
-                <div className="flex items-center justify-between p-5 border border-brand-primary/10 rounded-[24px] bg-white/50 hover:bg-white/80 transition-all">
-                  <div className="flex-1 pr-4">
-                    <p className="b2 font-bold text-text-primary font-figtree flex items-center gap-1.5">
-                      <Volume2 size={16} className="text-brand-accent" />
-                      Critical Stock Alerts
-                    </p>
-                    <p className="text-xs text-text-secondary mt-0.5 leading-relaxed font-inter">
-                      Play a low-frequency alert beep if an item scanned falls below inventory levels.
-                    </p>
+                  <div className="flex items-center justify-between p-5 border border-brand-primary/10 rounded-[24px] bg-white/50 hover:bg-white/80 transition-all">
+                    <div className="flex-1 pr-4">
+                      <p className="b2 font-bold text-text-primary font-figtree flex items-center gap-1.5">
+                        <Volume2 size={16} className="text-brand-accent" />
+                        Critical Stock Alerts
+                      </p>
+                      <p className="text-xs text-text-secondary mt-0.5 leading-relaxed font-inter">
+                        Play a low-frequency alert beep if an item scanned falls
+                        below inventory levels.
+                      </p>
+                    </div>
+                    <Toggle
+                      variant="accent"
+                      isOn={operationalData.soundStock}
+                      onChange={(next) =>
+                        setOperationalData((previous) => ({
+                          ...previous,
+                          soundStock: next,
+                        }))
+                      }
+                      disabled={!preferencesEditMode}
+                    />
                   </div>
-                  <Badge color="accent" variant="subtle">
-                    {operationalData.soundStock ? "On" : "Off"}
-                  </Badge>
                 </div>
 
                 <div className="h-px bg-brand-primary/10 my-4" />
@@ -712,7 +771,8 @@ export function EmployeeSettingsClient({
                       Email shift updates
                     </p>
                     <p className="text-xs text-text-secondary mt-0.5 leading-relaxed font-inter">
-                      Receive scheduling, roster modifications, or store reports on your email.
+                      Receive scheduling, roster modifications, or store reports
+                      on your email.
                     </p>
                   </div>
                   <Badge color="accent" variant="subtle">
@@ -727,7 +787,8 @@ export function EmployeeSettingsClient({
                       Mobile Push indicators
                     </p>
                     <p className="text-xs text-text-secondary mt-0.5 leading-relaxed font-inter">
-                      Get fast notification banner alerts on emergency store messages or priority tasks.
+                      Get fast notification banner alerts on emergency store
+                      messages or priority tasks.
                     </p>
                   </div>
                   <Badge color="accent" variant="subtle">
