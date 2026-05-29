@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { logEmployeeActivity } from "@/lib/employeeAuditLogger";
 
 async function requireAdminForTenant(
   admin: any,
@@ -19,7 +20,7 @@ async function requireAdminForTenant(
 
   const { data: profile, error: profileErr } = await admin
     .from("profiles")
-    .select("role, tenant_id")
+    .select("role, tenant_id, full_name")
     .eq("id", userId)
     .single();
 
@@ -32,11 +33,11 @@ async function requireAdminForTenant(
   }
 
   if (profile.role === "super_admin") {
-    return { ok: true, userId };
+    return { ok: true, userId, actorName: profile.full_name as string, actorRole: profile.role as string };
   }
 
   if (profile.role === "admin" && profile.tenant_id === tenantId) {
-    return { ok: true, userId };
+    return { ok: true, userId, actorName: profile.full_name as string, actorRole: profile.role as string };
   }
 
   return { ok: false, status: 403, message: "insufficient privileges" };
@@ -164,6 +165,20 @@ export async function POST(
       status: 500,
     });
   }
+
+  // Log the role creation to employee audit logs
+  void logEmployeeActivity({
+    tenantId,
+    actorId: auth.userId,
+    actorName: auth.actorName ?? "Unknown",
+    actorRole: auth.actorRole ?? "admin",
+    actionType: "CREATE",
+    description: `Created role: ${name}`,
+    targetType: "role",
+    targetId: data.id,
+    targetName: name,
+    metadata: { color, permissions },
+  });
 
   return new Response(JSON.stringify(data), { status: 201 });
 }

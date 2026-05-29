@@ -1,104 +1,214 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Badge } from "@/components/atoms/Badge";
 import { Input } from "@/components/atoms/Input";
-import { Search, Download, Eye } from "lucide-react";
+import { Search, Download, Eye, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/atoms/Button";
 import { Dropdown } from "@/components/molecules/Dropdown";
 import { AuditLogDetailsModal, AuditLogEntry } from "./AuditLogDetailsModal";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { useParams } from "next/navigation";
 
-const mockAuditLogs: AuditLogEntry[] = [
-  {
-    id: "LOG-9021",
-    timestamp: "2026-10-24 14:32:05",
-    actor: "Jane Doe",
-    role: "Manager",
-    action: "Updated Item Price",
-    actionType: "UPDATE",
-    target: "Menu: Truffle Burger",
-    ip: "192.168.1.45",
-    details: {
-      before: { price: 350 },
-      after: { price: 380 },
+// ---------------------------------------------------------------------------
+// API response shape from employee_audit_logs
+// ---------------------------------------------------------------------------
+interface RawAuditLog {
+  id: string;
+  tenant_id: string;
+  actor_id: string | null;
+  actor_name: string;
+  actor_role: string;
+  action_type: "CREATE" | "UPDATE" | "DELETE" | "LOGIN" | "LOGOUT" | "REFUND" | "SYSTEM";
+  description: string;
+  target_type: string | null;
+  target_id: string | null;
+  target_name: string | null;
+  metadata: Record<string, unknown> | null;
+  created_at: string;
+}
+
+interface AuditLogsResponse {
+  data: RawAuditLog[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+// ---------------------------------------------------------------------------
+// Map raw DB row → AuditLogEntry (used by details modal)
+// ---------------------------------------------------------------------------
+function mapToEntry(raw: RawAuditLog): AuditLogEntry {
+  const meta = raw.metadata ?? {};
+  const changes = meta.changes as Record<string, { old: unknown; new: unknown }> | undefined;
+
+  let before: Record<string, unknown> | undefined;
+  let after: Record<string, unknown> | undefined;
+
+  if (changes && typeof changes === "object") {
+    before = {};
+    after = {};
+    for (const [key, diff] of Object.entries(changes)) {
+      if (typeof diff === "object" && diff !== null && "old" in diff) {
+        before[key] = (diff as { old: unknown; new: unknown }).old;
+        after[key] = (diff as { old: unknown; new: unknown }).new;
+      }
     }
-  },
-  {
-    id: "LOG-9022",
-    timestamp: "2026-10-24 15:10:22",
-    actor: "System",
-    role: "System",
-    action: "Automated Backup",
-    actionType: "CREATE",
-    target: "Database",
-    ip: "127.0.0.1",
-    details: { message: "Daily snapshot completed successfully." }
-  },
-  {
-    id: "LOG-9023",
-    timestamp: "2026-10-24 16:05:11",
-    actor: "John Smith",
-    role: "Cashier",
-    action: "Refunded Order",
-    actionType: "REFUND",
-    target: "Order: ORD-1031",
-    ip: "192.168.1.12",
-    details: {
-      before: { status: "Completed" },
-      after: { status: "Refunded" },
-      message: "Customer complained about cold food."
-    }
-  },
-  {
-    id: "LOG-9024",
-    timestamp: "2026-10-24 16:45:00",
-    actor: "Jane Doe",
-    role: "Manager",
-    action: "Deleted Staff Member",
-    actionType: "DELETE",
-    target: "Staff: Mark Lee",
-    ip: "192.168.1.45",
-    details: {
-      before: { id: "STF-004", name: "Mark Lee", status: "Active" }
-    }
-  },
-  {
-    id: "LOG-9025",
-    timestamp: "2026-10-24 17:20:00",
-    actor: "Alex Johnson",
-    role: "Admin",
-    action: "User Login",
-    actionType: "LOGIN",
-    target: "Auth",
-    ip: "112.204.15.88",
-    details: { message: "Successful login via web portal." }
+    if (Object.keys(before).length === 0) before = undefined;
+    if (Object.keys(after).length === 0) after = undefined;
   }
-];
+
+  // action_type mapping — LOGOUT / SYSTEM not in the modal union; coerce to closest
+  const actionType = (
+    ["CREATE", "UPDATE", "DELETE", "LOGIN", "REFUND"].includes(raw.action_type)
+      ? raw.action_type
+      : "CREATE"
+  ) as AuditLogEntry["actionType"];
+
+  return {
+    id: raw.id.slice(0, 8).toUpperCase(),
+    timestamp: new Date(raw.created_at).toLocaleString("en-PH", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    }),
+    actor: raw.actor_name,
+    role: raw.actor_role,
+    action: raw.description,
+    actionType,
+    target: raw.target_name
+      ? `${raw.target_type ? raw.target_type.charAt(0).toUpperCase() + raw.target_type.slice(1) + ": " : ""}${raw.target_name}`
+      : (raw.target_type ?? "—"),
+    ip: (meta.ip as string) ?? "—",
+    details: {
+      before,
+      after,
+      message: (meta.message as string) ?? undefined,
+    },
+  };
+}
+
+const PAGE_SIZE = 20;
 
 export const AuditLogTable = () => {
+  const params = useParams();
+  const tenantId = params?.id as string | undefined;
+
+  const [logs, setLogs] = useState<AuditLogEntry[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [moduleFilter, setModuleFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
   const [selectedLog, setSelectedLog] = useState<AuditLogEntry | null>(null);
 
-  const filteredLogs = mockAuditLogs.filter((log) => {
-    const matchesSearch =
-      log.actor.toLowerCase().includes(search.toLowerCase()) ||
-      log.action.toLowerCase().includes(search.toLowerCase());
-    
-    const matchesModule =
-      moduleFilter === "all" ||
-      log.target.toLowerCase().includes(moduleFilter.toLowerCase());
+  // Debounce search input
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 400);
+    return () => clearTimeout(t);
+  }, [search]);
 
-    const matchesType =
-      typeFilter === "all" || log.actionType === typeFilter;
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, moduleFilter, typeFilter]);
 
-    return matchesSearch && matchesModule && matchesType;
-  });
+  const fetchLogs = useCallback(async () => {
+    if (!tenantId) return;
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const supabase = createSupabaseBrowserClient();
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      if (!token) {
+        setError("Not authenticated.");
+        setIsLoading(false);
+        return;
+      }
+
+      const qs = new URLSearchParams({
+        page: String(page),
+        limit: String(PAGE_SIZE),
+      });
+
+      if (debouncedSearch) qs.set("search", debouncedSearch);
+      if (typeFilter !== "all") qs.set("action_type", typeFilter);
+      if (moduleFilter !== "all") qs.set("target_type", moduleFilter);
+
+      const res = await fetch(
+        `/api/tenants/${tenantId}/audit-logs?${qs.toString()}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          cache: "no-store",
+        },
+      );
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setError(body.error ?? `Error ${res.status}`);
+        setIsLoading(false);
+        return;
+      }
+
+      const json: AuditLogsResponse = await res.json();
+      setLogs((json.data ?? []).map(mapToEntry));
+      setTotal(json.total ?? 0);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Unknown error");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [tenantId, page, debouncedSearch, moduleFilter, typeFilter]);
+
+  useEffect(() => {
+    fetchLogs();
+  }, [fetchLogs]);
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  // ---------------------------------------------------------------------------
+  // Export CSV
+  // ---------------------------------------------------------------------------
+  const handleExportCSV = () => {
+    if (logs.length === 0) return;
+    const headers = ["ID", "Timestamp", "Actor", "Role", "Action", "Target", "Type", "IP"];
+    const rows = logs.map((l) => [
+      l.id,
+      l.timestamp,
+      l.actor,
+      l.role,
+      l.action,
+      l.target,
+      l.actionType,
+      l.ip,
+    ]);
+    const csv = [headers, ...rows]
+      .map((row) => row.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","))
+      .join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `audit-logs-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <>
       <div className="bg-white rounded-[24px] shadow-sm border border-gray-100 overflow-hidden flex flex-col h-full w-full">
+        {/* Header / Filters */}
         <div className="p-6 border-b border-gray-50 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
           <div>
             <h3 className="font-bold text-xl text-text-primary">Activity Log</h3>
@@ -124,10 +234,12 @@ export const AuditLogTable = () => {
                 onSelect={(opt) => setModuleFilter(opt.value)}
                 options={[
                   { label: "All Modules", value: "all" },
+                  { label: "Staff", value: "staff" },
+                  { label: "Role", value: "role" },
                   { label: "Menu", value: "menu" },
                   { label: "Order", value: "order" },
-                  { label: "Staff", value: "staff" },
                   { label: "Auth", value: "auth" },
+                  { label: "Inventory", value: "inventory" },
                 ]}
               />
             </div>
@@ -144,15 +256,23 @@ export const AuditLogTable = () => {
                   { label: "Delete", value: "DELETE" },
                   { label: "Refund", value: "REFUND" },
                   { label: "Login", value: "LOGIN" },
+                  { label: "Logout", value: "LOGOUT" },
                 ]}
               />
             </div>
-            <Button variant="outline" shape="rounded" className="px-3" title="Export CSV">
+            <Button
+              variant="outline"
+              shape="rounded"
+              className="px-3"
+              title="Export CSV"
+              onClick={handleExportCSV}
+            >
               <Download size={16} />
             </Button>
           </div>
         </div>
 
+        {/* Table body */}
         <div className="overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           <table className="w-full text-left border-collapse whitespace-nowrap">
             <thead>
@@ -166,8 +286,25 @@ export const AuditLogTable = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredLogs.length > 0 ? (
-                filteredLogs.map((log) => (
+              {isLoading ? (
+                // Loading skeleton
+                Array.from({ length: 6 }).map((_, i) => (
+                  <tr key={i} className="border-b border-gray-50">
+                    {Array.from({ length: 6 }).map((__, j) => (
+                      <td key={j} className="py-4 px-6">
+                        <div className="h-4 bg-gray-100 rounded animate-pulse w-full" />
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              ) : error ? (
+                <tr>
+                  <td colSpan={6} className="py-8 text-center text-sm text-error-primary">
+                    {error}
+                  </td>
+                </tr>
+              ) : logs.length > 0 ? (
+                logs.map((log) => (
                   <tr
                     key={log.id}
                     className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors"
@@ -188,9 +325,13 @@ export const AuditLogTable = () => {
                     <td className="py-4 px-6 text-center">
                       <Badge
                         color={
-                          log.actionType === "DELETE" || log.actionType === "REFUND" ? "error" :
-                          log.actionType === "UPDATE" ? "warning" :
-                          log.actionType === "CREATE" ? "success" : "info"
+                          log.actionType === "DELETE" || log.actionType === "REFUND"
+                            ? "error"
+                            : log.actionType === "UPDATE"
+                              ? "warning"
+                              : log.actionType === "CREATE"
+                                ? "success"
+                                : "info"
                         }
                         variant="subtle"
                         shape="pill"
@@ -220,12 +361,35 @@ export const AuditLogTable = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination footer */}
         <div className="p-4 border-t border-gray-50 flex justify-between items-center text-sm text-text-secondary">
-           <span>Showing {filteredLogs.length} of {mockAuditLogs.length} logs</span>
-           <div className="flex gap-2">
-              <button className="px-3 py-1 rounded hover:bg-gray-100 disabled:opacity-50">Prev</button>
-              <button className="px-3 py-1 rounded hover:bg-gray-100">Next</button>
-           </div>
+          <span>
+            {isLoading
+              ? "Loading…"
+              : `Showing ${logs.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1}–${Math.min(page * PAGE_SIZE, total)} of ${total} logs`}
+          </span>
+          <div className="flex items-center gap-1">
+            <button
+              className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page <= 1 || isLoading}
+              aria-label="Previous page"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <span className="px-2 text-xs font-medium">
+              {page} / {totalPages}
+            </span>
+            <button
+              className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page >= totalPages || isLoading}
+              aria-label="Next page"
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
         </div>
       </div>
 

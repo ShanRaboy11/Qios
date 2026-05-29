@@ -51,6 +51,41 @@ export const useMenuManagement = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [actionError, setActionError] = useState<string | null>(null);
 
+  // ---------------------------------------------------------------------------
+  // Audit logging helper — posts to the server-side log endpoint (non-fatal)
+  // ---------------------------------------------------------------------------
+  const logAuditEvent = async (payload: {
+    actionType: "CREATE" | "UPDATE" | "DELETE";
+    description: string;
+    targetType: "menu";
+    targetId?: string;
+    targetName?: string;
+    metadata?: Record<string, unknown>;
+    tenantId: string;
+  }) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) return;
+      await fetch(`/api/tenants/${payload.tenantId}/audit-logs/log`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          actionType: payload.actionType,
+          description: payload.description,
+          targetType: payload.targetType,
+          targetId: payload.targetId,
+          targetName: payload.targetName,
+          metadata: payload.metadata,
+        }),
+      });
+    } catch {
+      // Non-fatal — never block primary operation
+    }
+  };
+
   const getErrorMessage = (error: unknown, fallback: string) => {
     if (error && typeof error === "object" && "message" in error) {
       return String((error as { message: unknown }).message);
@@ -193,6 +228,15 @@ export const useMenuManagement = () => {
           icon: data.icon,
         };
         setCategories((prev) => [...prev, newCat]);
+        void logAuditEvent({
+          tenantId: tenant_id,
+          actionType: "CREATE",
+          description: `Added menu category: ${data.name}`,
+          targetType: "menu",
+          targetId: data.id,
+          targetName: data.name,
+          metadata: { entityType: "category" },
+        });
         return newCat;
       } else {
         if (!catDraft.id) {
@@ -217,6 +261,15 @@ export const useMenuManagement = () => {
               : c,
           ),
         );
+        void logAuditEvent({
+          tenantId: tenant_id,
+          actionType: "UPDATE",
+          description: `Updated menu category: ${data.name}`,
+          targetType: "menu",
+          targetId: data.id,
+          targetName: data.name,
+          metadata: { entityType: "category" },
+        });
         return { id: data.id, name: data.name, icon: data.icon } as Category;
       }
     } catch (e) {
@@ -230,6 +283,7 @@ export const useMenuManagement = () => {
     setActionError(null);
     try {
       const tenant_id = await getCurrentTenantId();
+      const deletedCat = categories.find((c) => c.id === id);
       const { error } = await supabase
         .from("categories")
         .delete()
@@ -238,6 +292,15 @@ export const useMenuManagement = () => {
       if (error) throw error;
       setCategories((prev) => prev.filter((c) => c.id !== id));
       setItems((prev) => prev.filter((i) => i.categoryId !== id));
+      void logAuditEvent({
+        tenantId: tenant_id,
+        actionType: "DELETE",
+        description: `Deleted menu category: ${deletedCat?.name ?? id}`,
+        targetType: "menu",
+        targetId: id,
+        targetName: deletedCat?.name,
+        metadata: { entityType: "category" },
+      });
       return true;
     } catch (e) {
       setActionError(getErrorMessage(e, "Failed to delete category."));
@@ -296,6 +359,15 @@ export const useMenuManagement = () => {
 
         const newItem: MenuItem = { ...draftItem, id: itemId };
         setItems((prev) => [...prev, newItem]);
+        void logAuditEvent({
+          tenantId: tenant_id,
+          actionType: "CREATE",
+          description: `Added menu item: ${draftItem.name}`,
+          targetType: "menu",
+          targetId: itemId,
+          targetName: draftItem.name,
+          metadata: { entityType: "menu_item", price: draftItem.price },
+        });
         return newItem;
       } else {
         const tenant_id = await getCurrentTenantId();
@@ -338,6 +410,15 @@ export const useMenuManagement = () => {
               : i,
           ),
         );
+        void logAuditEvent({
+          tenantId: tenant_id,
+          actionType: "UPDATE",
+          description: `Updated menu item: ${draftItem.name}`,
+          targetType: "menu",
+          targetId: itemId,
+          targetName: draftItem.name,
+          metadata: { entityType: "menu_item", price: draftItem.price },
+        });
         return draftItem;
       }
     } catch (e) {
@@ -351,6 +432,7 @@ export const useMenuManagement = () => {
     setActionError(null);
     try {
       const tenant_id = await getCurrentTenantId();
+      const deletedItems = items.filter((i) => ids.includes(i.id));
       const { error } = await supabase
         .from("menu_items")
         .delete()
@@ -358,6 +440,16 @@ export const useMenuManagement = () => {
         .in("id", ids);
       if (error) throw error;
       setItems((prev) => prev.filter((i) => !ids.includes(i.id)));
+      const names = deletedItems.map((i) => i.name).join(", ");
+      void logAuditEvent({
+        tenantId: tenant_id,
+        actionType: "DELETE",
+        description: `Deleted menu item${ids.length > 1 ? "s" : ""}: ${names}`,
+        targetType: "menu",
+        targetId: ids[0],
+        targetName: names,
+        metadata: { entityType: "menu_item", deletedIds: ids },
+      });
       return true;
     } catch (e) {
       setActionError(getErrorMessage(e, "Failed to delete menu item(s)."));
@@ -373,6 +465,7 @@ export const useMenuManagement = () => {
     setActionError(null);
     try {
       const tenant_id = await getCurrentTenantId();
+      const targetItem = items.find((i) => i.id === id);
       const { error } = await supabase
         .from("menu_items")
         .update({ is_available: !currentAvailability })
@@ -384,6 +477,15 @@ export const useMenuManagement = () => {
           i.id === id ? { ...i, isAvailable: !currentAvailability } : i,
         ),
       );
+      void logAuditEvent({
+        tenantId: tenant_id,
+        actionType: "UPDATE",
+        description: `Set menu item "${targetItem?.name ?? id}" availability to ${!currentAvailability ? "available" : "unavailable"}`,
+        targetType: "menu",
+        targetId: id,
+        targetName: targetItem?.name,
+        metadata: { entityType: "menu_item", is_available: !currentAvailability },
+      });
     } catch (e) {
       setActionError(getErrorMessage(e, "Failed to update item availability."));
       console.error(e);

@@ -6,12 +6,13 @@ import { cn } from "@/lib/utils";
 
 interface HighlightCardProps {
   title: string;
-  value: string;
+  value: string | number;
   description: string;
   icon: React.ReactNode;
   iconBgColor: string;
   iconTextColor: string;
   isAlert?: boolean;
+  isLoading?: boolean;
 }
 
 const HighlightCard = ({
@@ -22,28 +23,45 @@ const HighlightCard = ({
   iconBgColor,
   iconTextColor,
   isAlert = false,
+  isLoading = false,
 }: HighlightCardProps) => {
   return (
     <div
       className={cn(
         "rounded-[16px] sm:rounded-[24px] shadow-sm border p-4 sm:p-6 flex flex-col justify-between min-w-0 transition-all duration-300",
-        isAlert ? "bg-error-secondary border-error-primary/50 shadow-[0_0_15px_rgba(255,82,105,0.15)]" : "bg-white border-gray-100"
+        isAlert
+          ? "bg-error-secondary border-error-primary/50 shadow-[0_0_15px_rgba(255,82,105,0.15)]"
+          : "bg-white border-gray-100",
       )}
     >
       <div className="flex justify-between items-start mb-3 sm:mb-4 gap-2">
         <div className="space-y-0.5 sm:space-y-1 min-w-0">
-          <h3 className={cn("text-[11px] sm:text-sm font-medium leading-tight", isAlert ? "text-error-primary/80" : "text-text-secondary")}>
+          <h3
+            className={cn(
+              "text-[11px] sm:text-sm font-medium leading-tight",
+              isAlert ? "text-error-primary/80" : "text-text-secondary",
+            )}
+          >
             {title}
           </h3>
-          <p className={cn("text-lg sm:text-2xl lg:text-3xl font-bold truncate", isAlert ? "text-error-primary" : "text-text-primary")}>
-            {value}
-          </p>
+          {isLoading ? (
+            <div className="h-8 w-16 bg-gray-200 animate-pulse rounded-md" />
+          ) : (
+            <p
+              className={cn(
+                "text-lg sm:text-2xl lg:text-3xl font-bold truncate",
+                isAlert ? "text-error-primary" : "text-text-primary",
+              )}
+            >
+              {typeof value === "number" ? value.toLocaleString() : value}
+            </p>
+          )}
         </div>
         <div
           className={cn(
             "w-8 h-8 sm:w-12 sm:h-12 rounded-full flex items-center justify-center shrink-0",
             iconBgColor,
-            iconTextColor
+            iconTextColor,
           )}
         >
           <div className="scale-75 sm:scale-100 flex items-center justify-center">
@@ -52,7 +70,14 @@ const HighlightCard = ({
         </div>
       </div>
       <div className="flex flex-wrap items-center mt-auto">
-        <span className={cn("text-[10px] sm:text-sm truncate", isAlert ? "text-error-primary/80 font-medium" : "text-text-secondary")}>
+        <span
+          className={cn(
+            "text-[10px] sm:text-sm truncate",
+            isAlert
+              ? "text-error-primary/80 font-medium"
+              : "text-text-secondary",
+          )}
+        >
           {description}
         </span>
       </div>
@@ -60,41 +85,65 @@ const HighlightCard = ({
   );
 };
 
-export const SecurityHighlightsCards = () => {
+export interface SecurityStats {
+  totalActions24h: number;
+  criticalActions: number;
+  failedLogins: number;
+  securityAlerts: number;
+}
+
+interface SecurityHighlightsCardsProps {
+  stats?: SecurityStats | null;
+  isLoading?: boolean;
+}
+
+export const SecurityHighlightsCards = ({
+  stats,
+  isLoading = false,
+}: SecurityHighlightsCardsProps) => {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 w-full">
       <HighlightCard
         title="Total Actions (24h)"
-        value="1,248"
+        value={stats?.totalActions24h ?? 0}
         description="Standard system activity."
         icon={<Activity size={24} />}
         iconBgColor="bg-blue-100"
         iconTextColor="text-blue-600"
+        isLoading={isLoading}
       />
       <HighlightCard
         title="Critical Actions"
-        value="12"
+        value={stats?.criticalActions ?? 0}
         description="Refunds, deletions, settings."
         icon={<AlertTriangle size={24} />}
         iconBgColor="bg-warning-secondary"
         iconTextColor="text-warning-primary"
+        isLoading={isLoading}
       />
       <HighlightCard
         title="Failed Logins"
-        value="3"
+        value={stats?.failedLogins ?? 0}
         description="Suspicious login attempts."
         icon={<UserX size={24} />}
         iconBgColor="bg-error-secondary"
         iconTextColor="text-error-primary"
-        isAlert={true}
+        isAlert={(stats?.failedLogins ?? 0) > 0}
+        isLoading={isLoading}
       />
       <HighlightCard
         title="Security Alerts"
-        value="0"
-        description="No active breaches detected."
+        value={stats?.securityAlerts ?? 0}
+        description={
+          (stats?.securityAlerts ?? 0) > 0
+            ? "Active alerts detected!"
+            : "No active breaches detected."
+        }
         icon={<ShieldAlert size={24} />}
         iconBgColor="bg-success-secondary"
         iconTextColor="text-success-primary"
+        isAlert={(stats?.securityAlerts ?? 0) > 0}
+        isLoading={isLoading}
       />
     </div>
   );

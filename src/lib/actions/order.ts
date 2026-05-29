@@ -2,6 +2,7 @@
 
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { logActivity } from "@/lib/activityLogger";
+import { logEmployeeActivity } from "@/lib/employeeAuditLogger";
 import { CartItem } from "@/contexts/CartContext";
 
 export async function placeOrder(
@@ -129,6 +130,25 @@ export async function placeOrder(
         qrHash,
         itemCount: cartItems.length,
         totalPrice,
+      },
+    });
+
+    // Log to employee_audit_logs so it appears in the Audit Logs section
+    void logEmployeeActivity({
+      tenantId,
+      actorName: "Customer (Guest)",
+      actorRole: "guest",
+      actionType: "CREATE",
+      description: `New order placed — ₱${totalPrice.toFixed(2)} (${cartItems.length} item${cartItems.length !== 1 ? "s" : ""}): ${itemSummary}`,
+      targetType: "order",
+      targetId: orderId,
+      targetName: `Order #${qrHash}`,
+      metadata: {
+        orderId,
+        qrHash,
+        itemCount: cartItems.length,
+        totalPrice,
+        items: cartItems.map((i) => ({ name: i.menuItem.name, qty: i.quantity, price: i.menuItem.price })),
       },
     });
 
