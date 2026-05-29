@@ -60,10 +60,6 @@ export const Navbar = ({
   const tenantLogoUrl = branding?.dashboardLogoUrl;
 
   useEffect(() => {
-    if (type === "employee" && initialEmployeePermissions) {
-      setEmployeePermissions(initialEmployeePermissions);
-    }
-
     if (type !== "tenant") return;
 
     let isMounted = true;
@@ -122,11 +118,16 @@ export const Navbar = ({
     return () => {
       isMounted = false;
     };
-  }, [type, initialEmployeePermissions]);
+  }, [type]);
 
   useEffect(() => {
     if (type !== "employee") {
       setEmployeePermissions(null);
+      return;
+    }
+
+    if (initialEmployeePermissions) {
+      setEmployeePermissions(initialEmployeePermissions);
       return;
     }
 
