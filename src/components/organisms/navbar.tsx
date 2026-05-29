@@ -27,6 +27,7 @@ interface NavbarProps {
   activeView?: string;
   onNavigate?: (view: string) => void;
   className?: string;
+  initialEmployeePermissions?: RolePermissions | null;
 }
 
 export const Navbar = ({
@@ -35,6 +36,7 @@ export const Navbar = ({
   activeView,
   onNavigate,
   className,
+  initialEmployeePermissions = null,
 }: NavbarProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -48,7 +50,7 @@ export const Navbar = ({
     useState("tenant@qios.com");
   const [tenantAvatarInitials, setTenantAvatarInitials] = useState("TU");
   const [employeePermissions, setEmployeePermissions] =
-    useState<RolePermissions | null>(null);
+    useState<RolePermissions | null>(initialEmployeePermissions);
   const router = useRouter();
   const params = useParams();
   const pathname = usePathname();
@@ -126,7 +128,7 @@ export const Navbar = ({
 
     let isMounted = true;
 
-    const loadEmployeePermissions = async () => {
+    const loadEmployeeIdentity = async () => {
       try {
         const supabase = createSupabaseBrowserClient();
         const { data: authData } = await supabase.auth.getUser();
@@ -162,6 +164,13 @@ export const Navbar = ({
             : displayName.charAt(0).toUpperCase() || "EU",
         );
 
+        if (initialEmployeePermissions) {
+          if (isMounted) {
+            setEmployeePermissions(initialEmployeePermissions);
+          }
+          return;
+        }
+
         if (!profile?.app_role_id || !profile?.tenant_id) {
           if (isMounted) setEmployeePermissions(null);
           return;
@@ -184,12 +193,12 @@ export const Navbar = ({
       }
     };
 
-    void loadEmployeePermissions();
+    void loadEmployeeIdentity();
 
     return () => {
       isMounted = false;
     };
-  }, [type]);
+  }, [type, initialEmployeePermissions]);
 
   const handleLogout = async () => {
     clearAuthSessionExpiry();
@@ -310,7 +319,11 @@ export const Navbar = ({
       ? employeeLinks.filter((link) =>
           canAccessEmployeeRoute(employeePermissions, link.id),
         )
-      : employeeLinks;
+      : type === "employee"
+        ? employeeLinks.filter((link) =>
+            canAccessEmployeeRoute(employeePermissions, link.id),
+          )
+        : employeeLinks;
 
   const links =
     type === "admin"
@@ -356,7 +369,11 @@ export const Navbar = ({
         className="shrink-0 relative cursor-pointer flex items-center"
       >
         {(type === "tenant" || type === "employee") && tenantLogoUrl ? (
-          <img src={tenantLogoUrl} alt="Tenant Logo" className="h-10 w-auto object-contain" />
+          <img
+            src={tenantLogoUrl}
+            alt="Tenant Logo"
+            className="h-10 w-auto object-contain"
+          />
         ) : (
           <span
             className="font-ibrand"

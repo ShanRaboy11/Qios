@@ -91,7 +91,10 @@ export const LegalDocument = ({
 
       <div className="flex flex-col lg:flex-row lg:items-start gap-12 lg:gap-28 relative">
         {/* Sidebar Table of Contents */}
-        <div className="hidden lg:block w-72 shrink-0 self-start sticky top-32">
+        <div
+          className="hidden lg:block w-72 shrink-0"
+          style={{ position: "sticky", top: "8rem", alignSelf: "flex-start" }}
+        >
           <div className="flex flex-col gap-1">
             <h4 className="text-xs font-bold uppercase tracking-widest text-text-secondary mb-4 ml-4">
               Contents

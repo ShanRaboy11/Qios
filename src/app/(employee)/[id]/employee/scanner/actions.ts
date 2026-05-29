@@ -3,8 +3,14 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { logActivity } from "@/lib/activityLogger";
 import { revalidatePath } from "next/cache";
+import { requireEmployeePermission } from "@/lib/serverPermissions";
 
 export async function processScannedQr(tenantId: string, qrData: string) {
+  const auth = await requireEmployeePermission(tenantId, "QR Code Scanning");
+  if (!auth.ok) {
+    throw new Error(auth.message);
+  }
+
   const supabase = await createSupabaseServerClient();
   const normalizedQrData = qrData
     .trim()
@@ -81,24 +87,21 @@ export async function updateOrderFromScanner(
   newStatus: string,
   actionDesc: string,
 ) {
+  const auth = await requireEmployeePermission(tenantId, "QR Code Scanning");
+  if (!auth.ok) {
+    throw new Error(auth.message);
+  }
+
   const supabase = await createSupabaseServerClient();
   const tenantIsUUID =
     /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(
       tenantId.trim(),
     );
 
-  const [{ data: userData }, { data: sessionData }] = await Promise.all([
-    supabase.auth.getUser(),
-    supabase.auth.getSession(),
-  ]);
-
-  const user = userData.user ?? sessionData.session?.user ?? null;
-  if (!user) throw new Error("Unauthorized");
-
   const { data: profile } = await supabase
     .from("profiles")
     .select("first_name, last_name, role")
-    .eq("id", user.id)
+    .eq("id", auth.userId)
     .single();
 
   const actorName = profile
@@ -120,7 +123,7 @@ export async function updateOrderFromScanner(
   if (error) throw new Error(error.message);
 
   await logActivity({
-    actorId: user.id,
+    actorId: auth.userId,
     actorName,
     actorRole,
     actionType: "UPDATE",
