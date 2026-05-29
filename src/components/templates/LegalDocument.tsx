@@ -38,13 +38,20 @@ export const LegalDocument = ({
       const sectionElements = sections.map((s) =>
         document.getElementById(s.id),
       );
-      const scrollPosition = window.scrollY + 100;
+
+      // Calculate scroll position trigger line
+      const scrollPosition = window.scrollY + 160;
 
       for (let i = sectionElements.length - 1; i >= 0; i--) {
         const element = sectionElements[i];
-        if (element && element.offsetTop <= scrollPosition) {
-          setActiveSection(sections[i].id);
-          break;
+        if (element) {
+          const elementTop =
+            element.getBoundingClientRect().top + window.scrollY;
+
+          if (elementTop <= scrollPosition) {
+            setActiveSection(sections[i].id);
+            break;
+          }
         }
       }
     };
@@ -60,8 +67,10 @@ export const LegalDocument = ({
     e.preventDefault();
     const element = document.getElementById(id);
     if (element) {
+      const elementTop = element.getBoundingClientRect().top + window.scrollY;
+
       window.scrollTo({
-        top: element.offsetTop - 80,
+        top: elementTop - 130,
         behavior: "smooth",
       });
     }
