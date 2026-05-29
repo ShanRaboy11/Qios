@@ -11,12 +11,14 @@ type AuthCredentialsProps = {
     email: string;
     password: string;
     confirm: string;
+    acceptedLegal: boolean;
   };
   setData: React.Dispatch<
     React.SetStateAction<{
       email: string;
       password: string;
       confirm: string;
+      acceptedLegal: boolean;
     }>
   >;
   onAutoResume?: (email: string) => Promise<void> | void;
@@ -162,6 +164,26 @@ export function AuthCredentials({
             : undefined
         }
       />
+
+      <div className="flex items-start gap-3 mt-4">
+        <div className="flex items-center h-5 mt-1">
+          <input
+            id="legal-consent"
+            type="checkbox"
+            className="w-5 h-5 rounded border-black/20 text-brand-primary focus:ring-brand-primary/50 transition-colors cursor-pointer"
+            checked={data.acceptedLegal}
+            onChange={(e) => setData({ ...data, acceptedLegal: e.target.checked })}
+          />
+        </div>
+        <div className="flex flex-col">
+          <label htmlFor="legal-consent" className="b2 text-text-primary font-medium cursor-pointer">
+            I agree to the Terms and Privacy Policy <Required />
+          </label>
+          <p className="b4 text-text-secondary">
+            By creating an account, you agree to our <a href="/legal/terms-of-service" target="_blank" className="text-brand-accent hover:underline">Terms of Service</a> and <a href="/legal/privacy-policy" target="_blank" className="text-brand-accent hover:underline">Privacy Policy</a>.
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
