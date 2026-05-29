@@ -60,6 +60,10 @@ export function canAccessEmployeeRoute(
   permissions: RolePermissions | null,
   routeName: string,
 ) {
+  if (!permissions) {
+    return true;
+  }
+
   if (routeName === "dashboard") {
     return true;
   }
@@ -90,5 +94,9 @@ export function getFirstAccessibleEmployeeRoute(
 export function canUpdateEmployeeOrderStatus(
   permissions: RolePermissions | null,
 ) {
+  if (!permissions) {
+    return true;
+  }
+
   return hasPermission(permissions, "Order Status Updating");
 }
