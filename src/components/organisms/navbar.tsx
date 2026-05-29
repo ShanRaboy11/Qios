@@ -126,14 +126,9 @@ export const Navbar = ({
       return;
     }
 
-    if (initialEmployeePermissions) {
-      setEmployeePermissions(initialEmployeePermissions);
-      return;
-    }
-
     let isMounted = true;
 
-    const loadEmployeePermissions = async () => {
+    const loadEmployeeIdentity = async () => {
       try {
         const supabase = createSupabaseBrowserClient();
         const { data: authData } = await supabase.auth.getUser();
@@ -169,6 +164,13 @@ export const Navbar = ({
             : displayName.charAt(0).toUpperCase() || "EU",
         );
 
+        if (initialEmployeePermissions) {
+          if (isMounted) {
+            setEmployeePermissions(initialEmployeePermissions);
+          }
+          return;
+        }
+
         if (!profile?.app_role_id || !profile?.tenant_id) {
           if (isMounted) setEmployeePermissions(null);
           return;
@@ -191,12 +193,12 @@ export const Navbar = ({
       }
     };
 
-    void loadEmployeePermissions();
+    void loadEmployeeIdentity();
 
     return () => {
       isMounted = false;
     };
-  }, [type]);
+  }, [type, initialEmployeePermissions]);
 
   const handleLogout = async () => {
     clearAuthSessionExpiry();
