@@ -58,6 +58,16 @@ const logoffOptions = [
   { label: "Never Automatically Lock Till", value: "never" },
 ];
 
+function validatePassword(password: string) {
+  return {
+    hasMinLength: password.length >= 8,
+    hasUppercase: /[A-Z]/.test(password),
+    hasLowercase: /[a-z]/.test(password),
+    hasDigit: /[0-9]/.test(password),
+    hasSpecial: /[^A-Za-z0-9]/.test(password),
+  };
+}
+
 function SettingsMessage({ state }: { state: SettingsActionState }) {
   if (state.error) {
     return (
@@ -110,6 +120,7 @@ export function EmployeeSettingsClient({
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const passwordStrength = validatePassword(newPassword);
 
   useEffect(() => {
     setProfileData(initialData.profile);
@@ -701,6 +712,51 @@ export function EmployeeSettingsClient({
                       }
                       required
                     />
+                  </div>
+                </div>
+              )}
+
+              {securityEditMode && newPassword && (
+                <div className="rounded-[24px] border border-brand-primary/10 bg-brand-secondary/5 p-5 space-y-3">
+                  <p className="b4 font-bold text-text-primary uppercase tracking-wider font-inter">
+                    password requirements
+                  </p>
+                  <div className="space-y-2 text-sm text-text-secondary font-inter">
+                    <p
+                      className={
+                        passwordStrength.hasMinLength ? "text-emerald-700" : ""
+                      }
+                    >
+                      At least 8 characters
+                    </p>
+                    <p
+                      className={
+                        passwordStrength.hasUppercase ? "text-emerald-700" : ""
+                      }
+                    >
+                      At least one uppercase letter
+                    </p>
+                    <p
+                      className={
+                        passwordStrength.hasLowercase ? "text-emerald-700" : ""
+                      }
+                    >
+                      At least one lowercase letter
+                    </p>
+                    <p
+                      className={
+                        passwordStrength.hasDigit ? "text-emerald-700" : ""
+                      }
+                    >
+                      At least one digit (0-9)
+                    </p>
+                    <p
+                      className={
+                        passwordStrength.hasSpecial ? "text-emerald-700" : ""
+                      }
+                    >
+                      At least one special character (!@#$%^&*)
+                    </p>
                   </div>
                 </div>
               )}

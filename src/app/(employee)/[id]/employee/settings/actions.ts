@@ -38,6 +38,16 @@ function toBoolean(value: FormDataEntryValue | null, fallback = false) {
   return ["true", "1", "on", "yes"].includes(value.trim().toLowerCase());
 }
 
+function validatePassword(password: string) {
+  return {
+    hasMinLength: password.length >= 8,
+    hasUppercase: /[A-Z]/.test(password),
+    hasLowercase: /[a-z]/.test(password),
+    hasDigit: /[0-9]/.test(password),
+    hasSpecial: /[^A-Za-z0-9]/.test(password),
+  };
+}
+
 function normalizeAutoLogoff(value: FormDataEntryValue | null) {
   const text = toText(value);
   if (!text || text === "never") return 0;
@@ -267,8 +277,32 @@ export async function updateEmployeePassword(
       throw new Error("Please complete all password fields.");
     }
 
-    if (newPassword.length < 8) {
-      throw new Error("New password must be at least 8 characters long.");
+    const strength = validatePassword(newPassword);
+
+    if (!strength.hasMinLength) {
+      throw new Error("New password must be at least 8 characters.");
+    }
+
+    if (!strength.hasUppercase) {
+      throw new Error(
+        "New password must contain at least one uppercase letter.",
+      );
+    }
+
+    if (!strength.hasLowercase) {
+      throw new Error(
+        "New password must contain at least one lowercase letter.",
+      );
+    }
+
+    if (!strength.hasDigit) {
+      throw new Error("New password must contain at least one digit.");
+    }
+
+    if (!strength.hasSpecial) {
+      throw new Error(
+        "New password must contain at least one special character.",
+      );
     }
 
     if (newPassword !== confirmPassword) {
