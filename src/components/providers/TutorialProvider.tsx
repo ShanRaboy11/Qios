@@ -1,11 +1,6 @@
 "use client";
 
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-} from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 import { useRouter, usePathname, useParams } from "next/navigation";
 import { updateTenantTutorialStatus } from "@/app/(tenant)/[id]/tutorialActions";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -36,7 +31,7 @@ interface TutorialContextType {
 }
 
 const TutorialContext = createContext<TutorialContextType | undefined>(
-  undefined
+  undefined,
 );
 
 export const useTutorial = () => {
@@ -183,6 +178,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [isCompleted, setIsCompleted] = useState(false);
   const [spotlightRect, setSpotlightRect] = useState<DOMRect | null>(null);
+  const [spotlightRadius, setSpotlightRadius] = useState<string>("20px");
 
   const steps = TOUR_STEPS;
   const currentStep = steps[currentStepIndex];
@@ -227,12 +223,15 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
           // logging in normally and haven't gone through the branding setup yet.
         }
       } catch (err) {
-        console.error("[TutorialProvider] Failed to load tutorial status:", err);
+        console.error(
+          "[TutorialProvider] Failed to load tutorial status:",
+          err,
+        );
       }
     };
 
     void checkStatus();
-  }, [tenantId]);
+  }, [tenantId, pathname]);
 
   // ── Snap to first step of current page when navigating while tour is active ──
   useEffect(() => {
@@ -258,6 +257,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!isActive || !currentStep?.selector) {
       setSpotlightRect(null);
+      setSpotlightRadius("20px");
       return;
     }
 
@@ -265,9 +265,12 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       const el = document.querySelector(currentStep.selector!);
       if (el) {
         setSpotlightRect(el.getBoundingClientRect());
+        const computed = window.getComputedStyle(el).borderRadius;
+        setSpotlightRadius(computed && computed !== "0px" ? computed : "20px");
         el.scrollIntoView({ behavior: "smooth", block: "nearest" });
       } else {
         setSpotlightRect(null);
+        setSpotlightRadius("20px");
       }
     };
 
@@ -320,8 +323,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     const prevStepPage = steps[prevIdx].page;
 
     if (currentStep && prevStepPage !== currentStep.page) {
-      const path =
-        prevStepPage === "dashboard" ? "dashboard" : prevStepPage;
+      const path = prevStepPage === "dashboard" ? "dashboard" : prevStepPage;
       router.push(`/${tenantId}/${path}`);
     }
 
@@ -344,7 +346,10 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
 
     switch (currentStep?.position) {
       case "bottom":
-        top = Math.min(vh - TOOLTIP_H - GAP, spotlightRect.bottom + GAP + scrollY);
+        top = Math.min(
+          vh - TOOLTIP_H - GAP,
+          spotlightRect.bottom + GAP + scrollY,
+        );
         break;
       case "top":
         top = Math.max(GAP, spotlightRect.top - TOOLTIP_H - GAP + scrollY);
@@ -356,14 +361,20 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
           GAP,
           Math.min(
             vh - TOOLTIP_H - GAP,
-            spotlightRect.top + spotlightRect.height / 2 - TOOLTIP_H / 2 + scrollY
-          )
+            spotlightRect.top +
+              spotlightRect.height / 2 -
+              TOOLTIP_H / 2 +
+              scrollY,
+          ),
         );
     }
 
     left = Math.max(
       GAP,
-      Math.min(vw - TOOLTIP_W - GAP, spotlightRect.left + spotlightRect.width / 2 - TOOLTIP_W / 2)
+      Math.min(
+        vw - TOOLTIP_W - GAP,
+        spotlightRect.left + spotlightRect.width / 2 - TOOLTIP_W / 2,
+      ),
     );
 
     return { position: "absolute", top, left, width: TOOLTIP_W };
@@ -406,37 +417,46 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       <AnimatePresence>
         {isActive && currentStep && (
           <div className="fixed inset-0 z-[99999] pointer-events-none">
-            {/* Backdrop with spotlight cutout */}
-            <motion.div
-              key="backdrop"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.25 }}
-              className="absolute inset-0 bg-black/55 pointer-events-auto"
-              style={{ clipPath }}
-              onClick={() => void skipTour()}
-            />
-
-            {/* Glowing ring around target element */}
-            {spotlightRect && (
+            {/* Backdrop with dynamic spotlight cutout */}
+            {!spotlightRect ? (
               <motion.div
-                key="ring"
-                initial={{ opacity: 0, scale: 0.94 }}
-                animate={{ opacity: 1, scale: 1 }}
+                key="backdrop-solid"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="absolute rounded-2xl pointer-events-none"
-                style={{
-                  border: "2px solid var(--brand-accent, #FF5269)",
-                  boxShadow:
-                    "0 0 0 4px rgba(255,82,105,0.15), 0 0 24px rgba(255,82,105,0.3)",
-                  top: spotlightRect.top - 4,
-                  left: spotlightRect.left - 4,
-                  width: spotlightRect.width + 8,
-                  height: spotlightRect.height + 8,
-                }}
+                transition={{ duration: 0.25 }}
+                className="absolute inset-0 bg-black/55 pointer-events-auto"
+                onClick={() => void skipTour()}
               />
+            ) : (
+              <>
+                <motion.div
+                  key="backdrop-transparent"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute inset-0 bg-transparent pointer-events-auto"
+                  onClick={() => void skipTour()}
+                />
+                <motion.div
+                  key="spotlight-cutout"
+                  initial={{ opacity: 0, scale: 0.98 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="absolute pointer-events-none"
+                  style={{
+                    top: spotlightRect.top,
+                    left: spotlightRect.left,
+                    width: spotlightRect.width,
+                    height: spotlightRect.height,
+                    borderRadius: spotlightRadius,
+                    border: "2.5px solid var(--brand-accent, #FF5269)",
+                    boxShadow:
+                      "0 0 0 9999px rgba(0, 0, 0, 0.55), 0 0 0 4px rgba(255,82,105,0.15), 0 0 24px rgba(255,82,105,0.3)",
+                  }}
+                />
+              </>
             )}
 
             {/* Tutorial card */}
@@ -499,14 +519,14 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
                           idx === currentStepIndex
                             ? 16
                             : steps[idx].page === currentStep.page
-                            ? 8
-                            : 6,
+                              ? 8
+                              : 6,
                         background:
                           idx === currentStepIndex
                             ? "var(--brand-accent, #FF5269)"
                             : steps[idx].page === currentStep.page
-                            ? "var(--brand-primary, #FFC670)"
-                            : "#E5E7EB",
+                              ? "var(--brand-primary, #FFC670)"
+                              : "#E5E7EB",
                       }}
                     />
                   ))}
