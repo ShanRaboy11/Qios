@@ -54,6 +54,12 @@ type DashboardInventoryRow = {
   unit_type: string;
   current_stock: number | string;
   low_stock_threshold: number | string;
+  purchase_price: number | string;
+};
+
+type DashboardPurchaseRow = {
+  total_cost: number | string;
+  created_at: string;
 };
 
 type DashboardStatusLogRow = {
@@ -322,31 +328,120 @@ function buildMonthlySeries(orders: DashboardOrderRow[], months: number) {
   return buckets.map(({ key: _key, ...point }) => point);
 }
 
-function buildSalesSeries(orders: DashboardOrderRow[]): DashboardSalesSeries {
+function buildPurchaseDailySeries(
+  purchases: DashboardPurchaseRow[],
+  days: number,
+  labelFormatter: (date: Date) => string,
+): SalesAndRevenuePoint[] {
+  const buckets = Array.from({ length: days }, (_, index) => {
+    const date = new Date();
+    date.setDate(date.getDate() - (days - 1 - index));
+    return {
+      key: getManilaDateKey(date),
+      label: labelFormatter(date),
+      sales: 0,
+      purchase: 0,
+      revenue: 0,
+    };
+  });
+
+  const lookup = new Map(buckets.map((bucket) => [bucket.key, bucket]));
+
+  for (const purchase of purchases) {
+    const bucket = lookup.get(getManilaDateKey(purchase.created_at));
+    if (!bucket) continue;
+
+    bucket.purchase += toNumber(purchase.total_cost);
+  }
+
+  return buckets.map(({ key: _key, ...point }) => point);
+}
+
+function buildPurchaseMonthlySeries(
+  purchases: DashboardPurchaseRow[],
+  months: number,
+) {
+  const buckets = Array.from({ length: months }, (_, index) => {
+    const date = new Date();
+    date.setMonth(date.getMonth() - (months - 1 - index));
+    return {
+      key: getManilaMonthKey(date),
+      label: getManilaMonthLabel(date),
+      sales: 0,
+      purchase: 0,
+      revenue: 0,
+    };
+  });
+
+  const lookup = new Map(buckets.map((bucket) => [bucket.key, bucket]));
+
+  for (const purchase of purchases) {
+    const bucket = lookup.get(getManilaMonthKey(purchase.created_at));
+    if (!bucket) continue;
+
+    bucket.purchase += toNumber(purchase.total_cost);
+  }
+
+  return buckets.map(({ key: _key, ...point }) => point);
+}
+
+function mergeSalesAndPurchaseSeries(
+  salesSeries: SalesAndRevenuePoint[],
+  purchaseSeries: SalesAndRevenuePoint[],
+) {
+  return salesSeries.map((point, index) => ({
+    ...point,
+    purchase: purchaseSeries[index]?.purchase ?? 0,
+  }));
+}
+
+function buildSalesSeries(
+  orders: DashboardOrderRow[],
+  purchases: DashboardPurchaseRow[],
+): DashboardSalesSeries {
+  const dayLabel = (date: Date) =>
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: "Asia/Manila",
+      hour: "numeric",
+      minute: "2-digit",
+    }).format(date);
+  const weekLabel = (date: Date) =>
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: "Asia/Manila",
+      weekday: "short",
+    }).format(date);
+  const monthLabel = (date: Date) =>
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: "Asia/Manila",
+      month: "short",
+      day: "numeric",
+    }).format(date);
+
   return {
-    "1D": buildDailySeries(orders, 1, (date) =>
-      new Intl.DateTimeFormat("en-US", {
-        timeZone: "Asia/Manila",
-        hour: "numeric",
-        minute: "2-digit",
-      }).format(date),
+    "1D": mergeSalesAndPurchaseSeries(
+      buildDailySeries(orders, 1, dayLabel),
+      buildPurchaseDailySeries(purchases, 1, dayLabel),
     ),
-    "1W": buildDailySeries(orders, 7, (date) =>
-      new Intl.DateTimeFormat("en-US", {
-        timeZone: "Asia/Manila",
-        weekday: "short",
-      }).format(date),
+    "1W": mergeSalesAndPurchaseSeries(
+      buildDailySeries(orders, 7, weekLabel),
+      buildPurchaseDailySeries(purchases, 7, weekLabel),
     ),
-    "1M": buildDailySeries(orders, 30, (date) =>
-      new Intl.DateTimeFormat("en-US", {
-        timeZone: "Asia/Manila",
-        month: "short",
-        day: "numeric",
-      }).format(date),
+    "1M": mergeSalesAndPurchaseSeries(
+      buildDailySeries(orders, 30, monthLabel),
+      buildPurchaseDailySeries(purchases, 30, monthLabel),
     ),
-    "3M": buildMonthlySeries(orders, 3),
-    "6M": buildMonthlySeries(orders, 6),
-    "1Y": buildMonthlySeries(orders, 12),
+    "3M": mergeSalesAndPurchaseSeries(
+      buildMonthlySeries(orders, 3),
+      buildPurchaseMonthlySeries(purchases, 3),
+    ),
+    "6M": mergeSalesAndPurchaseSeries(
+      buildMonthlySeries(orders, 6),
+      buildPurchaseMonthlySeries(purchases, 6),
+    ),
+    "1Y": mergeSalesAndPurchaseSeries(
+      buildMonthlySeries(orders, 12),
+      buildPurchaseMonthlySeries(purchases, 12),
+    ),
   };
 }
 
@@ -357,6 +452,8 @@ async function getTenantDashboardData(
   const admin = createSupabaseAdminClient();
   const dateRange = getDashboardDateRange(rangePreset);
   const todayStartIso = `${getManilaDateKey(new Date())}T00:00:00+08:00`;
+  const yearStart = new Date();
+  yearStart.setFullYear(yearStart.getFullYear() - 1);
 
   const currentOrdersQuery = admin
     .from("orders")
@@ -424,6 +521,7 @@ async function getTenantDashboardData(
     currentOrdersResult,
     previousOrdersResult,
     inventoryResult,
+    purchaseLogsResult,
     menuCountResult,
     statusLogsResult,
   ] = await Promise.all([
@@ -436,9 +534,17 @@ async function getTenantDashboardData(
     previousOrdersQuery,
     admin
       .from("inventory_items")
-      .select("id, name, unit_type, current_stock, low_stock_threshold")
+      .select(
+        "id, name, unit_type, current_stock, low_stock_threshold, purchase_price",
+      )
       .eq("tenant_id", tenantId)
       .order("current_stock", { ascending: true }),
+    admin
+      .from("inventory_purchase_logs")
+      .select("total_cost, created_at")
+      .eq("tenant_id", tenantId)
+      .gte("created_at", `${getManilaDateKey(yearStart)}T00:00:00+08:00`)
+      .order("created_at", { ascending: false }),
     admin
       .from("menu_items")
       .select("id", { count: "exact", head: true })
@@ -457,8 +563,6 @@ async function getTenantDashboardData(
   const hasComparisonRange = Boolean(
     dateRange.previousStartIso && dateRange.previousEndIso,
   );
-  const yearStart = new Date();
-  yearStart.setFullYear(yearStart.getFullYear() - 1);
   const { data: yearOrdersData } = await admin
     .from("orders")
     .select(
@@ -486,6 +590,8 @@ async function getTenantDashboardData(
   const yearOrders = (yearOrdersData ?? []) as DashboardOrderRow[];
   const inventoryItems = (inventoryResult.data ??
     []) as DashboardInventoryRow[];
+  const purchaseLogs = (purchaseLogsResult.data ??
+    []) as DashboardPurchaseRow[];
   const statusLogs = (statusLogsResult.data ?? []) as DashboardStatusLogRow[];
 
   const paidCurrentOrders = currentOrders.filter(
@@ -536,7 +642,7 @@ async function getTenantDashboardData(
     hasComparisonRange,
   );
   const recentOrders = buildRecentOrders(currentOrders);
-  const salesChartSeries = buildSalesSeries(yearOrders);
+  const salesChartSeries = buildSalesSeries(yearOrders, purchaseLogs);
 
   const inventoryCount = inventoryItems.length;
   const lowStockCount = lowStockItems.length;

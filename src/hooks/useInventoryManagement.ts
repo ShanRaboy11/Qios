@@ -42,6 +42,7 @@ export interface InventoryItem {
   current_stock: number;
   low_stock_threshold: number;
   critical_stock_threshold: number;
+  purchase_price: number;
   created_at: string;
   updated_at: string;
 }
@@ -68,13 +69,15 @@ export const useInventoryManagement = () => {
     tenantId: string;
   }) => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (!session?.access_token) return;
       await fetch(`/api/tenants/${payload.tenantId}/audit-logs/log`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${session.access_token}`,
+          Authorization: `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           actionType: payload.actionType,
@@ -87,6 +90,29 @@ export const useInventoryManagement = () => {
       });
     } catch {
       // Non-fatal — never block primary operation
+    }
+  };
+
+  const logPurchaseEvent = async (payload: {
+    tenantId: string;
+    inventoryItemId: string;
+    quantity: number;
+    unitPrice: number;
+  }) => {
+    try {
+      if (payload.quantity <= 0 || payload.unitPrice <= 0) return;
+
+      const { error } = await supabase.from("inventory_purchase_logs").insert({
+        tenant_id: payload.tenantId,
+        inventory_item_id: payload.inventoryItemId,
+        quantity: payload.quantity,
+        unit_price: payload.unitPrice,
+        total_cost: payload.quantity * payload.unitPrice,
+      });
+
+      if (error) throw error;
+    } catch {
+      // Non-fatal — purchase logging should never block inventory saves
     }
   };
 
@@ -125,6 +151,7 @@ export const useInventoryManagement = () => {
 
   const mapRowToItem = (row: InventoryItemRow): InventoryItem => ({
     ...row,
+    purchase_price: Number(row.purchase_price ?? 0),
     inventory_mode: toUiInventoryMode(row.inventory_mode),
   });
 
@@ -201,10 +228,15 @@ export const useInventoryManagement = () => {
     setActionError(null);
     try {
       const tenantId = await getCurrentTenantId();
+      const normalizedPurchasePrice = Number(draft.purchase_price ?? 0);
       const inferredInventoryMode = inferInventoryModeFromUnit(
         draft.unit_type,
         draft.inventory_mode ?? "unit",
       );
+
+      const previousItem = draft.id
+        ? items.find((item) => item.id === draft.id)
+        : null;
 
       const payload = {
         name: draft.name,
@@ -213,6 +245,7 @@ export const useInventoryManagement = () => {
         current_stock: draft.current_stock,
         low_stock_threshold: draft.low_stock_threshold,
         critical_stock_threshold: draft.critical_stock_threshold,
+        purchase_price: normalizedPurchasePrice,
       };
 
       if (isNew) {
@@ -247,13 +280,23 @@ export const useInventoryManagement = () => {
         if (error) throw error;
         const mapped = mapRowToItem(data as InventoryItemRow);
         setItems((prev) => [...prev, mapped]);
+        void logPurchaseEvent({
+          tenantId,
+          inventoryItemId: mapped.id,
+          quantity: Number(mapped.current_stock ?? 0),
+          unitPrice: mapped.purchase_price,
+        });
         void logAuditEvent({
           tenantId,
           actionType: "CREATE",
           description: `Added inventory item: ${mapped.name}`,
           targetId: mapped.id,
           targetName: mapped.name,
-          metadata: { unit_type: mapped.unit_type, current_stock: mapped.current_stock },
+          metadata: {
+            unit_type: mapped.unit_type,
+            current_stock: mapped.current_stock,
+            purchase_price: mapped.purchase_price,
+          },
         });
         return { item: mapped, error: null as string | null };
       } else {
@@ -288,13 +331,26 @@ export const useInventoryManagement = () => {
         if (error) throw error;
         const mapped = mapRowToItem(data as InventoryItemRow);
         setItems((prev) => prev.map((i) => (i.id === draft.id ? mapped : i)));
+        const previousStock = Number(previousItem?.current_stock ?? 0);
+        const nextStock = Number(mapped.current_stock ?? 0);
+        const stockIncrease = Math.max(nextStock - previousStock, 0);
+        void logPurchaseEvent({
+          tenantId,
+          inventoryItemId: mapped.id,
+          quantity: stockIncrease,
+          unitPrice: mapped.purchase_price,
+        });
         void logAuditEvent({
           tenantId,
           actionType: "UPDATE",
           description: `Updated inventory item: ${mapped.name}`,
           targetId: mapped.id,
           targetName: mapped.name,
-          metadata: { unit_type: mapped.unit_type, current_stock: mapped.current_stock },
+          metadata: {
+            unit_type: mapped.unit_type,
+            current_stock: mapped.current_stock,
+            purchase_price: mapped.purchase_price,
+          },
         });
         return { item: mapped, error: null as string | null };
       }

@@ -100,6 +100,7 @@ export default function IngredientsInventory() {
       current_stock: 0,
       low_stock_threshold: 0,
       critical_stock_threshold: 0,
+      purchase_price: 0,
     });
     setModalMode("add");
     setModalError(null);
@@ -135,8 +136,14 @@ export default function IngredientsInventory() {
     const currentStock = draftItem.current_stock ?? 0;
     const lowStock = draftItem.low_stock_threshold ?? 0;
     const criticalStock = draftItem.critical_stock_threshold ?? 0;
+    const purchasePrice = draftItem.purchase_price ?? 0;
 
-    if (currentStock < 0 || lowStock < 0 || criticalStock < 0) {
+    if (
+      currentStock < 0 ||
+      lowStock < 0 ||
+      criticalStock < 0 ||
+      purchasePrice < 0
+    ) {
       setModalError("Stock numbers must be 0 or greater.");
       return;
     }
@@ -526,6 +533,25 @@ export default function IngredientsInventory() {
                     }
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="block b5 font-bold text-text-secondary uppercase tracking-widest mb-1.5">
+                  Purchase Price
+                </label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={draftItem.purchase_price ?? 0}
+                  onChange={(e) =>
+                    setDraftItem({
+                      ...draftItem,
+                      purchase_price: parseFloat(e.target.value) || 0,
+                    })
+                  }
+                  placeholder="e.g. 25.00"
+                />
               </div>
             </div>
 
