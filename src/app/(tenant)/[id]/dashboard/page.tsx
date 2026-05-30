@@ -523,9 +523,9 @@ async function getTenantDashboardData(
     (order) => order.status === "ready" && order.payment_status === "paid",
   ).length;
 
-  const readyTodayCount = new Set(
+  const servedTodayCount = new Set(
     statusLogs
-      .filter((log) => log.status_change === "ready")
+      .filter((log) => log.status_change === "served")
       .map((log) => log.order_id),
   ).size;
 
@@ -599,9 +599,9 @@ async function getTenantDashboardData(
       color: "primary" as const,
     },
     {
-      title: "Ready Today",
-      value: formatCompactCount(readyTodayCount),
-      description: "Scanner-confirmed ready orders",
+      title: "Served Today",
+      value: formatCompactCount(servedTodayCount),
+      description: "Scanner-confirmed served orders",
       icon: <CheckCircle2 size={24} />,
       variant: "outlined" as const,
       color: "accent" as const,
@@ -637,7 +637,7 @@ async function getTenantDashboardData(
     },
     {
       label: "Completed Today",
-      value: formatCompactCount(readyTodayCount),
+      value: formatCompactCount(servedTodayCount),
       icon: <CheckCircle2 className="w-6 h-6 text-brand-accent mb-2" />,
       iconClassName:
         "bg-gray-50 border border-gray-100 hover:border-orange-100",
@@ -698,7 +698,7 @@ async function getTenantDashboardData(
       {
         value: formatCompactCount(readyOrdersCount),
         label: "Ready",
-        trend: `${formatCompactCount(readyTodayCount)} today`,
+        trend: `${formatCompactCount(servedTodayCount)} today`,
         trendPositive: true,
       },
     ] as [

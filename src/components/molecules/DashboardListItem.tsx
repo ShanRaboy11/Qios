@@ -5,7 +5,7 @@ export interface DashboardListItemProps {
   icon: React.ReactNode;
   title: string;
   subtitle: string;
-  rightContent: React.ReactNode;
+  rightContent?: React.ReactNode;
   className?: string;
   isLast?: boolean;
 }
@@ -40,7 +40,9 @@ export const DashboardListItem = ({
       </div>
 
       {/* right Content */}
-      <div className="flex flex-col items-end shrink-0">{rightContent}</div>
+      {rightContent ? (
+        <div className="flex flex-col items-end shrink-0">{rightContent}</div>
+      ) : null}
     </div>
   );
 };

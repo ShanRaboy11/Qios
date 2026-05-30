@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { requireEmployeePermission } from "@/lib/serverPermissions";
-import {
-  formatManilaDate,
-  formatManilaTime,
-} from "@/lib/salesDashboard";
+import { formatManilaDate, formatManilaTime } from "@/lib/salesDashboard";
 
 // ---------------------------------------------------------------------------
 // Shared types
@@ -36,7 +33,10 @@ function toNumber(value: number | string | null | undefined): number {
 function buildTransactions(orders: OrderRow[]) {
   return orders.map((order) => {
     const items = (order.order_items ?? [])
-      .map((item) => `${item.quantity}x ${item.menu_items?.name ?? "Unknown Item"}`)
+      .map(
+        (item) =>
+          `${item.quantity}x ${item.menu_items?.name ?? "Unknown Item"}`,
+      )
       .join(", ");
 
     return {
@@ -83,7 +83,10 @@ export async function GET(
   const status = searchParams.get("status")?.trim() ?? "all";
   const paymentStatus = searchParams.get("paymentStatus")?.trim() ?? "all";
   const includeAll = searchParams.get("all") === "true";
-  const page = Math.max(1, Number.parseInt(searchParams.get("page") ?? "1", 10));
+  const page = Math.max(
+    1,
+    Number.parseInt(searchParams.get("page") ?? "1", 10),
+  );
   const limit = Math.max(
     1,
     Math.min(100, Number.parseInt(searchParams.get("limit") ?? "10", 10)),
@@ -118,7 +121,9 @@ export async function GET(
       .order("created_at", { ascending: false });
 
     if (search) {
-      query = query.or(`qr_hash.ilike.%${search}%,table_number.ilike.%${search}%`);
+      query = query.or(
+        `qr_hash.ilike.%${search}%,table_number.ilike.%${search}%`,
+      );
     }
 
     if (status && status !== "all") {
@@ -143,37 +148,48 @@ export async function GET(
     }
 
     // Normalise Supabase nested relations
-    const normalised = (data ?? []).map((raw: any): OrderRow => ({
-      id: String(raw.id),
-      qr_hash: raw.qr_hash ?? null,
-      status: String(raw.status ?? ""),
-      payment_status: String(raw.payment_status ?? ""),
-      payment_method: raw.payment_method ?? null,
-      total_price: raw.total_price ?? 0,
-      created_at: String(raw.created_at ?? new Date().toISOString()),
-      table_number: raw.table_number ?? null,
-      order_items: (raw.order_items ?? []).map((it: any) => ({
-        id: String(it.id),
-        quantity: Number(it.quantity ?? 0),
-        unit_price: it.unit_price ?? null,
-        menu_items: Array.isArray(it.menu_items)
-          ? it.menu_items[0] ?? null
-          : it.menu_items ?? null,
-      })),
-    }));
+    const normalised = (data ?? []).map(
+      (raw: any): OrderRow => ({
+        id: String(raw.id),
+        qr_hash: raw.qr_hash ?? null,
+        status: String(raw.status ?? ""),
+        payment_status: String(raw.payment_status ?? ""),
+        payment_method: raw.payment_method ?? null,
+        total_price: raw.total_price ?? 0,
+        created_at: String(raw.created_at ?? new Date().toISOString()),
+        table_number: raw.table_number ?? null,
+        order_items: (raw.order_items ?? []).map((it: any) => ({
+          id: String(it.id),
+          quantity: Number(it.quantity ?? 0),
+          unit_price: it.unit_price ?? null,
+          menu_items: Array.isArray(it.menu_items)
+            ? (it.menu_items[0] ?? null)
+            : (it.menu_items ?? null),
+        })),
+      }),
+    );
 
     const transactions = buildTransactions(normalised);
     const total = count ?? 0;
 
+    // fetch tenant business name so employees can export proper header
+    const { data: tenant } = await admin
+      .from("tenants")
+      .select("business_name")
+      .eq("id", tenantId)
+      .maybeSingle();
+
     return NextResponse.json({
-      businessName: "",
+      businessName:
+        typeof tenant?.business_name === "string" ? tenant.business_name : "",
       data: transactions,
       total,
       page: includeAll ? 1 : page,
       limit: includeAll ? Math.max(transactions.length, 1) : limit,
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to load transactions";
+    const message =
+      err instanceof Error ? err.message : "Failed to load transactions";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

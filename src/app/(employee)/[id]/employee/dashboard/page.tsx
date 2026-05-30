@@ -101,7 +101,7 @@ function buildPrepAverage(logs: DashboardStatusLogRow[]) {
     const prepStartTime = new Date(prepStart.created_at).getTime();
     const prepEnd = sorted.find(
       (log) =>
-        (log.status_change === "ready" || log.status_change === "served") &&
+        log.status_change === "served" &&
         new Date(log.created_at).getTime() >= prepStartTime,
     );
 
@@ -133,7 +133,7 @@ async function getEmployeeDashboardData(tenantId: string) {
 
   const [
     activeOrdersResult,
-    readyTodayResult,
+    servedTodayResult,
     prepLogsResult,
     recentLogsResult,
   ] = await Promise.all([
@@ -164,14 +164,14 @@ async function getEmployeeDashboardData(tenantId: string) {
       .from("order_status_logs")
       .select("order_id")
       .eq("tenant_id", tenantId)
-      .eq("status_change", "ready")
+      .eq("status_change", "served")
       .gte("created_at", todayStartIso),
     admin
       .from("order_status_logs")
       .select("order_id, status_change, created_at")
       .eq("tenant_id", tenantId)
       .gte("created_at", prepWindowIso)
-      .in("status_change", ["preparing", "ready", "served"])
+      .in("status_change", ["preparing", "served"])
       .order("created_at", { ascending: true }),
     admin
       .from("order_status_logs")
@@ -182,8 +182,8 @@ async function getEmployeeDashboardData(tenantId: string) {
   ]);
 
   const activeOrders = (activeOrdersResult.data ?? []) as DashboardOrderRow[];
-  const readyTodayCount = new Set(
-    (readyTodayResult.data ?? []).map((row) => row.order_id),
+  const servedTodayCount = new Set(
+    (servedTodayResult.data ?? []).map((row) => row.order_id),
   ).size;
   const prepLogs = (prepLogsResult.data ?? []) as DashboardStatusLogRow[];
   const recentLogs = (recentLogsResult.data ?? []) as DashboardStatusLogRow[];
@@ -260,7 +260,7 @@ async function getEmployeeDashboardData(tenantId: string) {
 
   return {
     pendingCount,
-    readyTodayCount,
+    servedTodayCount,
     prepAverageMinutes,
     recentActivities,
     hasActivity: recentActivities.length > 0,
@@ -275,7 +275,7 @@ export default async function EmployeeDashboard({
   const { id: tenantId } = await params;
   const {
     pendingCount,
-    readyTodayCount,
+    servedTodayCount,
     prepAverageMinutes,
     recentActivities,
     hasActivity,
@@ -300,15 +300,15 @@ export default async function EmployeeDashboard({
         />
         <KPICard
           title="Completed Today"
-          value={String(readyTodayCount)}
-          description="Orders marked ready today"
+          value={String(servedTodayCount)}
+          description="Orders marked served today"
           icon={<CheckCircle2 size={24} />}
           color="accent"
         />
         <KPICard
           title="Avg Prep Time"
           value={formatPrepTime(prepAverageMinutes)}
-          description="Calculated in minutes from scanner start to ready/served"
+          description="Calculated in minutes from scanner start to served"
           icon={<ChefHat size={24} />}
           color="primary"
         />

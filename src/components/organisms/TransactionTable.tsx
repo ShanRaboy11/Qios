@@ -5,7 +5,15 @@ import { createPortal } from "react-dom";
 import { Badge } from "@/components/atoms/Badge";
 import { Input } from "@/components/atoms/Input";
 import { Button } from "@/components/atoms/Button";
-import { ChevronDown, ChevronLeft, ChevronRight, Download, Filter, Search, X } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  Filter,
+  Search,
+  X,
+} from "lucide-react";
 import { jsPDF } from "jspdf";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -17,11 +25,17 @@ import {
 interface TransactionTableProps {
   tenantId: string;
   businessName: string;
-  /** Override the fetch endpoint. Defaults to /api/tenants/{tenantId}/sales */
   apiPath?: string;
 }
 
-const STATUS_OPTIONS = ["all", "pending", "preparing", "ready", "served", "cancelled"] as const;
+const STATUS_OPTIONS = [
+  "all",
+  "pending",
+  "preparing",
+  "ready",
+  "served",
+  "cancelled",
+] as const;
 const PAYMENT_STATUS_OPTIONS = ["all", "unpaid", "paid", "refunded"] as const;
 
 function capitalize(value: string) {
@@ -32,8 +46,12 @@ function capitalize(value: string) {
 function buildFilterSummary(
   status: (typeof STATUS_OPTIONS)[number],
   paymentStatus: (typeof PAYMENT_STATUS_OPTIONS)[number],
+  startDate: string,
+  endDate: string
 ) {
-  return [status, paymentStatus].filter((value) => value !== "all").length;
+  const count = [status, paymentStatus].filter((value) => value !== "all").length;
+  const dateCount = (startDate || endDate) ? 1 : 0;
+  return count + dateCount;
 }
 
 function formatDateTime(value: string) {
@@ -62,7 +80,11 @@ type TransactionDetailsModalProps = {
   onClose: () => void;
 };
 
-function TransactionDetailsModal({ transaction, isOpen, onClose }: TransactionDetailsModalProps) {
+function TransactionDetailsModal({
+  transaction,
+  isOpen,
+  onClose,
+}: TransactionDetailsModalProps) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -131,17 +153,28 @@ function TransactionDetailsModal({ transaction, isOpen, onClose }: TransactionDe
                     { label: "Order ID", value: transaction.orderNumber },
                     { label: "Date", value: transaction.date },
                     { label: "Time", value: transaction.time },
-                    { label: "Table", value: transaction.tableNumber || "Walk-in" },
+                    {
+                      label: "Table",
+                      value: transaction.tableNumber || "Walk-in",
+                    },
                     { label: "Status", value: capitalize(transaction.status) },
-                    { label: "Payment Status", value: capitalize(transaction.paymentStatus) },
+                    {
+                      label: "Payment Status",
+                      value: capitalize(transaction.paymentStatus),
+                    },
                     { label: "Method", value: capitalize(transaction.method) },
                     { label: "Total", value: formatMoney(transaction.total) },
                   ].map((field) => (
-                    <div key={field.label} className="rounded-2xl border border-gray-100 bg-gray-50/60 p-4">
+                    <div
+                      key={field.label}
+                      className="rounded-2xl border border-gray-100 bg-gray-50/60 p-4"
+                    >
                       <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-text-secondary">
                         {field.label}
                       </p>
-                      <p className="mt-2 text-sm font-semibold text-text-primary">{field.value}</p>
+                      <p className="mt-2 text-sm font-semibold text-text-primary">
+                        {field.value}
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -149,21 +182,32 @@ function TransactionDetailsModal({ transaction, isOpen, onClose }: TransactionDe
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.3fr_0.7fr]">
                   <div className="rounded-[24px] border border-gray-100 bg-white shadow-sm overflow-hidden">
                     <div className="border-b border-gray-100 px-5 py-4">
-                      <h4 className="text-sm font-bold text-text-primary">Items</h4>
-                      <p className="mt-1 text-xs text-text-secondary">All items included in this order</p>
+                      <h4 className="text-sm font-bold text-text-primary">
+                        Items
+                      </h4>
+                      <p className="mt-1 text-xs text-text-secondary">
+                        All items included in this order
+                      </p>
                     </div>
                     <div className="divide-y divide-gray-100">
                       {parseItems(transaction.items).length > 0 ? (
                         parseItems(transaction.items).map((item, index) => (
-                          <div key={`${transaction.id}-item-${index}`} className="px-5 py-4 flex items-start gap-3">
+                          <div
+                            key={`${transaction.id}-item-${index}`}
+                            className="px-5 py-4 flex items-start gap-3"
+                          >
                             <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-primary/10 text-xs font-bold text-brand-accent">
                               {index + 1}
                             </div>
-                            <p className="text-sm text-text-primary leading-relaxed">{item}</p>
+                            <p className="text-sm text-text-primary leading-relaxed">
+                              {item}
+                            </p>
                           </div>
                         ))
                       ) : (
-                        <div className="px-5 py-8 text-sm text-text-secondary">No item details available.</div>
+                        <div className="px-5 py-8 text-sm text-text-secondary">
+                          No item details available.
+                        </div>
                       )}
                     </div>
                   </div>
@@ -175,16 +219,28 @@ function TransactionDetailsModal({ transaction, isOpen, onClose }: TransactionDe
                       </p>
                       <div className="mt-4 space-y-3 text-sm">
                         <div className="flex items-center justify-between gap-4">
-                          <span className="text-text-secondary">Created at</span>
-                          <span className="font-medium text-text-primary text-right">{formatDateTime(transaction.createdAt)}</span>
+                          <span className="text-text-secondary">
+                            Created at
+                          </span>
+                          <span className="font-medium text-text-primary text-right">
+                            {formatDateTime(transaction.createdAt)}
+                          </span>
                         </div>
                         <div className="flex items-center justify-between gap-4">
-                          <span className="text-text-secondary">Transaction ID</span>
-                          <span className="font-medium text-text-primary text-right break-all">{transaction.id}</span>
+                          <span className="text-text-secondary">
+                            Transaction ID
+                          </span>
+                          <span className="font-medium text-text-primary text-right break-all">
+                            {transaction.id}
+                          </span>
                         </div>
                         <div className="flex items-center justify-between gap-4">
-                          <span className="text-text-secondary">Table number</span>
-                          <span className="font-medium text-text-primary text-right">{transaction.tableNumber || "Walk-in"}</span>
+                          <span className="text-text-secondary">
+                            Table number
+                          </span>
+                          <span className="font-medium text-text-primary text-right">
+                            {transaction.tableNumber || "Walk-in"}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -193,8 +249,12 @@ function TransactionDetailsModal({ transaction, isOpen, onClose }: TransactionDe
                       <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-brand-accent">
                         Amount Due
                       </p>
-                      <p className="mt-3 text-3xl font-bold text-text-primary">{formatMoney(transaction.total)}</p>
-                      <p className="mt-2 text-sm text-text-secondary">Includes all listed items and charges for this order.</p>
+                      <p className="mt-3 text-3xl font-bold text-text-primary">
+                        {formatMoney(transaction.total)}
+                      </p>
+                      <p className="mt-2 text-sm text-text-secondary">
+                        Includes all listed items and charges for this order.
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -208,27 +268,36 @@ function TransactionDetailsModal({ transaction, isOpen, onClose }: TransactionDe
   );
 }
 
-export const TransactionTable = ({ tenantId, businessName, apiPath }: TransactionTableProps) => {
+export const TransactionTable = ({
+  tenantId,
+  businessName,
+  apiPath,
+}: TransactionTableProps) => {
   const resolvedApiPath = apiPath ?? `/api/tenants/${tenantId}/sales`;
   const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<(typeof STATUS_OPTIONS)[number]>("all");
-  const [paymentStatusFilter, setPaymentStatusFilter] = useState<(typeof PAYMENT_STATUS_OPTIONS)[number]>("all");
+  const [statusFilter, setStatusFilter] =
+    useState<(typeof STATUS_OPTIONS)[number]>("all");
+  const [paymentStatusFilter, setPaymentStatusFilter] =
+    useState<(typeof PAYMENT_STATUS_OPTIONS)[number]>("all");
+  
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+
   const [page, setPage] = useState(1);
   const [limit] = useState(6);
-  const [transactions, setTransactions] = useState<SalesTransactionRecord[]>([]);
+  const [transactions, setTransactions] = useState<SalesTransactionRecord[]>(
+    [],
+  );
   const [total, setTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [selectedTransaction, setSelectedTransaction] = useState<SalesTransactionRecord | null>(null);
+  const [selectedTransaction, setSelectedTransaction] =
+    useState<SalesTransactionRecord | null>(null);
 
   useEffect(() => {
     const query = searchInput.trim();
-
-    if (!query) {
-      return;
-    }
 
     const timeout = window.setTimeout(() => {
       setPage(1);
@@ -256,12 +325,19 @@ export const TransactionTable = ({ tenantId, businessName, apiPath }: Transactio
           search: searchQuery,
           status: statusFilter,
           paymentStatus: paymentStatusFilter,
+          startDate, 
+          endDate,   
         });
 
-        const response = await fetch(`${resolvedApiPath}?${params.toString()}`, {
-          signal: controller.signal,
-        });
-        const payload = (await response.json()) as SalesTransactionResponse & { error?: string };
+        const response = await fetch(
+          `${resolvedApiPath}?${params.toString()}`,
+          {
+            signal: controller.signal,
+          },
+        );
+        const payload = (await response.json()) as SalesTransactionResponse & {
+          error?: string;
+        };
 
         if (!response.ok) {
           throw new Error(payload.error || "Failed to load transactions");
@@ -286,15 +362,15 @@ export const TransactionTable = ({ tenantId, businessName, apiPath }: Transactio
     void loadTransactions();
 
     return () => controller.abort();
-  }, [limit, page, paymentStatusFilter, searchQuery, statusFilter, tenantId]);
+  }, [limit, page, paymentStatusFilter, searchQuery, statusFilter, startDate, endDate, tenantId, resolvedApiPath]);
 
   const totalPages = Math.max(1, Math.ceil(total / limit));
   const startIndex = total === 0 ? 0 : (page - 1) * limit + 1;
   const endIndex = Math.min(total, page * limit);
 
   const filterSummary = useMemo(
-    () => buildFilterSummary(statusFilter, paymentStatusFilter),
-    [paymentStatusFilter, statusFilter],
+    () => buildFilterSummary(statusFilter, paymentStatusFilter, startDate, endDate),
+    [paymentStatusFilter, statusFilter, startDate, endDate],
   );
 
   const exportTransactions = async () => {
@@ -311,16 +387,24 @@ export const TransactionTable = ({ tenantId, businessName, apiPath }: Transactio
         search: searchQuery,
         status: statusFilter,
         paymentStatus: paymentStatusFilter,
+        startDate,
+        endDate,
       });
 
       const response = await fetch(`${resolvedApiPath}?${params.toString()}`);
-      const payload = (await response.json()) as SalesTransactionResponse & { error?: string };
+      const payload = (await response.json()) as SalesTransactionResponse & {
+        error?: string;
+      };
 
       if (!response.ok) {
         throw new Error(payload.error || "Failed to export transactions");
       }
 
-      const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
+      const doc = new jsPDF({
+        orientation: "landscape",
+        unit: "pt",
+        format: "a4",
+      });
       const width = doc.internal.pageSize.getWidth();
       const height = doc.internal.pageSize.getHeight();
       const margin = 36;
@@ -330,7 +414,9 @@ export const TransactionTable = ({ tenantId, businessName, apiPath }: Transactio
       const drawHeader = () => {
         doc.setFont("helvetica", "bold");
         doc.setFontSize(18);
-        doc.text(businessName || payload.businessName || "Sales Report", margin, 48);
+        const titleText =
+          businessName || payload.businessName || "Sales Report";
+        doc.text(titleText, margin, 48);
 
         doc.setFont("helvetica", "normal");
         doc.setFontSize(10);
@@ -339,23 +425,32 @@ export const TransactionTable = ({ tenantId, businessName, apiPath }: Transactio
           margin,
           68,
         );
-        doc.text(
-          `Filters: ${searchQuery || "All orders"}${statusFilter !== "all" ? ` • Status: ${capitalize(statusFilter)}` : ""}${paymentStatusFilter !== "all" ? ` • Payment: ${capitalize(paymentStatusFilter)}` : ""}`,
-          margin,
-          84,
-          { maxWidth: width - margin * 2 },
-        );
+
+        // Filters - Line 1: Basic Filters (Query, Status, Payment)
+        const filterText = `Filters: ${searchQuery || "All orders"}${statusFilter !== "all" ? ` • Status: ${capitalize(statusFilter)}` : ""}${paymentStatusFilter !== "all" ? ` • Payment: ${capitalize(paymentStatusFilter)}` : ""}`;
+        doc.text(filterText, margin, 84, { maxWidth: width - margin * 2 });
+
+        // Filters - Line 2: Dates (From and To with Indentation)
+        if (startDate || endDate) {
+          const dateText = `${startDate ? `From: ${startDate}` : ""}${startDate && endDate ? "        " : ""}${endDate ? `To: ${endDate}` : ""}`;
+          doc.text(dateText, margin, 98);
+        }
+
+        doc.setFillColor(247, 247, 247);
+        doc.rect(margin, startY - 12, width - margin * 2, 22, "F");
 
         doc.setFont("helvetica", "bold");
-        doc.setFontSize(9);
+        doc.setFontSize(10);
         const headers = ["Order", "Date", "Time", "Items", "Status", "Total"];
         const headerWidths = [78, 78, 58, 250, 74, 76];
         let x = margin;
         headers.forEach((header, index) => {
-          doc.text(header, x, startY);
+          const centerX = x + headerWidths[index] / 2;
+          doc.text(header, centerX, startY, { align: "center" });
           x += headerWidths[index];
         });
-        doc.line(margin, startY + 6, width - margin, startY + 6);
+        doc.setDrawColor(220);
+        doc.line(margin, startY + 8, width - margin, startY + 8);
       };
 
       drawHeader();
@@ -364,8 +459,9 @@ export const TransactionTable = ({ tenantId, businessName, apiPath }: Transactio
       doc.setFontSize(9);
       let y = startY + 24;
 
-      payload.data.forEach((row: SalesTransactionRecord) => {
-        const wrappedItems = doc.splitTextToSize(row.items || "No items", 244);
+      payload.data.forEach((row: SalesTransactionRecord, rowIndex: number) => {
+        const itemsText = (row.items || "No items").replace(/\u00A0/g, " ");
+        const wrappedItems = doc.splitTextToSize(itemsText, 244);
         const rowBlockHeight = Math.max(20, wrappedItems.length * 12 + 8);
 
         if (y + rowBlockHeight > height - margin) {
@@ -374,23 +470,38 @@ export const TransactionTable = ({ tenantId, businessName, apiPath }: Transactio
           y = startY + 24;
         }
 
+        if (rowIndex % 2 === 0) {
+          doc.setFillColor(250, 250, 250);
+          doc.rect(margin, y - 8, width - margin * 2, rowBlockHeight, "F");
+        }
+
+        const totalRaw = formatMoney(row.total).replace(/\u00A0/g, " ");
+        const totalForPdf = totalRaw.replace("₱", "PHP ");
+
         const values: Array<string | string[]> = [
           row.orderNumber,
           row.date,
           row.time,
           wrappedItems,
           capitalize(row.status),
-          formatMoney(row.total),
+          totalForPdf,
         ];
 
         let x = margin;
         values.forEach((value, index) => {
+          const colWidth = columnWidths[index];
+          const centerX = x + colWidth / 2;
+          doc.setTextColor(40, 40, 40);
+
           if (Array.isArray(value)) {
-            doc.text(value, x, y);
+            doc.text(value, centerX, y, { align: "center" });
           } else {
-            doc.text(String(value), x, y);
+            doc.text(String(value).replace(/\u00A0/g, " "), centerX, y, {
+              align: "center",
+            });
           }
-          x += columnWidths[index];
+
+          x += colWidth;
         });
 
         y += rowBlockHeight;
@@ -401,9 +512,16 @@ export const TransactionTable = ({ tenantId, businessName, apiPath }: Transactio
         .replace(/^-+|-+$/g, "")
         .toLowerCase();
 
+      doc.setDrawColor(220);
+      doc.line(margin, height - 28, width - margin, height - 28);
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(110, 110, 110);
+      doc.text("Powered by Qios", width / 2, height - 12, { align: "center" });
+      doc.setTextColor(0, 0, 0);
+
       doc.save(`${fileName || "sales-report"}.pdf`);
     } catch {
-      // Keep the UI stable if the export fails.
     } finally {
       setIsDownloading(false);
     }
@@ -414,6 +532,8 @@ export const TransactionTable = ({ tenantId, businessName, apiPath }: Transactio
     setSearchQuery("");
     setStatusFilter("all");
     setPaymentStatusFilter("all");
+    setStartDate("");
+    setEndDate("");
     setPage(1);
     setIsFilterOpen(false);
   };
@@ -457,24 +577,59 @@ export const TransactionTable = ({ tenantId, businessName, apiPath }: Transactio
             </Button>
 
             {isFilterOpen ? (
-              <div className="absolute right-0 top-full mt-3 z-50 min-w-[20rem] rounded-2xl border border-gray-100 bg-white p-5 shadow-lg">
+              <div className="absolute right-0 top-full mt-3 z-50 min-w-[22rem] rounded-2xl border border-gray-100 bg-white p-5 shadow-lg">
                 <div className="flex items-center justify-between border-b border-gray-100 pb-4">
                   <div>
-                    <p className="text-sm font-bold text-text-primary">Filters</p>
-                    <p className="text-xs text-text-secondary mt-0.5">Refine the transaction list</p>
+                    <p className="text-sm font-bold text-text-primary">
+                      Filters
+                    </p>
+                    <p className="text-xs text-text-secondary mt-0.5">
+                      Refine the transaction list
+                    </p>
                   </div>
                 </div>
                 <div className="mt-4 space-y-4">
                   <div>
-                    <span className="text-text-secondary text-[11px] font-bold uppercase tracking-[0.16em]">Order Status</span>
+                    <span className="text-text-secondary text-[11px] font-bold uppercase tracking-[0.16em]">
+                      Date Range
+                    </span>
+                    <div className="grid grid-cols-2 gap-3 mt-2">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[10px] text-text-secondary font-medium px-1">From</span>
+                        <input
+                          type="date"
+                          value={startDate}
+                          onChange={(e) => {setStartDate(e.target.value); setPage(1);}}
+                          className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-xs focus:border-brand-primary outline-none transition-colors"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[10px] text-text-secondary font-medium px-1">To</span>
+                        <input
+                          type="date"
+                          value={endDate}
+                          onChange={(e) => {setEndDate(e.target.value); setPage(1);}}
+                          className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-xs focus:border-brand-primary outline-none transition-colors"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <span className="text-text-secondary text-[11px] font-bold uppercase tracking-[0.16em]">
+                      Order Status
+                    </span>
                     <div className="relative mt-1.5">
                       <select
                         value={statusFilter}
                         onChange={(event) => {
-                          setStatusFilter(event.target.value as (typeof STATUS_OPTIONS)[number]);
+                          setStatusFilter(
+                            event.target
+                              .value as (typeof STATUS_OPTIONS)[number],
+                          );
                           setPage(1);
                         }}
-                        className="w-full rounded-2xl border-2 border-[#E5E5E5] bg-white px-6 py-3.5 text-sm text-text-primary outline-none focus:border-brand-primary focus:shadow-[0_0_0_4px_rgba(255,198,112,0.08)] appearance-none cursor-pointer transition-colors"
+                        className="w-full rounded-2xl border-2 border-[#E5E5E5] bg-white px-6 py-3.5 text-sm text-text-primary outline-none focus:border-brand-primary appearance-none cursor-pointer transition-colors"
                       >
                         {STATUS_OPTIONS.map((option) => (
                           <option key={option} value={option}>
@@ -485,26 +640,7 @@ export const TransactionTable = ({ tenantId, businessName, apiPath }: Transactio
                       <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                     </div>
                   </div>
-                  <div>
-                    <span className="text-text-secondary text-[11px] font-bold uppercase tracking-[0.16em]">Payment Status</span>
-                    <div className="relative mt-1.5">
-                      <select
-                        value={paymentStatusFilter}
-                        onChange={(event) => {
-                          setPaymentStatusFilter(event.target.value as (typeof PAYMENT_STATUS_OPTIONS)[number]);
-                          setPage(1);
-                        }}
-                        className="w-full rounded-2xl border-2 border-[#E5E5E5] bg-white px-6 py-3.5 text-sm text-text-primary outline-none focus:border-brand-primary focus:shadow-[0_0_0_4px_rgba(255,198,112,0.08)] appearance-none cursor-pointer transition-colors"
-                      >
-                        {PAYMENT_STATUS_OPTIONS.map((option) => (
-                          <option key={option} value={option}>
-                            {capitalize(option)}
-                          </option>
-                        ))}
-                      </select>
-                      <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                    </div>
-                  </div>
+                  
                   <div className="flex justify-end gap-2 pt-4 border-t border-gray-100">
                     <Button
                       variant="outline"
@@ -555,27 +691,30 @@ export const TransactionTable = ({ tenantId, businessName, apiPath }: Transactio
           <tbody>
             {isLoading ? (
               Array.from({ length: limit }).map((_, index) => (
-                  <tr key={`transaction-skeleton-${index}`} className="border-b border-gray-50">
-                    <td className="py-4 px-6 text-center">
-                      <div className="h-4 rounded skeleton-shimmer w-24 mx-auto" />
-                    </td>
-                    <td className="py-4 px-6 text-center">
-                      <div className="h-4 rounded skeleton-shimmer w-20 mx-auto" />
-                    </td>
-                    <td className="py-4 px-6 text-center">
-                      <div className="h-4 rounded skeleton-shimmer w-20 mx-auto" />
-                    </td>
-                    <td className="py-4 px-6 text-center">
-                      <div className="h-4 rounded skeleton-shimmer w-44 mx-auto" />
-                    </td>
-                    <td className="py-4 px-6 text-center">
-                      <div className="h-4 rounded skeleton-shimmer w-20 mx-auto" />
-                    </td>
-                    <td className="py-4 px-6 text-right">
-                      <div className="h-4 rounded skeleton-shimmer w-24 ml-auto" />
-                    </td>
-                  </tr>
-                ))
+                <tr
+                  key={`transaction-skeleton-${index}`}
+                  className="border-b border-gray-50"
+                >
+                  <td className="py-4 px-6 text-center">
+                    <div className="h-4 rounded skeleton-shimmer w-24 mx-auto" />
+                  </td>
+                  <td className="py-4 px-6 text-center">
+                    <div className="h-4 rounded skeleton-shimmer w-20 mx-auto" />
+                  </td>
+                  <td className="py-4 px-6 text-center">
+                    <div className="h-4 rounded skeleton-shimmer w-20 mx-auto" />
+                  </td>
+                  <td className="py-4 px-6 text-center">
+                    <div className="h-4 rounded skeleton-shimmer w-44 mx-auto" />
+                  </td>
+                  <td className="py-4 px-6 text-center">
+                    <div className="h-4 rounded skeleton-shimmer w-20 mx-auto" />
+                  </td>
+                  <td className="py-4 px-6 text-right">
+                    <div className="h-4 rounded skeleton-shimmer w-24 ml-auto" />
+                  </td>
+                </tr>
+              ))
             ) : transactions.length > 0 ? (
               transactions.map((tx) => (
                 <tr
@@ -597,7 +736,13 @@ export const TransactionTable = ({ tenantId, businessName, apiPath }: Transactio
                   </td>
                   <td className="py-4 px-6 text-center">
                     <Badge
-                      color={tx.status === "cancelled" ? "error" : tx.status === "ready" || tx.status === "served" ? "success" : "warning"}
+                      color={
+                        tx.status === "cancelled"
+                          ? "error"
+                          : tx.status === "ready" || tx.status === "served"
+                            ? "success"
+                            : "warning"
+                      }
                       variant="subtle"
                       shape="pill"
                       className="justify-center text-[11px] py-0.5"
@@ -612,7 +757,10 @@ export const TransactionTable = ({ tenantId, businessName, apiPath }: Transactio
               ))
             ) : (
               <tr>
-                <td colSpan={6} className="py-16 text-center text-sm text-text-secondary">
+                <td
+                  colSpan={6}
+                  className="py-16 text-center text-sm text-text-secondary"
+                >
                   No transactions found for the selected filters.
                 </td>
               </tr>
@@ -622,7 +770,9 @@ export const TransactionTable = ({ tenantId, businessName, apiPath }: Transactio
       </div>
       <div className="border-t border-gray-50 flex justify-between items-center px-4 py-4 text-sm text-text-secondary">
         <span>
-          {total <= limit ? `Showing ${total} of ${total} transactions` : `Showing ${startIndex} to ${endIndex} of ${total} transactions`}
+          {total <= limit
+            ? `Showing ${total} of ${total} transactions`
+            : `Showing ${startIndex} to ${endIndex} of ${total} transactions`}
         </span>
         <div className="flex items-center gap-2">
           <button
@@ -638,7 +788,9 @@ export const TransactionTable = ({ tenantId, businessName, apiPath }: Transactio
           <button
             className="px-3 py-1 rounded hover:bg-gray-100 disabled:opacity-50 inline-flex items-center gap-1"
             disabled={page >= totalPages || isLoading}
-            onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+            onClick={() =>
+              setPage((current) => Math.min(totalPages, current + 1))
+            }
           >
             Next <ChevronRight size={14} />
           </button>
