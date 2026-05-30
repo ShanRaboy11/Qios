@@ -240,6 +240,7 @@ export async function middleware(request: NextRequest) {
     let redirectPath = "/";
     let role = null;
     let tenantId = null;
+    let userAppRoleId = null;
 
     if (token) {
       try {
@@ -251,6 +252,7 @@ export async function middleware(request: NextRequest) {
           payload.user_role ||
           (payload.role !== "authenticated" ? payload.role : null);
         tenantId = payload.tenant_id || payload.tenantId;
+        userAppRoleId = payload.app_role_id || payload.appRoleId || null;
       } catch (error) {}
     }
 
@@ -264,6 +266,7 @@ export async function middleware(request: NextRequest) {
       if (profile) {
         role = profile.role;
         tenantId = profile.tenant_id;
+        userAppRoleId = profile.app_role_id ?? userAppRoleId;
 
         if (!role && profile.app_role_id) {
           role = "employee";
@@ -289,6 +292,10 @@ export async function middleware(request: NextRequest) {
         (typeof userMetadata?.appRoleId === "string"
           ? userMetadata.appRoleId
           : undefined);
+
+      if (metadataRoleHint) {
+        userAppRoleId = metadataRoleHint;
+      }
 
       if (metadataRoleHint) {
         role = "employee";
