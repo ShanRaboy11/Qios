@@ -25,7 +25,6 @@ import {
 interface TransactionTableProps {
   tenantId: string;
   businessName: string;
-  /** Override the fetch endpoint. Defaults to /api/tenants/{tenantId}/sales */
   apiPath?: string;
 }
 
@@ -282,7 +281,6 @@ export const TransactionTable = ({
   const [paymentStatusFilter, setPaymentStatusFilter] =
     useState<(typeof PAYMENT_STATUS_OPTIONS)[number]>("all");
   
-  // Date states for the calendar
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
@@ -427,12 +425,16 @@ export const TransactionTable = ({
           margin,
           68,
         );
-        doc.text(
-          `Filters: ${searchQuery || "All orders"}${statusFilter !== "all" ? ` • Status: ${capitalize(statusFilter)}` : ""}${startDate ? ` • From: ${startDate}` : ""}${endDate ? ` • To: ${endDate}` : ""}`,
-          margin,
-          84,
-          { maxWidth: width - margin * 2 },
-        );
+
+        // Filters - Line 1: Basic Filters (Query, Status, Payment)
+        const filterText = `Filters: ${searchQuery || "All orders"}${statusFilter !== "all" ? ` • Status: ${capitalize(statusFilter)}` : ""}${paymentStatusFilter !== "all" ? ` • Payment: ${capitalize(paymentStatusFilter)}` : ""}`;
+        doc.text(filterText, margin, 84, { maxWidth: width - margin * 2 });
+
+        // Filters - Line 2: Dates (From and To with Indentation)
+        if (startDate || endDate) {
+          const dateText = `${startDate ? `From: ${startDate}` : ""}${startDate && endDate ? "        " : ""}${endDate ? `To: ${endDate}` : ""}`;
+          doc.text(dateText, margin, 98);
+        }
 
         doc.setFillColor(247, 247, 247);
         doc.rect(margin, startY - 12, width - margin * 2, 22, "F");
