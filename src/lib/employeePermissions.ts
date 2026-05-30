@@ -65,7 +65,7 @@ export function canAccessEmployeeRoute(
   }
 
   if (!permissions) {
-    return false;
+    return true;
   }
 
   const requiredPermissions = EMPLOYEE_ROUTE_REQUIREMENTS[routeName];

@@ -229,7 +229,8 @@ export const FloatingOrderStatus = ({ tenantId }: { tenantId: string }) => {
     }
   }, [currentStep, isExpanded]);
 
-  if ((!isOrderPlaced && !activeOrder) || !isVisible || !activeOrder) return null;
+  if ((!isOrderPlaced && !activeOrder) || !isVisible || !activeOrder)
+    return null;
 
   return (
     <div className="fixed bottom-6 left-0 right-0 z-[100] px-4 pointer-events-none flex justify-center">
@@ -258,8 +259,8 @@ export const FloatingOrderStatus = ({ tenantId }: { tenantId: string }) => {
                 isCancelled
                   ? "bg-gray-500"
                   : currentStep === 3
-                  ? "bg-brand-accent animate-pulse"
-                  : "bg-brand-primary",
+                    ? "bg-brand-accent animate-pulse"
+                    : "bg-brand-primary",
               )}
             >
               {isCancelled ? (
@@ -279,8 +280,8 @@ export const FloatingOrderStatus = ({ tenantId }: { tenantId: string }) => {
                 {isCancelled
                   ? "Order Cancelled"
                   : currentStep === 3
-                  ? "Order is Ready!"
-                  : `Status: ${currentLabel}`}
+                    ? "Order is Ready!"
+                    : `Status: ${currentLabel}`}
               </span>
             </div>
 

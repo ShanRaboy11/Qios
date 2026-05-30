@@ -59,7 +59,13 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-export const CartProvider = ({ children, currency = "PHP" }: { children: ReactNode, currency?: string }) => {
+export const CartProvider = ({
+  children,
+  currency = "PHP",
+}: {
+  children: ReactNode;
+  currency?: string;
+}) => {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isOrderPlaced, setIsOrderPlaced] = useState(false);
@@ -73,9 +79,7 @@ export const CartProvider = ({ children, currency = "PHP" }: { children: ReactNo
       const existingItemIndex = prevCart.findIndex(
         (item) =>
           item.menuItem.id === newItemInput.menuItem.id &&
-          JSON.stringify(
-            item.selectedOptions.map((o) => o.id).sort(),
-          ) ===
+          JSON.stringify(item.selectedOptions.map((o) => o.id).sort()) ===
             JSON.stringify(
               newItemInput.selectedOptions.map((o) => o.id).sort(),
             ) &&
