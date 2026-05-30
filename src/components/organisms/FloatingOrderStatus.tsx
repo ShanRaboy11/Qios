@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { StepperBar } from "@/components/molecules/StepperBar";
 import {
   Receipt,
@@ -17,6 +17,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 import { useCart } from "@/contexts/CartContext";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 const STEPS = [
   { id: 0, label: "Pending Payment", icon: <Receipt size={18} /> },
@@ -26,22 +27,191 @@ const STEPS = [
   { id: 4, label: "Done", icon: <CheckCircle size={18} /> },
 ];
 
-export const FloatingOrderStatus = () => {
-  const { isOrderPlaced, setIsOrderPlaced, cartTotal, currency } = useCart();
-  const [currentStep, setCurrentStep] = useState(0); // Start at Pending Payment
+type OrderStatusRow = {
+  id: string;
+  qr_hash: string | null;
+  tenant_id: string;
+  status: "pending" | "preparing" | "ready" | "served" | "cancelled";
+  payment_status: "unpaid" | "paid";
+  total_price: number;
+};
+
+function mapOrderToStep(
+  status: OrderStatusRow["status"],
+  paymentStatus: OrderStatusRow["payment_status"],
+) {
+  if (status === "cancelled") return 4;
+  if (status === "served") return 4;
+  if (status === "ready") return 3;
+  if (status === "preparing") return 2;
+  if (status === "pending" && paymentStatus === "paid") return 1;
+  return 0;
+}
+
+function mapOrderToLabel(
+  status: OrderStatusRow["status"],
+  paymentStatus: OrderStatusRow["payment_status"],
+) {
+  if (status === "cancelled") return "Cancelled";
+  if (status === "served") return "Completed";
+  if (status === "ready") return "Ready for Pickup";
+  if (status === "preparing") return "Preparing";
+  if (status === "pending" && paymentStatus === "paid") return "Placed";
+  return "Pending Payment";
+}
+
+export const FloatingOrderStatus = ({ tenantId }: { tenantId: string }) => {
+  const {
+    isOrderPlaced,
+    setIsOrderPlaced,
+    activeOrder,
+    setActiveOrder,
+    clearActiveOrder,
+    currency,
+  } = useCart();
+  const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isReadyNotified, setIsReadyNotified] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
+  const storageKey = `qios:active-order:${tenantId}`;
+
+  const upsertTrackedOrder = useCallback(
+    (row: OrderStatusRow) => {
+      const nextOrder = {
+        orderId: row.id,
+        qrHash: row.qr_hash ?? activeOrder?.qrHash ?? row.id,
+        tenantId: row.tenant_id,
+        status: row.status,
+        paymentStatus: row.payment_status,
+        totalPrice: Number(row.total_price || 0),
+      };
+
+      setActiveOrder(nextOrder);
+      setIsOrderPlaced(true);
+
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(nextOrder));
+      } catch {
+        // Storage failure should not block the live order status widget.
+      }
+    },
+    [activeOrder?.qrHash, setActiveOrder, setIsOrderPlaced, storageKey],
+  );
+
+  const fetchOrder = useCallback(async () => {
+    if (!activeOrder?.orderId || !supabase) return;
+
+    const { data, error } = await supabase
+      .from("orders")
+      .select("id, qr_hash, tenant_id, status, payment_status, total_price")
+      .eq("id", activeOrder.orderId)
+      .eq("tenant_id", tenantId)
+      .maybeSingle();
+
+    if (error || !data) {
+      return;
+    }
+
+    upsertTrackedOrder(data as OrderStatusRow);
+  }, [activeOrder?.orderId, supabase, tenantId, upsertTrackedOrder]);
 
   useEffect(() => {
-    if (isOrderPlaced) {
+    if (activeOrder) {
       setIsVisible(true);
-      setCurrentStep(0);
+      setIsOrderPlaced(true);
+      return;
     }
-  }, [isOrderPlaced]);
 
-  // Remove the setInterval auto-progress simulator for actual production.
-  // We'll leave the Ready Notification effect in place so if it ever hits step 3 it works.
+    try {
+      const raw = localStorage.getItem(storageKey);
+      if (!raw) return;
+
+      const saved = JSON.parse(raw) as {
+        orderId?: string;
+        qrHash?: string;
+        tenantId?: string;
+        status?: "pending" | "preparing" | "ready" | "served" | "cancelled";
+        paymentStatus?: "unpaid" | "paid";
+        totalPrice?: number;
+      };
+
+      if (!saved.orderId || saved.tenantId !== tenantId) {
+        return;
+      }
+
+      setActiveOrder({
+        orderId: saved.orderId,
+        qrHash: saved.qrHash || saved.orderId,
+        tenantId,
+        status: saved.status || "pending",
+        paymentStatus: saved.paymentStatus || "unpaid",
+        totalPrice: Number(saved.totalPrice || 0),
+      });
+      setIsOrderPlaced(true);
+    } catch {
+      // Ignore malformed saved payloads and continue without a restored order.
+    }
+  }, [activeOrder, setActiveOrder, setIsOrderPlaced, storageKey, tenantId]);
+
+  useEffect(() => {
+    if (!activeOrder?.orderId || !supabase) return;
+
+    fetchOrder();
+
+    const channel = supabase
+      .channel(`customer_order_${activeOrder.orderId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "orders",
+          filter: `id=eq.${activeOrder.orderId}`,
+        },
+        (payload: { new: Record<string, unknown> }) => {
+          upsertTrackedOrder(payload.new as OrderStatusRow);
+        },
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "DELETE",
+          schema: "public",
+          table: "orders",
+          filter: `id=eq.${activeOrder.orderId}`,
+        },
+        () => {
+          clearActiveOrder();
+          try {
+            localStorage.removeItem(storageKey);
+          } catch {
+            // no-op
+          }
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [
+    activeOrder?.orderId,
+    clearActiveOrder,
+    fetchOrder,
+    storageKey,
+    supabase,
+    upsertTrackedOrder,
+  ]);
+
+  const currentStep = activeOrder
+    ? mapOrderToStep(activeOrder.status, activeOrder.paymentStatus)
+    : 0;
+  const currentLabel = activeOrder
+    ? mapOrderToLabel(activeOrder.status, activeOrder.paymentStatus)
+    : "Processing";
+  const progress = (currentStep / (STEPS.length - 1)) * 100;
+  const isCancelled = activeOrder?.status === "cancelled";
+  const isDone = activeOrder?.status === "served";
 
   useEffect(() => {
     if (currentStep === 3) {
@@ -59,11 +229,8 @@ export const FloatingOrderStatus = () => {
     }
   }, [currentStep, isExpanded]);
 
-  if (!isOrderPlaced || !isVisible) return null;
-
-  const currentLabel =
-    STEPS.find((s) => s.id === currentStep)?.label || "Processing";
-  const progress = (currentStep / (STEPS.length - 1)) * 100;
+  if ((!isOrderPlaced && !activeOrder) || !isVisible || !activeOrder)
+    return null;
 
   return (
     <div className="fixed bottom-6 left-0 right-0 z-[100] px-4 pointer-events-none flex justify-center">
@@ -89,12 +256,16 @@ export const FloatingOrderStatus = () => {
             <div
               className={cn(
                 "w-10 h-10 rounded-full flex items-center justify-center text-white shrink-0 shadow-inner",
-                currentStep === 3
-                  ? "bg-brand-accent animate-pulse"
-                  : "bg-brand-primary",
+                isCancelled
+                  ? "bg-gray-500"
+                  : currentStep === 3
+                    ? "bg-brand-accent animate-pulse"
+                    : "bg-brand-primary",
               )}
             >
-              {currentStep === 3 ? (
+              {isCancelled ? (
+                <X size={20} />
+              ) : currentStep === 3 ? (
                 <BellRing size={20} />
               ) : (
                 <ChefHat size={20} />
@@ -106,9 +277,11 @@ export const FloatingOrderStatus = () => {
                 Active Order
               </span>
               <span className="text-sm font-black text-text-primary truncate">
-                {currentStep === 3
-                  ? "Order is Ready!"
-                  : `Status: ${currentLabel}`}
+                {isCancelled
+                  ? "Order Cancelled"
+                  : currentStep === 3
+                    ? "Order is Ready!"
+                    : `Status: ${currentLabel}`}
               </span>
             </div>
 
@@ -138,7 +311,7 @@ export const FloatingOrderStatus = () => {
                     Order Details
                   </span>
                   <h2 className="text-2xl font-brand font-black text-text-primary">
-                    #ORD-2847
+                    #{activeOrder.qrHash}
                   </h2>
                 </div>
                 <div className="text-right">
@@ -146,7 +319,7 @@ export const FloatingOrderStatus = () => {
                     Order Total
                   </span>
                   <span className="text-2xl font-brand font-black text-brand-accent">
-                    {currency} {cartTotal.toFixed(2)}
+                    {currency} {Number(activeOrder.totalPrice || 0).toFixed(2)}
                   </span>
                 </div>
               </div>
@@ -155,7 +328,16 @@ export const FloatingOrderStatus = () => {
             {/* Main Status Content */}
             <div className="p-6 bg-white relative">
               <AnimatePresence mode="wait">
-                {isReadyNotified ? (
+                {isCancelled ? (
+                  <div className="bg-gray-100 rounded-3xl p-6 text-center text-gray-700">
+                    <h3 className="text-2xl font-brand font-black mb-1">
+                      Order Cancelled
+                    </h3>
+                    <p className="text-sm font-brand-secondary">
+                      Please approach the counter if you need assistance.
+                    </p>
+                  </div>
+                ) : isReadyNotified ? (
                   // Ready Notification State
                   <motion.div
                     key="ready"
@@ -210,9 +392,17 @@ export const FloatingOrderStatus = () => {
                 )}
               </AnimatePresence>
 
-              {currentStep === 4 && (
+              {(currentStep === 4 || isDone || isCancelled) && (
                 <button
-                  onClick={() => setIsVisible(false)}
+                  onClick={() => {
+                    setIsVisible(false);
+                    clearActiveOrder();
+                    try {
+                      localStorage.removeItem(storageKey);
+                    } catch {
+                      // no-op
+                    }
+                  }}
                   className="w-full mt-4 py-3 bg-gray-100 text-gray-600 font-bold rounded-xl"
                 >
                   Dismiss

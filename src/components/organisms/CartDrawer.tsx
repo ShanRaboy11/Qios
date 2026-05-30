@@ -21,6 +21,7 @@ export const CartDrawer = () => {
     isCartOpen,
     setIsCartOpen,
     setIsOrderPlaced,
+    setActiveOrder,
     currency,
   } = useCart();
 
@@ -34,6 +35,9 @@ export const CartDrawer = () => {
 
   const params = useParams();
   const tenantId = typeof params?.id === "string" ? params.id : "";
+  const storageKey = tenantId
+    ? `qios:active-order:${tenantId}`
+    : "qios:active-order:demo";
 
   // prevent background body scroll when the drawer layout is fully visible
   useEffect(() => {
@@ -279,15 +283,29 @@ export const CartDrawer = () => {
                   onClick={async () => {
                     if (!tenantId) {
                       // demo fallback when no tenant scope
+                      const demoHash = `DEMO-${Math.floor(1000 + Math.random() * 9000)}`;
+                      const demoOrder = {
+                        orderId: `demo-${Date.now()}`,
+                        qrHash: demoHash,
+                        tenantId: "demo",
+                        status: "pending" as const,
+                        paymentStatus: "unpaid" as const,
+                        totalPrice: cartTotal,
+                      };
+
                       setCartSnapshot([...cart]);
                       setCartTotalSnapshot(cartTotal);
-                      setPlacedOrderId(
-                        `DEMO-${Math.floor(1000 + Math.random() * 9000)}`,
-                      );
+                      setPlacedOrderId(demoHash);
                       setIsConfirmOpen(false);
                       setIsCartOpen(false);
                       triggerQueueSound();
-                      setIsOrderPlaced(true); // <--- Add this
+                      setIsOrderPlaced(true);
+                      setActiveOrder(demoOrder);
+                      try {
+                        localStorage.setItem(storageKey, JSON.stringify(demoOrder));
+                      } catch {
+                        // ignore storage failures; in-memory state is still enough for this session
+                      }
                       clearCart();
                       setTimeout(() => setIsReceiptOpen(true), 250);
                       return;
@@ -298,6 +316,15 @@ export const CartDrawer = () => {
                     setIsSubmitting(false);
 
                     if (result.success && result.qrHash) {
+                      const trackedOrder = {
+                        orderId: result.orderId,
+                        qrHash: result.qrHash,
+                        tenantId,
+                        status: "pending" as const,
+                        paymentStatus: "unpaid" as const,
+                        totalPrice: cartTotal,
+                      };
+
                       setCartSnapshot([...cart]);
                       setCartTotalSnapshot(cartTotal);
                       setPlacedOrderId(result.qrHash);
@@ -305,6 +332,12 @@ export const CartDrawer = () => {
                       setIsCartOpen(false);
                       triggerQueueSound();
                       setIsOrderPlaced(true);
+                      setActiveOrder(trackedOrder);
+                      try {
+                        localStorage.setItem(storageKey, JSON.stringify(trackedOrder));
+                      } catch {
+                        // ignore storage failures; in-memory state is still enough for this session
+                      }
                       clearCart();
                       setTimeout(() => setIsReceiptOpen(true), 250);
                     } else {

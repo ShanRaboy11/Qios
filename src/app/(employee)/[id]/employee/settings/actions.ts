@@ -4,10 +4,7 @@ import crypto from "crypto";
 import { revalidatePath } from "next/cache";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import type {
-  EmployeeSettingsPageData,
-  SettingsActionState,
-} from "./types";
+import type { EmployeeSettingsPageData, SettingsActionState } from "./types";
 
 const DEFAULT_OPERATIONAL_SETTINGS = {
   terminal: "counter-1",
@@ -73,7 +70,9 @@ async function getEmployeeSettingsContext(tenantId: string) {
 
   const { data: profile, error: profileError } = await admin
     .from("profiles")
-    .select("id, tenant_id, full_name, phone_number, username, role, app_role_id")
+    .select(
+      "id, tenant_id, full_name, phone_number, username, role, app_role_id",
+    )
     .eq("id", user.id)
     .maybeSingle();
 
@@ -120,16 +119,19 @@ export async function getEmployeeSettingsPageData(
   return {
     profile: {
       fullName: profile.full_name || user.email || "Employee",
-      displayName: profile.username || profile.full_name || user.email || "Employee",
+      displayName:
+        profile.username || profile.full_name || user.email || "Employee",
       email: user.email || "",
       phoneNumber: profile.phone_number || "",
       roleLabel,
       employeeId: profile.username || profile.id.slice(0, 8).toUpperCase(),
     },
     operational: {
-      terminal: employeeSettings?.terminal || DEFAULT_OPERATIONAL_SETTINGS.terminal,
+      terminal:
+        employeeSettings?.terminal || DEFAULT_OPERATIONAL_SETTINGS.terminal,
       defaultView:
-        employeeSettings?.default_view || DEFAULT_OPERATIONAL_SETTINGS.defaultView,
+        employeeSettings?.default_view ||
+        DEFAULT_OPERATIONAL_SETTINGS.defaultView,
       autoLogoff:
         employeeSettings?.auto_logoff_minutes === 0
           ? "never"
@@ -139,15 +141,19 @@ export async function getEmployeeSettingsPageData(
             ),
       quickPin: "",
       soundQueue:
-        employeeSettings?.sound_queue ?? DEFAULT_OPERATIONAL_SETTINGS.soundQueue,
+        employeeSettings?.sound_queue ??
+        DEFAULT_OPERATIONAL_SETTINGS.soundQueue,
       soundScan:
         employeeSettings?.sound_scan ?? DEFAULT_OPERATIONAL_SETTINGS.soundScan,
       soundStock:
-        employeeSettings?.sound_stock ?? DEFAULT_OPERATIONAL_SETTINGS.soundStock,
+        employeeSettings?.sound_stock ??
+        DEFAULT_OPERATIONAL_SETTINGS.soundStock,
       notifyEmail:
-        employeeSettings?.notify_email ?? DEFAULT_OPERATIONAL_SETTINGS.notifyEmail,
+        employeeSettings?.notify_email ??
+        DEFAULT_OPERATIONAL_SETTINGS.notifyEmail,
       notifyPush:
-        employeeSettings?.notify_push ?? DEFAULT_OPERATIONAL_SETTINGS.notifyPush,
+        employeeSettings?.notify_push ??
+        DEFAULT_OPERATIONAL_SETTINGS.notifyPush,
     },
   };
 }
@@ -180,14 +186,17 @@ export async function saveEmployeeProfileSettings(
     const { data: authUserData } = await admin.auth.admin.getUserById(user.id);
     const existingMetadata = authUserData.user?.user_metadata ?? {};
 
-    const { error: authError } = await admin.auth.admin.updateUserById(user.id, {
-      user_metadata: {
-        ...existingMetadata,
-        full_name: fullName,
-        display_name: displayName,
-        phone_number: phoneNumber || undefined,
+    const { error: authError } = await admin.auth.admin.updateUserById(
+      user.id,
+      {
+        user_metadata: {
+          ...existingMetadata,
+          full_name: fullName,
+          display_name: displayName,
+          phone_number: phoneNumber || undefined,
+        },
       },
-    });
+    );
 
     if (authError) {
       throw new Error(authError.message);
@@ -197,7 +206,9 @@ export async function saveEmployeeProfileSettings(
     return emptyActionState("", "Profile details saved successfully.");
   } catch (error) {
     return emptyActionState(
-      error instanceof Error ? error.message : "Unable to save profile details.",
+      error instanceof Error
+        ? error.message
+        : "Unable to save profile details.",
     );
   }
 }
@@ -210,23 +221,42 @@ export async function saveEmployeeOperationalSettings(
   try {
     const { admin, user } = await getEmployeeSettingsContext(tenantId);
 
-    const terminal = toText(formData.get("terminal")) || DEFAULT_OPERATIONAL_SETTINGS.terminal;
+    const terminal =
+      toText(formData.get("terminal")) || DEFAULT_OPERATIONAL_SETTINGS.terminal;
     const defaultView =
-      toText(formData.get("defaultView")) || DEFAULT_OPERATIONAL_SETTINGS.defaultView;
+      toText(formData.get("defaultView")) ||
+      DEFAULT_OPERATIONAL_SETTINGS.defaultView;
     const autoLogoffMinutes = normalizeAutoLogoff(formData.get("autoLogoff"));
     const quickPin = toText(formData.get("quickPin"));
-    const pinHash = quickPin ? crypto.createHash("sha256").update(quickPin).digest("hex") : null;
+    const pinHash = quickPin
+      ? crypto.createHash("sha256").update(quickPin).digest("hex")
+      : null;
 
     const payload: Record<string, unknown> = {
       profile_id: user.id,
       terminal,
       default_view: defaultView,
       auto_logoff_minutes: autoLogoffMinutes,
-      sound_queue: toBoolean(formData.get("soundQueue"), DEFAULT_OPERATIONAL_SETTINGS.soundQueue),
-      sound_scan: toBoolean(formData.get("soundScan"), DEFAULT_OPERATIONAL_SETTINGS.soundScan),
-      sound_stock: toBoolean(formData.get("soundStock"), DEFAULT_OPERATIONAL_SETTINGS.soundStock),
-      notify_email: toBoolean(formData.get("notifyEmail"), DEFAULT_OPERATIONAL_SETTINGS.notifyEmail),
-      notify_push: toBoolean(formData.get("notifyPush"), DEFAULT_OPERATIONAL_SETTINGS.notifyPush),
+      sound_queue: toBoolean(
+        formData.get("soundQueue"),
+        DEFAULT_OPERATIONAL_SETTINGS.soundQueue,
+      ),
+      sound_scan: toBoolean(
+        formData.get("soundScan"),
+        DEFAULT_OPERATIONAL_SETTINGS.soundScan,
+      ),
+      sound_stock: toBoolean(
+        formData.get("soundStock"),
+        DEFAULT_OPERATIONAL_SETTINGS.soundStock,
+      ),
+      notify_email: toBoolean(
+        formData.get("notifyEmail"),
+        DEFAULT_OPERATIONAL_SETTINGS.notifyEmail,
+      ),
+      notify_push: toBoolean(
+        formData.get("notifyPush"),
+        DEFAULT_OPERATIONAL_SETTINGS.notifyPush,
+      ),
     };
 
     if (pinHash) {

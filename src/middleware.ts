@@ -1,8 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import {
-  canAccessEmployeeRoute,
-  getFirstAccessibleEmployeeRoute,
   type RolePermissions,
 } from "@/lib/employeePermissions";
 
@@ -176,21 +174,6 @@ export async function middleware(request: NextRequest) {
       `/${pathTenantId}/employee`,
     );
 
-    const employeeView = isEmployeePath ? pathParts[2] || "dashboard" : null;
-    let employeePermissions: RolePermissions | null = null;
-
-    if (role === "employee" && userTenantId && userAppRoleId) {
-      const { data: appRole } = await supabase
-        .from("roles")
-        .select("permissions")
-        .eq("id", userAppRoleId)
-        .eq("tenant_id", userTenantId)
-        .maybeSingle();
-
-      employeePermissions =
-        (appRole?.permissions as RolePermissions | null) ?? null;
-    }
-
     if (role === "super_admin") {
       // allow all access for now
     } else if (role === "admin") {
@@ -206,19 +189,6 @@ export async function middleware(request: NextRequest) {
         const redirectUrl = request.nextUrl.clone();
         redirectUrl.pathname = userTenantId
           ? `/${userTenantId}/employee/dashboard`
-          : "/";
-        return NextResponse.redirect(redirectUrl);
-      }
-
-      if (
-        employeeView &&
-        !canAccessEmployeeRoute(employeePermissions, employeeView)
-      ) {
-        const redirectUrl = request.nextUrl.clone();
-        redirectUrl.pathname = userTenantId
-          ? `/${userTenantId}/employee/${getFirstAccessibleEmployeeRoute(
-              employeePermissions,
-            )}`
           : "/";
         return NextResponse.redirect(redirectUrl);
       }
