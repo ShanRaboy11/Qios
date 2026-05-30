@@ -378,6 +378,26 @@ export const FloatingOrderStatus = ({ tenantId }: { tenantId: string }) => {
                       Est. Time: 12 min
                     </div>
 
+                    {/* Cashier notice — shown while order is unpaid/pending */}
+                    {currentStep === 0 && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mb-5 flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3"
+                      >
+                        <div>
+                          <p className="text-sm font-bold text-amber-800">
+                            Please proceed to the cashier
+                          </p>
+                          <p className="text-xs text-amber-700 mt-0.5 leading-relaxed">
+                            Show this receipt to the cashier to pay and confirm
+                            your order. Your food will be prepared once payment
+                            is received.
+                          </p>
+                        </div>
+                      </motion.div>
+                    )}
+
                     {/* Horizontal StepperBar wrapper to handle overflow cleanly on mobile */}
                     <div className="w-full overflow-x-auto pb-4 scrollbar-hide">
                       <div className="min-w-[300px]">
