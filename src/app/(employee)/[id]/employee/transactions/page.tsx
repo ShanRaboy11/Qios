@@ -129,12 +129,12 @@ export default function TransactionsPage() {
       </div>
 
       <div className="mt-8">
-    <TransactionTable
-      tenantId={tenantId}
-      businessName=""
-      apiPath={`/api/tenants/${tenantId}/employee/transactions`}
-    />
-  </div>
+        <TransactionTable
+          tenantId={tenantId}
+          businessName=""
+          apiPath={apiPath}
+        />
+      </div>
     </>
   );
 }
