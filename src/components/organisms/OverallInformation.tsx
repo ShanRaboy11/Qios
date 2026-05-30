@@ -42,7 +42,7 @@ const fallbackStats: OverviewStatCard[] = [
     iconClassName: "bg-gray-50 border border-gray-100 hover:border-orange-100",
   },
   {
-    label: "Customer",
+    label: "Customers",
     value: "4896",
     icon: <Users className="w-6 h-6 text-brand-accent mb-2" />,
     iconClassName: "bg-gray-50 border border-gray-100 hover:border-orange-100",
@@ -85,12 +85,12 @@ export const OverallInformation = ({
         <h2 className="text-[18px] font-bold text-text-primary">{heading}</h2>
       </div>
 
-      {/* top 3 Stat Cards */}
-      <div className="grid grid-cols-3 gap-3 mb-8">
+      {/* top Stat Cards */}
+      <div className="grid grid-cols-3 gap-3 mb-8 w-full">
         {stats.slice(0, 3).map((stat) => (
           <div
             key={stat.label}
-            className={`flex flex-col items-center justify-center rounded-2xl py-4 transition-colors ${stat.iconClassName}`}
+            className={`flex h-full w-full flex-col items-center justify-center rounded-2xl py-4 transition-colors ${stat.iconClassName}`}
           >
             {stat.icon}
             <span className="text-[14px] text-text-secondary">

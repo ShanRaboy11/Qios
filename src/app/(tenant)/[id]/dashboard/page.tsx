@@ -1,10 +1,10 @@
 import React from "react";
 import Link from "next/link";
-import { AlertTriangle, CheckCircle2, Info, ShoppingCart } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Info, Users } from "lucide-react";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { TenantDashboardHeader } from "@/components/organisms/TenantDashboardHeader";
 import { TenantMetricsSection } from "@/components/organisms/TenantMetricsSection";
-import { SalesAndPurchaseChart } from "@/components/organisms/SalesAndPurchaseChart";
+import { SalesAndPurchaseChart } from "../../../../components/organisms/SalesAndPurchaseChart";
 import { OverallInformation } from "@/components/organisms/OverallInformation";
 import { DashboardListsSection } from "@/components/organisms/DashboardListsSection";
 import { AlertBanner } from "@/components/molecules/AlertBanner";
@@ -218,6 +218,41 @@ function buildLowStockItems(inventoryItems: DashboardInventoryRow[]) {
     }));
 }
 
+function buildSalesChartData(orders: DashboardOrderRow[]) {
+  const todayKey = getManilaDateKey(new Date());
+  const buckets = Array.from({ length: 24 }, (_, hour) => {
+    const displayHour = hour % 12 === 0 ? 12 : hour % 12;
+    const suffix = hour < 12 ? "AM" : "PM";
+
+    return {
+      hour,
+      label: `${displayHour} ${suffix}`,
+      sales: 0,
+      revenue: 0,
+    };
+  });
+
+  for (const order of orders) {
+    if (order.payment_status !== "paid") continue;
+    if (getManilaDateKey(order.created_at) !== todayKey) continue;
+
+    const orderDate = new Date(order.created_at);
+    const hour = Number(
+      new Intl.DateTimeFormat("en-US", {
+        timeZone: "Asia/Manila",
+        hour: "2-digit",
+        hour12: false,
+      }).format(orderDate),
+    );
+
+    const bucket = buckets[Number.isFinite(hour) ? hour : 0];
+    bucket.sales += 1;
+    bucket.revenue += toNumber(order.total_price);
+  }
+
+  return buckets.map(({ hour: _hour, ...point }) => point);
+}
+
 async function getTenantDashboardData(tenantId: string) {
   const admin = createSupabaseAdminClient();
   const { currentStartIso, previousStartIso } = getPeriodRange("month");
@@ -353,6 +388,7 @@ async function getTenantDashboardData(tenantId: string) {
   const lowStockItems = buildLowStockItems(inventoryItems);
   const topSellingItems = buildTopSellers(currentOrders, previousOrders);
   const recentOrders = buildRecentOrders(currentOrders);
+  const salesChartData = buildSalesChartData(currentOrders);
 
   const inventoryCount = inventoryItems.length;
   const lowStockCount = lowStockItems.length;
@@ -444,16 +480,14 @@ async function getTenantDashboardData(tenantId: string) {
 
   const overviewStats = [
     {
-      label: "Active Orders",
-      value: formatCompactCount(activeOrdersCount),
-      icon: (
-        <ShoppingCart size={24} className="w-6 h-6 text-brand-primary mb-2" />
-      ),
+      label: "Customers",
+      value: formatCompactCount(totalOrders),
+      icon: <Users className="w-6 h-6 text-brand-accent mb-2" />,
       iconClassName:
         "bg-gray-50 border border-gray-100 hover:border-orange-100",
     },
     {
-      label: "Ready Today",
+      label: "Completed Today",
       value: formatCompactCount(readyTodayCount),
       icon: <CheckCircle2 className="w-6 h-6 text-brand-accent mb-2" />,
       iconClassName:
@@ -511,6 +545,7 @@ async function getTenantDashboardData(tenantId: string) {
     topSellingItems,
     lowStockItems,
     recentOrders,
+    salesChartData,
   };
 }
 
@@ -522,63 +557,64 @@ export default async function TenantDashboardPage({
   const { id: tenantId } = await params;
   const dashboard = await getTenantDashboardData(tenantId);
 
-  const alert = dashboard.inventoryCount > 0 ? (
-    dashboard.lowStockCount > 0 && dashboard.inventoryAlert ? (
-      <AlertBanner
-        message={
-          <>
-            Your Ingredient{" "}
-            <span className="text-[#EF4444]">
-              {dashboard.inventoryAlert.name} is running low.
-            </span>{" "}
-            <Link
-              href={dashboard.inventoryAlertHref}
-              className="underline decoration-[#EF4444] text-[#EF4444]"
-            >
-              Add Stock
-            </Link>
-          </>
-        }
-        className="bg-[#FFF6F8] border-[#ec1313]"
-        icon={<AlertTriangle size={16} className="text-[#EF4444] shrink-0" />}
-      />
+  const alert =
+    dashboard.inventoryCount > 0 ? (
+      dashboard.lowStockCount > 0 && dashboard.inventoryAlert ? (
+        <AlertBanner
+          message={
+            <>
+              Your Ingredient{" "}
+              <span className="text-[#EF4444]">
+                {dashboard.inventoryAlert.name} is running low.
+              </span>{" "}
+              <Link
+                href={dashboard.inventoryAlertHref}
+                className="underline decoration-[#EF4444] text-[#EF4444]"
+              >
+                Add Stock
+              </Link>
+            </>
+          }
+          className="bg-[#FFF6F8] border-[#ec1313]"
+          icon={<AlertTriangle size={16} className="text-[#EF4444] shrink-0" />}
+        />
+      ) : (
+        <AlertBanner
+          message={
+            <>
+              Inventory levels look healthy.{" "}
+              <span className="text-[#16A34A]">
+                All tracked ingredients are above threshold.
+              </span>{" "}
+              <Link
+                href={dashboard.inventoryAlertHref}
+                className="underline decoration-[#16A34A] text-[#16A34A]"
+              >
+                Review Inventory
+              </Link>
+            </>
+          }
+          className="bg-[#F0FDF4] border-[#16A34A]"
+          icon={<CheckCircle2 size={16} className="text-[#16A34A] shrink-0" />}
+        />
+      )
     ) : (
       <AlertBanner
         message={
           <>
-            Inventory levels look healthy. {" "}
-            <span className="text-[#16A34A]">
-              All tracked ingredients are above threshold.
-            </span>{" "}
+            No ingredients have been added yet.{" "}
             <Link
               href={dashboard.inventoryAlertHref}
-              className="underline decoration-[#16A34A] text-[#16A34A]"
+              className="underline decoration-[#D97706] text-[#D97706]"
             >
-              Review Inventory
+              Set Up Inventory
             </Link>
           </>
         }
-        className="bg-[#F0FDF4] border-[#16A34A]"
-        icon={<CheckCircle2 size={16} className="text-[#16A34A] shrink-0" />}
+        className="bg-[#FFFBEB] border-[#D97706]"
+        icon={<Info size={16} className="text-[#D97706] shrink-0" />}
       />
-    )
-  ) : (
-    <AlertBanner
-      message={
-        <>
-          No ingredients have been added yet.{" "}
-          <Link
-            href={dashboard.inventoryAlertHref}
-            className="underline decoration-[#D97706] text-[#D97706]"
-          >
-            Set Up Inventory
-          </Link>
-        </>
-      }
-      className="bg-[#FFFBEB] border-[#D97706]"
-      icon={<Info size={16} className="text-[#D97706] shrink-0" />}
-    />
-  );
+    );
 
   return (
     <>
@@ -605,7 +641,10 @@ export default async function TenantDashboardPage({
 
       <div className="flex flex-col lg:flex-row gap-6">
         <div id="tutorial-charts" className="w-full lg:w-[65%]">
-          <SalesAndPurchaseChart />
+          <SalesAndPurchaseChart
+            data={dashboard.salesChartData}
+            defaultPeriod="1D"
+          />
         </div>
         <div id="tutorial-overall" className="w-full lg:w-[35%]">
           <OverallInformation
