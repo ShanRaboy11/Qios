@@ -21,6 +21,24 @@ export interface CartItem {
   totalPrice: number; // (basePrice + sum of additionalPrices) * quantity
 }
 
+export type CustomerOrderStatus =
+  | "pending"
+  | "preparing"
+  | "ready"
+  | "served"
+  | "cancelled";
+
+export type CustomerPaymentStatus = "unpaid" | "paid";
+
+export interface ActiveOrderTracking {
+  orderId: string;
+  qrHash: string;
+  tenantId: string;
+  status: CustomerOrderStatus;
+  paymentStatus: CustomerPaymentStatus;
+  totalPrice: number;
+}
+
 interface CartContextType {
   cart: CartItem[];
   addToCart: (item: Omit<CartItem, "id">) => void;
@@ -33,6 +51,9 @@ interface CartContextType {
   setIsCartOpen: (open: boolean) => void;
   isOrderPlaced: boolean;
   setIsOrderPlaced: (placed: boolean) => void;
+  activeOrder: ActiveOrderTracking | null;
+  setActiveOrder: (order: ActiveOrderTracking | null) => void;
+  clearActiveOrder: () => void;
   currency: string;
 }
 
@@ -42,6 +63,9 @@ export const CartProvider = ({ children, currency = "PHP" }: { children: ReactNo
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isOrderPlaced, setIsOrderPlaced] = useState(false);
+  const [activeOrder, setActiveOrder] = useState<ActiveOrderTracking | null>(
+    null,
+  );
 
   const addToCart = (newItemInput: Omit<CartItem, "id">) => {
     setCart((prevCart) => {
@@ -108,6 +132,10 @@ export const CartProvider = ({ children, currency = "PHP" }: { children: ReactNo
   };
 
   const clearCart = () => setCart([]);
+  const clearActiveOrder = () => {
+    setActiveOrder(null);
+    setIsOrderPlaced(false);
+  };
 
   const cartTotal = cart.reduce((sum, item) => sum + item.totalPrice, 0);
   const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
@@ -126,6 +154,9 @@ export const CartProvider = ({ children, currency = "PHP" }: { children: ReactNo
         setIsCartOpen,
         isOrderPlaced,
         setIsOrderPlaced,
+        activeOrder,
+        setActiveOrder,
+        clearActiveOrder,
         currency,
       }}
     >

@@ -333,7 +333,7 @@ function CustomerOrderingHomeInner({
           />
         )}
         <CartDrawer />
-        <FloatingOrderStatus />
+        <FloatingOrderStatus tenantId={tenantId} />
         <GuestProfileDrawer
           isOpen={isProfileOpen}
           onClose={() => setIsProfileOpen(false)}

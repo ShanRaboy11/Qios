@@ -15,7 +15,7 @@ interface GuestProfileDrawerProps {
 }
 
 export const GuestProfileDrawer = ({ isOpen, onClose, guestNumber = 1 }: GuestProfileDrawerProps) => {
-  const { isOrderPlaced, cartTotal, currency } = useCart();
+  const { isOrderPlaced, activeOrder, currency } = useCart();
   const [displayName, setDisplayName] = useState(`Guest #${guestNumber}`);
   const [isEditingName, setIsEditingName] = useState(false);
   const [tempName, setTempName] = useState(displayName);
@@ -118,13 +118,13 @@ export const GuestProfileDrawer = ({ isOpen, onClose, guestNumber = 1 }: GuestPr
                   <h3 className="text-lg font-bold text-text-primary">Recent Orders</h3>
                 </div>
                 <div className="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm">
-                  {isOrderPlaced && cartTotal > 0 ? (
+                  {isOrderPlaced && activeOrder ? (
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="font-bold text-text-primary">Active Order</p>
                         <p className="text-sm text-gray-500">Just now</p>
                       </div>
-                      <span className="font-bold text-brand-accent">{currency} {cartTotal.toFixed(2)}</span>
+                      <span className="font-bold text-brand-accent">{currency} {Number(activeOrder.totalPrice || 0).toFixed(2)}</span>
                     </div>
                   ) : (
                     <div className="text-sm text-gray-500 text-center py-2">
