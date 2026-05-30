@@ -5,13 +5,7 @@ import { Button } from "@/components/atoms/Button";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { updateOrderStatus } from "@/app/(employee)/[id]/employee/queue/actions";
 
-type OrderStatus =
-  | "pending"
-  | "preparing"
-  | "ready"
-  | "completed"
-  | "served"
-  | "cancelled";
+type OrderStatus = "pending" | "preparing" | "ready" | "served" | "cancelled";
 
 interface OrderItem {
   id: string;
@@ -36,7 +30,7 @@ interface OrderWithPercentage extends Order {
   targetTimePercentage: number;
 }
 
-type QueueActionStatus = "preparing" | "ready" | "completed";
+type QueueActionStatus = "preparing" | "ready" | "served";
 
 interface KitchenPreparationDashboardProps {
   tenantId: string;
@@ -309,6 +303,15 @@ export default function KitchenPreparationDashboard({
                 Mark Ready
               </button>
             )}
+            {order.status === "ready" && canUpdateStatus && (
+              <Button
+                onClick={() => handleUpdateStatus(order.id, "served")}
+                variant="primary"
+                className="w-full py-2.5 rounded-xl text-sm font-bold shadow-sm flex items-center justify-center gap-2"
+              >
+                Mark Served
+              </Button>
+            )}
           </>
         ) : (
           <>
@@ -330,11 +333,11 @@ export default function KitchenPreparationDashboard({
             )}
             {order.status === "ready" && (
               <Button
-                onClick={() => handleUpdateStatus(order.id, "completed")}
+                onClick={() => handleUpdateStatus(order.id, "served")}
                 variant="primary"
                 className="w-full py-2.5 rounded-xl text-sm font-bold shadow-sm flex items-center justify-center gap-2"
               >
-                Order Received
+                Mark Served
               </Button>
             )}
           </>

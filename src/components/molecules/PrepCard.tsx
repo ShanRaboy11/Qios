@@ -3,7 +3,7 @@ import { Timer, ChefHat, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/atoms/Button";
 import { cn } from "@/lib/utils";
 
-export type OrderStatus = "pending" | "preparing" | "ready";
+export type OrderStatus = "pending" | "preparing" | "ready" | "served";
 
 export interface OrderItem {
   qty: number;
@@ -31,7 +31,7 @@ function formatElapsed(ms: number): string {
 
 type Urgency = "calm" | "warm" | "urgent";
 function getUrgency(ms: number, status: OrderStatus): Urgency {
-  if (status === "ready") return "calm";
+  if (status === "ready" || status === "served") return "calm";
   const minutes = ms / 60000;
   if (minutes > 12) return "urgent";
   if (minutes > 6) return "warm";
@@ -46,13 +46,12 @@ interface PrepCardProps {
 }
 
 export function PrepCard({ order, onAdvance, index = 0, now }: PrepCardProps) {
-
   const elapsed = now - order.startedAt;
   const urgency = getUrgency(elapsed, order.status);
 
   /* ── accent bar colour ── */
   const accentBar =
-    order.status === "ready"
+    order.status === "served"
       ? "before:bg-[var(--kds-green)]"
       : order.status === "preparing"
         ? "before:bg-[var(--kds-coral)]"
@@ -74,7 +73,7 @@ export function PrepCard({ order, onAdvance, index = 0, now }: PrepCardProps) {
         ? "w-1/2"
         : "w-full";
   const progressColor =
-    order.status === "ready"
+    order.status === "served"
       ? "bg-[var(--kds-green)]"
       : urgency === "urgent"
         ? "bg-[var(--kds-coral)]"
@@ -86,10 +85,12 @@ export function PrepCard({ order, onAdvance, index = 0, now }: PrepCardProps) {
       ? { label: "Start Preparing", Icon: ChefHat }
       : order.status === "preparing"
         ? { label: "Mark as Ready", Icon: CheckCircle2 }
-        : { label: "Served ✓", Icon: CheckCircle2 };
+        : order.status === "ready"
+          ? { label: "Mark as Served", Icon: CheckCircle2 }
+          : { label: "Served ✓", Icon: CheckCircle2 };
 
   const ctaClass =
-    order.status === "ready"
+    order.status === "served"
       ? "bg-[var(--kds-green-soft)] text-[var(--kds-green)] hover:bg-[var(--kds-green-soft)] border-0 shadow-none"
       : "bg-[var(--kds-coral)] text-white hover:bg-[var(--kds-coral)]/90 border-0";
 
@@ -171,12 +172,12 @@ export function PrepCard({ order, onAdvance, index = 0, now }: PrepCardProps) {
               </span>
               <span
                 className={cn(
-                  order.status === "ready"
+                  order.status === "served"
                     ? "text-[var(--kds-green)]"
                     : "text-gray-300",
                 )}
               >
-                Ready
+                Served
               </span>
             </div>
             <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
@@ -234,7 +235,7 @@ export function PrepCard({ order, onAdvance, index = 0, now }: PrepCardProps) {
         <div className="mt-4 border-t border-gray-100 pt-4">
           <Button
             onClick={() => onAdvance(order.id)}
-            disabled={order.status === "ready"}
+            disabled={order.status === "served"}
             variant="ghost"
             size="md"
             className={cn(

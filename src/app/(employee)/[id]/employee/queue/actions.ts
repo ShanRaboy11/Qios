@@ -14,7 +14,7 @@ import { revalidatePath } from "next/cache";
 type QueueOrder = {
   id: string;
   order_number: string;
-  status: "pending" | "preparing" | "ready";
+  status: "pending" | "preparing" | "ready" | "served";
   payment_status?: "unpaid" | "paid";
   created_at: string;
   table_number: string | null;
@@ -152,13 +152,7 @@ export async function getEmployeeQueueData(tenantId: string) {
 export async function updateOrderStatus(
   orderId: string,
   tenantId: string,
-  newStatus:
-    | "pending"
-    | "preparing"
-    | "ready"
-    | "completed"
-    | "served"
-    | "cancelled",
+  newStatus: "pending" | "preparing" | "ready" | "served" | "cancelled",
 ) {
   const { supabase, admin, user, profile, permissions } =
     await getEmployeeQueueContext(tenantId);
@@ -200,6 +194,9 @@ export async function updateOrderStatus(
   });
 
   revalidatePath(`/(employee)/[id]/employee/queue`, "page");
+  revalidatePath(`/(employee)/[id]/employee/kitchen`, "page");
+  revalidatePath(`/(employee)/[id]/employee/dashboard`, "page");
+  revalidatePath(`/(tenant)/[id]/dashboard`, "page");
   return { success: true };
 }
 
