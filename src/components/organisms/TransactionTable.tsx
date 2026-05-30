@@ -610,29 +610,7 @@ export const TransactionTable = ({
                     </div>
                   </div>
                   <div>
-                    <span className="text-text-secondary text-[11px] font-bold uppercase tracking-[0.16em]">
-                      Payment Status
-                    </span>
-                    <div className="relative mt-1.5">
-                      <select
-                        value={paymentStatusFilter}
-                        onChange={(event) => {
-                          setPaymentStatusFilter(
-                            event.target
-                              .value as (typeof PAYMENT_STATUS_OPTIONS)[number],
-                          );
-                          setPage(1);
-                        }}
-                        className="w-full rounded-2xl border-2 border-[#E5E5E5] bg-white px-6 py-3.5 text-sm text-text-primary outline-none focus:border-brand-primary focus:shadow-[0_0_0_4px_rgba(255,198,112,0.08)] appearance-none cursor-pointer transition-colors"
-                      >
-                        {PAYMENT_STATUS_OPTIONS.map((option) => (
-                          <option key={option} value={option}>
-                            {capitalize(option)}
-                          </option>
-                        ))}
-                      </select>
-                      <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                    </div>
+                    
                   </div>
                   <div className="flex justify-end gap-2 pt-4 border-t border-gray-100">
                     <Button
