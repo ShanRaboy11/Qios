@@ -307,11 +307,23 @@ export const Navbar = ({
   ];
 
   const employeeLinks = [
-    { label: "Dashboard", href: "#", id: "dashboard" },
-    { label: "Order Queue", href: "#", id: "queue" },
-    { label: "Scanner", href: "#", id: "scanner" },
-    { label: "Inventory Audit", href: "#", id: "inventory_audit" },
-    { label: "Transactions", href: "#", id: "transactions" },
+    {
+      label: "Dashboard",
+      href: `/${tenantId}/employee/dashboard`,
+      id: "dashboard",
+    },
+    { label: "Order Queue", href: `/${tenantId}/employee/queue`, id: "queue" },
+    { label: "Scanner", href: `/${tenantId}/employee/scanner`, id: "scanner" },
+    {
+      label: "Inventory Audit",
+      href: `/${tenantId}/employee/inventory_audit`,
+      id: "inventory_audit",
+    },
+    {
+      label: "Transactions",
+      href: `/${tenantId}/employee/transactions`,
+      id: "transactions",
+    },
   ];
 
   const visibleLinks =

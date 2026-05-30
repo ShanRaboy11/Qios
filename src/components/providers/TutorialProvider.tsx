@@ -46,7 +46,7 @@ const TOUR_STEPS: TourStep[] = [
   // ─── DASHBOARD ───
   {
     page: "dashboard",
-    title: "Welcome to your Qios Portal! 🎉",
+    title: "Welcome to your Qios Portal!",
     content:
       "Let's take a quick 2-minute tour to get you familiar with your merchant command center.",
     position: "center",

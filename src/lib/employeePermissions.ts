@@ -64,6 +64,10 @@ export function canAccessEmployeeRoute(
     return true;
   }
 
+  if (routeName === "inventory_audit") {
+    return true;
+  }
+
   if (!permissions) {
     return true;
   }

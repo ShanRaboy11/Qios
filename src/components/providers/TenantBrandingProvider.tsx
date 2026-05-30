@@ -9,27 +9,37 @@ interface TenantBrandingContextType {
   branding: Partial<TenantBrandingSettingsData> | null;
 }
 
-export const TenantBrandingContext = createContext<TenantBrandingContextType>({ branding: null });
+export const TenantBrandingContext = createContext<TenantBrandingContextType>({
+  branding: null,
+});
 
 // hook for consuming the context
 export const useTenantBranding = () => {
   const context = useContext(TenantBrandingContext);
   if (!context) {
-    throw new Error("useTenantBranding must be used within a TenantBrandingProvider");
+    throw new Error(
+      "useTenantBranding must be used within a TenantBrandingProvider",
+    );
   }
   return context;
 };
 
-// map font settings to actual font families. 
+// map font settings to actual font families.
 // "inter" maps to Tailwind's var(--font-inter), etc.
 const getFontFamilyString = (fontId?: string) => {
   switch (fontId) {
-    case "inter": return "var(--font-inter), sans-serif";
-    case "playfair": return "'Playfair Display', serif"; // if playfair is used, fallback
-    case "roboto": return "'Roboto', monospace";
-    case "figtree": return "var(--font-figtree), sans-serif";
-    case "ibrand": return "var(--font-ibrand), serif";
-    default: return "";
+    case "inter":
+      return "var(--font-inter), sans-serif";
+    case "playfair":
+      return "'Playfair Display', serif"; // if playfair is used, fallback
+    case "roboto":
+      return "'Roboto', monospace";
+    case "figtree":
+      return "var(--font-figtree), sans-serif";
+    case "ibrand":
+      return "var(--font-ibrand), serif";
+    default:
+      return "";
   }
 };
 
@@ -76,7 +86,9 @@ export const TenantBrandingProvider = ({
               "--color-brand-accent": accentColor,
             }),
             ...(primaryFontStr && { "--font-brand-primary": primaryFontStr }),
-            ...(secondaryFontStr && { "--font-brand-secondary": secondaryFontStr }),
+            ...(secondaryFontStr && {
+              "--font-brand-secondary": secondaryFontStr,
+            }),
           } as React.CSSProperties
         }
       >

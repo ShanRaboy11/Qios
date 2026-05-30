@@ -57,6 +57,19 @@ export interface SalesTransactionResponse {
   limit: number;
 }
 
+export type DashboardDateRangePreset = "week" | "month" | "year" | "all-time";
+
+export interface DashboardDateRange {
+  preset: DashboardDateRangePreset;
+  startDate: Date | null;
+  endDate: Date;
+  startIso: string | null;
+  endIso: string;
+  previousStartIso: string | null;
+  previousEndIso: string | null;
+  label: string;
+}
+
 const MANILA_TIME_ZONE = "Asia/Manila";
 
 function getIntlParts(
@@ -136,5 +149,99 @@ export function getPeriodRange(period: SalesPeriod) {
     currentEndIso: new Date().toISOString(),
     previousStartIso: `${previousStartKey}T00:00:00+08:00`,
     previousEndIso: `${currentStartKey}T00:00:00+08:00`,
+  };
+}
+
+export function formatManilaDateRangeLabel(
+  startDate: Date | string | null,
+  endDate: Date | string | null,
+) {
+  if (!startDate || !endDate) {
+    return "All Time";
+  }
+
+  const formatDate = (date: Date | string) =>
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: MANILA_TIME_ZONE,
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    }).format(typeof date === "string" ? new Date(date) : date);
+
+  return `${formatDate(startDate)} - ${formatDate(endDate)}`;
+}
+
+export function getDashboardDateRange(
+  preset: DashboardDateRangePreset = "week",
+): DashboardDateRange {
+  const endDate = new Date();
+  const startDate = new Date(endDate);
+
+  if (preset === "week") {
+    startDate.setDate(startDate.getDate() - 6);
+    const previousEndDate = new Date(startDate);
+    previousEndDate.setDate(previousEndDate.getDate() - 1);
+    const previousStartDate = new Date(previousEndDate);
+    previousStartDate.setDate(previousStartDate.getDate() - 6);
+
+    return {
+      preset,
+      startDate,
+      endDate,
+      startIso: `${getManilaDateKey(startDate)}T00:00:00+08:00`,
+      endIso: `${getManilaDateKey(endDate)}T23:59:59.999+08:00`,
+      previousStartIso: `${getManilaDateKey(previousStartDate)}T00:00:00+08:00`,
+      previousEndIso: `${getManilaDateKey(previousEndDate)}T23:59:59.999+08:00`,
+      label: formatManilaDateRangeLabel(startDate, endDate),
+    };
+  }
+
+  if (preset === "month") {
+    startDate.setDate(startDate.getDate() - 29);
+    const previousEndDate = new Date(startDate);
+    previousEndDate.setDate(previousEndDate.getDate() - 1);
+    const previousStartDate = new Date(previousEndDate);
+    previousStartDate.setDate(previousStartDate.getDate() - 29);
+
+    return {
+      preset,
+      startDate,
+      endDate,
+      startIso: `${getManilaDateKey(startDate)}T00:00:00+08:00`,
+      endIso: `${getManilaDateKey(endDate)}T23:59:59.999+08:00`,
+      previousStartIso: `${getManilaDateKey(previousStartDate)}T00:00:00+08:00`,
+      previousEndIso: `${getManilaDateKey(previousEndDate)}T23:59:59.999+08:00`,
+      label: formatManilaDateRangeLabel(startDate, endDate),
+    };
+  }
+
+  if (preset === "year") {
+    startDate.setDate(startDate.getDate() - 364);
+    const previousEndDate = new Date(startDate);
+    previousEndDate.setDate(previousEndDate.getDate() - 1);
+    const previousStartDate = new Date(previousEndDate);
+    previousStartDate.setDate(previousStartDate.getDate() - 364);
+
+    return {
+      preset,
+      startDate,
+      endDate,
+      startIso: `${getManilaDateKey(startDate)}T00:00:00+08:00`,
+      endIso: `${getManilaDateKey(endDate)}T23:59:59.999+08:00`,
+      previousStartIso: `${getManilaDateKey(previousStartDate)}T00:00:00+08:00`,
+      previousEndIso: `${getManilaDateKey(previousEndDate)}T23:59:59.999+08:00`,
+      label: formatManilaDateRangeLabel(startDate, endDate),
+    };
+  }
+
+  return {
+    preset,
+    startDate: null,
+    endDate,
+    startIso: null,
+    endIso: `${getManilaDateKey(endDate)}T23:59:59.999+08:00`,
+    previousStartIso: null,
+    previousEndIso: null,
+    label: "All Time",
   };
 }
