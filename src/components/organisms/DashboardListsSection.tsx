@@ -7,7 +7,123 @@ import { ListCardItem } from "@/components/molecules/ListCardItem";
 import Link from "next/link";
 import { Badge } from "@/components/atoms/Badge";
 
-export const DashboardListsSection = () => {
+export type DashboardTopSeller = {
+  id: string;
+  name: string;
+  revenueLabel: string;
+  salesLabel: string;
+  trendLabel: string;
+  isPositive: boolean;
+};
+
+export type DashboardLowStockItem = {
+  id: string;
+  name: string;
+  skuLabel: string;
+  stockLabel: string;
+  stockTone: "low" | "warning" | "good";
+};
+
+export type DashboardRecentOrder = {
+  id: string;
+  title: string;
+  subtitle: string;
+  dateLabel: string;
+  statusLabel: string;
+  statusTone: "warning" | "error" | "success" | "neutral";
+};
+
+export interface DashboardListsSectionProps {
+  topSellingItems?: DashboardTopSeller[];
+  lowStockItems?: DashboardLowStockItem[];
+  recentOrders?: DashboardRecentOrder[];
+  inventoryConfigHref?: string;
+}
+
+const fallbackTopSellingItems: DashboardTopSeller[] = [
+  {
+    id: "fallback-top-1",
+    name: "Chicken McDo",
+    revenueLabel: "$187",
+    salesLabel: "247+ Sales",
+    trendLabel: "↗ 25%",
+    isPositive: true,
+  },
+  {
+    id: "fallback-top-2",
+    name: "McFloat",
+    revenueLabel: "$145",
+    salesLabel: "289+ Sales",
+    trendLabel: "↗ 25%",
+    isPositive: true,
+  },
+  {
+    id: "fallback-top-3",
+    name: "Ala King",
+    revenueLabel: "$458",
+    salesLabel: "300+ Sales",
+    trendLabel: "↗ 25%",
+    isPositive: true,
+  },
+];
+
+const fallbackLowStockItems: DashboardLowStockItem[] = [
+  {
+    id: "fallback-low-1",
+    name: "Salt",
+    skuLabel: "ID : #940004",
+    stockLabel: "21g",
+    stockTone: "low",
+  },
+  {
+    id: "fallback-low-2",
+    name: "Ketchup",
+    skuLabel: "ID : #665814",
+    stockLabel: "08",
+    stockTone: "low",
+  },
+  {
+    id: "fallback-low-3",
+    name: "Sugar",
+    skuLabel: "ID : #325569",
+    stockLabel: "14g",
+    stockTone: "warning",
+  },
+];
+
+const fallbackRecentOrders: DashboardRecentOrder[] = [
+  {
+    id: "fallback-order-1",
+    title: "Chicken McDo",
+    subtitle: "Meal • $640",
+    dateLabel: "Today",
+    statusLabel: "Pending",
+    statusTone: "warning",
+  },
+  {
+    id: "fallback-order-2",
+    title: "McFloat",
+    subtitle: "Dessert • $126",
+    dateLabel: "Today",
+    statusLabel: "Cancelled",
+    statusTone: "error",
+  },
+  {
+    id: "fallback-order-3",
+    title: "Ala King",
+    subtitle: "Meal • $89",
+    dateLabel: "15 Jan 2025",
+    statusLabel: "Pending",
+    statusTone: "warning",
+  },
+];
+
+export const DashboardListsSection = ({
+  topSellingItems = fallbackTopSellingItems,
+  lowStockItems = fallbackLowStockItems,
+  recentOrders = fallbackRecentOrders,
+  inventoryConfigHref = "#",
+}: DashboardListsSectionProps) => {
   const [topSellingFilter, setTopSellingFilter] = useState("Today");
   const [recentOrdersFilter, setRecentOrdersFilter] = useState("Today");
 
@@ -39,64 +155,32 @@ export const DashboardListsSection = () => {
         </div>
 
         <div className="flex flex-col gap-2">
-          <ListCardItem
-            imageSlot={
-              <div className="w-full h-full bg-orange-100 rounded-xl" />
-            } // replace with image
-            title="Chicken McDo"
-            subtitle="$187 • 247+ Sales"
-            rightSlot={
-              <div className="text-[#22C55E] border border-[#22C55E] rounded px-2 py-0.5 text-[11px] font-bold flex items-center gap-1">
-                ↗ 25%
-              </div>
-            }
-          />
-          <ListCardItem
-            imageSlot={<div className="w-full h-full bg-red-100 rounded-xl" />}
-            title="McFloat"
-            subtitle="$145 • 289+ Sales"
-            rightSlot={
-              <div className="text-[#22C55E] border border-[#22C55E] rounded px-2 py-0.5 text-[11px] font-bold flex items-center gap-1">
-                ↗ 25%
-              </div>
-            }
-          />
-          <ListCardItem
-            imageSlot={
-              <div className="w-full h-full bg-green-100 rounded-xl" />
-            }
-            title="Ala King"
-            subtitle="$458 • 300+ Sales"
-            rightSlot={
-              <div className="text-[#22C55E] border border-[#22C55E] rounded px-2 py-0.5 text-[11px] font-bold flex items-center gap-1">
-                ↗ 25%
-              </div>
-            }
-          />
-          <ListCardItem
-            imageSlot={
-              <div className="w-full h-full bg-yellow-100 rounded-xl" />
-            }
-            title="Fries"
-            subtitle="$139 • 225+ Sales"
-            rightSlot={
-              <div className="text-[#EF4444] border border-[#EF4444] rounded px-2 py-0.5 text-[11px] font-bold flex items-center gap-1">
-                ↘ 21%
-              </div>
-            }
-          />
-          <ListCardItem
-            imageSlot={
-              <div className="w-full h-full bg-purple-100 rounded-xl" />
-            }
-            title="Burger"
-            subtitle="$898 • 365+ Sales"
-            rightSlot={
-              <div className="text-[#22C55E] border border-[#22C55E] rounded px-2 py-0.5 text-[11px] font-bold flex items-center gap-1">
-                ↗ 25%
-              </div>
-            }
-          />
+          {topSellingItems.map((item) => (
+            <ListCardItem
+              key={item.id}
+              imageSlot={
+                <div className="w-full h-full bg-orange-100 rounded-xl" />
+              }
+              title={item.name}
+              subtitle={`${item.revenueLabel} • ${item.salesLabel}`}
+              rightSlot={
+                <div
+                  className={`border rounded px-2 py-0.5 text-[11px] font-bold flex items-center gap-1 ${
+                    item.isPositive
+                      ? "text-[#22C55E] border-[#22C55E]"
+                      : "text-[#EF4444] border-[#EF4444]"
+                  }`}
+                >
+                  {item.trendLabel}
+                </div>
+              }
+            />
+          ))}
+          {topSellingItems.length === 0 && (
+            <div className="text-sm text-text-secondary py-4">
+              No top-selling product data yet.
+            </div>
+          )}
         </div>
       </div>
 
@@ -120,61 +204,37 @@ export const DashboardListsSection = () => {
         </div>
 
         <div className="flex flex-col gap-2">
-          <ListCardItem
-            imageSlot={<div className="w-full h-full bg-gray-200 rounded-xl" />}
-            title="Salt"
-            subtitle="ID : #940004"
-            rightSlot={
-              <div className="text-right">
-                <div className="text-[12px] text-text-secondary">Instock</div>
-                <div className="text-[14px] font-bold text-[#EF4444]">21g</div>
-              </div>
-            }
-          />
-          <ListCardItem
-            imageSlot={<div className="w-full h-full bg-gray-200 rounded-xl" />}
-            title="Ketchup"
-            subtitle="ID : #665814"
-            rightSlot={
-              <div className="text-right">
-                <div className="text-[12px] text-text-secondary">Instock</div>
-                <div className="text-[14px] font-bold text-[#EF4444]">08</div>
-              </div>
-            }
-          />
-          <ListCardItem
-            imageSlot={<div className="w-full h-full bg-gray-200 rounded-xl" />}
-            title="Sugar"
-            subtitle="ID : #325569"
-            rightSlot={
-              <div className="text-right">
-                <div className="text-[12px] text-text-secondary">Instock</div>
-                <div className="text-[14px] font-bold text-[#EF4444]">14g</div>
-              </div>
-            }
-          />
-          <ListCardItem
-            imageSlot={<div className="w-full h-full bg-gray-200 rounded-xl" />}
-            title="Bread"
-            subtitle="ID : #124588"
-            rightSlot={
-              <div className="text-right">
-                <div className="text-[12px] text-text-secondary">Instock</div>
-                <div className="text-[14px] font-bold text-[#EF4444]">12</div>
-              </div>
-            }
-          />
-          <ListCardItem
-            imageSlot={<div className="w-full h-full bg-gray-200 rounded-xl" />}
-            title="Mayonnaise"
-            subtitle="ID : #365586"
-            rightSlot={
-              <div className="text-right">
-                <div className="text-[12px] text-text-secondary">Instock</div>
-                <div className="text-[14px] font-bold text-[#EF4444]">10</div>
-              </div>
-            }
-          />
+          {lowStockItems.map((item) => (
+            <ListCardItem
+              key={item.id}
+              imageSlot={
+                <div className="w-full h-full bg-gray-200 rounded-xl" />
+              }
+              title={item.name}
+              subtitle={item.skuLabel}
+              rightSlot={
+                <div className="text-right">
+                  <div className="text-[12px] text-text-secondary">Instock</div>
+                  <div
+                    className={`text-[14px] font-bold ${
+                      item.stockTone === "good"
+                        ? "text-[#22C55E]"
+                        : item.stockTone === "warning"
+                          ? "text-[#F59E0B]"
+                          : "text-[#EF4444]"
+                    }`}
+                  >
+                    {item.stockLabel}
+                  </div>
+                </div>
+              }
+            />
+          ))}
+          {lowStockItems.length === 0 && (
+            <div className="text-sm text-text-secondary py-4">
+              No low stock items right now.
+            </div>
+          )}
         </div>
       </div>
 
@@ -212,63 +272,43 @@ export const DashboardListsSection = () => {
             subtitle="Meal • $640"
             rightSlot={
               <div className="text-right flex flex-col gap-1 items-end">
-                <div className="text-[12px] text-text-secondary">Today</div>
-                <Badge
-                  variant="outline"
-                  color="warning"
-                  className="text-[10px] py-0 px-2 rounded-full h-5"
-                >
-                  Pending
-                </Badge>
-              </div>
-            }
-          />
-          <ListCardItem
-            imageSlot={<div className="w-full h-full bg-blue-100 rounded-xl" />}
-            title="McFloat"
-            subtitle="Dessert • $126"
-            rightSlot={
-              <div className="text-right flex flex-col gap-1 items-end">
-                <div className="text-[12px] text-text-secondary">Today</div>
-                <Badge
-                  variant="outline"
-                  color="error"
-                  className="text-[10px] py-0 px-2 rounded-full h-5"
-                >
-                  Cancelled
-                </Badge>
-              </div>
-            }
-          />
-          <ListCardItem
-            imageSlot={
-              <div className="w-full h-full bg-yellow-100 rounded-xl" />
-            }
-            title="Ala King"
-            subtitle="Meal • $89"
-            rightSlot={
-              <div className="text-right flex flex-col gap-1 items-end">
-                <div className="text-[12px] text-text-secondary">
-                  15 Jan 2025
-                </div>
-                <Badge
-                  variant="outline"
-                  color="warning"
-                  className="text-[10px] py-0 px-2 rounded-full h-5"
-                >
-                  Pending
-                </Badge>
-              </div>
-            }
-          />
-          <ListCardItem
-            imageSlot={
-              <div className="w-full h-full bg-orange-100 rounded-xl" />
-            }
-            title="Fries"
-            subtitle="Snacks • $65"
-            rightSlot={
-              <div className="text-right flex flex-col gap-1 items-end">
+                {recentOrders.map((item) => (
+                  <ListCardItem
+                    key={item.id}
+                    imageSlot={
+                      <div className="w-full h-full bg-green-100 rounded-xl" />
+                    }
+                    title={item.title}
+                    subtitle={item.subtitle}
+                    rightSlot={
+                      <div className="text-right flex flex-col gap-1 items-end">
+                        <div className="text-[12px] text-text-secondary">
+                          {item.dateLabel}
+                        </div>
+                        <Badge
+                          variant="outline"
+                          color={
+                            item.statusTone === "success"
+                              ? "success"
+                              : item.statusTone === "error"
+                                ? "error"
+                                : item.statusTone === "neutral"
+                                  ? "secondary"
+                                  : "warning"
+                          }
+                          className="text-[10px] py-0 px-2 rounded-full h-5"
+                        >
+                          {item.statusLabel}
+                        </Badge>
+                      </div>
+                    }
+                  />
+                ))}
+                {recentOrders.length === 0 && (
+                  <div className="text-sm text-text-secondary py-4">
+                    No recent orders yet.
+                  </div>
+                )}
                 <div className="text-[12px] text-text-secondary">
                   12 Jan 2025
                 </div>
