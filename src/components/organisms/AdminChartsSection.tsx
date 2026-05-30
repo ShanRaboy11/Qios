@@ -45,13 +45,20 @@ export const AdminChartsSection = ({
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 mb-6">
-      <ChartCard title="Companies" dropdownLabel="This Week" className="lg:col-span-3">
+      <ChartCard
+        title="Companies"
+        dropdownLabel="This Week"
+        className="lg:col-span-3"
+      >
         <div className="h-[250px] w-full mt-4 flex flex-col">
           {hasCompanyData ? (
             <>
               <div className="flex-1 min-h-0">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={companiesSeries} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+                  <BarChart
+                    data={companiesSeries}
+                    margin={{ top: 0, right: 0, left: 0, bottom: 0 }}
+                  >
                     <XAxis
                       dataKey="name"
                       axisLine={false}
@@ -93,7 +100,11 @@ export const AdminChartsSection = ({
         </div>
       </ChartCard>
 
-      <ChartCard title="Revenue" dropdownLabel={currentYear} className="lg:col-span-6">
+      <ChartCard
+        title="Revenue"
+        dropdownLabel={currentYear}
+        className="lg:col-span-6"
+      >
         <div className="h-[250px] w-full mt-4 flex flex-col">
           {hasRevenueData ? (
             <>
@@ -113,11 +124,22 @@ export const AdminChartsSection = ({
               </div>
               <div className="flex-grow min-h-0">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={revenueSeries} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                  <AreaChart
+                    data={revenueSeries}
+                    margin={{ top: 0, right: 0, left: -20, bottom: 0 }}
+                  >
                     <defs>
                       <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#F28C50" stopOpacity={0.3} />
-                        <stop offset="95%" stopColor="#F28C50" stopOpacity={0} />
+                        <stop
+                          offset="5%"
+                          stopColor="#F28C50"
+                          stopOpacity={0.3}
+                        />
+                        <stop
+                          offset="95%"
+                          stopColor="#F28C50"
+                          stopOpacity={0}
+                        />
                       </linearGradient>
                     </defs>
                     <CartesianGrid vertical={false} stroke="#F2F2F2" />
@@ -161,7 +183,11 @@ export const AdminChartsSection = ({
         </div>
       </ChartCard>
 
-      <ChartCard title="Plans" dropdownLabel="This Month" className="lg:col-span-3">
+      <ChartCard
+        title="Plans"
+        dropdownLabel="This Month"
+        className="lg:col-span-3"
+      >
         <div className="h-[250px] w-full flex flex-col relative mt-4">
           {hasPlanData ? (
             <>
@@ -179,7 +205,10 @@ export const AdminChartsSection = ({
                       stroke="none"
                     >
                       {plansSeries.map((entry, index) => (
-                        <Cell key={`plan-cell-${entry.name}-${index}`} fill={entry.color} />
+                        <Cell
+                          key={`plan-cell-${entry.name}-${index}`}
+                          fill={entry.color}
+                        />
                       ))}
                     </Pie>
                     <Tooltip />
@@ -188,7 +217,10 @@ export const AdminChartsSection = ({
               </div>
               <div className="flex flex-col gap-2 mt-auto pb-2">
                 {plansSeries.map((plan) => (
-                  <div key={plan.name} className="flex justify-between items-center text-[13px]">
+                  <div
+                    key={plan.name}
+                    className="flex justify-between items-center text-[13px]"
+                  >
                     <div className="flex items-center gap-2 text-text-secondary">
                       <span
                         className="w-2.5 h-2.5 rounded-full"
@@ -196,7 +228,9 @@ export const AdminChartsSection = ({
                       />
                       {formatPlanName(plan.name)}
                     </div>
-                    <span className="font-bold text-[#2D2D2D]">{plan.value}%</span>
+                    <span className="font-bold text-[#2D2D2D]">
+                      {plan.value}%
+                    </span>
                   </div>
                 ))}
               </div>

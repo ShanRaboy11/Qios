@@ -146,11 +146,6 @@ export const AdminListsSection = ({
                 title={item.name}
                 subtitle={item.subtitle}
                 isLast={index === recentActivities.length - 1}
-                rightContent={
-                  <span className="text-[13px] font-medium text-[#2D2D2D] mt-2">
-                    {item.detail}
-                  </span>
-                }
               />
             ))
           ) : (

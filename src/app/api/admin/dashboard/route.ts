@@ -83,7 +83,11 @@ async function requireSuperAdmin() {
   }
 
   if (profile.role !== "super_admin") {
-    return { ok: false as const, status: 403, message: "Requires super_admin role" };
+    return {
+      ok: false as const,
+      status: 403,
+      message: "Requires super_admin role",
+    };
   }
 
   return { ok: true as const, admin, userId: user.id };
@@ -131,7 +135,7 @@ function initialsFromName(name: string) {
   if (!trimmed) return "Q";
   const parts = trimmed.split(/\s+/).filter(Boolean);
   const first = parts[0]?.[0] ?? "Q";
-  const second = parts.length > 1 ? parts[1]?.[0] ?? "" : "";
+  const second = parts.length > 1 ? (parts[1]?.[0] ?? "") : "";
   return `${first}${second}`.toUpperCase().slice(0, 2);
 }
 
@@ -149,8 +153,29 @@ function colorForIndex(index: number) {
 }
 
 function planColorFallback(index: number) {
-  const palette = ["#FF5269", "#FFDC72", "#F28C50", "#22C55E", "#3B82F6", "#A855F7"];
+  const palette = [
+    "#FF5269",
+    "#FFDC72",
+    "#F28C50",
+    "#22C55E",
+    "#3B82F6",
+    "#A855F7",
+  ];
   return palette[index % palette.length];
+}
+
+function normalizeChartColor(
+  raw: string | null | undefined,
+  fallbackIndex: number,
+) {
+  if (typeof raw === "string") {
+    const hexMatch = raw.match(/#(?:[0-9a-fA-F]{3}){1,2}/);
+    if (hexMatch) {
+      return hexMatch[0];
+    }
+  }
+
+  return planColorFallback(fallbackIndex);
 }
 
 function resolveBusinessName(tenant: TenantRow) {
@@ -195,13 +220,16 @@ function buildCompaniesSeries(tenants: TenantRow[]): AdminDashboardBarPoint[] {
   return buckets.map((bucket, index, array) => ({
     name: bucket.name,
     value: counts.get(bucket.key) ?? 0,
-    isHighlighted: index === array.length - 1 && (counts.get(bucket.key) ?? 0) > 0,
+    isHighlighted:
+      index === array.length - 1 && (counts.get(bucket.key) ?? 0) > 0,
   }));
 }
 
 function buildRevenueSeries(orders: OrderRow[]): AdminDashboardRevenuePoint[] {
   const now = new Date();
-  const currentMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  const currentMonth = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1),
+  );
   const start = shiftMonths(currentMonth, -11);
   const buckets = Array.from({ length: 12 }, (_, index) => {
     const monthDate = shiftMonths(start, index);
@@ -234,12 +262,11 @@ function buildPlanSeries(
   const counts = new Map<string, { count: number; color: string }>();
 
   tenants.forEach((tenant, index) => {
-    const key = (tenant.subscription_plan ?? "").trim().toLowerCase() || "unassigned";
+    const key =
+      (tenant.subscription_plan ?? "").trim().toLowerCase() || "unassigned";
     const existing = counts.get(key) ?? {
       count: 0,
-      color:
-        planLookup.get(key)?.color ||
-        (key === "unassigned" ? "#9CA3AF" : planColorFallback(index)),
+      color: normalizeChartColor(planLookup.get(key)?.color, index),
     };
     existing.count += 1;
     counts.set(key, existing);
@@ -250,9 +277,7 @@ function buildPlanSeries(
   return Array.from(counts.entries())
     .map(([key, entry], index) => ({
       name:
-        key === "unassigned"
-          ? "Unassigned"
-          : planLookup.get(key)?.name || key,
+        key === "unassigned" ? "Unassigned" : planLookup.get(key)?.name || key,
       value: Math.round((entry.count / total) * 100),
       color: entry.color || planColorFallback(index),
     }))
@@ -265,7 +290,9 @@ function buildRecentTransactions(
 ): AdminDashboardTransactionItem[] {
   return orders.slice(0, 5).map((order, index) => {
     const tenant = tenantMap.get(order.tenant_id);
-    const businessName = tenant ? resolveBusinessName(tenant) : "Unknown Tenant";
+    const businessName = tenant
+      ? resolveBusinessName(tenant)
+      : "Unknown Tenant";
     const plan = tenant?.subscription_plan?.trim() || "Unassigned";
     const date = formatManilaDate(order.created_at);
 
@@ -305,14 +332,11 @@ function buildRecentActivities(
   return activities.slice(0, 5).map((activity, index) => {
     const actor = activity.actor_name?.trim() || "System";
     const action = activity.action_type?.trim() || "activity";
-    const tenantName = activity.target_tenant_name?.trim();
-    const description = activity.description?.trim() || action;
 
     return {
       id: activity.id,
       name: actor,
       subtitle: `${action} • ${formatManilaDate(activity.created_at)}`,
-      detail: tenantName || description,
       icon: initialsFromName(actor),
       color: colorForIndex(index),
     };
@@ -331,7 +355,9 @@ function mapMetrics({
   latencyMs: number;
 }): AdminDashboardMetric[] {
   const totalCompanies = tenants.length;
-  const activeCompanies = tenants.filter((tenant) => tenant.status === "approved").length;
+  const activeCompanies = tenants.filter(
+    (tenant) => tenant.status === "approved",
+  ).length;
 
   const now = new Date();
   const currentMonthKey = monthKey(now);
@@ -339,13 +365,19 @@ function mapMetrics({
   const monthTotals = new Map<string, number>();
 
   revenueSeries.forEach((point, index) => {
-    const monthDate = shiftMonths(new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)), index - 11);
+    const monthDate = shiftMonths(
+      new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)),
+      index - 11,
+    );
     monthTotals.set(monthKey(monthDate), point.value);
   });
 
   const currentMonthRevenue = monthTotals.get(currentMonthKey) ?? 0;
   const previousMonthRevenue = monthTotals.get(previousMonthKey) ?? 0;
-  const totalRevenue = revenueSeries.reduce((sum, point) => sum + point.value, 0);
+  const totalRevenue = revenueSeries.reduce(
+    (sum, point) => sum + point.value,
+    0,
+  );
   const currentMonthNewCompanies = tenants.filter(
     (tenant) => monthKey(new Date(tenant.created_at)) === currentMonthKey,
   ).length;
@@ -358,11 +390,15 @@ function mapMetrics({
     previousMonthNewCompanies,
     "%",
   );
-  const activePercent = totalCompanies > 0
-    ? `${Math.round((activeCompanies / totalCompanies) * 100)}% active`
-    : "0% active";
+  const activePercent =
+    totalCompanies > 0
+      ? `${Math.round((activeCompanies / totalCompanies) * 100)}% active`
+      : "0% active";
   const latencyTrend = `Fetched in ${latencyMs}ms`;
-  const revenueTrendValue = trendPercent(currentMonthRevenue, previousMonthRevenue);
+  const revenueTrendValue = trendPercent(
+    currentMonthRevenue,
+    previousMonthRevenue,
+  );
   const revenueTrend = `${revenueTrendValue >= 0 ? "+" : ""}${Number.isFinite(revenueTrendValue) ? revenueTrendValue.toFixed(1) : "0.0"}% vs prev month`;
 
   return [
@@ -390,7 +426,7 @@ function mapMetrics({
       percentage: latencyTrend,
       badgeColor: "green",
       color: "green",
-      chartData: [latencyMs, latencyMs, latencyMs, latencyMs, latencyMs],
+      chartData: [],
     },
     {
       title: "Total Earnings",
@@ -398,7 +434,9 @@ function mapMetrics({
       percentage: revenueTrend,
       badgeColor: revenueTrendValue >= 0 ? "green" : "red",
       color: "red",
-      chartData: revenueSeries.map((point) => Math.max(0, Math.round(point.value / 1000))),
+      chartData: revenueSeries.map((point) =>
+        Math.max(0, Math.round(point.value / 1000)),
+      ),
     },
   ];
 }
@@ -415,36 +453,50 @@ export async function GET() {
   const response = createEmptyAdminDashboard();
 
   const now = new Date();
-  const twelveMonthsAgo = shiftMonths(new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)), -11);
+  const twelveMonthsAgo = shiftMonths(
+    new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)),
+    -11,
+  );
 
-  const [tenantsResult, revenueOrdersResult, recentOrdersResult, plansResult, activityResult] =
-    await Promise.all([
-      admin
-        .from("tenants")
-        .select("id, business_name, status, subscription_plan, created_at")
-        .order("created_at", { ascending: false }),
-      admin
-        .from("orders")
-        .select("id, tenant_id, qr_hash, status, payment_status, payment_method, total_price, created_at, table_number")
-        .eq("payment_status", "paid")
-        .gte("created_at", twelveMonthsAgo.toISOString())
-        .order("created_at", { ascending: false }),
-      admin
-        .from("orders")
-        .select("id, tenant_id, qr_hash, status, payment_status, payment_method, total_price, created_at, table_number")
-        .eq("payment_status", "paid")
-        .order("created_at", { ascending: false })
-        .limit(5),
-      admin
-        .from("subscription_plans")
-        .select("name, color, badge, price_monthly, price_annually")
-        .order("created_at", { ascending: true }),
-      admin
-        .from("system_activity_logs")
-        .select("id, actor_name, actor_role, action_type, description, target_tenant_name, created_at")
-        .order("created_at", { ascending: false })
-        .limit(5),
-    ]);
+  const [
+    tenantsResult,
+    revenueOrdersResult,
+    recentOrdersResult,
+    plansResult,
+    activityResult,
+  ] = await Promise.all([
+    admin
+      .from("tenants")
+      .select("id, business_name, status, subscription_plan, created_at")
+      .order("created_at", { ascending: false }),
+    admin
+      .from("orders")
+      .select(
+        "id, tenant_id, qr_hash, status, payment_status, payment_method, total_price, created_at, table_number",
+      )
+      .eq("payment_status", "paid")
+      .gte("created_at", twelveMonthsAgo.toISOString())
+      .order("created_at", { ascending: false }),
+    admin
+      .from("orders")
+      .select(
+        "id, tenant_id, qr_hash, status, payment_status, payment_method, total_price, created_at, table_number",
+      )
+      .eq("payment_status", "paid")
+      .order("created_at", { ascending: false })
+      .limit(5),
+    admin
+      .from("subscription_plans")
+      .select("name, color, badge, price_monthly, price_annually")
+      .order("created_at", { ascending: true }),
+    admin
+      .from("system_activity_logs")
+      .select(
+        "id, actor_name, actor_role, action_type, description, target_tenant_name, created_at",
+      )
+      .order("created_at", { ascending: false })
+      .limit(5),
+  ]);
 
   if (tenantsResult.error) {
     warnings.push(tenantsResult.error.message);
@@ -468,7 +520,9 @@ export async function GET() {
   const plans = (plansResult.data ?? []) as PlanRow[];
   const activities = (activityResult.data ?? []) as ActivityRow[];
 
-  const tenantMap = new Map<string, TenantRow>(tenants.map((tenant) => [tenant.id, tenant]));
+  const tenantMap = new Map<string, TenantRow>(
+    tenants.map((tenant) => [tenant.id, tenant]),
+  );
   const recentTenantIds = tenants.slice(0, 5).map((tenant) => tenant.id);
 
   let profileCounts = new Map<string, number>();
@@ -481,12 +535,15 @@ export async function GET() {
     if (profileError) {
       warnings.push(profileError.message);
     } else {
-      profileCounts = (profileRows ?? []).reduce<Map<string, number>>((acc, profile) => {
-        const tenantId = profile.tenant_id as string | null;
-        if (!tenantId) return acc;
-        acc.set(tenantId, (acc.get(tenantId) ?? 0) + 1);
-        return acc;
-      }, new Map<string, number>());
+      profileCounts = (profileRows ?? []).reduce<Map<string, number>>(
+        (acc, profile) => {
+          const tenantId = profile.tenant_id as string | null;
+          if (!tenantId) return acc;
+          acc.set(tenantId, (acc.get(tenantId) ?? 0) + 1);
+          return acc;
+        },
+        new Map<string, number>(),
+      );
     }
   }
 
@@ -501,10 +558,15 @@ export async function GET() {
   });
 
   response.metrics = metrics.length > 0 ? metrics : response.metrics;
-  response.companiesSeries = companiesSeries.length > 0 ? companiesSeries : response.companiesSeries;
-  response.revenueSeries = revenueSeries.length > 0 ? revenueSeries : response.revenueSeries;
+  response.companiesSeries =
+    companiesSeries.length > 0 ? companiesSeries : response.companiesSeries;
+  response.revenueSeries =
+    revenueSeries.length > 0 ? revenueSeries : response.revenueSeries;
   response.plansSeries = plansSeries;
-  response.recentTransactions = buildRecentTransactions(recentOrders, tenantMap);
+  response.recentTransactions = buildRecentTransactions(
+    recentOrders,
+    tenantMap,
+  );
   response.recentTenants = buildRecentTenants(tenants, profileCounts);
   response.recentActivities = buildRecentActivities(activities);
   response.generatedAt = new Date().toISOString();

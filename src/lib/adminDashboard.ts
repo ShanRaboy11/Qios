@@ -50,7 +50,6 @@ export interface AdminDashboardActivityItem {
   id: string;
   name: string;
   subtitle: string;
-  detail: string;
   icon: string;
   color: string;
 }
