@@ -11,6 +11,7 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  Rectangle,
 } from "recharts";
 import { formatMoney } from "@/lib/salesDashboard";
 
@@ -46,6 +47,37 @@ function formatCompactAmount(value: number) {
   }
 
   return `${Math.round(value)}`;
+}
+
+type StackedBarShapeProps = React.ComponentProps<typeof Rectangle> & {
+  payload?: SalesAndRevenuePoint;
+  dataKey?: string;
+};
+
+function StackedBarShape({ payload, dataKey, ...props }: StackedBarShapeProps) {
+  const isPurchase = dataKey === "purchase";
+  const salesValue = payload?.sales ?? 0;
+  const purchaseValue = payload?.purchase ?? 0;
+
+  let isTopmost = false;
+  if (isPurchase) {
+    isTopmost = purchaseValue > 0 && salesValue === 0;
+  } else {
+    isTopmost = salesValue > 0;
+  }
+
+  const radius: [number, number, number, number] = isTopmost
+    ? [4, 4, 0, 0]
+    : [0, 0, 0, 0];
+
+  if (
+    (isPurchase && purchaseValue === 0) ||
+    (!isPurchase && salesValue === 0)
+  ) {
+    return null;
+  }
+
+  return <Rectangle {...props} radius={radius} />;
 }
 
 const fallbackData: SalesAndRevenuePoint[] = Array.from(
@@ -161,8 +193,10 @@ export const SalesAndPurchaseChart = ({
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={chartData}
-            margin={{ top: 0, right: 0, left: -20, bottom: 0 }}
+            margin={{ top: 0, right: 0, left: 10, bottom: 0 }}
             barSize={24}
+            tabIndex={-1}
+            style={{ outline: "none" }}
           >
             <CartesianGrid
               strokeDasharray="3 3"
@@ -181,9 +215,10 @@ export const SalesAndPurchaseChart = ({
               tickLine={false}
               tick={{ fill: "#9CA3AF", fontSize: 13 }}
               tickFormatter={(value) => formatCompactAmount(Number(value))}
-              dx={-10}
+              width={45}
             />
             <Tooltip
+              shared={false}
               cursor={{ fill: "transparent" }}
               formatter={(value, name) => {
                 const numericValue = Number(value ?? 0);
@@ -202,13 +237,15 @@ export const SalesAndPurchaseChart = ({
             />
             <Bar
               dataKey="purchase"
+              stackId="a"
               fill="var(--brand-accent, #FFEDBA)"
-              radius={[4, 4, 0, 0]}
+              shape={<StackedBarShape />}
             />
             <Bar
               dataKey="sales"
+              stackId="a"
               fill="var(--brand-primary, #FFDC72)"
-              radius={[4, 4, 0, 0]}
+              shape={<StackedBarShape />}
             />
           </BarChart>
         </ResponsiveContainer>

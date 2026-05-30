@@ -97,6 +97,24 @@ export function getManilaDateKey(date: Date | string): string {
   return `${year}-${month}-${day}`;
 }
 
+export function getManilaHourKey(date: Date | string): string {
+  const value = typeof date === "string" ? new Date(date) : date;
+  const parts = getIntlParts(value, {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    hour12: false,
+  });
+
+  const year = parts.find((part) => part.type === "year")?.value ?? "1970";
+  const month = parts.find((part) => part.type === "month")?.value ?? "01";
+  const day = parts.find((part) => part.type === "day")?.value ?? "01";
+  const hour = parts.find((part) => part.type === "hour")?.value ?? "00";
+
+  return `${year}-${month}-${day}-${hour}`;
+}
+
 export function formatManilaDate(date: Date | string): string {
   const value = typeof date === "string" ? new Date(date) : date;
   return new Intl.DateTimeFormat("en-US", {

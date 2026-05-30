@@ -13,6 +13,7 @@ import {
   formatManilaDateRangeLabel,
   getDashboardDateRange,
   getManilaDateKey,
+  getManilaHourKey,
   type DashboardDateRangePreset,
   trendPercent,
 } from "@/lib/salesDashboard";
@@ -265,12 +266,79 @@ function getManilaMonthKey(date: Date | string) {
   }).format(value);
 }
 
+function createManilaMonthDate(monthsBack: number) {
+  const date = new Date();
+  date.setHours(12, 0, 0, 0);
+  date.setDate(1);
+  date.setMonth(date.getMonth() - monthsBack);
+  date.setDate(1);
+
+  return date;
+}
+
 function getManilaMonthLabel(date: Date | string) {
   const value = typeof date === "string" ? new Date(date) : date;
   return new Intl.DateTimeFormat("en-US", {
     timeZone: "Asia/Manila",
     month: "short",
   }).format(value);
+}
+
+function buildHourlySeries(
+  orders: DashboardOrderRow[],
+  labelFormatter: (date: Date) => string,
+): SalesAndRevenuePoint[] {
+  const buckets = Array.from({ length: 24 }, (_, index) => {
+    const date = new Date();
+    date.setHours(date.getHours() - (23 - index));
+    return {
+      key: getManilaHourKey(date),
+      label: labelFormatter(date),
+      sales: 0,
+      revenue: 0,
+    };
+  });
+
+  const lookup = new Map(buckets.map((bucket) => [bucket.key, bucket]));
+
+  for (const order of orders) {
+    if (order.payment_status !== "paid") continue;
+    const bucket = lookup.get(getManilaHourKey(order.created_at));
+    if (!bucket) continue;
+
+    const orderAmount = toNumber(order.total_price);
+    bucket.sales += orderAmount;
+  }
+
+  return buckets.map(({ key: _key, ...point }) => point);
+}
+
+function buildPurchaseHourlySeries(
+  purchases: DashboardPurchaseRow[],
+  labelFormatter: (date: Date) => string,
+): SalesAndRevenuePoint[] {
+  const buckets = Array.from({ length: 24 }, (_, index) => {
+    const date = new Date();
+    date.setHours(date.getHours() - (23 - index));
+    return {
+      key: getManilaHourKey(date),
+      label: labelFormatter(date),
+      sales: 0,
+      purchase: 0,
+      revenue: 0,
+    };
+  });
+
+  const lookup = new Map(buckets.map((bucket) => [bucket.key, bucket]));
+
+  for (const purchase of purchases) {
+    const bucket = lookup.get(getManilaHourKey(purchase.created_at));
+    if (!bucket) continue;
+
+    bucket.purchase += toNumber(purchase.total_cost);
+  }
+
+  return buckets.map(({ key: _key, ...point }) => point);
 }
 
 function buildDailySeries(
@@ -306,8 +374,7 @@ function buildDailySeries(
 
 function buildMonthlySeries(orders: DashboardOrderRow[], months: number) {
   const buckets = Array.from({ length: months }, (_, index) => {
-    const date = new Date();
-    date.setMonth(date.getMonth() - (months - 1 - index));
+    const date = createManilaMonthDate(months - 1 - index);
     return {
       key: getManilaMonthKey(date),
       label: getManilaMonthLabel(date),
@@ -365,8 +432,7 @@ function buildPurchaseMonthlySeries(
   months: number,
 ) {
   const buckets = Array.from({ length: months }, (_, index) => {
-    const date = new Date();
-    date.setMonth(date.getMonth() - (months - 1 - index));
+    const date = createManilaMonthDate(months - 1 - index);
     return {
       key: getManilaMonthKey(date),
       label: getManilaMonthLabel(date),
@@ -413,36 +479,34 @@ function buildSalesSeries(
   orders: DashboardOrderRow[],
   purchases: DashboardPurchaseRow[],
 ): DashboardSalesSeries {
-  const dayLabel = (date: Date) =>
+  const hourLabel = (date: Date) =>
     new Intl.DateTimeFormat("en-US", {
       timeZone: "Asia/Manila",
       hour: "numeric",
-      minute: "2-digit",
-    }).format(date);
+    }).format(date); // e.g. "12 PM"
   const weekLabel = (date: Date) =>
     new Intl.DateTimeFormat("en-US", {
       timeZone: "Asia/Manila",
       weekday: "short",
     }).format(date);
-  const monthLabel = (date: Date) =>
+  const monthDayLabel = (date: Date) =>
     new Intl.DateTimeFormat("en-US", {
       timeZone: "Asia/Manila",
-      month: "short",
       day: "numeric",
-    }).format(date);
+    }).format(date); // e.g. "1", "2", "31"
 
   return {
     "1D": mergeSalesAndPurchaseSeries(
-      buildDailySeries(orders, 1, dayLabel),
-      buildPurchaseDailySeries(purchases, 1, dayLabel),
+      buildHourlySeries(orders, hourLabel),
+      buildPurchaseHourlySeries(purchases, hourLabel),
     ),
     "1W": mergeSalesAndPurchaseSeries(
       buildDailySeries(orders, 7, weekLabel),
       buildPurchaseDailySeries(purchases, 7, weekLabel),
     ),
     "1M": mergeSalesAndPurchaseSeries(
-      buildDailySeries(orders, 30, monthLabel),
-      buildPurchaseDailySeries(purchases, 30, monthLabel),
+      buildDailySeries(orders, 30, monthDayLabel),
+      buildPurchaseDailySeries(purchases, 30, monthDayLabel),
     ),
     "3M": mergeSalesAndPurchaseSeries(
       buildMonthlySeries(orders, 3),
