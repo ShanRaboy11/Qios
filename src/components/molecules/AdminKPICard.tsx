@@ -23,7 +23,7 @@ export const AdminKPICard = ({
   icon,
   color,
   className,
-  chartData = [4, 7, 5, 8, 3, 6],
+  chartData = [],
 }: AdminKPICardProps) => {
   const iconBgStyles = {
     pink: "bg-[#FFEDED] text-[#FF5269]",
@@ -76,18 +76,20 @@ export const AdminKPICard = ({
         </div>
 
         {/* mini Bar Chart */}
-        <div className="hidden md:flex items-end gap-1 h-8">
-          {chartData.map((height, i) => (
-            <div
-              key={i}
-              className={cn(
-                "w-1.5 rounded-full opacity-80",
-                chartColorStyles[color],
-              )}
-              style={{ height: `${(height / 10) * 100}%` }}
-            />
-          ))}
-        </div>
+        {chartData.length > 0 ? (
+          <div className="hidden md:flex items-end gap-1 h-8">
+            {chartData.map((height, i) => (
+              <div
+                key={i}
+                className={cn(
+                  "w-1.5 rounded-full opacity-80",
+                  chartColorStyles[color],
+                )}
+                style={{ height: `${(height / 10) * 100}%` }}
+              />
+            ))}
+          </div>
+        ) : null}
       </div>
     </div>
   );
