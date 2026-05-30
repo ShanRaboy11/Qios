@@ -2,8 +2,8 @@
 
 import React from "react";
 import {
-  AreaChart,
-  Area,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -72,36 +72,11 @@ export const RevenueChart = ({
           <div className="h-full w-full rounded-[20px] skeleton-shimmer" />
         ) : (
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart
+            <BarChart
               data={chartData}
               margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+              barSize={24}
             >
-              <defs>
-                <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
-                  <stop
-                    offset="5%"
-                    stopColor="var(--brand-primary, #FFC670)"
-                    stopOpacity={0.3}
-                  />
-                  <stop
-                    offset="95%"
-                    stopColor="var(--brand-primary, #FFC670)"
-                    stopOpacity={0}
-                  />
-                </linearGradient>
-                <linearGradient id="colorPurchase" x1="0" y1="0" x2="0" y2="1">
-                  <stop
-                    offset="5%"
-                    stopColor="var(--brand-accent, #FF5269)"
-                    stopOpacity={0.3}
-                  />
-                  <stop
-                    offset="95%"
-                    stopColor="var(--brand-accent, #FF5269)"
-                    stopOpacity={0}
-                  />
-                </linearGradient>
-              </defs>
               <CartesianGrid
                 strokeDasharray="3 3"
                 vertical={false}
@@ -141,23 +116,18 @@ export const RevenueChart = ({
                   name === "sales" ? "Sales" : "Purchases",
                 ]}
               />
-              <Area
-                type="monotone"
+              <Bar
                 dataKey="purchase"
-                stroke="var(--brand-accent, #FF5269)"
-                strokeWidth={3}
-                fillOpacity={1}
-                fill="url(#colorPurchase)"
+                stackId="a"
+                fill="var(--brand-accent, #FF5269)"
               />
-              <Area
-                type="monotone"
+              <Bar
                 dataKey="sales"
-                stroke="var(--brand-primary, #FFC670)"
-                strokeWidth={3}
-                fillOpacity={1}
-                fill="url(#colorSales)"
+                stackId="a"
+                fill="var(--brand-primary, #FFC670)"
+                radius={[4, 4, 0, 0]}
               />
-            </AreaChart>
+            </BarChart>
           </ResponsiveContainer>
         )}
       </div>

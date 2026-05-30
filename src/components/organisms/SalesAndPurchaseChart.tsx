@@ -138,7 +138,7 @@ export const SalesAndPurchaseChart = ({
         </div>
         <div className="flex flex-col border border-gray-100 rounded-xl px-4 py-2 min-w-[160px]">
           <div className="flex items-center gap-2 mb-1">
-            <div className="w-2.5 h-2.5 rounded-full bg-brand-secondary" />
+            <div className="w-2.5 h-2.5 rounded-full bg-brand-accent" />
             <span className="text-[14px] text-text-secondary">Total Purchase</span>
           </div>
           <span className="text-[20px] font-bold text-text-primary">
@@ -198,13 +198,14 @@ export const SalesAndPurchaseChart = ({
               }}
             />
             <Bar
-              dataKey="sales"
-              fill="var(--brand-primary, #FFDC72)"
-              radius={[4, 4, 0, 0]}
+              dataKey="purchase"
+              stackId="a"
+              fill="var(--brand-accent, #FFEDBA)"
             />
             <Bar
-              dataKey="purchase"
-              fill="var(--brand-accent, #FFEDBA)"
+              dataKey="sales"
+              stackId="a"
+              fill="var(--brand-primary, #FFDC72)"
               radius={[4, 4, 0, 0]}
             />
           </BarChart>
