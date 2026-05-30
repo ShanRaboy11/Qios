@@ -91,7 +91,8 @@ const FEATURE_DESCRIPTIONS: Record<string, string> = {
     "Automatically compute total cost based on selected items and options.",
   "Order Confirmation & QR Generation":
     "Review order summary and generate a QR code with order ID.",
-  "Order Status Viewing": "View order progress (Pending, Preparing, Ready).",
+  "Order Status Viewing":
+    "View order progress (Pending, Preparing, Ready, Served).",
   "Employee Authentication": "Secure login for authorized store personnel.",
   "QR Code Order Retrieval":
     "Scan customer-generated QR codes to retrieve order details.",

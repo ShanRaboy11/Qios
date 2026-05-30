@@ -69,10 +69,10 @@ const fallbackSecondaryCards: TenantMetricCard[] = [
     color: "accent",
   },
   {
-    title: "Ready Today",
+    title: "Served Today",
     value: "24",
     percentageChange: 35,
-    description: "Ready items from the queue",
+    description: "Served items from the queue",
     icon: <RefreshCcw size={24} />,
     variant: "outlined",
     color: "primary",

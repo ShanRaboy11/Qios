@@ -1,25 +1,20 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { FormField } from "@/components/molecules/FormField";
 import { Button } from "@/components/atoms/Button";
 import { Checkbox } from "@/components/atoms/Checkbox";
 import { Badge } from "@/components/atoms/Badge";
-import { Mail, Lock, AlertCircle, X, Check, Shield } from "lucide-react";
+import { Mail, Lock, AlertCircle, X, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import {
-  checkLoginTwoFactorRequired,
-  sendLoginEmailCode,
-  verifyLoginTwoFactorCode,
-} from "@/app/login/actions";
-import {
-  getFirstAccessibleEmployeeRoute,
-  type RolePermissions,
-} from "@/lib/employeePermissions";
+  clearAuthSessionExpiry,
+  setAuthSessionExpiry,
+} from "@/lib/authSession";
 
-// decode a jwt payload for client-side inspection only; this does not verify the token or its claims.
+/** Decode a JWT payload for client-side inspection only; this does not verify the token or its claims. */
 function decodeJwtPayload(token: string): Record<string, unknown> {
   try {
     const payload = token.split(".")[1];
@@ -34,128 +29,34 @@ function decodeJwtPayload(token: string): Record<string, unknown> {
   }
 }
 
-const SixDigitInput = ({
-  value,
-  onChange,
-  disabled,
-  isError,
-  errorMessage,
-}: {
-  value: string;
-  onChange: (val: string) => void;
-  disabled?: boolean;
-  isError?: boolean;
-  errorMessage?: string;
-}) => {
-  const inputs = useRef<(HTMLInputElement | null)[]>([]);
-
-  const handleChange = (
-    index: number,
-    e: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    const val = e.target.value.replace(/[^0-9A-Za-z]/g, ""); // allow letters for recovery codes, but mostly numbers
-    const newCode = [...value.padEnd(6, " ").split("")];
-    if (!val) {
-      newCode[index] = " ";
-      onChange(newCode.join("").trimEnd());
-      return;
-    }
-    newCode[index] = val[val.length - 1];
-    onChange(newCode.join("").trimEnd());
-    if (index < 5) inputs.current[index + 1]?.focus();
-  };
-
-  const handleKeyDown = (
-    index: number,
-    e: React.KeyboardEvent<HTMLInputElement>,
-  ) => {
-    if (
-      e.key === "Backspace" &&
-      (!value[index] || value[index] === " ") &&
-      index > 0
-    ) {
-      inputs.current[index - 1]?.focus();
-    }
-  };
-
-  const handlePaste = (e: React.ClipboardEvent) => {
-    e.preventDefault();
-    const pasted = e.clipboardData
-      .getData("text")
-      .replace(/[^0-9A-Za-z]/g, "")
-      .slice(0, 8); // recovery codes are 8 chars
-    if (pasted) {
-      onChange(pasted);
-      // focus the last filled input or the end
-      const focusIndex = Math.min(pasted.length, 5);
-      inputs.current[focusIndex]?.focus();
-    }
-  };
-
-  // check if the value is longer than 6 chars (e.g. 8 for recovery code)
-  const isRecovery = value.length > 6;
-
-  if (isRecovery) {
-    return (
-      <div className="flex flex-col gap-2">
-        <div className="flex justify-center" onPaste={handlePaste}>
-          <input
-            type="text"
-            value={value}
-            disabled={disabled}
-            onChange={(e) =>
-              onChange(e.target.value.replace(/[^0-9A-Za-z]/g, ""))
-            }
-            className={cn(
-              "w-full h-12 sm:h-14 text-center text-xl font-bold font-mono tracking-widest rounded-xl border outline-none transition-all disabled:opacity-50",
-              isError
-                ? "border-warning-primary bg-warning-secondary/40 focus:border-warning-primary focus:ring-2 focus:ring-warning-primary/20 text-warning-primary"
-                : "border-black/[0.08] focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 text-text-primary",
-            )}
-          />
-        </div>
-        {isError && errorMessage && (
-          <p className="text-sm text-warning-primary text-center animate-in fade-in slide-in-from-top-1">
-            {errorMessage}
-          </p>
-        )}
-      </div>
-    );
+async function resolveEmployeeTenantId(
+  supabase: ReturnType<typeof createSupabaseBrowserClient>,
+  role: string | undefined,
+  jwtTenantId: string | undefined,
+  profileTenantId: string | undefined,
+  appRoleId: string | undefined,
+) {
+  if (role !== "employee") {
+    return jwtTenantId || profileTenantId || null;
   }
 
-  return (
-    <div className="flex flex-col gap-2">
-      <div className="flex gap-2 justify-center" onPaste={handlePaste}>
-        {Array.from({ length: 6 }).map((_, i) => (
-          <input
-            key={i}
-            ref={(el) => {
-              inputs.current[i] = el;
-            }}
-            type="text"
-            inputMode="text"
-            maxLength={value.length > 5 ? 8 : 2} // allow longer paste for recovery codes
-            value={value[i] && value[i] !== " " ? value[i] : ""}
-            disabled={disabled}
-            onChange={(e) => handleChange(i, e)}
-            onKeyDown={(e) => handleKeyDown(i, e)}
-            className={cn(
-              "w-10 h-12 sm:w-12 sm:h-14 text-center text-xl font-bold rounded-xl border outline-none transition-all disabled:opacity-50",
-              isError
-                ? "border-warning-primary focus:border-warning-primary focus:ring-2 focus:ring-warning-primary/20 text-warning-primary bg-warning-secondary/40 shadow-[0_0_0_3px_color-mix(in_srgb,var(--color-warning-primary)_12%,transparent)]"
-                : "border-black/[0.08] focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 text-text-primary bg-white",
-            )}
-          />
-        ))}
-      </div>
-      {isError && errorMessage && (
-        <p className="text-sm text-warning-primary text-center animate-in fade-in slide-in-from-top-1">
-          {errorMessage}
-        </p>
-      )}
-    </div>
-  );
-};
+  const directTenantId = jwtTenantId || profileTenantId;
+  if (directTenantId) {
+    return directTenantId;
+  }
+
+  if (!appRoleId) {
+    return null;
+  }
+
+  const { data: roleRow } = await supabase
+    .from("roles")
+    .select("tenant_id")
+    .eq("id", appRoleId)
+    .single();
+
+  return typeof roleRow?.tenant_id === "string" ? roleRow.tenant_id : null;
+}
 
 export const LoginForm = () => {
   const router = useRouter();
@@ -176,20 +77,7 @@ export const LoginForm = () => {
   const [emailError, setEmailError] = useState(false);
   const [passwordError, setPasswordError] = useState(false);
 
-  // 2fa state
-  const [requires2FA, setRequires2FA] = useState(false);
-  const [twoFactorCode, setTwoFactorCode] = useState("");
-  const [twoFactorConfig, setTwoFactorConfig] = useState<{
-    userId: string;
-    tenantId: string;
-    hasAuthenticator: boolean;
-    hasEmail: boolean;
-    routeDestination: string;
-  } | null>(null);
-  const [useRecoveryCode, setUseRecoveryCode] = useState(false);
-
   useEffect(() => {
-    // restore remembered email on mount
     const storedEmail = localStorage.getItem("rememberedEmail");
     if (storedEmail) {
       setEmail(storedEmail);
@@ -197,80 +85,15 @@ export const LoginForm = () => {
     }
   }, []);
 
-  // simple email regex for validation
+  // Simple email regex for validation
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const vectorStyle =
     "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rotate-[6.521deg] overflow-visible";
 
-  const routeUser = (role: string, tenantId?: string) => {
-    if (role === "super_admin") {
-      router.push("/admin/dashboard");
-    } else if (role === "admin" && tenantId) {
-      router.push(`/${tenantId}/dashboard`);
-    } else if (role === "employee" && tenantId) {
-      router.push(`/${tenantId}/employee/dashboard`);
-    } else {
-      setError("Account configuration is incomplete.");
-    }
-  };
-
-  const determineRouteDestination = (
-    role: string,
-    tenantId?: string,
-    employeePermissions?: RolePermissions | null,
-  ) => {
-    if (role === "super_admin") return "/admin/dashboard";
-    if (role === "admin" && tenantId) return `/${tenantId}/dashboard`;
-    if (role === "employee" && tenantId) {
-      const employeeRoute = getFirstAccessibleEmployeeRoute(
-        employeePermissions ?? null,
-      );
-      return `/${tenantId}/employee/${employeeRoute}`;
-    }
-    return "";
-  };
-
-  const handleVerify2FA = async () => {
-    if (!twoFactorConfig) return;
-    setIsLoading(true);
-    setError(null);
-    try {
-      // fully verify against the user's own profile (handles totp, email, and recovery codes)
-      await verifyLoginTwoFactorCode(twoFactorConfig.userId, twoFactorCode);
-      if (twoFactorConfig.routeDestination) {
-        // sync router and reload based on environment
-        const isLocalhost =
-          typeof window !== "undefined" &&
-          (window.location.hostname === "localhost" ||
-            window.location.hostname === "127.0.0.1");
-        if (isLocalhost) {
-          router.push(twoFactorConfig.routeDestination);
-        } else {
-          window.location.href = twoFactorConfig.routeDestination;
-        }
-      } else {
-        setError("Invalid route destination.");
-      }
-    } catch (err: any) {
-      const message = err instanceof Error ? err.message : String(err || "");
-      setError(
-        message.toLowerCase().includes("invalid verification code")
-          ? "Invalid verification code. Please try again."
-          : "An unexpected error occurred. Please try again.",
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
 
-    if (requires2FA) {
-      return handleVerify2FA();
-    }
-
-    // reset errors before validation
+    // Reset errors
     setError(null);
     setSuccessMsg(null);
     setEmailError(false);
@@ -278,7 +101,7 @@ export const LoginForm = () => {
 
     let hasError = false;
 
-    // validate email
+    // Validate Email
     if (!email.trim()) {
       setEmailError(true);
       hasError = true;
@@ -287,7 +110,7 @@ export const LoginForm = () => {
       hasError = true;
     }
 
-    // validate password
+    // Validate Password
     if (!password) {
       setPasswordError(true);
       hasError = true;
@@ -296,130 +119,80 @@ export const LoginForm = () => {
     if (hasError) return;
 
     setIsLoading(true);
+
     try {
-      const supabase = createSupabaseBrowserClient(rememberMe);
-      const normalizedEmail = email.trim().toLowerCase();
+      const supabase = createSupabaseBrowserClient();
 
       const { data: signInData, error: signInError } =
-        await supabase.auth.signInWithPassword({
-          email: normalizedEmail,
-          password,
-        });
+        await supabase.auth.signInWithPassword({ email, password });
 
       if (signInError || !signInData.user || !signInData.session) {
+        // Adhere to cybersecurity standards: Do not leak whether the email exists
         setError("Invalid email or password. Please try again.");
         return;
       }
-
       if (rememberMe) {
-        localStorage.setItem("rememberedEmail", normalizedEmail);
+        localStorage.setItem("rememberedEmail", email);
       } else {
         localStorage.removeItem("rememberedEmail");
       }
-
+      // Prefer claims injected by Supabase's custom_access_token_hook —
+      // avoids an extra DB round-trip and removes dependency on RLS being
+      // configured on the profiles table.
       const claims = decodeJwtPayload(signInData.session.access_token);
+      let role = claims.user_role as string | undefined;
+      const jwtTenantId = claims.tenant_id as string | undefined;
+      const jwtAppRoleId = claims.app_role_id as string | undefined;
 
-      // always fetch canonical role and tenant from profiles table
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("role, tenant_id, app_role_id")
-        .eq("id", signInData.user.id)
-        .single();
-
-      let role = profile?.role;
-      let tenantId = profile?.tenant_id;
-      const appRoleId = profile?.app_role_id;
-      let employeePermissions: RolePermissions | null = null;
-
-      // fallback to jwt claims if profile data is missing
-      if (!role) {
-        // avoid generic supabase role "authenticated"
-        role =
-          claims.user_role ||
-          (claims.role !== "authenticated" ? claims.role : undefined);
+      // Ensure we know the actual role for maintenance mode check
+      // If user_role is empty in JWT or the user has default 'authenticated' role, fetch application role from profiles
+      if (!role || role === "authenticated") {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role, tenant_id, app_role_id")
+          .eq("id", signInData.user.id)
+          .single();
+        role = profile?.role;
       }
 
-      if (!tenantId) {
-        tenantId = claims.tenant_id || claims.tenantId;
-      }
-
-      if (!tenantId) {
-        const metadata = signInData.user.user_metadata as
-          | Record<string, unknown>
-          | undefined;
-
-        tenantId =
-          (typeof metadata?.tenant_id === "string"
-            ? metadata.tenant_id
-            : undefined) ||
-          (typeof metadata?.tenantId === "string"
-            ? metadata.tenantId
-            : undefined) ||
-          tenantId;
-      }
-
-      if (!role && appRoleId) {
-        role = "employee";
-      }
-
-      if (!role) {
-        const metadata = signInData.user.user_metadata as
-          | Record<string, unknown>
-          | undefined;
-
-        const metaAppRoleId =
-          (typeof metadata?.app_role_id === "string"
-            ? metadata.app_role_id
-            : undefined) ||
-          (typeof metadata?.appRoleId === "string"
-            ? metadata.appRoleId
-            : undefined);
-
-        if (metaAppRoleId) {
-          role = "employee";
-        }
-      }
-
-      if (role === "employee" && tenantId && appRoleId) {
-        const { data: roleData } = await supabase
-          .from("roles")
-          .select("permissions")
-          .eq("id", appRoleId)
-          .eq("tenant_id", tenantId)
-          .maybeSingle();
-
-        employeePermissions =
-          (roleData?.permissions as RolePermissions | null) ?? null;
-      }
-
-      tenantId = tenantId || "";
-
-      // check maintenance mode before allowing further access
+      // Check maintenance mode
       const { data: platformSettings } = await supabase
         .from("platform_settings")
-        .select("maintenance_mode")
+        .select("maintenance_mode, session_timeout_hours")
         .eq("id", 1)
         .single();
 
       if (platformSettings?.maintenance_mode && role !== "super_admin") {
         await supabase.auth.signOut();
+        clearAuthSessionExpiry();
         setError(
           "The system is currently undergoing maintenance. Please try again later.",
         );
         return;
       }
 
-      // enforce tenant status for non-super-admins
-      if (tenantId && role !== "super_admin") {
-        const { data: tenantData } = await supabase
+      setAuthSessionExpiry(
+        Number(platformSettings?.session_timeout_hours ?? 24),
+      );
+
+      if (role === "super_admin") {
+        router.replace("/admin/dashboard");
+        return;
+      }
+
+      if (jwtTenantId) {
+        // Enforce tenant status check
+        const { data: tenant } = await supabase
           .from("tenants")
           .select("status")
-          .eq("id", tenantId)
+          .eq("id", jwtTenantId)
           .single();
 
-        const status = tenantData?.status || "approved";
+        const status = tenant?.status || "approved";
+
         if (status !== "approved") {
           await supabase.auth.signOut();
+          clearAuthSessionExpiry();
           setError(
             status === "pending"
               ? "Your business registration is currently pending super admin approval."
@@ -427,54 +200,84 @@ export const LoginForm = () => {
           );
           return;
         }
-      }
 
-      // check if this user has 2fa enabled in their profile
-      const tfaCheck = await checkLoginTwoFactorRequired(
-        tenantId || "",
-        signInData.user.id,
-      );
-
-      const routeDestination = determineRouteDestination(
-        role || "employee",
-        tenantId || undefined,
-        employeePermissions,
-      );
-
-      if (tfaCheck?.required) {
-        setTwoFactorConfig({
-          userId: signInData.user.id,
-          tenantId: tenantId || "",
-          hasAuthenticator: !!tfaCheck.hasAuthenticator,
-          hasEmail: !!tfaCheck.hasEmail,
-          routeDestination,
-        });
-
-        // auto-send email code if the user has email 2fa enabled
-        if (tfaCheck.hasEmail) {
-          try {
-            await sendLoginEmailCode(
-              signInData.user.id,
-              signInData.user.email!,
-              tfaCheck.businessName || "",
-            );
-          } catch (e) {
-            console.error("failed to send 2fa email automatically:", e);
-          }
+        if (role === "admin") {
+          router.replace(`/${jwtTenantId}/dashboard`);
+          return;
         }
 
-        setRequires2FA(true);
+        if (role === "employee") {
+          router.replace(`/${jwtTenantId}/employee/dashboard`);
+          return;
+        }
+      }
+
+      // Fallback: query the profiles table (requires RLS policy allowing
+      // authenticated users to SELECT their own row).
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("role, tenant_id, app_role_id")
+        .eq("id", signInData.user.id)
+        .single();
+
+      if (profileError || !profile) {
+        setError(
+          "Could not load your account profile. Please contact support.",
+        );
         return;
       }
 
-      // no 2fa required — route directly to destination
-      if (routeDestination) {
-        router.push(routeDestination);
+      let tenantStatus = "approved";
+      if (profile.tenant_id && profile.role !== "super_admin") {
+        // Try to fetch tenant status, but catch if the column doesn't exist yet
+        const { data: tenantData, error: tenantError } = await supabase
+          .from("tenants")
+          .select("status")
+          .eq("id", profile.tenant_id)
+          .single();
+
+        if (!tenantError && tenantData?.status) {
+          tenantStatus = tenantData.status;
+        }
+      }
+
+      if (profile.role !== "super_admin" && tenantStatus !== "approved") {
+        await supabase.auth.signOut();
+        clearAuthSessionExpiry();
+        if (tenantStatus === "pending") {
+          setError(
+            "Your business registration is currently pending super admin approval.",
+          );
+        } else {
+          setError(
+            "Your business registration has been rejected or suspended. Please contact support.",
+          );
+        }
+        return;
+      }
+
+      if (profile.role === "super_admin") {
+        router.replace("/admin/dashboard");
+      } else if (profile.role === "admin" && profile.tenant_id) {
+        router.replace(`/${profile.tenant_id}/dashboard`);
+      } else if (profile.role === "employee") {
+        const employeeTenantId = await resolveEmployeeTenantId(
+          supabase,
+          profile.role,
+          jwtTenantId,
+          profile.tenant_id ?? undefined,
+          profile.app_role_id ?? jwtAppRoleId,
+        );
+
+        if (employeeTenantId) {
+          router.replace(`/${employeeTenantId}/employee/dashboard`);
+        } else {
+          setError("Account configuration is incomplete.");
+        }
       } else {
         setError("Account configuration is incomplete.");
       }
-    } catch (err) {
-      console.error(err);
+    } catch {
       setError("An unexpected error occurred. Please try again.");
     } finally {
       setIsLoading(false);
@@ -502,7 +305,7 @@ export const LoginForm = () => {
         />
       </a>
 
-      {/* background vectors (rotating) */}
+      {/* Background Vectors (Rotating) */}
       <div className="absolute inset-0 z-0 overflow-hidden flex items-center justify-end pointer-events-none opacity-60">
         <div
           className="relative shrink-0 -mr-[200px] md:-mr-[400px]"
@@ -644,7 +447,7 @@ export const LoginForm = () => {
           </div>
         </div>
       </div>
-      {/* big qios background word */}
+      {/* Big Qios Background Word */}
       <div className="absolute bottom-0 -left-10 md:-left-20 lg:left-10 z-0 pointer-events-none select-none">
         <div
           className="absolute inset-0 z-0"
@@ -682,222 +485,127 @@ export const LoginForm = () => {
           </h1>
         </div>
       </div>
-
-      {/* login card */}
+      {/* Login Card */}
       <div className="relative z-10 w-full max-w-[440px] bg-white rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 md:p-10 flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-        {requires2FA && twoFactorConfig ? (
-          <div className="flex flex-col items-center gap-3 animate-in fade-in zoom-in-95 duration-300 w-full">
-            <div className="w-16 h-16 rounded-full bg-brand-primary/10 flex items-center justify-center text-brand-primary mb-2">
-              <Shield className="w-8 h-8 text-brand-accent" />
-            </div>
-            <h1 className="text-2xl font-extrabold text-text-primary text-center">
-              {useRecoveryCode ? "Recovery Code" : "Two-Factor Authentication"}
+        {/* Header Section */}
+        <div className="flex flex-col items-center gap-3">
+          <div className="text-center">
+            <h1 className="text-2xl font-extrabold text-text-primary">
+              Welcome back
             </h1>
-            <p className="b4 text-text-secondary mt-1 text-center max-w-sm">
-              {useRecoveryCode
-                ? "Please enter one of your 8-character backup recovery codes."
-                : twoFactorConfig.hasAuthenticator && twoFactorConfig.hasEmail
-                  ? "Please enter the 6-digit code from your authenticator app or the code sent to your email."
-                  : twoFactorConfig.hasAuthenticator
-                    ? "Please enter the 6-digit code from your authenticator app."
-                    : "Please enter the 6-digit code sent to your email."}
+            <p className="b4 text-text-secondary mt-1">
+              Please enter your details to sign in
             </p>
-
-            <form className="w-full mt-6 space-y-6" onSubmit={handleSubmit}>
-              {useRecoveryCode ? (
-                <FormField
-                  label="Recovery Code"
-                  type="text"
-                  placeholder="Enter 8-character code"
-                  value={twoFactorCode}
-                  onChange={(e) => {
-                    setTwoFactorCode(
-                      e.target.value.replace(/[^0-9A-Za-z]/g, ""),
-                    );
-                    if (error) setError(null);
-                  }}
-                  onKeyDown={handleKeyDown}
-                  isError={!!error}
-                  supportiveText={error || undefined}
-                  leftIcon={<Lock size={20} />}
-                  className="max-w-full"
-                  maxLength={8}
-                />
-              ) : (
-                <SixDigitInput
-                  value={twoFactorCode}
-                  onChange={(val) => {
-                    setTwoFactorCode(val);
-                    if (error) setError(null);
-                  }}
-                  disabled={isLoading}
-                  isError={!!error}
-                  errorMessage={error || undefined}
-                />
-              )}
-
-              <Button
-                type="button"
-                onClick={handleVerify2FA}
-                variant="accent"
-                size="lg"
-                className="w-full h-[52px]"
-                disabled={
-                  (useRecoveryCode
-                    ? twoFactorCode.length < 8
-                    : twoFactorCode.length < 6) || isLoading
-                }
-                loading={isLoading}
-              >
-                {isLoading ? "Verifying..." : "Verify Code"}
-              </Button>
-
-              <div className="text-center mt-4">
-                <span className="text-text-secondary text-sm">
-                  {useRecoveryCode ? "Have your device? " : "Having trouble? "}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setUseRecoveryCode(!useRecoveryCode);
-                    setTwoFactorCode("");
-                    setError(null);
-                  }}
-                  className="text-brand-primary font-bold hover:text-brand-accent transition-colors focus:outline-none text-sm"
-                >
-                  {useRecoveryCode ? "Use authenticator" : "Use recovery code"}
-                </button>
-              </div>
-            </form>
           </div>
-        ) : (
-          <>
-            {/* header section */}
-            <div className="flex flex-col items-center gap-3">
-              <div className="text-center">
-                <h1 className="text-2xl font-extrabold text-text-primary">
-                  Welcome back
-                </h1>
-                <p className="b4 text-text-secondary mt-1">
-                  Please enter your details to sign in
-                </p>
-              </div>
-            </div>
+        </div>
 
-            {/* form section */}
-            <form
-              onSubmit={handleSubmit}
-              className="flex flex-col gap-5 w-full"
+        {/* Form Section */}
+        <form onSubmit={handleSubmit} className="flex flex-col gap-5 w-full">
+          <FormField
+            label="Email"
+            type="email"
+            placeholder="Enter your email"
+            value={email}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              if (error) setError(null);
+              if (emailError) setEmailError(false);
+            }}
+            onKeyDown={handleKeyDown}
+            isError={emailError || !!error}
+            supportiveText={
+              emailError
+                ? !email.trim()
+                  ? "Email is required"
+                  : "Invalid email format"
+                : undefined
+            }
+            leftIcon={<Mail size={20} />}
+            className="max-w-full"
+          />
+
+          <FormField
+            label="Password"
+            type="password"
+            placeholder="Enter your password"
+            value={password}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              if (error) setError(null);
+              if (passwordError) setPasswordError(false);
+            }}
+            onKeyDown={handleKeyDown}
+            isError={passwordError || !!error}
+            supportiveText={passwordError ? "Password is required" : undefined}
+            leftIcon={<Lock size={20} />}
+            className="max-w-full"
+          />
+
+          {/* Additional Options */}
+          <div className="flex items-center justify-between pt-1">
+            <Checkbox
+              label="Remember me"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+            />
+            <button
+              type="button"
+              className="b4 font-bold text-brand-primary hover:text-brand-accent transition-colors focus:outline-none"
             >
-              <FormField
-                label="Email"
-                type="email"
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  if (error) setError(null);
-                  if (emailError) setEmailError(false);
-                }}
-                onKeyDown={handleKeyDown}
-                isError={emailError || !!error}
-                supportiveText={
-                  emailError
-                    ? !email.trim()
-                      ? "Email is required"
-                      : "Invalid email format"
-                    : undefined
-                }
-                leftIcon={<Mail size={20} />}
-                className="max-w-full"
-              />
+              Forgot password?
+            </button>
+          </div>
 
-              <FormField
-                label="Password"
-                type="password"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => {
-                  setPassword(e.target.value);
-                  if (error) setError(null);
-                  if (passwordError) setPasswordError(false);
-                }}
-                onKeyDown={handleKeyDown}
-                isError={passwordError || !!error}
-                supportiveText={
-                  passwordError ? "Password is required" : undefined
-                }
-                leftIcon={<Lock size={20} />}
-                className="max-w-full"
-              />
+          {/* Submit Button & Error */}
+          <div className="pt-2 flex flex-col gap-3">
+            {error && (
+              <Badge
+                color="error"
+                variant="outline"
+                shape="rounded"
+                leftIcon={<AlertCircle size={16} className="shrink-0" />}
+                className="w-full justify-center whitespace-normal text-center py-2 animate-in fade-in zoom-in-95"
+              >
+                {error}
+              </Badge>
+            )}
+            {successMsg && (
+              <Badge
+                color="success"
+                variant="outline"
+                shape="rounded"
+                leftIcon={<Check size={16} className="shrink-0" />}
+                className="w-full justify-center whitespace-normal text-center py-2 animate-in fade-in zoom-in-95"
+              >
+                {successMsg}
+              </Badge>
+            )}
+            <Button
+              type="submit"
+              variant="accent"
+              size="lg"
+              className="w-full h-[52px]"
+              disabled={isFormEmpty || isLoading}
+              loading={isLoading}
+            >
+              {isLoading ? "Signing in..." : "Sign In"}
+            </Button>
+          </div>
 
-              {/* additional options */}
-              <div className="flex items-center justify-between pt-1">
-                <Checkbox
-                  label="Remember me"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                />
-                <button
-                  type="button"
-                  className="b4 font-bold text-brand-primary hover:text-brand-accent transition-colors focus:outline-none"
-                >
-                  Forgot password?
-                </button>
-              </div>
-
-              {/* submit button & error */}
-              <div className="pt-2 flex flex-col gap-3">
-                {error && (
-                  <Badge
-                    color="error"
-                    variant="outline"
-                    shape="rounded"
-                    leftIcon={<AlertCircle size={16} className="shrink-0" />}
-                    className="w-full justify-center whitespace-normal text-center py-2 animate-in fade-in zoom-in-95"
-                  >
-                    {error}
-                  </Badge>
-                )}
-                {successMsg && (
-                  <Badge
-                    color="success"
-                    variant="outline"
-                    shape="rounded"
-                    leftIcon={<Check size={16} className="shrink-0" />}
-                    className="w-full justify-center whitespace-normal text-center py-2 animate-in fade-in zoom-in-95"
-                  >
-                    {successMsg}
-                  </Badge>
-                )}
-                <Button
-                  type="submit"
-                  variant="accent"
-                  size="lg"
-                  className="w-full h-[52px]"
-                  disabled={isFormEmpty || isLoading}
-                  loading={isLoading}
-                >
-                  {isLoading ? "Signing in..." : "Sign In"}
-                </Button>
-              </div>
-
-              {/* sign up link */}
-              <div className="text-center mt-2">
-                <span className="text-text-secondary text-sm">
-                  Don't have an account?{" "}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => router.push("/onboarding")}
-                  className="text-brand-primary font-bold hover:text-brand-accent transition-colors focus:outline-none text-sm"
-                >
-                  Sign up
-                </button>
-              </div>
-            </form>
-          </>
-        )}
+          {/* Sign Up Link */}
+          <div className="text-center mt-2">
+            <span className="text-text-secondary text-sm">
+              Don't have an account?{" "}
+            </span>
+            <button
+              type="button"
+              onClick={() => router.push("/onboarding")}
+              className="text-brand-primary font-bold hover:text-brand-accent transition-colors focus:outline-none text-sm"
+            >
+              Sign up
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

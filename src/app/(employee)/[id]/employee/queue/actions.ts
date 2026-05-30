@@ -9,12 +9,13 @@ import {
   canUpdateEmployeeOrderStatus,
   type RolePermissions,
 } from "@/lib/employeePermissions";
+import { getManilaDateKey } from "@/lib/salesDashboard";
 import { revalidatePath } from "next/cache";
 
 type QueueOrder = {
   id: string;
   order_number: string;
-  status: "pending" | "preparing" | "ready";
+  status: "pending" | "preparing" | "ready" | "served";
   payment_status?: "unpaid" | "paid";
   created_at: string;
   table_number: string | null;
@@ -75,6 +76,7 @@ async function getEmployeeQueueContext(tenantId: string) {
 export async function getEmployeeQueueData(tenantId: string) {
   const { admin, permissions, profile } =
     await getEmployeeQueueContext(tenantId);
+  const todayStartIso = `${getManilaDateKey(new Date())}T00:00:00+08:00`;
 
   if (
     profile.role !== "super_admin" &&
@@ -83,8 +85,11 @@ export async function getEmployeeQueueData(tenantId: string) {
     throw new Error("Insufficient permissions to access order queue");
   }
 
-  const [{ count: totalOrderCount }, { data: orders, error: ordersError }] =
-    await Promise.all([
+  const [
+    { count: totalOrderCount },
+    { data: orders, error: ordersError },
+    { data: servedTodayLogs },
+  ] = await Promise.all([
       admin
         .from("orders")
         .select("id", { count: "exact", head: true })
@@ -117,6 +122,12 @@ export async function getEmployeeQueueData(tenantId: string) {
         .in("status", ["pending", "preparing", "ready"])
         .eq("payment_status", "paid")
         .order("created_at", { ascending: true }),
+      admin
+        .from("order_status_logs")
+        .select("order_id")
+        .eq("tenant_id", tenantId)
+        .eq("status_change", "served")
+        .gte("created_at", todayStartIso),
     ]);
 
   if (ordersError) {
@@ -143,6 +154,8 @@ export async function getEmployeeQueueData(tenantId: string) {
   return {
     orders: mappedOrders,
     totalOrderCount: totalOrderCount ?? 0,
+    servedTodayCount: new Set((servedTodayLogs ?? []).map((row) => row.order_id))
+      .size,
     canUpdateStatus:
       profile.role === "super_admin" ||
       canUpdateEmployeeOrderStatus(permissions),
@@ -152,13 +165,7 @@ export async function getEmployeeQueueData(tenantId: string) {
 export async function updateOrderStatus(
   orderId: string,
   tenantId: string,
-  newStatus:
-    | "pending"
-    | "preparing"
-    | "ready"
-    | "completed"
-    | "served"
-    | "cancelled",
+  newStatus: "pending" | "preparing" | "ready" | "served" | "cancelled",
 ) {
   const { supabase, admin, user, profile, permissions } =
     await getEmployeeQueueContext(tenantId);
@@ -200,6 +207,9 @@ export async function updateOrderStatus(
   });
 
   revalidatePath(`/(employee)/[id]/employee/queue`, "page");
+  revalidatePath(`/(employee)/[id]/employee/kitchen`, "page");
+  revalidatePath(`/(employee)/[id]/employee/dashboard`, "page");
+  revalidatePath(`/(tenant)/[id]/dashboard`, "page");
   return { success: true };
 }
 
