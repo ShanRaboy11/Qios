@@ -17,7 +17,8 @@ import { formatMoney } from "@/lib/salesDashboard";
 export type SalesAndRevenuePoint = {
   label: string;
   sales: number;
-  revenue: number;
+  purchase?: number;
+  revenue?: number;
 };
 
 export type SalesAndPurchasePeriod = "1D" | "1W" | "1M" | "3M" | "6M" | "1Y";
@@ -84,16 +85,16 @@ export const SalesAndPurchaseChart = ({
       chartData.reduce(
         (accumulator, point) => {
           accumulator.sales += point.sales;
-          accumulator.revenue += point.revenue;
+          accumulator.purchase += point.purchase ?? 0;
           return accumulator;
         },
-        { sales: 0, revenue: 0 },
+        { sales: 0, purchase: 0 },
       ),
     [chartData],
   );
 
   const hasData = chartData.some(
-    (point) => point.sales > 0 || point.revenue > 0,
+    (point) => point.sales > 0 || (point.purchase ?? 0) > 0 || (point.revenue ?? 0) > 0,
   );
 
   return (
@@ -103,9 +104,7 @@ export const SalesAndPurchaseChart = ({
           <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center">
             <Package className="w-5 h-5 text-brand-primary" />
           </div>
-          <h2 className="text-[18px] font-bold text-text-primary">
-            Sales & Revenue
-          </h2>
+          <h2 className="text-[18px] font-bold text-text-primary">Sales & Purchase</h2>
         </div>
         <div className="w-full sm:w-[320px]">
           <SegmentedControl
@@ -134,16 +133,16 @@ export const SalesAndPurchaseChart = ({
             <span className="text-[14px] text-text-secondary">Total Sales</span>
           </div>
           <span className="text-[20px] font-bold text-text-primary">
-            {formatCompactAmount(totals.sales)}
+            {formatMoney(totals.sales)}
           </span>
         </div>
         <div className="flex flex-col border border-gray-100 rounded-xl px-4 py-2 min-w-[160px]">
           <div className="flex items-center gap-2 mb-1">
             <div className="w-2.5 h-2.5 rounded-full bg-brand-secondary" />
-            <span className="text-[14px] text-text-secondary">Revenue</span>
+            <span className="text-[14px] text-text-secondary">Total Purchase</span>
           </div>
           <span className="text-[20px] font-bold text-text-primary">
-            {formatMoney(totals.revenue)}
+            {formatMoney(totals.purchase)}
           </span>
         </div>
       </div>
@@ -187,8 +186,8 @@ export const SalesAndPurchaseChart = ({
                 return [
                   name === "sales"
                     ? `${numericValue}`
-                    : formatMoney(numericValue),
-                  name === "sales" ? "Sales" : "Revenue",
+                    : `${numericValue}`,
+                  name === "sales" ? "Sales" : "Purchase",
                 ];
               }}
               labelFormatter={(label) => `Time: ${label}`}
@@ -204,7 +203,7 @@ export const SalesAndPurchaseChart = ({
               radius={[4, 4, 0, 0]}
             />
             <Bar
-              dataKey="revenue"
+              dataKey="purchase"
               fill="var(--brand-accent, #FFEDBA)"
               radius={[4, 4, 0, 0]}
             />

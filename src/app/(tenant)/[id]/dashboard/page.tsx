@@ -10,8 +10,10 @@ import { DashboardListsSection } from "@/components/organisms/DashboardListsSect
 import { AlertBanner } from "@/components/molecules/AlertBanner";
 import {
   formatMoney,
+  formatManilaDateRangeLabel,
+  getDashboardDateRange,
   getManilaDateKey,
-  getPeriodRange,
+  type DashboardDateRangePreset,
   trendPercent,
 } from "@/lib/salesDashboard";
 import type {
@@ -73,6 +75,24 @@ function formatCompactCount(value: number) {
   }).format(Number.isFinite(value) ? value : 0);
 }
 
+function getFirstName(name: string | null | undefined) {
+  const trimmed = name?.trim();
+  if (!trimmed) return "Admin";
+
+  const firstName = trimmed.split(/\s+/)[0] || "Admin";
+  return firstName.charAt(0).toUpperCase() + firstName.slice(1);
+}
+
+function normalizeDashboardRange(
+  value: string | undefined,
+): DashboardDateRangePreset {
+  if (value === "month" || value === "year" || value === "all-time") {
+    return value;
+  }
+
+  return "week";
+}
+
 function formatOrderSummary(items: DashboardOrderItemRow[] | null | undefined) {
   const names =
     items
@@ -107,6 +127,7 @@ function formatStatusLabel(status: DashboardOrderRow["status"]) {
 function buildTopSellers(
   currentOrders: DashboardOrderRow[],
   previousOrders: DashboardOrderRow[],
+  hasComparisonRange: boolean,
 ) {
   const currentMap = new Map<
     string,
@@ -160,8 +181,10 @@ function buildTopSellers(
         revenueValue: item.revenue,
         revenueLabel: formatMoney(item.revenue),
         salesLabel: `${formatCompactCount(item.sales)} Sales`,
-        trendLabel: `${item.revenue >= previousRevenue ? "↗" : "↘"} ${Math.abs(trend)}%`,
-        isPositive: item.revenue >= previousRevenue,
+        trendLabel: hasComparisonRange
+          ? `${item.revenue >= previousRevenue ? "↗" : "↘"} ${Math.abs(trend)}%`
+          : "—",
+        isPositive: hasComparisonRange ? item.revenue >= previousRevenue : true,
       };
     })
     .sort((left, right) => right.revenueValue - left.revenueValue)
@@ -264,8 +287,9 @@ function buildDailySeries(
     const bucket = lookup.get(getManilaDateKey(order.created_at));
     if (!bucket) continue;
 
-    bucket.sales += 1;
-    bucket.revenue += toNumber(order.total_price);
+    const orderAmount = toNumber(order.total_price);
+    bucket.sales += orderAmount;
+    bucket.revenue += 0;
   }
 
   return buckets.map(({ key: _key, ...point }) => point);
@@ -290,8 +314,9 @@ function buildMonthlySeries(orders: DashboardOrderRow[], months: number) {
     const bucket = lookup.get(getManilaMonthKey(order.created_at));
     if (!bucket) continue;
 
-    bucket.sales += 1;
-    bucket.revenue += toNumber(order.total_price);
+    const orderAmount = toNumber(order.total_price);
+    bucket.sales += orderAmount;
+    bucket.revenue += 0;
   }
 
   return buckets.map(({ key: _key, ...point }) => point);
@@ -325,10 +350,74 @@ function buildSalesSeries(orders: DashboardOrderRow[]): DashboardSalesSeries {
   };
 }
 
-async function getTenantDashboardData(tenantId: string) {
+async function getTenantDashboardData(
+  tenantId: string,
+  rangePreset: DashboardDateRangePreset,
+) {
   const admin = createSupabaseAdminClient();
-  const { currentStartIso, previousStartIso } = getPeriodRange("month");
+  const dateRange = getDashboardDateRange(rangePreset);
   const todayStartIso = `${getManilaDateKey(new Date())}T00:00:00+08:00`;
+
+  const currentOrdersQuery = admin
+    .from("orders")
+    .select(
+      `
+            id,
+            qr_hash,
+            status,
+            payment_status,
+            total_price,
+            created_at,
+            order_items (
+              quantity,
+              unit_price,
+              menu_items (
+                id,
+                name,
+                category_id
+              )
+            )
+          `,
+    )
+    .eq("tenant_id", tenantId)
+    .order("created_at", { ascending: false });
+
+  if (dateRange.startIso) {
+    currentOrdersQuery.gte("created_at", dateRange.startIso);
+  }
+
+  if (dateRange.endIso) {
+    currentOrdersQuery.lte("created_at", dateRange.endIso);
+  }
+
+  const previousOrdersQuery =
+    dateRange.previousStartIso && dateRange.previousEndIso
+      ? admin
+          .from("orders")
+          .select(
+            `
+            id,
+            qr_hash,
+            status,
+            payment_status,
+            total_price,
+            created_at,
+            order_items (
+              quantity,
+              unit_price,
+              menu_items (
+                id,
+                name,
+                category_id
+              )
+            )
+          `,
+          )
+          .eq("tenant_id", tenantId)
+          .gte("created_at", dateRange.previousStartIso)
+          .lte("created_at", dateRange.previousEndIso)
+          .order("created_at", { ascending: false })
+      : Promise.resolve({ data: [] as DashboardOrderRow[] });
 
   const [
     tenantResult,
@@ -340,58 +429,11 @@ async function getTenantDashboardData(tenantId: string) {
   ] = await Promise.all([
     admin
       .from("tenants")
-      .select("business_name")
+      .select("business_name, owner_name")
       .eq("id", tenantId)
       .maybeSingle(),
-    admin
-      .from("orders")
-      .select(
-        `
-            id,
-            qr_hash,
-            status,
-            payment_status,
-            total_price,
-            created_at,
-            order_items (
-              quantity,
-              unit_price,
-              menu_items (
-                id,
-                name,
-                category_id
-              )
-            )
-          `,
-      )
-      .eq("tenant_id", tenantId)
-      .gte("created_at", currentStartIso)
-      .order("created_at", { ascending: false }),
-    admin
-      .from("orders")
-      .select(
-        `
-            id,
-            qr_hash,
-            status,
-            payment_status,
-            total_price,
-            created_at,
-            order_items (
-              quantity,
-              unit_price,
-              menu_items (
-                id,
-                name,
-                category_id
-              )
-            )
-          `,
-      )
-      .eq("tenant_id", tenantId)
-      .gte("created_at", previousStartIso)
-      .lt("created_at", currentStartIso)
-      .order("created_at", { ascending: false }),
+    currentOrdersQuery,
+    previousOrdersQuery,
     admin
       .from("inventory_items")
       .select("id, name, unit_type, current_stock, low_stock_threshold")
@@ -412,6 +454,9 @@ async function getTenantDashboardData(tenantId: string) {
   const currentOrders = (currentOrdersResult.data ?? []) as DashboardOrderRow[];
   const previousOrders = (previousOrdersResult.data ??
     []) as DashboardOrderRow[];
+  const hasComparisonRange = Boolean(
+    dateRange.previousStartIso && dateRange.previousEndIso,
+  );
   const yearStart = new Date();
   yearStart.setFullYear(yearStart.getFullYear() - 1);
   const { data: yearOrdersData } = await admin
@@ -485,7 +530,11 @@ async function getTenantDashboardData(tenantId: string) {
   ).size;
 
   const lowStockItems = buildLowStockItems(inventoryItems);
-  const topSellingItems = buildTopSellers(currentOrders, previousOrders);
+  const topSellingItems = buildTopSellers(
+    currentOrders,
+    previousOrders,
+    hasComparisonRange,
+  );
   const recentOrders = buildRecentOrders(currentOrders);
   const salesChartSeries = buildSalesSeries(yearOrders);
 
@@ -498,7 +547,7 @@ async function getTenantDashboardData(tenantId: string) {
       title: "Total Sales",
       value: formatMoney(totalSales),
       percentageChange:
-        previousSales > 0 || totalSales > 0
+        hasComparisonRange && (previousSales > 0 || totalSales > 0)
           ? Math.round(trendPercent(totalSales, previousSales))
           : undefined,
       icon: <Info size={24} />,
@@ -509,7 +558,7 @@ async function getTenantDashboardData(tenantId: string) {
       title: "Orders Paid",
       value: formatCompactCount(totalOrders),
       percentageChange:
-        previousTotalOrders > 0 || totalOrders > 0
+        hasComparisonRange && (previousTotalOrders > 0 || totalOrders > 0)
           ? Math.round(trendPercent(totalOrders, previousTotalOrders))
           : undefined,
       icon: <CheckCircle2 size={24} />,
@@ -520,7 +569,8 @@ async function getTenantDashboardData(tenantId: string) {
       title: "Avg Order Value",
       value: formatMoney(averageOrderValue),
       percentageChange:
-        previousAverageOrderValue > 0 || averageOrderValue > 0
+        hasComparisonRange &&
+        (previousAverageOrderValue > 0 || averageOrderValue > 0)
           ? Math.round(
               trendPercent(averageOrderValue, previousAverageOrderValue),
             )
@@ -616,6 +666,20 @@ async function getTenantDashboardData(tenantId: string) {
 
   return {
     tenantName: tenantResult.data?.business_name || "Tenant Dashboard",
+    ownerFirstName: getFirstName(tenantResult.data?.owner_name),
+    dateRangePreset: dateRange.preset,
+    dateRangeStart: dateRange.startDate
+      ? formatManilaDateRangeLabel(
+          dateRange.startDate,
+          dateRange.endDate,
+        ).split(" - ")[0]
+      : null,
+    dateRangeEnd: dateRange.startDate
+      ? formatManilaDateRangeLabel(
+          dateRange.startDate,
+          dateRange.endDate,
+        ).split(" - ")[1]
+      : null,
     inventoryAlert: lowStockItems[0] ?? null,
     inventoryCount,
     lowStockCount,
@@ -650,11 +714,15 @@ async function getTenantDashboardData(tenantId: string) {
 
 export default async function TenantDashboardPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams?: Promise<{ range?: string }>;
 }) {
   const { id: tenantId } = await params;
-  const dashboard = await getTenantDashboardData(tenantId);
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const rangePreset = normalizeDashboardRange(resolvedSearchParams?.range);
+  const dashboard = await getTenantDashboardData(tenantId, rangePreset);
 
   const alert =
     dashboard.inventoryCount > 0 ? (
@@ -718,7 +786,10 @@ export default async function TenantDashboardPage({
   return (
     <>
       <TenantDashboardHeader
-        adminName="Admin"
+        adminName={dashboard.ownerFirstName}
+        rangePreset={dashboard.dateRangePreset}
+        startDate={dashboard.dateRangeStart ?? undefined}
+        endDate={dashboard.dateRangeEnd ?? undefined}
         subtitle={
           <>
             Live tenant summary for{" "}
