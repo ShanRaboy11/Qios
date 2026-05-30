@@ -329,14 +329,14 @@ export default function TenantManagement({
         <div className="w-2.5 h-2.5 bg-[#ffc670] rounded-full" />
         <span className="b1 text-gray-500">Onboarding:</span>
         <span className="b1 text-gray-900">{stats.onboarding}</span>
+
+        <div className="w-2.5 h-2.5 bg-warning-primary rounded-full" />
+        <span className="b1 text-gray-500">Rejected:</span>
+        <span className="b1 text-gray-900">{stats.rejected}</span>
       </div>
 
       <div className="flex items-center gap-2">
-        <div className="flex items-center gap-2">
-          <div className="w-2.5 h-2.5 bg-warning-primary rounded-full" />
-          <span className="b1 text-gray-500">Rejected:</span>
-          <span className="b1 text-gray-900">{stats.rejected}</span>
-        </div>
+        <div className="flex items-center gap-2"></div>
       </div>
 
       {/* search and Filters */}
@@ -505,65 +505,19 @@ function TenantCard({
       onClick={() => onClick(tenant)}
       onMouseEnter={() => onPrefetch(tenant.id)}
       onFocus={() => onPrefetch(tenant.id)}
-      className="group bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col md:flex-row md:items-center gap-4 transition-all hover:border-orange-100 block"
+      className="group w-full text-left bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4 transition-all duration-200 hover:shadow-md hover:border-orange-200 hover:-translate-y-px"
     >
-      <div className="flex items-start md:items-center gap-4 md:w-[60%] shrink-0">
-        {/* logo */}
-        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-orange-300 via-orange-300 to-amber-200 rounded-2xl flex items-center justify-center border-[1.5px] border-white shadow-sm flex-shrink-0">
-          <Building2 className="w-5 h-5 sm:w-6 sm:h-6 text-white opacity-90" />
-        </div>
-
-        {/* info */}
-        <div className="flex flex-col gap-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <h3 className="text-gray-900 text-base sm:text-lg font-semibold tracking-tight truncate group-hover:text-brand-accent transition-colors cursor-pointer">
-              {tenant.business_name}
-            </h3>
-          </div>
-          <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-500 font-normal">
-            <span className="truncate">ID: {tenant.id}</span>
-            <span className="text-gray-300">•</span>
-            <span className="truncate">Owner: {tenant.owner}</span>
-          </div>
-        </div>
+      {/* logo */}
+      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-orange-300 via-orange-300 to-amber-200 rounded-2xl flex items-center justify-center border-[1.5px] border-white shadow-sm flex-shrink-0">
+        <Building2 className="w-5 h-5 sm:w-6 sm:h-6 text-white opacity-90" />
       </div>
 
-      <div className="flex flex-row items-center justify-between w-full md:w-auto md:flex-1 gap-3 md:gap-6 border-t border-gray-50 pt-3 md:pt-0 md:border-none mt-2 md:mt-0">
-        {/* left Section: Joined Date & Status Indicator grouped together */}
-        <div className="flex items-center gap-6 shrink-0">
-          <span className="hidden lg:block text-gray-500 text-sm font-normal shrink-0">
-            Joined {tenant.joined}
-          </span>
-
-          {/* status Indicator placed close to the joined date */}
-          <div className="flex items-center gap-2 sm:min-w-[85px] justify-between">
-            <div
-              className={cn(
-                "w-2 h-2 rounded-full",
-                tenant.status === "Active" && "bg-success-primary",
-                tenant.status === "Pending" && "bg-brand-secondary",
-                tenant.status === "Suspended" && "bg-gray-500",
-                tenant.status === "Onboarding" && "bg-[#ffc670]",
-                tenant.status === "Rejected" && "bg-warning-primary",
-              )}
-            />
-            <span
-              className={cn(
-                "text-xs sm:text-sm font-medium",
-                tenant.status === "Active" && "text-success-primary",
-                tenant.status === "Pending" && "text-brand-secondary",
-                tenant.status === "Suspended" && "text-gray-500",
-                tenant.status === "Onboarding" && "text-[#ffc670]",
-                tenant.status === "Rejected" && "text-warning-primary",
-              )}
-            >
-              {tenant.status}
-            </span>
-          </div>
-        </div>
-
-        {/* right Section: Badge pushed to the right */}
-        <div className="flex items-center md:ml-auto">
+      {/* left info: name + plan badge + owner */}
+      <div className="flex flex-col gap-0.5 min-w-0 flex-1">
+        <div className="flex items-center gap-2 flex-wrap">
+          <h3 className="text-gray-900 text-base sm:text-lg font-semibold tracking-tight truncate group-hover:text-brand-accent transition-colors">
+            {tenant.business_name}
+          </h3>
           <Badge
             variant="outline"
             color={
@@ -577,6 +531,40 @@ function TenantCard({
             {tenant.type}
           </Badge>
         </div>
+        <span className="text-xs sm:text-sm text-gray-500 font-normal truncate">
+          Owner: {tenant.owner}
+        </span>
+      </div>
+
+      {/* right: status on top, joined date below */}
+      <div className="flex flex-col items-end gap-1 flex-shrink-0 text-right">
+        <div className="flex items-center gap-1.5">
+          <div
+            className={cn(
+              "w-2 h-2 rounded-full",
+              tenant.status === "Active" && "bg-success-primary",
+              tenant.status === "Pending" && "bg-brand-secondary",
+              tenant.status === "Suspended" && "bg-gray-500",
+              tenant.status === "Onboarding" && "bg-[#ffc670]",
+              tenant.status === "Rejected" && "bg-warning-primary",
+            )}
+          />
+          <span
+            className={cn(
+              "text-xs sm:text-sm font-medium",
+              tenant.status === "Active" && "text-success-primary",
+              tenant.status === "Pending" && "text-brand-secondary",
+              tenant.status === "Suspended" && "text-gray-500",
+              tenant.status === "Onboarding" && "text-[#ffc670]",
+              tenant.status === "Rejected" && "text-warning-primary",
+            )}
+          >
+            {tenant.status}
+          </span>
+        </div>
+        <span className="text-xs text-gray-400 font-normal">
+          Joined {tenant.joined}
+        </span>
       </div>
     </button>
   );
