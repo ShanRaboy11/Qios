@@ -522,8 +522,8 @@ export default async function TenantDashboardPage({
   const { id: tenantId } = await params;
   const dashboard = await getTenantDashboardData(tenantId);
 
-  const alert = dashboard.inventoryAlert ? (
-    dashboard.lowStockCount > 0 ? (
+  const alert = dashboard.inventoryCount > 0 ? (
+    dashboard.lowStockCount > 0 && dashboard.inventoryAlert ? (
       <AlertBanner
         message={
           <>
@@ -546,7 +546,7 @@ export default async function TenantDashboardPage({
       <AlertBanner
         message={
           <>
-            Inventory levels look healthy.{" "}
+            Inventory levels look healthy. {" "}
             <span className="text-[#16A34A]">
               All tracked ingredients are above threshold.
             </span>{" "}

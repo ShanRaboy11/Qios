@@ -263,86 +263,45 @@ export const DashboardListsSection = ({
           </div>
         </div>
 
-        <div className="flex flex-col gap-2">
-          <ListCardItem
-            imageSlot={
-              <div className="w-full h-full bg-green-100 rounded-xl" />
-            }
-            title="Chicken McDo"
-            subtitle="Meal • $640"
-            rightSlot={
-              <div className="text-right flex flex-col gap-1 items-end">
-                {recentOrders.map((item) => (
-                  <ListCardItem
-                    key={item.id}
-                    imageSlot={
-                      <div className="w-full h-full bg-green-100 rounded-xl" />
-                    }
-                    title={item.title}
-                    subtitle={item.subtitle}
-                    rightSlot={
-                      <div className="text-right flex flex-col gap-1 items-end">
-                        <div className="text-[12px] text-text-secondary">
-                          {item.dateLabel}
-                        </div>
-                        <Badge
-                          variant="outline"
-                          color={
-                            item.statusTone === "success"
-                              ? "success"
-                              : item.statusTone === "error"
-                                ? "error"
-                                : item.statusTone === "neutral"
-                                  ? "secondary"
-                                  : "warning"
-                          }
-                          className="text-[10px] py-0 px-2 rounded-full h-5"
-                        >
-                          {item.statusLabel}
-                        </Badge>
-                      </div>
-                    }
-                  />
-                ))}
-                {recentOrders.length === 0 && (
-                  <div className="text-sm text-text-secondary py-4">
-                    No recent orders yet.
+        <div className="flex flex-col divide-y divide-gray-100 rounded-2xl border border-gray-100 overflow-hidden">
+          {recentOrders.map((item) => (
+            <ListCardItem
+              key={item.id}
+              className="px-0 py-4"
+              imageSlot={
+                <div className="w-full h-full bg-green-100 rounded-xl" />
+              }
+              title={item.title}
+              subtitle={item.subtitle}
+              rightSlot={
+                <div className="text-right flex flex-col gap-1 items-end min-w-[92px]">
+                  <div className="text-[12px] text-text-secondary whitespace-nowrap">
+                    {item.dateLabel}
                   </div>
-                )}
-                <div className="text-[12px] text-text-secondary">
-                  12 Jan 2025
+                  <Badge
+                    variant="outline"
+                    color={
+                      item.statusTone === "success"
+                        ? "success"
+                        : item.statusTone === "error"
+                          ? "error"
+                          : item.statusTone === "neutral"
+                            ? "secondary"
+                            : "warning"
+                    }
+                    className="text-[10px] py-0 px-2 rounded-full h-5 whitespace-nowrap"
+                  >
+                    {item.statusLabel}
+                  </Badge>
                 </div>
-                <Badge
-                  variant="outline"
-                  color="success"
-                  className="text-[10px] py-0 px-2 rounded-full h-5"
-                >
-                  Completed
-                </Badge>
-              </div>
-            }
-          />
-          <ListCardItem
-            imageSlot={
-              <div className="w-full h-full bg-purple-100 rounded-xl" />
-            }
-            title="Burger"
-            subtitle="Snacks • $87.56"
-            rightSlot={
-              <div className="text-right flex flex-col gap-1 items-end">
-                <div className="text-[12px] text-text-secondary">
-                  11 Jan 2025
-                </div>
-                <Badge
-                  variant="outline"
-                  color="success"
-                  className="text-[10px] py-0 px-2 rounded-full h-5"
-                >
-                  Completed
-                </Badge>
-              </div>
-            }
-          />
+              }
+            />
+          ))}
+          {recentOrders.length === 0 && (
+            <div className="px-1 py-4 text-sm text-text-secondary">
+              No recent orders yet.
+            </div>
+          )}
         </div>
       </div>
     </div>
