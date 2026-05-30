@@ -1,10 +1,32 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import {
-  type RolePermissions,
-} from "@/lib/employeePermissions";
+import { type RolePermissions } from "@/lib/employeePermissions";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+
+async function resolveEmployeeTenantId(
+  admin: ReturnType<typeof createSupabaseAdminClient>,
+  tenantId: string | null,
+  appRoleId: string | null,
+) {
+  if (tenantId) {
+    return tenantId;
+  }
+
+  if (!appRoleId) {
+    return null;
+  }
+
+  const { data: roleRow } = await admin
+    .from("roles")
+    .select("tenant_id")
+    .eq("id", appRoleId)
+    .maybeSingle();
+
+  return typeof roleRow?.tenant_id === "string" ? roleRow.tenant_id : null;
+}
 
 export async function middleware(request: NextRequest) {
+  const admin = createSupabaseAdminClient();
   let supabaseResponse = NextResponse.next({
     request,
   });
@@ -169,6 +191,12 @@ export async function middleware(request: NextRequest) {
       }
     }
 
+    userTenantId = await resolveEmployeeTenantId(
+      admin,
+      userTenantId,
+      userAppRoleId,
+    );
+
     // detect employee routes
     const isEmployeePath = request.nextUrl.pathname.startsWith(
       `/${pathTenantId}/employee`,
@@ -266,6 +294,16 @@ export async function middleware(request: NextRequest) {
         role = "employee";
       }
     }
+
+    tenantId = await resolveEmployeeTenantId(
+      admin,
+      tenantId,
+      role === "employee"
+        ? typeof userAppRoleId === "string"
+          ? userAppRoleId
+          : null
+        : null,
+    );
 
     if (role === "super_admin") {
       redirectPath = "/admin/dashboard";
