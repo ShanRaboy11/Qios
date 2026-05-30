@@ -148,7 +148,9 @@ export const TenantProfileBentoGrid = ({
                 <span className="text-sm font-bold text-text-primary">
                   {(() => {
                     const now = new Date();
-                    const isAnnual = tenant.billingCycle?.toLowerCase().includes("annual");
+                    const isAnnual = tenant.billingCycle
+                      ?.toLowerCase()
+                      .includes("annual");
                     const next = new Date(now);
                     if (isAnnual) {
                       next.setFullYear(next.getFullYear() + 1);
@@ -169,7 +171,9 @@ export const TenantProfileBentoGrid = ({
                 </span>
                 <span className="text-sm font-bold text-text-primary">
                   {(() => {
-                    const isAnnual = tenant.billingCycle?.toLowerCase().includes("annual");
+                    const isAnnual = tenant.billingCycle
+                      ?.toLowerCase()
+                      .includes("annual");
                     const rawPrice = isAnnual
                       ? tenant.priceAnnually
                       : tenant.priceMonthly;
@@ -201,7 +205,7 @@ export const TenantProfileBentoGrid = ({
       </div>
 
       {/* 2. Documents & Verification - Wide (Span 2x2) */}
-      <div className="col-span-1 md:col-span-2 xl:col-span-2 xl:row-span-2 h-full">
+      <div className="col-span-1 md:col-span-2 xl:col-span-2 xl:row-span-1 h-full">
         <BentoCard
           title="Documents & Verification"
           icon={<FileText className="w-5 h-5 text-brand-primary" />}
