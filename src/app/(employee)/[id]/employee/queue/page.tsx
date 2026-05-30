@@ -8,7 +8,7 @@ export default async function OrderQueuePage({
   params: Promise<{ id: string }>;
 }) {
   const { id: tenantId } = await params;
-  const { orders, totalOrderCount, canUpdateStatus } =
+  const { orders, totalOrderCount, servedTodayCount, canUpdateStatus } =
     await getEmployeeQueueData(tenantId);
 
   return (
@@ -25,6 +25,7 @@ export default async function OrderQueuePage({
           tenantId={tenantId}
           initialOrders={orders}
           totalOrderCount={totalOrderCount}
+          servedTodayCount={servedTodayCount}
           queueMode
           canUpdateStatus={canUpdateStatus}
         />

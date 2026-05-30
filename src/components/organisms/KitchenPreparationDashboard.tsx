@@ -36,6 +36,7 @@ interface KitchenPreparationDashboardProps {
   tenantId: string;
   initialOrders: Order[];
   totalOrderCount?: number;
+  servedTodayCount?: number;
   queueMode?: boolean;
   canUpdateStatus?: boolean;
 }
@@ -44,6 +45,7 @@ export default function KitchenPreparationDashboard({
   tenantId,
   initialOrders,
   totalOrderCount,
+  servedTodayCount = 0,
   queueMode = false,
   canUpdateStatus = true,
 }: KitchenPreparationDashboardProps) {
@@ -349,7 +351,7 @@ export default function KitchenPreparationDashboard({
   return (
     <div className="flex flex-col w-full p-4 md:p-6 lg:p-8 gap-6 md:gap-8 font-inter bg-transparent">
       {/* top stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4">
         <div className="bg-white p-3 md:p-5 rounded-[20px] shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-100 flex items-center gap-3 md:gap-4 transition-transform hover:-translate-y-0.5">
           <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center text-text-primary font-bold text-lg md:text-2xl shadow-sm shrink-0">
             {pOrders.length}
@@ -388,6 +390,20 @@ export default function KitchenPreparationDashboard({
             </p>
             <p className="text-sm md:text-[19px] font-bold text-text-primary leading-none truncate">
               Pickup
+            </p>
+          </div>
+        </div>
+
+        <div className="bg-white p-3 md:p-5 rounded-[20px] shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-100 flex items-center gap-3 md:gap-4 transition-transform hover:-translate-y-0.5">
+          <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl bg-success-primary/10 border border-success-primary/20 flex items-center justify-center text-success-primary font-bold text-lg md:text-2xl shadow-sm shrink-0">
+            {servedTodayCount}
+          </div>
+          <div className="flex flex-col justify-center min-w-0">
+            <p className="text-[9px] md:text-[11px] text-success-primary/80 font-bold uppercase tracking-widest mb-0.5 truncate">
+              Orders
+            </p>
+            <p className="text-sm md:text-[19px] font-bold text-text-primary leading-none truncate">
+              Completed
             </p>
           </div>
         </div>
