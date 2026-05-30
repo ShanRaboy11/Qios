@@ -103,6 +103,7 @@ function buildSeries(
     key: string;
     label: string;
     sales: number;
+    purchase: number;
     orders: number;
   }> = [];
   const cursor = new Date(startIso);
@@ -118,6 +119,7 @@ function buildSeries(
         day: "numeric",
       }).format(cursor),
       sales: 0,
+      purchase: 0,
       orders: 0,
     });
     cursor.setUTCDate(cursor.getUTCDate() + 1);
@@ -133,7 +135,41 @@ function buildSeries(
     }
   }
 
-  return labels.map(({ label, sales, orders }) => ({ label, sales, orders }));
+  return labels;
+}
+
+function mergePurchasesIntoSeries(
+  series: Array<{ key?: string; label: string; sales: number; orders: number; purchase?: number; }>,
+  purchases: Array<{ created_at: string; total_cost: number | string }>,
+  period: SalesPeriod
+) {
+  if (period === "today") {
+    for (const p of purchases) {
+      const hour = Number(
+        new Intl.DateTimeFormat("en-US", {
+          timeZone: "Asia/Manila",
+          hour: "2-digit",
+          hour12: false,
+        }).format(new Date(p.created_at)),
+      );
+      const slot = series[hour];
+      if (slot) {
+        slot.purchase = (slot.purchase ?? 0) + toNumber(p.total_cost);
+      }
+    }
+    return series.map(({ label, sales, purchase, orders }) => ({ label, sales, purchase, orders }));
+  }
+
+  const lookup = new Map(series.map((s, i) => [s.key, i]));
+  
+  for (const p of purchases) {
+    const key = getManilaDateKey(p.created_at);
+    const index = lookup.get(key);
+    if (index !== undefined) {
+      series[index].purchase = (series[index].purchase ?? 0) + toNumber(p.total_cost);
+    }
+  }
+  return series.map(({ label, sales, purchase, orders }) => ({ label, sales, purchase, orders }));
 }
 
 function buildTopItems(
@@ -245,7 +281,7 @@ async function getOverview(
   const { currentStartIso, currentEndIso, previousStartIso, previousEndIso } =
     getPeriodRange(period);
 
-  const [tenantResult, currentResult, previousResult, categoriesResult] =
+  const [tenantResult, currentResult, previousResult, categoriesResult, purchaseLogsResult] =
     await Promise.all([
       admin
         .from("tenants")
@@ -309,6 +345,12 @@ async function getOverview(
         .lte("created_at", previousEndIso)
         .order("created_at", { ascending: false }),
       admin.from("categories").select("id, name").eq("tenant_id", tenantId),
+      admin
+        .from("inventory_purchase_logs")
+        .select("total_cost, created_at")
+        .eq("tenant_id", tenantId)
+        .gte("created_at", currentStartIso)
+        .lte("created_at", currentEndIso),
     ]);
 
   // Supabase returns nested relation arrays for joined rows. Normalize the shape
@@ -341,6 +383,8 @@ async function getOverview(
       row.name,
     ]),
   );
+  
+  const purchases = (purchaseLogsResult.data ?? []) as { created_at: string; total_cost: number | string }[];
 
   const currentPaidOrders = currentOrders.filter(
     (order) => order.payment_status === "paid",
@@ -397,11 +441,15 @@ async function getOverview(
         previousAverageOrderValue,
       ),
     },
-    revenueSeries: buildSeries(
-      currentPaidOrders,
-      period,
-      currentStartIso,
-      currentEndIso,
+    revenueSeries: mergePurchasesIntoSeries(
+      buildSeries(
+        currentPaidOrders,
+        period,
+        currentStartIso,
+        currentEndIso,
+      ) as any,
+      purchases,
+      period
     ),
     topItems: buildTopItems(currentOrders, previousOrders, categoryMap),
   };

@@ -11,6 +11,7 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  Rectangle,
 } from "recharts";
 import { formatMoney } from "@/lib/salesDashboard";
 
@@ -46,6 +47,37 @@ function formatCompactAmount(value: number) {
   }
 
   return `${Math.round(value)}`;
+}
+
+type StackedBarShapeProps = React.ComponentProps<typeof Rectangle> & {
+  payload?: SalesAndRevenuePoint;
+  dataKey?: string;
+};
+
+function StackedBarShape({ payload, dataKey, ...props }: StackedBarShapeProps) {
+  const isPurchase = dataKey === "purchase";
+  const salesValue = payload?.sales ?? 0;
+  const purchaseValue = payload?.purchase ?? 0;
+
+  let isTopmost = false;
+  if (isPurchase) {
+    isTopmost = purchaseValue > 0 && salesValue === 0;
+  } else {
+    isTopmost = salesValue > 0;
+  }
+
+  const radius: [number, number, number, number] = isTopmost
+    ? [4, 4, 0, 0]
+    : [0, 0, 0, 0];
+
+  if (
+    (isPurchase && purchaseValue === 0) ||
+    (!isPurchase && salesValue === 0)
+  ) {
+    return null;
+  }
+
+  return <Rectangle {...props} radius={radius} />;
 }
 
 const fallbackData: SalesAndRevenuePoint[] = Array.from(
@@ -94,7 +126,8 @@ export const SalesAndPurchaseChart = ({
   );
 
   const hasData = chartData.some(
-    (point) => point.sales > 0 || (point.purchase ?? 0) > 0 || (point.revenue ?? 0) > 0,
+    (point) =>
+      point.sales > 0 || (point.purchase ?? 0) > 0 || (point.revenue ?? 0) > 0,
   );
 
   return (
@@ -104,7 +137,9 @@ export const SalesAndPurchaseChart = ({
           <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center">
             <Package className="w-5 h-5 text-brand-primary" />
           </div>
-          <h2 className="text-[18px] font-bold text-text-primary">Sales & Purchase</h2>
+          <h2 className="text-[18px] font-bold text-text-primary">
+            Sales & Purchase
+          </h2>
         </div>
         <div className="w-full sm:w-[320px]">
           <SegmentedControl
@@ -138,8 +173,10 @@ export const SalesAndPurchaseChart = ({
         </div>
         <div className="flex flex-col border border-gray-100 rounded-xl px-4 py-2 min-w-[160px]">
           <div className="flex items-center gap-2 mb-1">
-            <div className="w-2.5 h-2.5 rounded-full bg-brand-secondary" />
-            <span className="text-[14px] text-text-secondary">Total Purchase</span>
+            <div className="w-2.5 h-2.5 rounded-full bg-brand-accent" />
+            <span className="text-[14px] text-text-secondary">
+              Total Purchase
+            </span>
           </div>
           <span className="text-[20px] font-bold text-text-primary">
             {formatMoney(totals.purchase)}
@@ -156,8 +193,10 @@ export const SalesAndPurchaseChart = ({
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={chartData}
-            margin={{ top: 0, right: 0, left: -20, bottom: 0 }}
+            margin={{ top: 0, right: 0, left: 10, bottom: 0 }}
             barSize={24}
+            tabIndex={-1}
+            style={{ outline: "none" }}
           >
             <CartesianGrid
               strokeDasharray="3 3"
@@ -176,17 +215,16 @@ export const SalesAndPurchaseChart = ({
               tickLine={false}
               tick={{ fill: "#9CA3AF", fontSize: 13 }}
               tickFormatter={(value) => formatCompactAmount(Number(value))}
-              dx={-10}
+              width={45}
             />
             <Tooltip
+              shared={false}
               cursor={{ fill: "transparent" }}
               formatter={(value, name) => {
                 const numericValue = Number(value ?? 0);
 
                 return [
-                  name === "sales"
-                    ? `${numericValue}`
-                    : `${numericValue}`,
+                  name === "sales" ? `${numericValue}` : `${numericValue}`,
                   name === "sales" ? "Sales" : "Purchase",
                 ];
               }}
@@ -198,14 +236,16 @@ export const SalesAndPurchaseChart = ({
               }}
             />
             <Bar
-              dataKey="sales"
-              fill="var(--brand-primary, #FFDC72)"
-              radius={[4, 4, 0, 0]}
+              dataKey="purchase"
+              stackId="a"
+              fill="var(--brand-accent, #FFEDBA)"
+              shape={<StackedBarShape />}
             />
             <Bar
-              dataKey="purchase"
-              fill="var(--brand-accent, #FFEDBA)"
-              radius={[4, 4, 0, 0]}
+              dataKey="sales"
+              stackId="a"
+              fill="var(--brand-primary, #FFDC72)"
+              shape={<StackedBarShape />}
             />
           </BarChart>
         </ResponsiveContainer>

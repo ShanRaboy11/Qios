@@ -263,11 +263,11 @@ export const DashboardListsSection = ({
           </div>
         </div>
 
-        <div className="flex flex-col divide-y divide-gray-100 rounded-2xl border border-gray-100 overflow-hidden">
+        <div className="flex flex-col gap-2">
           {recentOrders.map((item) => (
             <ListCardItem
               key={item.id}
-              className="px-0 py-4"
+              className="px-0 py-3"
               imageSlot={
                 <div className="w-full h-full bg-green-100 rounded-xl" />
               }
