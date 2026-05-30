@@ -25,7 +25,6 @@ import {
 interface TransactionTableProps {
   tenantId: string;
   businessName: string;
-  /** Override the fetch endpoint. Defaults to /api/tenants/{tenantId}/sales */
   apiPath?: string;
 }
 
@@ -47,8 +46,12 @@ function capitalize(value: string) {
 function buildFilterSummary(
   status: (typeof STATUS_OPTIONS)[number],
   paymentStatus: (typeof PAYMENT_STATUS_OPTIONS)[number],
+  startDate: string,
+  endDate: string
 ) {
-  return [status, paymentStatus].filter((value) => value !== "all").length;
+  const count = [status, paymentStatus].filter((value) => value !== "all").length;
+  const dateCount = (startDate || endDate) ? 1 : 0;
+  return count + dateCount;
 }
 
 function formatDateTime(value: string) {
@@ -277,6 +280,10 @@ export const TransactionTable = ({
     useState<(typeof STATUS_OPTIONS)[number]>("all");
   const [paymentStatusFilter, setPaymentStatusFilter] =
     useState<(typeof PAYMENT_STATUS_OPTIONS)[number]>("all");
+  
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+
   const [page, setPage] = useState(1);
   const [limit] = useState(6);
   const [transactions, setTransactions] = useState<SalesTransactionRecord[]>(
@@ -291,10 +298,6 @@ export const TransactionTable = ({
 
   useEffect(() => {
     const query = searchInput.trim();
-
-    if (!query) {
-      return;
-    }
 
     const timeout = window.setTimeout(() => {
       setPage(1);
@@ -322,6 +325,8 @@ export const TransactionTable = ({
           search: searchQuery,
           status: statusFilter,
           paymentStatus: paymentStatusFilter,
+          startDate, 
+          endDate,   
         });
 
         const response = await fetch(
@@ -357,15 +362,15 @@ export const TransactionTable = ({
     void loadTransactions();
 
     return () => controller.abort();
-  }, [limit, page, paymentStatusFilter, searchQuery, statusFilter, tenantId]);
+  }, [limit, page, paymentStatusFilter, searchQuery, statusFilter, startDate, endDate, tenantId, resolvedApiPath]);
 
   const totalPages = Math.max(1, Math.ceil(total / limit));
   const startIndex = total === 0 ? 0 : (page - 1) * limit + 1;
   const endIndex = Math.min(total, page * limit);
 
   const filterSummary = useMemo(
-    () => buildFilterSummary(statusFilter, paymentStatusFilter),
-    [paymentStatusFilter, statusFilter],
+    () => buildFilterSummary(statusFilter, paymentStatusFilter, startDate, endDate),
+    [paymentStatusFilter, statusFilter, startDate, endDate],
   );
 
   const exportTransactions = async () => {
@@ -382,6 +387,8 @@ export const TransactionTable = ({
         search: searchQuery,
         status: statusFilter,
         paymentStatus: paymentStatusFilter,
+        startDate,
+        endDate,
       });
 
       const response = await fetch(`${resolvedApiPath}?${params.toString()}`);
@@ -405,14 +412,12 @@ export const TransactionTable = ({
       const columnWidths = [78, 78, 58, 250, 74, 76];
 
       const drawHeader = () => {
-        // Business name / title (left-aligned)
         doc.setFont("helvetica", "bold");
         doc.setFontSize(18);
         const titleText =
           businessName || payload.businessName || "Sales Report";
         doc.text(titleText, margin, 48);
 
-        // Generated timestamp and filters (centered)
         doc.setFont("helvetica", "normal");
         doc.setFontSize(10);
         doc.text(
@@ -420,14 +425,17 @@ export const TransactionTable = ({
           margin,
           68,
         );
-        doc.text(
-          `Filters: ${searchQuery || "All orders"}${statusFilter !== "all" ? ` • Status: ${capitalize(statusFilter)}` : ""}${paymentStatusFilter !== "all" ? ` • Payment: ${capitalize(paymentStatusFilter)}` : ""}`,
-          margin,
-          84,
-          { maxWidth: width - margin * 2 },
-        );
 
-        // Header background
+        // Filters - Line 1: Basic Filters (Query, Status, Payment)
+        const filterText = `Filters: ${searchQuery || "All orders"}${statusFilter !== "all" ? ` • Status: ${capitalize(statusFilter)}` : ""}${paymentStatusFilter !== "all" ? ` • Payment: ${capitalize(paymentStatusFilter)}` : ""}`;
+        doc.text(filterText, margin, 84, { maxWidth: width - margin * 2 });
+
+        // Filters - Line 2: Dates (From and To with Indentation)
+        if (startDate || endDate) {
+          const dateText = `${startDate ? `From: ${startDate}` : ""}${startDate && endDate ? "        " : ""}${endDate ? `To: ${endDate}` : ""}`;
+          doc.text(dateText, margin, 98);
+        }
+
         doc.setFillColor(247, 247, 247);
         doc.rect(margin, startY - 12, width - margin * 2, 22, "F");
 
@@ -452,7 +460,6 @@ export const TransactionTable = ({
       let y = startY + 24;
 
       payload.data.forEach((row: SalesTransactionRecord, rowIndex: number) => {
-        // normalize items text for PDF wrapping
         const itemsText = (row.items || "No items").replace(/\u00A0/g, " ");
         const wrappedItems = doc.splitTextToSize(itemsText, 244);
         const rowBlockHeight = Math.max(20, wrappedItems.length * 12 + 8);
@@ -463,13 +470,11 @@ export const TransactionTable = ({
           y = startY + 24;
         }
 
-        // alternating row shading for readability
         if (rowIndex % 2 === 0) {
           doc.setFillColor(250, 250, 250);
           doc.rect(margin, y - 8, width - margin * 2, rowBlockHeight, "F");
         }
 
-        // prepare values; for PDF avoid currency glyph issues by using 'PHP ' prefix
         const totalRaw = formatMoney(row.total).replace(/\u00A0/g, " ");
         const totalForPdf = totalRaw.replace("₱", "PHP ");
 
@@ -507,7 +512,6 @@ export const TransactionTable = ({
         .replace(/^-+|-+$/g, "")
         .toLowerCase();
 
-      // Add branding footer (centered)
       doc.setDrawColor(220);
       doc.line(margin, height - 28, width - margin, height - 28);
       doc.setFontSize(9);
@@ -518,7 +522,6 @@ export const TransactionTable = ({
 
       doc.save(`${fileName || "sales-report"}.pdf`);
     } catch {
-      // Keep the UI stable if the export fails.
     } finally {
       setIsDownloading(false);
     }
@@ -529,6 +532,8 @@ export const TransactionTable = ({
     setSearchQuery("");
     setStatusFilter("all");
     setPaymentStatusFilter("all");
+    setStartDate("");
+    setEndDate("");
     setPage(1);
     setIsFilterOpen(false);
   };
@@ -572,7 +577,7 @@ export const TransactionTable = ({
             </Button>
 
             {isFilterOpen ? (
-              <div className="absolute right-0 top-full mt-3 z-50 min-w-[20rem] rounded-2xl border border-gray-100 bg-white p-5 shadow-lg">
+              <div className="absolute right-0 top-full mt-3 z-50 min-w-[22rem] rounded-2xl border border-gray-100 bg-white p-5 shadow-lg">
                 <div className="flex items-center justify-between border-b border-gray-100 pb-4">
                   <div>
                     <p className="text-sm font-bold text-text-primary">
@@ -584,6 +589,32 @@ export const TransactionTable = ({
                   </div>
                 </div>
                 <div className="mt-4 space-y-4">
+                  <div>
+                    <span className="text-text-secondary text-[11px] font-bold uppercase tracking-[0.16em]">
+                      Date Range
+                    </span>
+                    <div className="grid grid-cols-2 gap-3 mt-2">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[10px] text-text-secondary font-medium px-1">From</span>
+                        <input
+                          type="date"
+                          value={startDate}
+                          onChange={(e) => {setStartDate(e.target.value); setPage(1);}}
+                          className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-xs focus:border-brand-primary outline-none transition-colors"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[10px] text-text-secondary font-medium px-1">To</span>
+                        <input
+                          type="date"
+                          value={endDate}
+                          onChange={(e) => {setEndDate(e.target.value); setPage(1);}}
+                          className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-xs focus:border-brand-primary outline-none transition-colors"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
                   <div>
                     <span className="text-text-secondary text-[11px] font-bold uppercase tracking-[0.16em]">
                       Order Status
@@ -598,7 +629,7 @@ export const TransactionTable = ({
                           );
                           setPage(1);
                         }}
-                        className="w-full rounded-2xl border-2 border-[#E5E5E5] bg-white px-6 py-3.5 text-sm text-text-primary outline-none focus:border-brand-primary focus:shadow-[0_0_0_4px_rgba(255,198,112,0.08)] appearance-none cursor-pointer transition-colors"
+                        className="w-full rounded-2xl border-2 border-[#E5E5E5] bg-white px-6 py-3.5 text-sm text-text-primary outline-none focus:border-brand-primary appearance-none cursor-pointer transition-colors"
                       >
                         {STATUS_OPTIONS.map((option) => (
                           <option key={option} value={option}>
@@ -609,31 +640,7 @@ export const TransactionTable = ({
                       <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                     </div>
                   </div>
-                  <div>
-                    <span className="text-text-secondary text-[11px] font-bold uppercase tracking-[0.16em]">
-                      Payment Status
-                    </span>
-                    <div className="relative mt-1.5">
-                      <select
-                        value={paymentStatusFilter}
-                        onChange={(event) => {
-                          setPaymentStatusFilter(
-                            event.target
-                              .value as (typeof PAYMENT_STATUS_OPTIONS)[number],
-                          );
-                          setPage(1);
-                        }}
-                        className="w-full rounded-2xl border-2 border-[#E5E5E5] bg-white px-6 py-3.5 text-sm text-text-primary outline-none focus:border-brand-primary focus:shadow-[0_0_0_4px_rgba(255,198,112,0.08)] appearance-none cursor-pointer transition-colors"
-                      >
-                        {PAYMENT_STATUS_OPTIONS.map((option) => (
-                          <option key={option} value={option}>
-                            {capitalize(option)}
-                          </option>
-                        ))}
-                      </select>
-                      <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                    </div>
-                  </div>
+                  
                   <div className="flex justify-end gap-2 pt-4 border-t border-gray-100">
                     <Button
                       variant="outline"
