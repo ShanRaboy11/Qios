@@ -20,9 +20,16 @@ export type SalesAndRevenuePoint = {
   revenue: number;
 };
 
+export type SalesAndPurchasePeriod = "1D" | "1W" | "1M" | "3M" | "6M" | "1Y";
+
+export type SalesAndPurchaseSeries = Partial<
+  Record<SalesAndPurchasePeriod, SalesAndRevenuePoint[]>
+>;
+
 export interface SalesAndPurchaseChartProps {
   data?: SalesAndRevenuePoint[];
-  defaultPeriod?: "1D" | "1W" | "1M" | "3M" | "6M" | "1Y";
+  seriesByPeriod?: SalesAndPurchaseSeries;
+  defaultPeriod?: SalesAndPurchasePeriod;
   emptyNote?: string;
 }
 
@@ -56,14 +63,25 @@ const fallbackData: SalesAndRevenuePoint[] = Array.from(
 
 export const SalesAndPurchaseChart = ({
   data = fallbackData,
+  seriesByPeriod,
   defaultPeriod = "1D",
   emptyNote = "No sales recorded for today yet.",
 }: SalesAndPurchaseChartProps) => {
-  const [activePeriod, setActivePeriod] = useState(defaultPeriod);
+  const [activePeriod, setActivePeriod] =
+    useState<SalesAndPurchasePeriod>(defaultPeriod);
+
+  const chartData = useMemo(() => {
+    const selectedSeries = seriesByPeriod?.[activePeriod];
+    if (selectedSeries && selectedSeries.length > 0) {
+      return selectedSeries;
+    }
+
+    return data;
+  }, [activePeriod, data, seriesByPeriod]);
 
   const totals = useMemo(
     () =>
-      data.reduce(
+      chartData.reduce(
         (accumulator, point) => {
           accumulator.sales += point.sales;
           accumulator.revenue += point.revenue;
@@ -71,10 +89,12 @@ export const SalesAndPurchaseChart = ({
         },
         { sales: 0, revenue: 0 },
       ),
-    [data],
+    [chartData],
   );
 
-  const hasData = data.some((point) => point.sales > 0 || point.revenue > 0);
+  const hasData = chartData.some(
+    (point) => point.sales > 0 || point.revenue > 0,
+  );
 
   return (
     <div className="bg-white rounded-[24px] p-6 shadow-[0px_4px_20px_rgba(0,0,0,0.03)] border border-gray-100 flex flex-col w-full h-full">
@@ -98,7 +118,9 @@ export const SalesAndPurchaseChart = ({
               { label: "1Y", value: "1Y" },
             ]}
             activeValue={activePeriod}
-            onChange={setActivePeriod}
+            onChange={(value) =>
+              setActivePeriod(value as SalesAndPurchasePeriod)
+            }
             className="h-10"
           />
         </div>
@@ -134,7 +156,7 @@ export const SalesAndPurchaseChart = ({
         ) : null}
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
-            data={data}
+            data={chartData}
             margin={{ top: 0, right: 0, left: -20, bottom: 0 }}
             barSize={24}
           >
@@ -159,10 +181,16 @@ export const SalesAndPurchaseChart = ({
             />
             <Tooltip
               cursor={{ fill: "transparent" }}
-              formatter={(value: number, name: string) => [
-                name === "sales" ? `${value}` : formatMoney(value),
-                name === "sales" ? "Sales" : "Revenue",
-              ]}
+              formatter={(value, name) => {
+                const numericValue = Number(value ?? 0);
+
+                return [
+                  name === "sales"
+                    ? `${numericValue}`
+                    : formatMoney(numericValue),
+                  name === "sales" ? "Sales" : "Revenue",
+                ];
+              }}
               labelFormatter={(label) => `Time: ${label}`}
               contentStyle={{
                 borderRadius: "12px",

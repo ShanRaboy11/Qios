@@ -14,6 +14,10 @@ import {
   getPeriodRange,
   trendPercent,
 } from "@/lib/salesDashboard";
+import type {
+  SalesAndPurchaseSeries,
+  SalesAndRevenuePoint,
+} from "../../../../components/organisms/SalesAndPurchaseChart";
 
 type DashboardOrderItemRow = {
   quantity: number;
@@ -55,6 +59,8 @@ type DashboardStatusLogRow = {
   status_change: "pending" | "preparing" | "ready" | "served" | "cancelled";
   created_at: string;
 };
+
+type DashboardSalesSeries = SalesAndPurchaseSeries;
 
 function toNumber(value: number | string | null | undefined) {
   const parsed = Number(value ?? 0);
@@ -218,39 +224,105 @@ function buildLowStockItems(inventoryItems: DashboardInventoryRow[]) {
     }));
 }
 
-function buildSalesChartData(orders: DashboardOrderRow[]) {
-  const todayKey = getManilaDateKey(new Date());
-  const buckets = Array.from({ length: 24 }, (_, hour) => {
-    const displayHour = hour % 12 === 0 ? 12 : hour % 12;
-    const suffix = hour < 12 ? "AM" : "PM";
+function getManilaMonthKey(date: Date | string) {
+  const value = typeof date === "string" ? new Date(date) : date;
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Manila",
+    year: "numeric",
+    month: "2-digit",
+  }).format(value);
+}
 
+function getManilaMonthLabel(date: Date | string) {
+  const value = typeof date === "string" ? new Date(date) : date;
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Manila",
+    month: "short",
+  }).format(value);
+}
+
+function buildDailySeries(
+  orders: DashboardOrderRow[],
+  days: number,
+  labelFormatter: (date: Date) => string,
+): SalesAndRevenuePoint[] {
+  const buckets = Array.from({ length: days }, (_, index) => {
+    const date = new Date();
+    date.setDate(date.getDate() - (days - 1 - index));
     return {
-      hour,
-      label: `${displayHour} ${suffix}`,
+      key: getManilaDateKey(date),
+      label: labelFormatter(date),
       sales: 0,
       revenue: 0,
     };
   });
 
+  const lookup = new Map(buckets.map((bucket) => [bucket.key, bucket]));
+
   for (const order of orders) {
     if (order.payment_status !== "paid") continue;
-    if (getManilaDateKey(order.created_at) !== todayKey) continue;
+    const bucket = lookup.get(getManilaDateKey(order.created_at));
+    if (!bucket) continue;
 
-    const orderDate = new Date(order.created_at);
-    const hour = Number(
-      new Intl.DateTimeFormat("en-US", {
-        timeZone: "Asia/Manila",
-        hour: "2-digit",
-        hour12: false,
-      }).format(orderDate),
-    );
-
-    const bucket = buckets[Number.isFinite(hour) ? hour : 0];
     bucket.sales += 1;
     bucket.revenue += toNumber(order.total_price);
   }
 
-  return buckets.map(({ hour: _hour, ...point }) => point);
+  return buckets.map(({ key: _key, ...point }) => point);
+}
+
+function buildMonthlySeries(orders: DashboardOrderRow[], months: number) {
+  const buckets = Array.from({ length: months }, (_, index) => {
+    const date = new Date();
+    date.setMonth(date.getMonth() - (months - 1 - index));
+    return {
+      key: getManilaMonthKey(date),
+      label: getManilaMonthLabel(date),
+      sales: 0,
+      revenue: 0,
+    };
+  });
+
+  const lookup = new Map(buckets.map((bucket) => [bucket.key, bucket]));
+
+  for (const order of orders) {
+    if (order.payment_status !== "paid") continue;
+    const bucket = lookup.get(getManilaMonthKey(order.created_at));
+    if (!bucket) continue;
+
+    bucket.sales += 1;
+    bucket.revenue += toNumber(order.total_price);
+  }
+
+  return buckets.map(({ key: _key, ...point }) => point);
+}
+
+function buildSalesSeries(orders: DashboardOrderRow[]): DashboardSalesSeries {
+  return {
+    "1D": buildDailySeries(orders, 1, (date) =>
+      new Intl.DateTimeFormat("en-US", {
+        timeZone: "Asia/Manila",
+        hour: "numeric",
+        minute: "2-digit",
+      }).format(date),
+    ),
+    "1W": buildDailySeries(orders, 7, (date) =>
+      new Intl.DateTimeFormat("en-US", {
+        timeZone: "Asia/Manila",
+        weekday: "short",
+      }).format(date),
+    ),
+    "1M": buildDailySeries(orders, 30, (date) =>
+      new Intl.DateTimeFormat("en-US", {
+        timeZone: "Asia/Manila",
+        month: "short",
+        day: "numeric",
+      }).format(date),
+    ),
+    "3M": buildMonthlySeries(orders, 3),
+    "6M": buildMonthlySeries(orders, 6),
+    "1Y": buildMonthlySeries(orders, 12),
+  };
 }
 
 async function getTenantDashboardData(tenantId: string) {
@@ -340,6 +412,33 @@ async function getTenantDashboardData(tenantId: string) {
   const currentOrders = (currentOrdersResult.data ?? []) as DashboardOrderRow[];
   const previousOrders = (previousOrdersResult.data ??
     []) as DashboardOrderRow[];
+  const yearStart = new Date();
+  yearStart.setFullYear(yearStart.getFullYear() - 1);
+  const { data: yearOrdersData } = await admin
+    .from("orders")
+    .select(
+      `
+        id,
+        qr_hash,
+        status,
+        payment_status,
+        total_price,
+        created_at,
+        order_items (
+          quantity,
+          unit_price,
+          menu_items (
+            id,
+            name,
+            category_id
+          )
+        )
+      `,
+    )
+    .eq("tenant_id", tenantId)
+    .gte("created_at", `${getManilaDateKey(yearStart)}T00:00:00+08:00`)
+    .order("created_at", { ascending: false });
+  const yearOrders = (yearOrdersData ?? []) as DashboardOrderRow[];
   const inventoryItems = (inventoryResult.data ??
     []) as DashboardInventoryRow[];
   const statusLogs = (statusLogsResult.data ?? []) as DashboardStatusLogRow[];
@@ -388,7 +487,7 @@ async function getTenantDashboardData(tenantId: string) {
   const lowStockItems = buildLowStockItems(inventoryItems);
   const topSellingItems = buildTopSellers(currentOrders, previousOrders);
   const recentOrders = buildRecentOrders(currentOrders);
-  const salesChartData = buildSalesChartData(currentOrders);
+  const salesChartSeries = buildSalesSeries(yearOrders);
 
   const inventoryCount = inventoryItems.length;
   const lowStockCount = lowStockItems.length;
@@ -545,7 +644,7 @@ async function getTenantDashboardData(tenantId: string) {
     topSellingItems,
     lowStockItems,
     recentOrders,
-    salesChartData,
+    salesChartSeries,
   };
 }
 
@@ -642,7 +741,7 @@ export default async function TenantDashboardPage({
       <div className="flex flex-col lg:flex-row gap-6">
         <div id="tutorial-charts" className="w-full lg:w-[65%]">
           <SalesAndPurchaseChart
-            data={dashboard.salesChartData}
+            seriesByPeriod={dashboard.salesChartSeries}
             defaultPeriod="1D"
           />
         </div>
