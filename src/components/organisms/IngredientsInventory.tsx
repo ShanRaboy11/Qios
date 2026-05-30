@@ -556,7 +556,11 @@ export default function IngredientsInventory() {
             </div>
 
             <div className="p-5 border-t border-black/5 bg-black/[0.02] flex justify-end gap-3">
-              <Button variant="outline" onClick={handleCloseModal}>
+              <Button
+                variant="outline"
+                onClick={handleCloseModal}
+                className="border-brand-primary text-brand-primary hover:!bg-brand-primary hover:!border-brand-primary hover:!text-white"
+              >
                 Cancel
               </Button>
               <Button

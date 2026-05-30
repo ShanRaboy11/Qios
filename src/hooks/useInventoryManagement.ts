@@ -98,16 +98,24 @@ export const useInventoryManagement = () => {
     inventoryItemId: string;
     quantity: number;
     unitPrice: number;
+    minimumQuantity?: number;
   }) => {
     try {
-      if (payload.quantity <= 0 || payload.unitPrice <= 0) return;
+      if (payload.unitPrice <= 0) return;
+
+      const effectiveQuantity = Math.max(
+        payload.quantity,
+        payload.minimumQuantity ?? 0,
+      );
+
+      if (effectiveQuantity <= 0) return;
 
       const { error } = await supabase.from("inventory_purchase_logs").insert({
         tenant_id: payload.tenantId,
         inventory_item_id: payload.inventoryItemId,
-        quantity: payload.quantity,
+        quantity: effectiveQuantity,
         unit_price: payload.unitPrice,
-        total_cost: payload.quantity * payload.unitPrice,
+        total_cost: effectiveQuantity * payload.unitPrice,
       });
 
       if (error) throw error;
@@ -161,6 +169,10 @@ export const useInventoryManagement = () => {
       message.includes("inventory_mode_enum") &&
       message.includes(`\"${value.toLowerCase()}\"`)
     );
+  };
+
+  const isMissingPurchasePriceColumnError = (error: unknown) => {
+    return getErrorMessage(error, "").toLowerCase().includes("purchase_price");
   };
 
   const getErrorMessage = (error: unknown, fallback: string) => {
@@ -247,6 +259,14 @@ export const useInventoryManagement = () => {
         critical_stock_threshold: draft.critical_stock_threshold,
         purchase_price: normalizedPurchasePrice,
       };
+      const payloadWithoutPurchasePrice = {
+        name: draft.name,
+        unit_type: draft.unit_type,
+        inventory_mode: toDbInventoryMode(inferredInventoryMode),
+        current_stock: draft.current_stock,
+        low_stock_threshold: draft.low_stock_threshold,
+        critical_stock_threshold: draft.critical_stock_threshold,
+      };
 
       if (isNew) {
         let { data, error } = await supabase
@@ -277,14 +297,31 @@ export const useInventoryManagement = () => {
           error = retryResult.error;
         }
 
+        if (error && isMissingPurchasePriceColumnError(error)) {
+          const retryResult = await supabase
+            .from("inventory_items")
+            .insert({
+              ...payloadWithoutPurchasePrice,
+              tenant_id: tenantId,
+            })
+            .select()
+            .single();
+          data = retryResult.data;
+          error = retryResult.error;
+        }
+
         if (error) throw error;
-        const mapped = mapRowToItem(data as InventoryItemRow);
+        const mapped = {
+          ...mapRowToItem(data as InventoryItemRow),
+          purchase_price: normalizedPurchasePrice,
+        };
         setItems((prev) => [...prev, mapped]);
         void logPurchaseEvent({
           tenantId,
           inventoryItemId: mapped.id,
           quantity: Number(mapped.current_stock ?? 0),
           unitPrice: mapped.purchase_price,
+          minimumQuantity: 1,
         });
         void logAuditEvent({
           tenantId,
@@ -328,8 +365,23 @@ export const useInventoryManagement = () => {
           error = retryResult.error;
         }
 
+        if (error && isMissingPurchasePriceColumnError(error)) {
+          const retryResult = await supabase
+            .from("inventory_items")
+            .update(payloadWithoutPurchasePrice)
+            .eq("tenant_id", tenantId)
+            .eq("id", draft.id)
+            .select()
+            .single();
+          data = retryResult.data;
+          error = retryResult.error;
+        }
+
         if (error) throw error;
-        const mapped = mapRowToItem(data as InventoryItemRow);
+        const mapped = {
+          ...mapRowToItem(data as InventoryItemRow),
+          purchase_price: normalizedPurchasePrice,
+        };
         setItems((prev) => prev.map((i) => (i.id === draft.id ? mapped : i)));
         const previousStock = Number(previousItem?.current_stock ?? 0);
         const nextStock = Number(mapped.current_stock ?? 0);

@@ -534,9 +534,7 @@ async function getTenantDashboardData(
     previousOrdersQuery,
     admin
       .from("inventory_items")
-      .select(
-        "id, name, unit_type, current_stock, low_stock_threshold, purchase_price",
-      )
+      .select("id, name, unit_type, current_stock, low_stock_threshold")
       .eq("tenant_id", tenantId)
       .order("current_stock", { ascending: true }),
     admin
