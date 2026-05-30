@@ -322,7 +322,6 @@ export const useInventoryManagement = () => {
           inventoryItemId: mapped.id,
           quantity: Number(mapped.current_stock ?? 0),
           unitPrice: mapped.purchase_price,
-          minimumQuantity: 1,
         });
         void logAuditEvent({
           tenantId,
