@@ -43,7 +43,7 @@ function ModalOverlay({
 }
 
 export default function IngredientsInventory() {
-  const { items, isLoading, actionError, saveItem, deleteItem } =
+  const { items, isLoading, actionError, saveItem, restockItem, deleteItem } =
     useInventoryManagement();
 
   const [activeTab, setActiveTab] = useState<"measurement" | "unit">(
@@ -57,6 +57,12 @@ export default function IngredientsInventory() {
   );
   const [isSaving, setIsSaving] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
+
+  const [restockModalOpen, setRestockModalOpen] = useState(false);
+  const [restockTarget, setRestockTarget] = useState<InventoryItem | null>(null);
+  const [restockQuantity, setRestockQuantity] = useState<number>(0);
+  const [restockPrice, setRestockPrice] = useState<number>(0);
+  const [isRestocking, setIsRestocking] = useState(false);
 
   const [isUnitDropdownOpen, setIsUnitDropdownOpen] = useState(false);
   const [unitSearch, setUnitSearch] = useState("");
@@ -112,9 +118,19 @@ export default function IngredientsInventory() {
     setModalError(null);
   };
 
+  const handleOpenRestockModal = (item: InventoryItem) => {
+    setRestockTarget(item);
+    setRestockQuantity(0);
+    setRestockPrice(item.purchase_price ?? 0);
+    setModalError(null);
+    setRestockModalOpen(true);
+  };
+
   const handleCloseModal = () => {
     setModalMode(null);
     setDraftItem(null);
+    setRestockModalOpen(false);
+    setRestockTarget(null);
     setModalError(null);
     setIsUnitDropdownOpen(false);
     setUnitSearch("");
@@ -169,6 +185,34 @@ export default function IngredientsInventory() {
         saveError ||
           "Failed to save item. It might already exist or you lack permission.",
       );
+    }
+  };
+
+  const handleRestockItem = async () => {
+    if (!restockTarget) return;
+
+    if (restockQuantity <= 0) {
+      setModalError("Restock quantity must be greater than 0.");
+      return;
+    }
+    if (restockPrice < 0) {
+      setModalError("Purchase price must be 0 or greater.");
+      return;
+    }
+
+    setModalError(null);
+    setIsRestocking(true);
+    const { item: savedItem, error: restockError } = await restockItem(
+      restockTarget.id,
+      restockQuantity,
+      restockPrice
+    );
+    setIsRestocking(false);
+
+    if (savedItem) {
+      handleCloseModal();
+    } else {
+      setModalError(restockError || "Failed to restock item.");
     }
   };
 
@@ -272,9 +316,19 @@ export default function IngredientsInventory() {
                     <h4 className="b2 font-bold text-text-primary leading-tight">
                       {item.name}
                     </h4>
-                    <p className="b5 text-text-secondary mt-1 uppercase tracking-wider">
+                    <p className="b5 text-text-secondary mt-1 tracking-wider uppercase">
                       Unit: {item.unit_type}
                     </p>
+                    <div className="flex items-center gap-3 mt-1.5 flex-wrap">
+                      <span className="text-[12px] font-medium text-brand-accent/80 bg-brand-accent/5 px-2 py-0.5 rounded border border-brand-accent/10">
+                        ₱{item.purchase_price?.toFixed(2) ?? "0.00"}/{item.unit_type}
+                      </span>
+                      {item.last_restocked_at && (
+                        <span className="text-[11px] text-text-secondary/70">
+                          Restocked: {new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(new Date(item.last_restocked_at))}
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   {/* status badge */}
@@ -326,14 +380,23 @@ export default function IngredientsInventory() {
                 {/* actions overlay */}
                 <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 bg-white/90 backdrop-blur-sm rounded-lg p-1 shadow-sm border border-black/5">
                   <button
+                    onClick={() => handleOpenRestockModal(item)}
+                    className="p-1.5 text-text-secondary hover:text-green-600 hover:bg-green-50 rounded-md transition-colors"
+                    title="Restock"
+                  >
+                    <Package size={16} />
+                  </button>
+                  <button
                     onClick={() => handleOpenEditModal(item)}
                     className="p-1.5 text-text-secondary hover:text-brand-accent hover:bg-brand-accent/10 rounded-md transition-colors"
+                    title="Edit"
                   >
                     <Edit2 size={16} />
                   </button>
                   <button
                     onClick={() => setDeleteConfirmId(item.id)}
                     className="p-1.5 text-text-secondary hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
+                    title="Delete"
                   >
                     <Trash2 size={16} />
                   </button>
@@ -570,6 +633,98 @@ export default function IngredientsInventory() {
                 className="bg-brand-accent hover:bg-brand-accent/90 border-brand-accent text-white"
               >
                 {isSaving ? "Saving..." : "Save Ingredient"}
+              </Button>
+            </div>
+          </div>
+        </ModalOverlay>
+      )}
+
+      {restockModalOpen && restockTarget && (
+        <ModalOverlay onClose={handleCloseModal}>
+          <div className="bg-white rounded-[24px] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between p-5 border-b border-black/5 bg-black/[0.02]">
+              <h3 className="b2 font-bold text-text-primary">
+                Restock {restockTarget.name}
+              </h3>
+              <button
+                onClick={handleCloseModal}
+                className="w-8 h-8 flex items-center justify-center rounded-full bg-black/5 hover:bg-black/10 text-text-secondary transition-colors"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="p-5 flex flex-col gap-5">
+              {modalError && (
+                <div className="bg-red-50 text-red-600 p-3 rounded-xl border border-red-100 flex items-start gap-2">
+                  <AlertCircle size={16} className="mt-0.5 flex-shrink-0" />
+                  <span className="b4">{modalError}</span>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block b5 font-bold text-text-secondary uppercase tracking-widest mb-1.5">
+                    Quantity to Add
+                  </label>
+                  <div className="relative">
+                    <Input
+                      type="number"
+                      min="0"
+                      step="any"
+                      value={restockQuantity || ""}
+                      onChange={(e) => setRestockQuantity(parseFloat(e.target.value) || 0)}
+                      placeholder="0"
+                      className="pr-12"
+                    />
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-text-secondary pointer-events-none">
+                      {restockTarget.unit_type}
+                    </span>
+                  </div>
+                </div>
+                <div>
+                  <label className="block b5 font-bold text-text-secondary uppercase tracking-widest mb-1.5">
+                    New Current Stock
+                  </label>
+                  <div className="bg-gray-50 rounded-xl px-4 py-[11px] border border-gray-100 text-sm font-bold text-text-primary">
+                    {(Number(restockTarget.current_stock ?? 0) + (restockQuantity || 0)).toLocaleString()} {restockTarget.unit_type}
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block b5 font-bold text-text-secondary uppercase tracking-widest mb-1.5">
+                  Unit Purchase Price (₱)
+                </label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={restockPrice || ""}
+                  onChange={(e) => setRestockPrice(parseFloat(e.target.value) || 0)}
+                  placeholder="e.g. 25.00"
+                />
+                <p className="text-[12px] text-text-secondary mt-1.5">
+                  This will log a purchase of ₱{((restockQuantity || 0) * (restockPrice || 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} total cost.
+                </p>
+              </div>
+            </div>
+
+            <div className="p-5 border-t border-black/5 bg-black/[0.02] flex justify-end gap-3">
+              <Button
+                variant="outline"
+                onClick={handleCloseModal}
+                className="border-brand-primary text-brand-primary hover:!bg-brand-primary hover:!border-brand-primary hover:!text-white"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleRestockItem}
+                disabled={isRestocking || restockQuantity <= 0}
+                className="bg-[#1fad66] hover:bg-[#1fad66]/90 border-[#1fad66] text-white"
+              >
+                {isRestocking ? "Restocking..." : "Confirm Restock"}
               </Button>
             </div>
           </div>

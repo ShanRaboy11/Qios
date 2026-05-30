@@ -43,6 +43,7 @@ export interface InventoryItem {
   low_stock_threshold: number;
   critical_stock_threshold: number;
   purchase_price: number;
+  last_restocked_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -414,6 +415,71 @@ export const useInventoryManagement = () => {
     }
   };
 
+  const restockItem = async (
+    id: string,
+    quantityToAdd: number,
+    newPurchasePrice: number
+  ) => {
+    setActionError(null);
+    try {
+      const tenantId = await getCurrentTenantId();
+      const item = items.find((i) => i.id === id);
+      if (!item) throw new Error("Item not found");
+
+      const nextStock = Number(item.current_stock ?? 0) + quantityToAdd;
+      const payload = {
+        current_stock: nextStock,
+        purchase_price: newPurchasePrice,
+        last_restocked_at: new Date().toISOString(),
+      };
+
+      const { data, error } = await supabase
+        .from("inventory_items")
+        .update(payload)
+        .eq("tenant_id", tenantId)
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const mapped = {
+        ...mapRowToItem(data as InventoryItemRow),
+        purchase_price: newPurchasePrice,
+      };
+
+      setItems((prev) => prev.map((i) => (i.id === id ? mapped : i)));
+
+      void logPurchaseEvent({
+        tenantId,
+        inventoryItemId: id,
+        quantity: quantityToAdd,
+        unitPrice: newPurchasePrice,
+      });
+
+      void logAuditEvent({
+        tenantId,
+        actionType: "UPDATE",
+        description: `Restocked inventory item: ${mapped.name} (+${quantityToAdd} ${mapped.unit_type})`,
+        targetId: mapped.id,
+        targetName: mapped.name,
+        metadata: {
+          unit_type: mapped.unit_type,
+          previous_stock: item.current_stock,
+          current_stock: mapped.current_stock,
+          purchase_price: mapped.purchase_price,
+        },
+      });
+
+      return { item: mapped, error: null as string | null };
+    } catch (e) {
+      const message = getErrorMessage(e, "Failed to restock inventory item.");
+      setActionError(message);
+      console.error(e);
+      return { item: null, error: message };
+    }
+  };
+
   const deleteItem = async (id: string) => {
     setActionError(null);
     try {
@@ -448,6 +514,7 @@ export const useInventoryManagement = () => {
     isLoading,
     actionError,
     saveItem,
+    restockItem,
     deleteItem,
   };
 };

@@ -12,8 +12,12 @@ import {
 } from "recharts";
 import { type RevenuePoint, type SalesPeriod } from "@/lib/salesDashboard";
 
+interface RevenuePointWithPurchase extends RevenuePoint {
+  purchase?: number;
+}
+
 interface RevenueChartProps {
-  data: RevenuePoint[];
+  data: RevenuePointWithPurchase[];
   period: SalesPeriod;
   onPeriodChange: (period: SalesPeriod) => void;
   isLoading?: boolean;
@@ -28,6 +32,7 @@ export const RevenueChart = ({
   const chartData = data.map((point) => ({
     time: point.label,
     sales: point.sales,
+    purchase: point.purchase ?? 0,
   }));
 
   return (
@@ -35,10 +40,10 @@ export const RevenueChart = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
         <div>
           <h3 className="font-brand font-bold text-xl text-text-primary">
-            Revenue Trend
+            Sales & Purchases
           </h3>
           <p className="font-brand-secondary text-sm text-text-secondary mt-1">
-            Sales performance over time
+            Revenue and inventory cost over time
           </p>
         </div>
         <div className="flex bg-gray-50 p-1 rounded-xl w-fit border border-gray-100 font-brand-secondary">
@@ -84,6 +89,18 @@ export const RevenueChart = ({
                     stopOpacity={0}
                   />
                 </linearGradient>
+                <linearGradient id="colorPurchase" x1="0" y1="0" x2="0" y2="1">
+                  <stop
+                    offset="5%"
+                    stopColor="var(--brand-accent, #FF5269)"
+                    stopOpacity={0.3}
+                  />
+                  <stop
+                    offset="95%"
+                    stopColor="var(--brand-accent, #FF5269)"
+                    stopOpacity={0}
+                  />
+                </linearGradient>
               </defs>
               <CartesianGrid
                 strokeDasharray="3 3"
@@ -119,10 +136,18 @@ export const RevenueChart = ({
                   boxShadow:
                     "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
                 }}
-                formatter={(value: any) => [
+                formatter={(value: any, name: any) => [
                   `₱${Number(value).toLocaleString()}`,
-                  "Sales",
+                  name === "sales" ? "Sales" : "Purchases",
                 ]}
+              />
+              <Area
+                type="monotone"
+                dataKey="purchase"
+                stroke="var(--brand-accent, #FF5269)"
+                strokeWidth={3}
+                fillOpacity={1}
+                fill="url(#colorPurchase)"
               />
               <Area
                 type="monotone"
