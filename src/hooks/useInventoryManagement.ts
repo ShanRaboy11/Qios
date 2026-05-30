@@ -251,6 +251,7 @@ export const useInventoryManagement = () => {
         low_stock_threshold: draft.low_stock_threshold,
         critical_stock_threshold: draft.critical_stock_threshold,
         purchase_price: normalizedPurchasePrice,
+        last_restocked_at: new Date().toISOString(),
       };
       const payloadWithoutPurchasePrice = {
         name: draft.name,
@@ -259,6 +260,7 @@ export const useInventoryManagement = () => {
         current_stock: draft.current_stock,
         low_stock_threshold: draft.low_stock_threshold,
         critical_stock_threshold: draft.critical_stock_threshold,
+        last_restocked_at: new Date().toISOString(),
       };
 
       if (isNew) {

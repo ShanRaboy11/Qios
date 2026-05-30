@@ -55,6 +55,9 @@ type DashboardInventoryRow = {
   current_stock: number | string;
   low_stock_threshold: number | string;
   purchase_price: number | string;
+  created_at: string;
+  updated_at: string;
+  last_restocked_at: string | null;
 };
 
 type DashboardPurchaseRow = {
@@ -385,6 +388,17 @@ function buildPurchaseMonthlySeries(
   return buckets.map(({ key: _key, ...point }) => point);
 }
 
+function buildFallbackPurchaseRows(
+  inventoryItems: DashboardInventoryRow[],
+): DashboardPurchaseRow[] {
+  return inventoryItems
+    .filter((item) => toNumber(item.purchase_price) > 0)
+    .map((item) => ({
+      total_cost: toNumber(item.purchase_price),
+      created_at: item.last_restocked_at ?? item.updated_at ?? item.created_at,
+    }));
+}
+
 function mergeSalesAndPurchaseSeries(
   salesSeries: SalesAndRevenuePoint[],
   purchaseSeries: SalesAndRevenuePoint[],
@@ -534,7 +548,9 @@ async function getTenantDashboardData(
     previousOrdersQuery,
     admin
       .from("inventory_items")
-      .select("id, name, unit_type, current_stock, low_stock_threshold")
+      .select(
+        "id, name, unit_type, current_stock, low_stock_threshold, purchase_price, created_at, updated_at, last_restocked_at",
+      )
       .eq("tenant_id", tenantId)
       .order("current_stock", { ascending: true }),
     admin
@@ -590,6 +606,10 @@ async function getTenantDashboardData(
     []) as DashboardInventoryRow[];
   const purchaseLogs = (purchaseLogsResult.data ??
     []) as DashboardPurchaseRow[];
+  const purchaseRows =
+    purchaseLogs.length > 0
+      ? purchaseLogs
+      : buildFallbackPurchaseRows(inventoryItems);
   const statusLogs = (statusLogsResult.data ?? []) as DashboardStatusLogRow[];
 
   const paidCurrentOrders = currentOrders.filter(
@@ -640,7 +660,7 @@ async function getTenantDashboardData(
     hasComparisonRange,
   );
   const recentOrders = buildRecentOrders(currentOrders);
-  const salesChartSeries = buildSalesSeries(yearOrders, purchaseLogs);
+  const salesChartSeries = buildSalesSeries(yearOrders, purchaseRows);
 
   const inventoryCount = inventoryItems.length;
   const lowStockCount = lowStockItems.length;
