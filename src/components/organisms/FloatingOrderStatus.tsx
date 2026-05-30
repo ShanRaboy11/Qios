@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { StepperBar } from "@/components/molecules/StepperBar";
 import {
   Receipt,
@@ -73,10 +73,13 @@ export const FloatingOrderStatus = ({ tenantId }: { tenantId: string }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isReadyNotified, setIsReadyNotified] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
+  // Prevents Supabase real-time callbacks from restoring the order after dismiss
+  const isDismissedRef = useRef(false);
   const storageKey = `qios:active-order:${tenantId}`;
 
   const upsertTrackedOrder = useCallback(
     (row: OrderStatusRow) => {
+      if (isDismissedRef.current) return; // Don't restore after customer dismissed
       const nextOrder = {
         orderId: row.id,
         qrHash: row.qr_hash ?? activeOrder?.qrHash ?? row.id,
@@ -116,6 +119,7 @@ export const FloatingOrderStatus = ({ tenantId }: { tenantId: string }) => {
   }, [activeOrder?.orderId, supabase, tenantId, upsertTrackedOrder]);
 
   useEffect(() => {
+    if (isDismissedRef.current) return; // Stay dismissed
     if (activeOrder) {
       setIsVisible(true);
       setIsOrderPlaced(true);
@@ -337,6 +341,28 @@ export const FloatingOrderStatus = ({ tenantId }: { tenantId: string }) => {
                       Please approach the counter if you need assistance.
                     </p>
                   </div>
+                ) : isDone ? (
+                  // Served / Completed State — checked BEFORE isReadyNotified
+                  <motion.div
+                    key="done"
+                    initial={{ scale: 0.9, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="bg-success-primary rounded-3xl p-6 text-center text-white shadow-lg relative overflow-hidden"
+                  >
+                    <motion.div
+                      animate={{ scale: [1, 1.15, 1] }}
+                      transition={{ duration: 0.5, delay: 0.1 }}
+                      className="inline-flex w-16 h-16 rounded-full bg-white/20 items-center justify-center mb-3"
+                    >
+                      <CheckCircle size={32} />
+                    </motion.div>
+                    <h3 className="text-2xl font-brand font-black mb-1">
+                      Order Complete!
+                    </h3>
+                    <p className="text-white/90 text-sm font-brand-secondary">
+                      Thank you! Enjoy your meal. 🎉
+                    </p>
+                  </motion.div>
                 ) : isReadyNotified ? (
                   // Ready Notification State
                   <motion.div
@@ -378,6 +404,26 @@ export const FloatingOrderStatus = ({ tenantId }: { tenantId: string }) => {
                       Est. Time: 12 min
                     </div>
 
+                    {/* Cashier notice — shown while order is unpaid/pending */}
+                    {currentStep === 0 && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mb-5 flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3"
+                      >
+                        <div>
+                          <p className="text-sm font-bold text-amber-800">
+                            Please proceed to the cashier
+                          </p>
+                          <p className="text-xs text-amber-700 mt-0.5 leading-relaxed">
+                            Show this receipt to the cashier to pay and confirm
+                            your order. Your food will be prepared once payment
+                            is received.
+                          </p>
+                        </div>
+                      </motion.div>
+                    )}
+
                     {/* Horizontal StepperBar wrapper to handle overflow cleanly on mobile */}
                     <div className="w-full overflow-x-auto pb-4 scrollbar-hide">
                       <div className="min-w-[300px]">
@@ -395,6 +441,7 @@ export const FloatingOrderStatus = ({ tenantId }: { tenantId: string }) => {
               {(currentStep === 4 || isDone || isCancelled) && (
                 <button
                   onClick={() => {
+                    isDismissedRef.current = true; // Block Supabase from restoring
                     setIsVisible(false);
                     clearActiveOrder();
                     try {

@@ -307,7 +307,7 @@ const OrderEditor = ({ menuItem, onClose }: OrderEditorProps) => {
               onClick={handleAddToOrder}
               className="w-full h-[56px] md:h-[64px] text-white text-base md:text-[18px] font-bold shadow-[0_12px_24px_rgba(255,82,105,0.22)] justify-center gap-3 active:scale-[0.98] transition-transform"
             >
-              Add to Order
+              Add to Cart
               <span className="w-px h-5 bg-white/30" />₱{" "}
               {totalPrice.toLocaleString(undefined, {
                 minimumFractionDigits: 2,
@@ -349,7 +349,7 @@ const OrderEditor = ({ menuItem, onClose }: OrderEditorProps) => {
 
                 <div className="space-y-1.5">
                   <h3 className="text-xl font-extrabold text-text-primary">
-                    Added to Order!
+                    Added to Cart!
                   </h3>
                   <p className="b4 text-text-secondary">
                     {quantity}× {menuItem.name} has been added to your cart.
