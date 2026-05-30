@@ -463,12 +463,6 @@ export const TransactionTable = ({ tenantId, businessName, apiPath }: Transactio
                     <p className="text-sm font-bold text-text-primary">Filters</p>
                     <p className="text-xs text-text-secondary mt-0.5">Refine the transaction list</p>
                   </div>
-                  <button
-                    onClick={clearFilters}
-                    className="text-xs font-medium text-brand-primary hover:text-brand-primary/80 hover:underline transition-colors duration-200"
-                  >
-                    Clear all
-                  </button>
                 </div>
                 <div className="mt-4 space-y-4">
                   <div>
