@@ -98,25 +98,17 @@ export const useInventoryManagement = () => {
     tenantId: string;
     inventoryItemId: string;
     quantity: number;
-    unitPrice: number;
-    minimumQuantity?: number;
+    totalCost: number;
   }) => {
     try {
-      if (payload.unitPrice <= 0) return;
-
-      const effectiveQuantity = Math.max(
-        payload.quantity,
-        payload.minimumQuantity ?? 0,
-      );
-
-      if (effectiveQuantity <= 0) return;
+      if (payload.totalCost <= 0) return;
 
       const { error } = await supabase.from("inventory_purchase_logs").insert({
         tenant_id: payload.tenantId,
         inventory_item_id: payload.inventoryItemId,
-        quantity: effectiveQuantity,
-        unit_price: payload.unitPrice,
-        total_cost: effectiveQuantity * payload.unitPrice,
+        quantity: payload.quantity > 0 ? payload.quantity : 1,
+        unit_price: payload.totalCost,
+        total_cost: payload.totalCost,
       });
 
       if (error) throw error;
@@ -321,7 +313,7 @@ export const useInventoryManagement = () => {
           tenantId,
           inventoryItemId: mapped.id,
           quantity: Number(mapped.current_stock ?? 0),
-          unitPrice: mapped.purchase_price,
+          totalCost: mapped.purchase_price,
         });
         void logAuditEvent({
           tenantId,
@@ -390,7 +382,7 @@ export const useInventoryManagement = () => {
           tenantId,
           inventoryItemId: mapped.id,
           quantity: stockIncrease,
-          unitPrice: mapped.purchase_price,
+          totalCost: mapped.purchase_price,
         });
         void logAuditEvent({
           tenantId,
@@ -417,7 +409,7 @@ export const useInventoryManagement = () => {
   const restockItem = async (
     id: string,
     quantityToAdd: number,
-    newPurchasePrice: number
+    newPurchasePrice: number,
   ) => {
     setActionError(null);
     try {
@@ -453,7 +445,7 @@ export const useInventoryManagement = () => {
         tenantId,
         inventoryItemId: id,
         quantity: quantityToAdd,
-        unitPrice: newPurchasePrice,
+        totalCost: newPurchasePrice,
       });
 
       void logAuditEvent({

@@ -59,7 +59,9 @@ export default function IngredientsInventory() {
   const [modalError, setModalError] = useState<string | null>(null);
 
   const [restockModalOpen, setRestockModalOpen] = useState(false);
-  const [restockTarget, setRestockTarget] = useState<InventoryItem | null>(null);
+  const [restockTarget, setRestockTarget] = useState<InventoryItem | null>(
+    null,
+  );
   const [restockQuantity, setRestockQuantity] = useState<number>(0);
   const [restockPrice, setRestockPrice] = useState<number>(0);
   const [isRestocking, setIsRestocking] = useState(false);
@@ -205,7 +207,7 @@ export default function IngredientsInventory() {
     const { item: savedItem, error: restockError } = await restockItem(
       restockTarget.id,
       restockQuantity,
-      restockPrice
+      restockPrice,
     );
     setIsRestocking(false);
 
@@ -321,11 +323,16 @@ export default function IngredientsInventory() {
                     </p>
                     <div className="flex items-center gap-3 mt-1.5 flex-wrap">
                       <span className="text-[12px] font-medium text-brand-accent/80 bg-brand-accent/5 px-2 py-0.5 rounded border border-brand-accent/10">
-                        ₱{item.purchase_price?.toFixed(2) ?? "0.00"}/{item.unit_type}
+                        Purchase: ₱{item.purchase_price?.toFixed(2) ?? "0.00"}
                       </span>
                       {item.last_restocked_at && (
                         <span className="text-[11px] text-text-secondary/70">
-                          Restocked: {new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(new Date(item.last_restocked_at))}
+                          Restocked:{" "}
+                          {new Intl.DateTimeFormat("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          }).format(new Date(item.last_restocked_at))}
                         </span>
                       )}
                     </div>
@@ -600,7 +607,7 @@ export default function IngredientsInventory() {
 
               <div>
                 <label className="block b5 font-bold text-text-secondary uppercase tracking-widest mb-1.5">
-                  Purchase Price
+                  Purchase Cost
                 </label>
                 <Input
                   type="number"
@@ -613,8 +620,11 @@ export default function IngredientsInventory() {
                       purchase_price: parseFloat(e.target.value) || 0,
                     })
                   }
-                  placeholder="e.g. 25.00"
+                  placeholder="e.g. 500.00"
                 />
+                <p className="mt-1 text-[11px] text-text-secondary">
+                  Total cost for this ingredient batch, not per unit.
+                </p>
               </div>
             </div>
 
@@ -673,7 +683,9 @@ export default function IngredientsInventory() {
                       min="0"
                       step="any"
                       value={restockQuantity || ""}
-                      onChange={(e) => setRestockQuantity(parseFloat(e.target.value) || 0)}
+                      onChange={(e) =>
+                        setRestockQuantity(parseFloat(e.target.value) || 0)
+                      }
                       placeholder="0"
                       className="pr-12"
                     />
@@ -687,25 +699,36 @@ export default function IngredientsInventory() {
                     New Current Stock
                   </label>
                   <div className="bg-gray-50 rounded-xl px-4 py-[11px] border border-gray-100 text-sm font-bold text-text-primary">
-                    {(Number(restockTarget.current_stock ?? 0) + (restockQuantity || 0)).toLocaleString()} {restockTarget.unit_type}
+                    {(
+                      Number(restockTarget.current_stock ?? 0) +
+                      (restockQuantity || 0)
+                    ).toLocaleString()}{" "}
+                    {restockTarget.unit_type}
                   </div>
                 </div>
               </div>
 
               <div>
                 <label className="block b5 font-bold text-text-secondary uppercase tracking-widest mb-1.5">
-                  Unit Purchase Price (₱)
+                  Purchase Cost (₱)
                 </label>
                 <Input
                   type="number"
                   min="0"
                   step="0.01"
                   value={restockPrice || ""}
-                  onChange={(e) => setRestockPrice(parseFloat(e.target.value) || 0)}
-                  placeholder="e.g. 25.00"
+                  onChange={(e) =>
+                    setRestockPrice(parseFloat(e.target.value) || 0)
+                  }
+                  placeholder="e.g. 500.00"
                 />
                 <p className="text-[12px] text-text-secondary mt-1.5">
-                  This will log a purchase of ₱{((restockQuantity || 0) * (restockPrice || 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} total cost.
+                  This will log a purchase of ₱
+                  {(restockPrice || 0).toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}{" "}
+                  total cost.
                 </p>
               </div>
             </div>

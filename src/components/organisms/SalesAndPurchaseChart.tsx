@@ -94,7 +94,8 @@ export const SalesAndPurchaseChart = ({
   );
 
   const hasData = chartData.some(
-    (point) => point.sales > 0 || (point.purchase ?? 0) > 0 || (point.revenue ?? 0) > 0,
+    (point) =>
+      point.sales > 0 || (point.purchase ?? 0) > 0 || (point.revenue ?? 0) > 0,
   );
 
   return (
@@ -104,7 +105,9 @@ export const SalesAndPurchaseChart = ({
           <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center">
             <Package className="w-5 h-5 text-brand-primary" />
           </div>
-          <h2 className="text-[18px] font-bold text-text-primary">Sales & Purchase</h2>
+          <h2 className="text-[18px] font-bold text-text-primary">
+            Sales & Purchase
+          </h2>
         </div>
         <div className="w-full sm:w-[320px]">
           <SegmentedControl
@@ -139,7 +142,9 @@ export const SalesAndPurchaseChart = ({
         <div className="flex flex-col border border-gray-100 rounded-xl px-4 py-2 min-w-[160px]">
           <div className="flex items-center gap-2 mb-1">
             <div className="w-2.5 h-2.5 rounded-full bg-brand-accent" />
-            <span className="text-[14px] text-text-secondary">Total Purchase</span>
+            <span className="text-[14px] text-text-secondary">
+              Total Purchase
+            </span>
           </div>
           <span className="text-[20px] font-bold text-text-primary">
             {formatMoney(totals.purchase)}
@@ -184,9 +189,7 @@ export const SalesAndPurchaseChart = ({
                 const numericValue = Number(value ?? 0);
 
                 return [
-                  name === "sales"
-                    ? `${numericValue}`
-                    : `${numericValue}`,
+                  name === "sales" ? `${numericValue}` : `${numericValue}`,
                   name === "sales" ? "Sales" : "Purchase",
                 ];
               }}
@@ -199,12 +202,11 @@ export const SalesAndPurchaseChart = ({
             />
             <Bar
               dataKey="purchase"
-              stackId="a"
               fill="var(--brand-accent, #FFEDBA)"
+              radius={[4, 4, 0, 0]}
             />
             <Bar
               dataKey="sales"
-              stackId="a"
               fill="var(--brand-primary, #FFDC72)"
               radius={[4, 4, 0, 0]}
             />
