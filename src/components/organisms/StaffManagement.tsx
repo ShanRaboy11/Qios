@@ -32,163 +32,6 @@ import {
   getLiveActivities,
 } from "@/app/(tenant)/[id]/staff/actions";
 
-// mock data
-const INITIAL_STAFF: StaffEntry[] = [
-  {
-    id: "1",
-    name: "Angelo Troy Rivera",
-    email: "angelo@qios.com",
-    role: "Head Chef",
-    department: "Kitchen",
-    status: "Active",
-    lastActive: "Just now",
-  },
-  {
-    id: "2",
-    name: "Nathaniel Porcalla",
-    email: "nathaniel@qios.com",
-    role: "Manager",
-    department: "Operations",
-    status: "Active",
-    lastActive: "5m ago",
-  },
-  {
-    id: "3",
-    name: "Akira Morishita",
-    email: "akira@qios.com",
-    role: "Cashier",
-    department: "Front of House",
-    status: "Active",
-    lastActive: "1m ago",
-  },
-  {
-    id: "4",
-    name: "John Lloyd Toreliza",
-    email: "john@qios.com",
-    role: "Line Cook",
-    department: "Kitchen",
-    status: "On Leave",
-    lastActive: "2 days ago",
-  },
-  {
-    id: "5",
-    name: "Michael Claver Jr.",
-    email: "michael@qios.com",
-    role: "Server",
-    department: "Front of House",
-    status: "Suspended",
-    lastActive: "1 week ago",
-  },
-];
-
-const MOCK_LEADERBOARD: LeaderboardEntry[] = [
-  {
-    id: "1",
-    rank: 1,
-    name: "Angelo Troy Rivera",
-    volume: 84,
-    performance: "Excellent",
-  },
-  {
-    id: "2",
-    rank: 2,
-    name: "Nathaniel Porcalla",
-    volume: 72,
-    performance: "Excellent",
-  },
-  {
-    id: "3",
-    rank: 3,
-    name: "Akira Morishita",
-    volume: 45,
-    performance: "Moderate",
-  },
-  {
-    id: "4",
-    rank: 4,
-    name: "John Lloyd Toreliza",
-    volume: 68,
-    performance: "Moderate",
-  },
-  {
-    id: "5",
-    rank: 5,
-    name: "Michael Claver Jr.",
-    volume: 20,
-    performance: "Poor",
-  },
-];
-
-const MOCK_ACTIVITIES: ActivityEntry[] = [
-  {
-    id: "1",
-    name: "Maria",
-    action: "Completed Order #68321",
-    time: "Just now",
-    status: "success",
-  },
-  {
-    id: "2",
-    name: "Juan",
-    action: "Processing Order #5247",
-    time: "1m ago",
-    status: "warning",
-  },
-  {
-    id: "3",
-    name: "Justin",
-    action: "Completed Order #2487",
-    time: "2m ago",
-    status: "success",
-  },
-  {
-    id: "4",
-    name: "Ken",
-    action: "Cancelled Order #1636",
-    time: "3m ago",
-    status: "error",
-  },
-  {
-    id: "5",
-    name: "DJ",
-    action: "Processing Order #1389",
-    time: "3m ago",
-    status: "warning",
-  },
-  {
-    id: "6",
-    name: "Maria",
-    action: "Processing Order #8821",
-    time: "3m ago",
-    status: "warning",
-  },
-  {
-    id: "7",
-    name: "Kian",
-    action: "Cancelled Order #2571",
-    time: "3m ago",
-    status: "error",
-  },
-];
-
-const MOCK_ANALYTICS: AnalyticsDataPoint[] = [
-  { time: "8:00", prepTime: 4, orderVolume: 10 },
-  { time: "9:00", prepTime: 5, orderVolume: 15 },
-  { time: "10:00", prepTime: 6, orderVolume: 20 },
-  { time: "11:00", prepTime: 8, orderVolume: 30 },
-  { time: "11:30", prepTime: 10, orderVolume: 45 },
-  { time: "12:00", prepTime: 14, orderVolume: 75 },
-  { time: "12:30", prepTime: 14.5, orderVolume: 78 },
-  { time: "13:00", prepTime: 12, orderVolume: 60 },
-  { time: "14:00", prepTime: 8, orderVolume: 35 },
-  { time: "15:00", prepTime: 6, orderVolume: 25 },
-  { time: "16:00", prepTime: 5, orderVolume: 20 },
-  { time: "17:00", prepTime: 7, orderVolume: 35 },
-  { time: "18:00", prepTime: 10, orderVolume: 60 },
-  { time: "19:00", prepTime: 9, orderVolume: 55 },
-  { time: "20:00", prepTime: 6, orderVolume: 30 },
-];
-
 export default function StaffManagement() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -196,6 +39,12 @@ export default function StaffManagement() {
   const [roles, setRoles] = useState<{ id: string; name: string }[]>([]);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [activities, setActivities] = useState<ActivityEntry[]>([]);
+  const [avgPrepTime, setAvgPrepTime] = useState<number>(0);
+  const [totalCompletedOrders, setTotalCompletedOrders] = useState<number>(0);
+  const [analyticsData, setAnalyticsData] = useState<AnalyticsDataPoint[]>([]);
+  const [activeStaffChange, setActiveStaffChange] = useState<number>(0);
+  const [prepTimeChange, setPrepTimeChange] = useState<number>(0);
+  const [completedOrdersChangePercent, setCompletedOrdersChangePercent] = useState<number>(0);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedStaffProfile, setSelectedStaffProfile] =
     useState<StaffEntry | null>(null);
@@ -216,30 +65,35 @@ export default function StaffManagement() {
       if (res.success) {
         setStaffData(res.staff);
         setRoles(res.roles);
+        setAvgPrepTime(res.avgPrepTime ?? 0);
+        setTotalCompletedOrders(res.totalCompletedOrders ?? 0);
+        setAnalyticsData(res.analytics ?? []);
+        setActiveStaffChange(res.activeStaffChange ?? 0);
+        setPrepTimeChange(res.prepTimeChange ?? 0);
+        setCompletedOrdersChangePercent(res.completedOrdersChangePercent ?? 0);
       } else {
         console.error("Failed to load staff data:", res.error);
-        // Fallback to initial mock data on local dev DB error
-        setStaffData(INITIAL_STAFF);
+        setStaffData([]);
       }
 
       if (leaderboardRes.success) {
         setLeaderboard(leaderboardRes.data);
       } else {
         console.error("Failed to load leaderboard:", leaderboardRes.error);
-        setLeaderboard(MOCK_LEADERBOARD);
+        setLeaderboard([]);
       }
 
       if (activitiesRes.success) {
         setActivities(activitiesRes.data);
       } else {
         console.error("Failed to load activities:", activitiesRes.error);
-        setActivities(MOCK_ACTIVITIES);
+        setActivities([]);
       }
     } catch (err) {
       console.error(err);
-      setStaffData(INITIAL_STAFF);
-      setLeaderboard(MOCK_LEADERBOARD);
-      setActivities(MOCK_ACTIVITIES);
+      setStaffData([]);
+      setLeaderboard([]);
+      setActivities([]);
     } finally {
       setIsLoading(false);
     }
@@ -362,94 +216,126 @@ export default function StaffManagement() {
           <div className="text-2xl font-bold text-text-primary">
             {staffData.filter((s) => s.status === "Active").length}
           </div>
-          <div className="text-xs text-success-primary mt-2 font-medium">
-            ↑ 2 from last month
+          <div
+            className={`text-xs mt-2 font-medium ${
+              activeStaffChange >= 0 ? "text-success-primary" : "text-error-primary"
+            }`}
+          >
+            {activeStaffChange >= 0 ? "↑" : "↓"} {Math.abs(activeStaffChange)} from last month
           </div>
         </div>
         <div className="bg-white p-5 rounded-[24px] shadow-sm border border-gray-100">
           <div className="text-sm font-medium text-text-secondary mb-1">
             Avg. Prep Time
           </div>
-          <div className="text-2xl font-bold text-text-primary">8.5m</div>
-          <div className="text-xs text-success-primary mt-2 font-medium">
-            ↓ 1.2m from last week
+          <div className="text-2xl font-bold text-text-primary">
+            {avgPrepTime > 0 ? `${avgPrepTime.toFixed(1)}m` : "—"}
+          </div>
+          <div
+            className={`text-xs mt-2 font-medium ${
+              prepTimeChange <= 0 ? "text-success-primary" : "text-error-primary"
+            }`}
+          >
+            {prepTimeChange <= 0 ? "↓" : "↑"} {Math.abs(prepTimeChange).toFixed(1)}m from last week
           </div>
         </div>
         <div className="bg-white p-5 rounded-[24px] shadow-sm border border-gray-100">
           <div className="text-sm font-medium text-text-secondary mb-1">
             Total Completed Orders
           </div>
-          <div className="text-2xl font-bold text-text-primary">1,284</div>
-          <div className="text-xs text-success-primary mt-2 font-medium">
-            ↑ 12% from last week
+          <div className="text-2xl font-bold text-text-primary">
+            {totalCompletedOrders.toLocaleString()}
+          </div>
+          <div
+            className={`text-xs mt-2 font-medium ${
+              completedOrdersChangePercent >= 0 ? "text-success-primary" : "text-error-primary"
+            }`}
+          >
+            {completedOrdersChangePercent >= 0 ? "↑" : "↓"} {Math.round(Math.abs(completedOrdersChangePercent))}% from last week
           </div>
         </div>
         <div className="bg-white p-5 rounded-[24px] shadow-sm border border-gray-100">
           <div className="text-sm font-medium text-text-secondary mb-1">
             Labor Cost
           </div>
-          <div className="text-2xl font-bold text-text-primary">₱42,500</div>
+          <div className="text-2xl font-bold text-text-primary">
+            ₱{staffData
+              .filter((s) => s.status === "Active")
+              .reduce((total, s) => {
+                const role = s.role.toLowerCase();
+                if (role.includes("admin")) return total + 25000;
+                if (role.includes("manager")) return total + 20000;
+                if (role.includes("chef")) return total + 18000;
+                if (role.includes("cook")) return total + 15000;
+                if (role.includes("cashier")) return total + 12000;
+                if (role.includes("server")) return total + 10000;
+                return total + 10000;
+              }, 0)
+              .toLocaleString()}
+          </div>
           <div className="text-xs text-text-secondary mt-2 font-medium">
             Within target budget
           </div>
         </div>
       </div>
 
-      {/* main grid layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* left column (directory & chart) */}
-        <div className="lg:col-span-2 space-y-8">
-          {/* analytics chart */}
+      {/* Row 1 Grid (Analytics Chart & Leaderboard) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+        <div className="lg:col-span-2">
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100">
-            <StaffAnalyticsChart data={MOCK_ANALYTICS} />
-          </div>
-
-          {/* staff directory table */}
-          <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <h3 className="text-xl font-bold text-text-primary">
-                Staff Directory
-              </h3>
-              <div className="flex items-center gap-3 w-full sm:w-auto">
-                <div className="relative w-full sm:w-64">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-                  <Input
-                    placeholder="Search staff..."
-                    className="pl-10 py-2 rounded-xl"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                </div>
-                <Button
-                  variant="primary"
-                  shape="rounded"
-                  leftIcon={<Plus size={18} />}
-                  onClick={() => setIsAddModalOpen(true)}
-                  className="shrink-0"
-                >
-                  Add Staff
-                </Button>
-              </div>
-            </div>
-            <StaffTable
-              data={filteredStaff}
-              onClearFilters={() => setSearchQuery("")}
-              onViewProfile={(staff) => setSelectedStaffProfile(staff)}
-              onEdit={handleEdit}
-              onResetPassword={handleResetPassword}
-              onDeactivate={handleDeactivate}
-            />
+            <StaffAnalyticsChart data={analyticsData} />
           </div>
         </div>
-
-        {/* right column (leaderboard & feed) */}
-        <div className="space-y-8">
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300">
+        <div>
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300 h-full">
             <StaffLeaderboard data={leaderboard} />
           </div>
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-400 h-[600px]">
-            <LiveActivityFeed activities={activities} />
+        </div>
+      </div>
+
+      {/* Row 2 Grid (Staff Directory Table & Live Activity Feed) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        {/* Staff Directory — flex-col so header stays top, table card fills remaining height */}
+        <div className="lg:col-span-2 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200 flex flex-col gap-4 h-[600px]">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <h3 className="text-xl font-bold text-text-primary">
+              Staff Directory
+            </h3>
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              <div className="relative w-full sm:w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <Input
+                  placeholder="Search staff..."
+                  className="pl-10 py-2 rounded-xl"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+              <Button
+                variant="primary"
+                shape="rounded"
+                leftIcon={<Plus size={18} />}
+                onClick={() => setIsAddModalOpen(true)}
+                className="shrink-0"
+              >
+                Add Staff
+              </Button>
+            </div>
           </div>
+          <StaffTable
+            className="flex-1"
+            data={filteredStaff}
+            onClearFilters={() => setSearchQuery("")}
+            onViewProfile={(staff) => setSelectedStaffProfile(staff)}
+            onEdit={handleEdit}
+            onResetPassword={handleResetPassword}
+            onDeactivate={handleDeactivate}
+          />
+        </div>
+
+        {/* Live Activity Feed */}
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-400">
+          <LiveActivityFeed activities={activities} />
         </div>
       </div>
 

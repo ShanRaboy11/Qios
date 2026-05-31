@@ -16,13 +16,13 @@ interface LiveActivityFeedProps {
 
 export const LiveActivityFeed = ({ activities }: LiveActivityFeedProps) => {
   return (
-    <div className="bg-white rounded-[24px] shadow-sm border border-gray-100 overflow-hidden flex flex-col h-full">
+    <div className="bg-white rounded-[24px] shadow-sm border border-gray-100 overflow-hidden flex flex-col h-[600px]">
       <div className="p-6 border-b border-gray-50">
         <h3 className="font-bold text-xl text-text-primary">
           Live Activity Feed
         </h3>
       </div>
-      <div className="p-6 overflow-y-auto flex-1 space-y-6 max-h-[500px]">
+      <div className="p-6 overflow-y-auto flex-1 space-y-6">
         {activities.map((activity, idx) => (
           <div key={activity.id} className="relative flex gap-4">
             {/* timeline Line */}
