@@ -15,6 +15,7 @@ import {
   canAccessEmployeeRoute,
   type RolePermissions,
 } from "@/lib/employeePermissions";
+import { canAccessMultiBranchManagement } from "@/lib/subscriptionFeatureAccess";
 import {
   clearAuthSessionExpiry,
   getAuthSessionExpiry,
@@ -29,6 +30,7 @@ interface NavbarProps {
   className?: string;
   initialEmployeePermissions?: RolePermissions | null;
   tenantFeatures?: any | null;
+  tenantSubscriptionPlan?: string | null;
 }
 
 export const Navbar = ({
@@ -39,6 +41,7 @@ export const Navbar = ({
   className,
   initialEmployeePermissions = null,
   tenantFeatures = null,
+  tenantSubscriptionPlan = null,
 }: NavbarProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -309,7 +312,7 @@ export const Navbar = ({
       ? [{ label: "Sales", href: `/${tenantId}/sales`, id: "sales" }]
       : []),
     { label: "Audit Logs", href: `/${tenantId}/audit_logs`, id: "audit_logs" },
-    ...(tenantFeatures?.admin_controls?.["Multi-Branch Management"]
+    ...(canAccessMultiBranchManagement(tenantFeatures, tenantSubscriptionPlan)
       ? [{ label: "Branches", href: `/${tenantId}/branches`, id: "branches" }]
       : []),
   ];

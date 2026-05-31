@@ -402,7 +402,26 @@ export default function Services() {
         {/* what makes us different */}
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-32 items-center mt-16 md:mt-32">
           <div className="order-2 lg:order-1 relative">
-            <div className="relative rounded-[3rem] overflow-hidden bg-bg-primary bg-gradient-to-tr from-brand-secondary/40 to-brand-primary/60 aspect-square flex items-center justify-center border border-black/10 p-8 shadow-inner">
+            <div 
+              className="relative rounded-[3rem] overflow-hidden aspect-square flex items-center justify-center border border-white/10 p-8 shadow-inner"
+              style={{
+                background: "linear-gradient(135deg, #1c1917 0%, #27201c 60%, #1c1917 100%)",
+              }}
+            >
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.07) 1px, transparent 1px)",
+                  backgroundSize: "32px 32px",
+                }}
+              />
+              <div
+                className="absolute -top-20 -right-20 w-96 h-96 rounded-full pointer-events-none"
+                style={{
+                  background:
+                    "radial-gradient(circle, color-mix(in srgb, var(--color-brand-accent) 22%, transparent) 0%, color-mix(in srgb, var(--color-brand-primary) 10%, transparent) 40%, transparent 65%)",
+                }}
+              />
               <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.15] mix-blend-overlay" />
               <div className="relative z-10 bg-white rounded-[2rem] shadow-[0_20px_40px_-12px_rgba(0,0,0,0.15)] p-8 w-full max-w-sm flex flex-col gap-6 transform rotate-[-3deg] hover:rotate-0 transition-all duration-700">
                 <div className="flex items-center justify-between border-b border-gray-100 pb-4">

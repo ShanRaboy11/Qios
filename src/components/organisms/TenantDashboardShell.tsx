@@ -10,10 +10,12 @@ export function TenantDashboardShell({
   children,
   storeName,
   tenantFeatures,
+  tenantSubscriptionPlan,
 }: {
   children: React.ReactNode;
   storeName: string;
   tenantFeatures?: any | null;
+  tenantSubscriptionPlan?: string | null;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -40,18 +42,45 @@ export function TenantDashboardShell({
       {/* Background moving blobs */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
         <motion.div
-          animate={{ x: [0, 100, -50, 0], y: [0, -100, 50, 0], scale: [1, 1.2, 0.8, 1] }}
-          transition={{ duration: 60, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
+          animate={{
+            x: [0, 100, -50, 0],
+            y: [0, -100, 50, 0],
+            scale: [1, 1.2, 0.8, 1],
+          }}
+          transition={{
+            duration: 60,
+            repeat: Infinity,
+            repeatType: "reverse",
+            ease: "easeInOut",
+          }}
           className="absolute top-[10%] left-[-5%] w-[500px] h-[500px] bg-brand-primary rounded-full mix-blend-multiply filter blur-[80px] opacity-15"
         />
         <motion.div
-          animate={{ x: [0, -120, 80, 0], y: [0, 80, -120, 0], scale: [1, 0.8, 1.2, 1] }}
-          transition={{ duration: 75, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
+          animate={{
+            x: [0, -120, 80, 0],
+            y: [0, 80, -120, 0],
+            scale: [1, 0.8, 1.2, 1],
+          }}
+          transition={{
+            duration: 75,
+            repeat: Infinity,
+            repeatType: "reverse",
+            ease: "easeInOut",
+          }}
           className="absolute top-[40%] right-[-5%] w-[600px] h-[600px] bg-brand-secondary rounded-full mix-blend-multiply filter blur-[100px] opacity-20"
         />
         <motion.div
-          animate={{ x: [0, 150, -100, 0], y: [0, 100, -150, 0], scale: [1, 1.3, 0.9, 1] }}
-          transition={{ duration: 66, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
+          animate={{
+            x: [0, 150, -100, 0],
+            y: [0, 100, -150, 0],
+            scale: [1, 1.3, 0.9, 1],
+          }}
+          transition={{
+            duration: 66,
+            repeat: Infinity,
+            repeatType: "reverse",
+            ease: "easeInOut",
+          }}
           className="absolute bottom-[-10%] left-[40%] w-[700px] h-[700px] bg-brand-accent rounded-full mix-blend-multiply filter blur-[120px] opacity-15"
         />
       </div>
@@ -63,6 +92,7 @@ export function TenantDashboardShell({
           activeView={currentView}
           onNavigate={handleNavigation}
           tenantFeatures={tenantFeatures}
+          tenantSubscriptionPlan={tenantSubscriptionPlan}
         />
       </div>
 
