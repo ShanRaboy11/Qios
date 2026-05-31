@@ -47,10 +47,12 @@ function buildFilterSummary(
   status: (typeof STATUS_OPTIONS)[number],
   paymentStatus: (typeof PAYMENT_STATUS_OPTIONS)[number],
   startDate: string,
-  endDate: string
+  endDate: string,
 ) {
-  const count = [status, paymentStatus].filter((value) => value !== "all").length;
-  const dateCount = (startDate || endDate) ? 1 : 0;
+  const count = [status, paymentStatus].filter(
+    (value) => value !== "all",
+  ).length;
+  const dateCount = startDate || endDate ? 1 : 0;
   return count + dateCount;
 }
 
@@ -280,7 +282,7 @@ export const TransactionTable = ({
     useState<(typeof STATUS_OPTIONS)[number]>("all");
   const [paymentStatusFilter, setPaymentStatusFilter] =
     useState<(typeof PAYMENT_STATUS_OPTIONS)[number]>("all");
-  
+
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
@@ -325,8 +327,8 @@ export const TransactionTable = ({
           search: searchQuery,
           status: statusFilter,
           paymentStatus: paymentStatusFilter,
-          startDate, 
-          endDate,   
+          startDate,
+          endDate,
         });
 
         const response = await fetch(
@@ -362,14 +364,25 @@ export const TransactionTable = ({
     void loadTransactions();
 
     return () => controller.abort();
-  }, [limit, page, paymentStatusFilter, searchQuery, statusFilter, startDate, endDate, tenantId, resolvedApiPath]);
+  }, [
+    limit,
+    page,
+    paymentStatusFilter,
+    searchQuery,
+    statusFilter,
+    startDate,
+    endDate,
+    tenantId,
+    resolvedApiPath,
+  ]);
 
   const totalPages = Math.max(1, Math.ceil(total / limit));
   const startIndex = total === 0 ? 0 : (page - 1) * limit + 1;
   const endIndex = Math.min(total, page * limit);
 
   const filterSummary = useMemo(
-    () => buildFilterSummary(statusFilter, paymentStatusFilter, startDate, endDate),
+    () =>
+      buildFilterSummary(statusFilter, paymentStatusFilter, startDate, endDate),
     [paymentStatusFilter, statusFilter, startDate, endDate],
   );
 
@@ -595,20 +608,30 @@ export const TransactionTable = ({
                     </span>
                     <div className="grid grid-cols-2 gap-3 mt-2">
                       <div className="flex flex-col gap-1">
-                        <span className="text-[10px] text-text-secondary font-medium px-1">From</span>
+                        <span className="text-[10px] text-text-secondary font-medium px-1">
+                          From
+                        </span>
                         <input
                           type="date"
                           value={startDate}
-                          onChange={(e) => {setStartDate(e.target.value); setPage(1);}}
+                          onChange={(e) => {
+                            setStartDate(e.target.value);
+                            setPage(1);
+                          }}
                           className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-xs focus:border-brand-primary outline-none transition-colors"
                         />
                       </div>
                       <div className="flex flex-col gap-1">
-                        <span className="text-[10px] text-text-secondary font-medium px-1">To</span>
+                        <span className="text-[10px] text-text-secondary font-medium px-1">
+                          To
+                        </span>
                         <input
                           type="date"
                           value={endDate}
-                          onChange={(e) => {setEndDate(e.target.value); setPage(1);}}
+                          onChange={(e) => {
+                            setEndDate(e.target.value);
+                            setPage(1);
+                          }}
                           className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-xs focus:border-brand-primary outline-none transition-colors"
                         />
                       </div>
@@ -640,7 +663,7 @@ export const TransactionTable = ({
                       <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                     </div>
                   </div>
-                  
+
                   <div className="flex justify-end gap-2 pt-4 border-t border-gray-100">
                     <Button
                       variant="outline"
