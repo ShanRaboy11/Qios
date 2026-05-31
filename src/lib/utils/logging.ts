@@ -6,7 +6,27 @@ interface LogParams {
   actorName: string;
   actionType: "CREATE" | "UPDATE" | "DELETE" | "REVOKE";
   description: string;
+  targetTenantId?: string;
+  targetTenantName?: string;
   metadata?: unknown;
+}
+
+async function resolveTargetTenantName(
+  supabase: SupabaseClient,
+  targetTenantId?: string,
+  targetTenantName?: string,
+) {
+  const providedName = targetTenantName?.trim();
+  if (providedName) return providedName;
+  if (!targetTenantId) return "Global System";
+
+  const { data } = await supabase
+    .from("tenants")
+    .select("business_name")
+    .eq("id", targetTenantId)
+    .maybeSingle();
+
+  return data?.business_name?.trim() || "Unknown Tenant";
 }
 
 export const logActivity = async ({
@@ -15,15 +35,24 @@ export const logActivity = async ({
   actorName,
   actionType,
   description,
+  targetTenantId,
+  targetTenantName,
   metadata,
 }: LogParams) => {
+  const resolvedTargetTenantName = await resolveTargetTenantName(
+    supabase,
+    targetTenantId,
+    targetTenantName,
+  );
+
   const { error } = await supabase.from("system_activity_logs").insert({
     actor_id: actorId,
     actor_name: actorName,
     actor_role: "Super Admin",
     action_type: actionType,
     description: description,
-    target_tenant_name: "Global System",
+    target_tenant_id: targetTenantId ?? null,
+    target_tenant_name: resolvedTargetTenantName,
     metadata: metadata,
   });
 

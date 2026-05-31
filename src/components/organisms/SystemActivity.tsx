@@ -51,15 +51,34 @@ function roleColor(role: string): BadgeColor {
   if (r.includes("admin")) return "secondary";
   if (r.includes("employee")) return "info";
   if (r.includes("customer")) return "success";
+  if (r.includes("guest")) return "success";
   return "secondary";
 }
 
 function formatRoleLabel(role: string): string {
+  const normalized = role.trim().toLowerCase();
+  if (normalized === "guest") return "Customer";
+  if (normalized === "super admin" || normalized === "super_admin") {
+    return "Super Admin";
+  }
+
   return role
     .replace(/[_-]+/g, " ")
     .trim()
     .toLowerCase()
     .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function isSuperAdminRole(role: string): boolean {
+  return role.toLowerCase().replace(/[\s_]/g, "").includes("superadmin");
+}
+
+function formatTargetEstablishment(row: ActivityLogRow): string {
+  if (isSuperAdminRole(row.actor_role)) {
+    return row.target_tenant_name?.trim() || "Global System";
+  }
+
+  return row.target_tenant_name?.trim() || "Unknown Tenant";
 }
 
 function actionColor(actionType: string): BadgeColor {
@@ -114,7 +133,7 @@ function mapRow(row: ActivityLogRow): ActivityData {
       color: actionColor(row.action_type),
     },
     description: row.description,
-    targetEstablishment: row.target_tenant_name ?? "Global System",
+    targetEstablishment: formatTargetEstablishment(row),
     timestamp: formatTimestamp(row.created_at),
   };
 }
