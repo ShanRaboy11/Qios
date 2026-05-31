@@ -79,7 +79,9 @@ export async function GET(req: NextRequest) {
       [key: string]: unknown;
     }>,
   ) {
-    const ids = [...new Set(rows.map((row) => row.target_tenant_id).filter(Boolean))] as string[];
+    const ids = [
+      ...new Set(rows.map((row) => row.target_tenant_id).filter(Boolean)),
+    ] as string[];
     const tenantNameById = new Map<string, string>();
 
     if (ids.length > 0) {
@@ -96,8 +98,13 @@ export async function GET(req: NextRequest) {
     return rows.map((row) => {
       const resolvedName =
         row.target_tenant_name?.trim() ||
-        (row.target_tenant_id ? tenantNameById.get(row.target_tenant_id) : null) ||
-        (row.actor_role.toLowerCase().replace(/[\s_]/g, "").includes("superadmin")
+        (row.target_tenant_id
+          ? tenantNameById.get(row.target_tenant_id)
+          : null) ||
+        (row.actor_role
+          .toLowerCase()
+          .replace(/[\s_]/g, "")
+          .includes("superadmin")
           ? "Global System"
           : "Unknown Tenant");
 
@@ -150,12 +157,14 @@ export async function GET(req: NextRequest) {
       }
 
       const rows = data ?? [];
-      const enrichedRows = await enrichTenantNames(rows as Array<{
-        target_tenant_id: string | null;
-        target_tenant_name: string | null;
-        actor_role: string;
-        [key: string]: unknown;
-      }>);
+      const enrichedRows = await enrichTenantNames(
+        rows as Array<{
+          target_tenant_id: string | null;
+          target_tenant_name: string | null;
+          actor_role: string;
+          [key: string]: unknown;
+        }>,
+      );
       allRows.push(...enrichedRows);
 
       if (rows.length < batchSize) {
@@ -187,12 +196,14 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  const enrichedData = await enrichTenantNames((data ?? []) as Array<{
-    target_tenant_id: string | null;
-    target_tenant_name: string | null;
-    actor_role: string;
-    [key: string]: unknown;
-  }>);
+  const enrichedData = await enrichTenantNames(
+    (data ?? []) as Array<{
+      target_tenant_id: string | null;
+      target_tenant_name: string | null;
+      actor_role: string;
+      [key: string]: unknown;
+    }>,
+  );
 
   return NextResponse.json({
     data: enrichedData,
