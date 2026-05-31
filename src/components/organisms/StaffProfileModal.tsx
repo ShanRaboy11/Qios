@@ -72,8 +72,8 @@ export const StaffProfileModal = ({
           </button>
         </div>
 
-        <div className="px-8 pt-6 pb-8 overflow-y-auto custom-scrollbar">
-          <div className="flex flex-col items-center mb-6 relative z-10">
+        <div className="px-8 pt-0 pb-8 overflow-y-auto custom-scrollbar">
+          <div className="flex flex-col items-center -mt-12 mb-6 relative z-20">
             <div className="p-1.5 bg-white rounded-full shadow-sm mb-3">
               <Avatar
                 initials={staff.name}

@@ -118,10 +118,24 @@ export async function getStaffData(tenantId: string): Promise<StaffDataResult> {
         emailsMap[id] = userFetches[idx];
       });
 
-      const { data: employeeSettings } = await admin
+      let { data: employeeSettings, error: employeeSettingsError } = await admin
         .from("employee_settings")
         .select("profile_id, weekly_schedule")
         .in("profile_id", uniqueProfileIds);
+
+      if (
+        employeeSettingsError?.message?.includes("weekly_schedule") ||
+        employeeSettingsError?.message?.includes("schema cache")
+      ) {
+        const fallback = await admin
+          .from("employee_settings")
+          .select("profile_id")
+          .in("profile_id", uniqueProfileIds);
+        employeeSettings = fallback.data?.map((row) => ({
+          profile_id: row.profile_id,
+          weekly_schedule: null,
+        }));
+      }
 
       (employeeSettings ?? []).forEach((row) => {
         weeklyScheduleMap[row.profile_id] = Array.isArray(row.weekly_schedule)

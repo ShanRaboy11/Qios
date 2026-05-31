@@ -533,7 +533,7 @@ export default function InventoryAuditPage() {
                 shape="rounded"
                 onClick={handleReset}
                 leftIcon={<RotateCcw size={16} />}
-                className="font-bold border-brand-accent text-brand-accent hover:bg-brand-accent hover:text-white bg-white shrink-0"
+                className="font-bold border-brand-primary text-brand-primary hover:!bg-brand-primary hover:!border-brand-primary hover:!text-white bg-white shrink-0"
               >
                 Reset
               </Button>

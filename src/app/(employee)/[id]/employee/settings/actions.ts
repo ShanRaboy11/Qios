@@ -139,13 +139,32 @@ async function getEmployeeSettingsContext(tenantId: string) {
     }
   }
 
-  const { data: employeeSettings } = await admin
+  let { data: employeeSettings, error: employeeSettingsError } = await admin
     .from("employee_settings")
     .select(
       "terminal, default_view, auto_logoff_minutes, quick_pin_hash, sound_queue, sound_scan, sound_stock, notify_email, notify_push, weekly_schedule",
     )
     .eq("profile_id", user.id)
     .maybeSingle();
+
+  if (
+    employeeSettingsError?.message?.includes("weekly_schedule") ||
+    employeeSettingsError?.message?.includes("schema cache")
+  ) {
+    const fallback = await admin
+      .from("employee_settings")
+      .select(
+        "terminal, default_view, auto_logoff_minutes, quick_pin_hash, sound_queue, sound_scan, sound_stock, notify_email, notify_push",
+      )
+      .eq("profile_id", user.id)
+      .maybeSingle();
+    employeeSettings = fallback.data;
+    employeeSettingsError = fallback.error;
+  }
+
+  if (employeeSettingsError) {
+    throw new Error(employeeSettingsError.message);
+  }
 
   const weeklySchedule = Array.isArray(employeeSettings?.weekly_schedule)
     ? employeeSettings.weekly_schedule

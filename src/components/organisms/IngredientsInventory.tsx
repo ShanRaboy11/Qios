@@ -100,6 +100,18 @@ export default function IngredientsInventory() {
     );
   }, [items, activeTab, searchQuery]);
 
+  const measurementCount = useMemo(
+    () => items.filter((item) => item.inventory_mode === "measurement").length,
+    [items],
+  );
+
+  const unitCount = useMemo(
+    () => items.filter((item) => item.inventory_mode === "unit").length,
+    [items],
+  );
+
+  const totalItems = measurementCount + unitCount;
+
   const handleOpenAddModal = () => {
     setDraftItem({
       name: "",
@@ -237,6 +249,21 @@ export default function IngredientsInventory() {
 
   return (
     <div className="w-full flex flex-col gap-6 font-inter">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs font-semibold uppercase tracking-wider text-text-secondary">
+          Total Items
+        </span>
+        <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-brand-primary/15 text-brand-primary border border-brand-primary/20">
+          {totalItems}
+        </span>
+        <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-white border border-black/10 text-text-secondary">
+          Measurement: {measurementCount}
+        </span>
+        <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-white border border-black/10 text-text-secondary">
+          Unit: {unitCount}
+        </span>
+      </div>
+
       {/* ── tabs ── */}
       <div className="flex bg-white/70 backdrop-blur-sm border border-black/5 rounded-2xl p-1.5 w-max">
         <button
@@ -249,7 +276,7 @@ export default function IngredientsInventory() {
           )}
         >
           <Scale size={18} />
-          Measurement Based
+          Measurement Based ({measurementCount})
         </button>
         <button
           onClick={() => setActiveTab("unit")}
@@ -261,7 +288,7 @@ export default function IngredientsInventory() {
           )}
         >
           <Package size={18} />
-          Unit Based
+          Unit Based ({unitCount})
         </button>
       </div>
 
