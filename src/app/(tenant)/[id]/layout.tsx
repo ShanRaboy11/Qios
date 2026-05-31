@@ -3,6 +3,10 @@ import { TenantBrandingProvider } from "@/components/providers/TenantBrandingPro
 import { TenantDashboardShell } from "@/components/organisms/TenantDashboardShell";
 import { fetchTenantBranding } from "@/lib/tenantBranding";
 import { TutorialProvider } from "@/components/providers/TutorialProvider";
+import {
+  getTenantFeatures,
+  getTenantSubscriptionPlan,
+} from "@/lib/subscriptionAccess";
 
 export default async function TenantLayout({
   children,
@@ -13,11 +17,17 @@ export default async function TenantLayout({
 }) {
   const { id: tenantId } = await params;
   const { branding, storeName } = await fetchTenantBranding(tenantId);
+  const tenantFeatures = await getTenantFeatures(tenantId);
+  const tenantSubscriptionPlan = await getTenantSubscriptionPlan(tenantId);
 
   return (
     <TenantBrandingProvider branding={branding}>
       <TutorialProvider>
-        <TenantDashboardShell storeName={storeName}>
+        <TenantDashboardShell
+          storeName={storeName}
+          tenantFeatures={tenantFeatures}
+          tenantSubscriptionPlan={tenantSubscriptionPlan}
+        >
           {children}
         </TenantDashboardShell>
       </TutorialProvider>
