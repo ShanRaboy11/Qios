@@ -4,6 +4,23 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { canAccessMultiBranchManagement } from "@/lib/subscriptionFeatureAccess";
 import { getTenantFeatures } from "@/lib/subscriptionAccess";
 
+function extractBrandingSettings(source: unknown) {
+  if (!source || typeof source !== "object") return null;
+
+  const entries = Object.entries(source as Record<string, unknown>).filter(
+    ([key]) =>
+      key.startsWith("branding_") ||
+      key.endsWith("Color") ||
+      key.endsWith("Font") ||
+      key === "fontFamily" ||
+      key === "secondaryFont" ||
+      key === "menuLayout",
+  );
+
+  if (entries.length === 0) return null;
+  return Object.fromEntries(entries);
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -57,7 +74,7 @@ export async function POST(req: NextRequest) {
     // Clone subscription plan and owner details from the current active tenant
     const { data: currentTenant } = await admin
       .from("tenants")
-      .select("business_email, owner_name, subscription_plan")
+      .select("business_email, owner_name, subscription_plan, settings")
       .eq("id", profile.tenant_id)
       .maybeSingle();
 
@@ -88,6 +105,9 @@ export async function POST(req: NextRequest) {
 
     const branchOwnerBusinessEmail =
       currentTenant.business_email?.trim() || user.email;
+    const inheritedBrandingSettings = extractBrandingSettings(
+      currentTenant.settings,
+    );
 
     const tenantFeatures = await getTenantFeatures(profile.tenant_id);
     if (
@@ -127,6 +147,7 @@ export async function POST(req: NextRequest) {
         business_email: branchOwnerBusinessEmail,
         owner_name: currentTenant.owner_name,
         subscription_plan: currentTenant.subscription_plan,
+        settings: inheritedBrandingSettings ?? undefined,
         status: "approved",
       })
       .select("id")

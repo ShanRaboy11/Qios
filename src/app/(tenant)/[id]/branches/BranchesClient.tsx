@@ -4,12 +4,14 @@ import React, { useMemo, useState } from "react";
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
 import { Badge } from "@/components/atoms/Badge";
+import { ActionConfirmationModal } from "@/components/molecules/ConfirmationModal";
 import {
   Building2,
   Plus,
   ArrowRight,
   Loader2,
   RefreshCw,
+  Trash2,
   X,
   AlertCircle,
 } from "lucide-react";
@@ -47,12 +49,17 @@ function ModalOverlay({
 export default function BranchesClient({
   branches,
   activeTenantId,
+  originalTenantId,
 }: {
   branches: Branch[];
   activeTenantId: string;
+  originalTenantId: string | null;
 }) {
   const router = useRouter();
+  const [branchItems, setBranchItems] = useState<Branch[]>(branches);
   const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Branch | null>(null);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [branchName, setBranchName] = useState("");
   const [branchNameError, setBranchNameError] = useState("");
@@ -65,7 +72,7 @@ export default function BranchesClient({
         .map((branch) => branch.business_name || branch.name || "")
         .filter(Boolean)
         .map((name) => name.trim().toLowerCase()),
-    [branches],
+    [branchItems],
   );
 
   const validateBranchName = (value: string) => {
@@ -149,6 +156,34 @@ export default function BranchesClient({
     } catch (err: any) {
       setError(err.message);
       setCreating(false);
+    }
+  };
+
+  const handleDeleteBranch = async () => {
+    if (!deleteTarget) return;
+
+    setDeletingId(deleteTarget.id);
+    setError("");
+
+    try {
+      const res = await fetch("/api/tenants/delete-branch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ targetTenantId: deleteTarget.id }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || "Failed to delete branch");
+
+      setBranchItems((prev) =>
+        prev.filter((branch) => branch.id !== deleteTarget.id),
+      );
+      setDeleteTarget(null);
+      router.refresh();
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -266,9 +301,11 @@ export default function BranchesClient({
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {branches.map((branch) => {
+        {branchItems.map((branch) => {
           const isActive = branch.id === activeTenantId;
           const isLoading = loadingId === branch.id;
+          const isDeleting = deletingId === branch.id;
+          const canDelete = branch.id !== originalTenantId && !isActive;
 
           return (
             <div
@@ -321,24 +358,47 @@ export default function BranchesClient({
               </div>
 
               {!isActive && (
-                <Button
-                  variant="outline"
-                  className="w-full mt-2"
-                  onClick={() => handleSwitch(branch.id)}
-                  disabled={!!loadingId}
-                >
-                  {isLoading ? (
-                    <>
-                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                      Switching...
-                    </>
-                  ) : (
-                    <>
-                      Switch to Branch
-                      <ArrowRight className="w-4 h-4 ml-2" />
-                    </>
+                <div className="mt-2 flex gap-2">
+                  <Button
+                    variant="outline"
+                    className="flex-1 border-brand-primary text-brand-primary hover:!bg-brand-primary hover:!border-brand-primary hover:!text-white"
+                    onClick={() => handleSwitch(branch.id)}
+                    disabled={!!loadingId || !!deletingId}
+                  >
+                    {isLoading ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                        Switching...
+                      </>
+                    ) : (
+                      <>
+                        Switch to Branch
+                        <ArrowRight className="w-4 h-4 ml-2" />
+                      </>
+                    )}
+                  </Button>
+
+                  {canDelete && (
+                    <Button
+                      variant="outline"
+                      className="border-red-300 text-red-600 hover:!bg-red-500 hover:!border-red-500 hover:!text-white"
+                      onClick={() => setDeleteTarget(branch)}
+                      disabled={!!loadingId || !!deletingId}
+                    >
+                      {isDeleting ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Deleting...
+                        </>
+                      ) : (
+                        <>
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Delete
+                        </>
+                      )}
+                    </Button>
                   )}
-                </Button>
+                </div>
               )}
               {isActive && (
                 <div className="mt-2 text-center text-sm font-medium text-brand-primary bg-white py-2 rounded-xl border border-brand-primary/20">
@@ -349,6 +409,24 @@ export default function BranchesClient({
           );
         })}
       </div>
+
+      <ActionConfirmationModal
+        isOpen={Boolean(deleteTarget)}
+        action="delete"
+        title="Delete branch?"
+        message={
+          deleteTarget
+            ? `This will permanently delete ${deleteTarget.business_name} and its branch data.`
+            : undefined
+        }
+        confirmLabel="Delete"
+        onClose={() => {
+          if (deletingId) return;
+          setDeleteTarget(null);
+        }}
+        onConfirm={handleDeleteBranch}
+        saving={Boolean(deletingId)}
+      />
     </div>
   );
 }

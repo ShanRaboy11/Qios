@@ -67,5 +67,13 @@ export default async function BranchesPage({
     return <div className="p-8">Error loading branches.</div>;
   }
 
-  return <BranchesClient branches={branches} activeTenantId={tenantId} />;
+  const originalTenantId = branches[0]?.id ?? null;
+
+  return (
+    <BranchesClient
+      branches={branches}
+      activeTenantId={tenantId}
+      originalTenantId={originalTenantId}
+    />
+  );
 }
