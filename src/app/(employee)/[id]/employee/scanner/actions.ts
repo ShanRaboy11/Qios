@@ -20,10 +20,7 @@ export async function processScannedQr(tenantId: string, qrData: string) {
     /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(
       normalizedQrData,
     );
-  const tenantIsUUID =
-    /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(
-      tenantId.trim(),
-    );
+  const currentTenantId = tenantId.trim();
 
   let query = supabase.from("orders").select(`
       id,
@@ -56,10 +53,6 @@ export async function processScannedQr(tenantId: string, qrData: string) {
       )
     `);
 
-  if (tenantIsUUID) {
-    query = query.eq("tenant_id", tenantId.trim());
-  }
-
   if (isUUID) {
     query = query.eq("id", normalizedQrData);
   } else {
@@ -73,8 +66,18 @@ export async function processScannedQr(tenantId: string, qrData: string) {
   }
 
   if (!data) {
+    throw new Error("Invalid QR Code: Order not found.");
+  }
+
+  if (data.tenant_id !== currentTenantId) {
     throw new Error(
-      "Invalid QR Code: Order not found or doesn't belong to your restaurant.",
+      "This QR code belongs to another business and cannot be processed here.",
+    );
+  }
+
+  if (data.payment_status === "paid") {
+    throw new Error(
+      "This order has already been paid and cannot be processed here.",
     );
   }
 
@@ -93,10 +96,7 @@ export async function updateOrderFromScanner(
   }
 
   const supabase = await createSupabaseServerClient();
-  const tenantIsUUID =
-    /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(
-      tenantId.trim(),
-    );
+  const currentTenantId = tenantId.trim();
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -112,11 +112,8 @@ export async function updateOrderFromScanner(
   let updateQuery = supabase
     .from("orders")
     .update({ status: newStatus })
-    .eq("id", orderId);
-
-  if (tenantIsUUID) {
-    updateQuery = updateQuery.eq("tenant_id", tenantId.trim());
-  }
+    .eq("id", orderId)
+    .eq("tenant_id", currentTenantId);
 
   const { error } = await updateQuery;
 
