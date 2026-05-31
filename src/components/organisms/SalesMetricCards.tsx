@@ -53,7 +53,7 @@ const MetricCard = ({
         <span
           className={cn(
             "text-[11px] sm:text-sm font-semibold flex items-center gap-0.5 sm:gap-1",
-            isPositive ? "text-success-primary" : "text-error-primary",
+            isPositive ? "text-success-primary" : "text-warning-primary",
           )}
         >
           {isPositive ? "↑" : "↓"} {Math.abs(trend)}%
