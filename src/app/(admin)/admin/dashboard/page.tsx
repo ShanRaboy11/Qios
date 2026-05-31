@@ -117,6 +117,7 @@ export default function AdminDashboardPage() {
       ) : null}
       <AdminDashboardHeader
         onCompaniesClick={() => router.push("/admin/tenant_directory")}
+        onPackagesClick={() => router.push("/admin/subscription")}
         isCompaniesActive={false}
       />
       <AdminMetricsRow metrics={dashboard.metrics} />

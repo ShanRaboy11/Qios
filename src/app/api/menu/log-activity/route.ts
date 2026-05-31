@@ -14,9 +14,9 @@ export interface MenuActivityLogRequest {
 
 /**
  * POST /api/menu/log-activity
- * 
+ *
  * Logs menu operations (create, update, delete) to system_activity_logs.
- * 
+ *
  * Request body:
  * {
  *   actionType: "CREATE" | "UPDATE" | "DELETE",
@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
     if (!authHeader?.startsWith("Bearer ")) {
       return NextResponse.json(
         { error: "Missing or invalid authorization header" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
     if (userErr || !userData?.user) {
       return NextResponse.json(
         { error: "Invalid authentication token" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -63,20 +63,7 @@ export async function POST(req: NextRequest) {
     if (profileErr || !profile) {
       return NextResponse.json(
         { error: "User profile not found" },
-        { status: 403 }
-      );
-    }
-
-    // verify user belongs to the target tenant (or is super_admin)
-    if (
-      profile.role !== "super_admin" &&
-      profile.tenant_id !== (
-        (await req.json() as MenuActivityLogRequest).tenantId
-      )
-    ) {
-      return NextResponse.json(
-        { error: "Unauthorized - tenant mismatch" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -87,20 +74,35 @@ export async function POST(req: NextRequest) {
     } catch {
       return NextResponse.json(
         { error: "Invalid request body" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     // validate required fields
-    const { actionType, entityType, entityId, entityName, tenantId, tenantName, metadata } =
-      logRequest;
+    const {
+      actionType,
+      entityType,
+      entityId,
+      entityName,
+      tenantId,
+      tenantName,
+      metadata,
+    } = logRequest;
     if (!actionType || !entityType || !entityId || !entityName || !tenantId) {
       return NextResponse.json(
         {
           error:
             "Missing required fields: actionType, entityType, entityId, entityName, tenantId",
         },
-        { status: 400 }
+        { status: 400 },
+      );
+    }
+
+    // verify user belongs to the target tenant (or is super_admin)
+    if (profile.role !== "super_admin" && profile.tenant_id !== tenantId) {
+      return NextResponse.json(
+        { error: "Unauthorized - tenant mismatch" },
+        { status: 403 },
       );
     }
 
@@ -128,13 +130,13 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(
       { success: true, message: "Activity logged successfully" },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("[menu/log-activity] Error:", error);
     return NextResponse.json(
       { error: "Failed to log activity" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

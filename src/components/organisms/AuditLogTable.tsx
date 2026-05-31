@@ -23,7 +23,14 @@ interface RawAuditLog {
   actor_id: string | null;
   actor_name: string;
   actor_role: string;
-  action_type: "CREATE" | "UPDATE" | "DELETE" | "LOGIN" | "LOGOUT" | "REFUND" | "SYSTEM";
+  action_type:
+    | "CREATE"
+    | "UPDATE"
+    | "DELETE"
+    | "LOGIN"
+    | "LOGOUT"
+    | "REFUND"
+    | "SYSTEM";
   description: string;
   target_type: string | null;
   target_id: string | null;
@@ -44,7 +51,9 @@ interface AuditLogsResponse {
 // ---------------------------------------------------------------------------
 function mapToEntry(raw: RawAuditLog): AuditLogEntry {
   const meta = raw.metadata ?? {};
-  const changes = meta.changes as Record<string, { old: unknown; new: unknown }> | undefined;
+  const changes = meta.changes as
+    | Record<string, { old: unknown; new: unknown }>
+    | undefined;
 
   let before: Record<string, unknown> | undefined;
   let after: Record<string, unknown> | undefined;
@@ -98,7 +107,9 @@ function mapToEntry(raw: RawAuditLog): AuditLogEntry {
 
 const PAGE_SIZE = 20;
 
-export const AuditLogTable = ({ isLoading: propIsLoading }: AuditLogTableProps) => {
+export const AuditLogTable = ({
+  isLoading: propIsLoading,
+}: AuditLogTableProps) => {
   const params = useParams();
   const tenantId = params?.id as string | undefined;
 
@@ -187,7 +198,16 @@ export const AuditLogTable = ({ isLoading: propIsLoading }: AuditLogTableProps) 
   // ---------------------------------------------------------------------------
   const handleExportCSV = () => {
     if (logs.length === 0) return;
-    const headers = ["ID", "Timestamp", "Actor", "Role", "Action", "Target", "Type", "IP"];
+    const headers = [
+      "ID",
+      "Timestamp",
+      "Actor",
+      "Role",
+      "Action",
+      "Target",
+      "Type",
+      "IP",
+    ];
     const rows = logs.map((l) => [
       l.id,
       l.timestamp,
@@ -199,7 +219,9 @@ export const AuditLogTable = ({ isLoading: propIsLoading }: AuditLogTableProps) 
       l.ip,
     ]);
     const csv = [headers, ...rows]
-      .map((row) => row.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","))
+      .map((row) =>
+        row.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","),
+      )
       .join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
@@ -216,7 +238,9 @@ export const AuditLogTable = ({ isLoading: propIsLoading }: AuditLogTableProps) 
         {/* Header / Filters */}
         <div className="p-6 border-b border-gray-50 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
           <div>
-            <h3 className="font-bold text-xl text-text-primary">Activity Log</h3>
+            <h3 className="font-bold text-xl text-text-primary">
+              Activity Log
+            </h3>
             <p className="text-sm text-text-secondary mt-1">
               Comprehensive trail of system actions and changes.
             </p>
@@ -279,26 +303,53 @@ export const AuditLogTable = ({ isLoading: propIsLoading }: AuditLogTableProps) 
 
         {showLoading ? (
           <div className="overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-            <table className="w-full text-left border-collapse whitespace-nowrap">
+            <table className="w-full text-center border-collapse whitespace-nowrap">
               <thead>
                 <tr className="bg-gray-50 text-text-secondary text-[11px] font-bold uppercase tracking-wider">
-                  <th className="py-3 px-6"><div className="h-3 w-20 rounded skeleton-shimmer" /></th>
-                  <th className="py-3 px-6"><div className="h-3 w-16 rounded skeleton-shimmer" /></th>
-                  <th className="py-3 px-6"><div className="h-3 w-16 rounded skeleton-shimmer" /></th>
-                  <th className="py-3 px-6"><div className="h-3 w-16 rounded skeleton-shimmer" /></th>
-                  <th className="py-3 px-6 text-center"><div className="h-3 w-12 rounded skeleton-shimmer mx-auto" /></th>
-                  <th className="py-3 px-6 text-center"><div className="h-3 w-14 rounded skeleton-shimmer mx-auto" /></th>
+                  <th className="py-3 px-6 text-center">
+                    <div className="h-3 w-20 rounded skeleton-shimmer mx-auto" />
+                  </th>
+                  <th className="py-3 px-6 text-center">
+                    <div className="h-3 w-16 rounded skeleton-shimmer mx-auto" />
+                  </th>
+                  <th className="py-3 px-6 text-center">
+                    <div className="h-3 w-16 rounded skeleton-shimmer mx-auto" />
+                  </th>
+                  <th className="py-3 px-6 text-center">
+                    <div className="h-3 w-16 rounded skeleton-shimmer mx-auto" />
+                  </th>
+                  <th className="py-3 px-6 text-center">
+                    <div className="h-3 w-12 rounded skeleton-shimmer mx-auto" />
+                  </th>
+                  <th className="py-3 px-6 text-center">
+                    <div className="h-3 w-14 rounded skeleton-shimmer mx-auto" />
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {Array.from({ length: 7 }).map((_, rowIndex) => (
-                  <tr key={`audit-log-skeleton-${rowIndex}`} className="border-b border-gray-50 last:border-0">
-                    <td className="py-4 px-6"><div className="h-4 w-28 rounded skeleton-shimmer" /></td>
-                    <td className="py-4 px-6"><div className="h-4 w-28 rounded skeleton-shimmer" /></td>
-                    <td className="py-4 px-6"><div className="h-4 w-32 rounded skeleton-shimmer" /></td>
-                    <td className="py-4 px-6"><div className="h-4 w-44 max-w-full rounded skeleton-shimmer" /></td>
-                    <td className="py-4 px-6 text-center"><div className="h-6 w-20 rounded-full skeleton-shimmer mx-auto" /></td>
-                    <td className="py-4 px-6 text-center"><div className="h-9 w-9 rounded-lg skeleton-shimmer mx-auto" /></td>
+                  <tr
+                    key={`audit-log-skeleton-${rowIndex}`}
+                    className="border-b border-gray-50 last:border-0"
+                  >
+                    <td className="py-4 px-6 text-center">
+                      <div className="h-4 w-28 rounded skeleton-shimmer mx-auto" />
+                    </td>
+                    <td className="py-4 px-6 text-center">
+                      <div className="h-4 w-28 rounded skeleton-shimmer mx-auto" />
+                    </td>
+                    <td className="py-4 px-6 text-center">
+                      <div className="h-4 w-32 rounded skeleton-shimmer mx-auto" />
+                    </td>
+                    <td className="py-4 px-6 text-center">
+                      <div className="h-4 w-44 max-w-full rounded skeleton-shimmer mx-auto" />
+                    </td>
+                    <td className="py-4 px-6 text-center">
+                      <div className="h-6 w-20 rounded-full skeleton-shimmer mx-auto" />
+                    </td>
+                    <td className="py-4 px-6 text-center">
+                      <div className="h-9 w-9 rounded-lg skeleton-shimmer mx-auto" />
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -306,13 +357,13 @@ export const AuditLogTable = ({ isLoading: propIsLoading }: AuditLogTableProps) 
           </div>
         ) : (
           <div className="overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-            <table className="w-full text-left border-collapse whitespace-nowrap">
+            <table className="w-full text-center border-collapse whitespace-nowrap">
               <thead>
                 <tr className="bg-gray-50 text-text-secondary text-[11px] font-bold uppercase tracking-wider">
-                  <th className="py-3 px-6">Timestamp</th>
-                  <th className="py-3 px-6">Actor</th>
-                  <th className="py-3 px-6">Action</th>
-                  <th className="py-3 px-6">Target</th>
+                  <th className="py-3 px-6 text-center">Timestamp</th>
+                  <th className="py-3 px-6 text-center">Actor</th>
+                  <th className="py-3 px-6 text-center">Action</th>
+                  <th className="py-3 px-6 text-center">Target</th>
                   <th className="py-3 px-6 text-center">Type</th>
                   <th className="py-3 px-6 text-center">Details</th>
                 </tr>
@@ -320,7 +371,10 @@ export const AuditLogTable = ({ isLoading: propIsLoading }: AuditLogTableProps) 
               <tbody>
                 {error ? (
                   <tr>
-                    <td colSpan={6} className="py-8 text-center text-sm text-error-primary">
+                    <td
+                      colSpan={6}
+                      className="py-8 text-center text-sm text-error-primary"
+                    >
                       {error}
                     </td>
                   </tr>
@@ -330,23 +384,28 @@ export const AuditLogTable = ({ isLoading: propIsLoading }: AuditLogTableProps) 
                       key={log.id}
                       className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors"
                     >
-                      <td className="py-4 px-6 text-[13px] font-medium text-text-secondary">
+                      <td className="py-4 px-6 text-[13px] font-medium text-text-secondary text-center">
                         {log.timestamp}
                       </td>
-                      <td className="py-4 px-6">
-                        <p className="font-bold text-text-primary text-sm">{log.actor}</p>
-                        <p className="text-[11px] text-text-tertiary">{log.role}</p>
+                      <td className="py-4 px-6 text-center">
+                        <p className="font-bold text-text-primary text-sm">
+                          {log.actor}
+                        </p>
+                        <p className="text-[11px] text-text-tertiary">
+                          {log.role}
+                        </p>
                       </td>
-                      <td className="py-4 px-6 font-medium text-text-primary text-sm">
+                      <td className="py-4 px-6 font-medium text-text-primary text-sm text-center">
                         {log.action}
                       </td>
-                      <td className="py-4 px-6 text-sm text-text-secondary truncate max-w-[200px]">
+                      <td className="py-4 px-6 text-sm text-text-secondary truncate max-w-[200px] text-center">
                         {log.target}
                       </td>
                       <td className="py-4 px-6 text-center">
                         <Badge
                           color={
-                            log.actionType === "DELETE" || log.actionType === "REFUND"
+                            log.actionType === "DELETE" ||
+                            log.actionType === "REFUND"
                               ? "error"
                               : log.actionType === "UPDATE"
                                 ? "warning"
@@ -364,7 +423,7 @@ export const AuditLogTable = ({ isLoading: propIsLoading }: AuditLogTableProps) 
                       <td className="py-4 px-6 text-center">
                         <button
                           onClick={() => setSelectedLog(log)}
-                          className="p-2 rounded-lg bg-gray-50 hover:bg-brand-primary/10 hover:text-brand-accent text-gray-500 transition-colors inline-flex"
+                          className="p-2 rounded-lg bg-gray-50 hover:bg-brand-primary/10 hover:text-brand-accent text-gray-500 transition-colors inline-flex mx-auto"
                           title="View Details"
                         >
                           <Eye size={16} />
@@ -374,7 +433,10 @@ export const AuditLogTable = ({ isLoading: propIsLoading }: AuditLogTableProps) 
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={6} className="py-8 text-center text-sm text-text-secondary">
+                    <td
+                      colSpan={6}
+                      className="py-8 text-center text-sm text-text-secondary"
+                    >
                       No audit logs found matching your filters.
                     </td>
                   </tr>

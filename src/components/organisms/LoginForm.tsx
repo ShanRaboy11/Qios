@@ -58,6 +58,34 @@ async function resolveEmployeeTenantId(
   return typeof roleRow?.tenant_id === "string" ? roleRow.tenant_id : null;
 }
 
+async function logTenantLoginActivity(
+  supabase: ReturnType<typeof createSupabaseBrowserClient>,
+  token: string,
+  tenantId: string,
+) {
+  try {
+    await fetch(`/api/tenants/${tenantId}/audit-logs/log`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        actionType: "LOGIN",
+        description: "Signed in to the system",
+        targetType: "auth",
+        targetName: "System Sign-in",
+        metadata: {
+          success: true,
+          logged_in_at: new Date().toISOString(),
+        },
+      }),
+    });
+  } catch (error) {
+    console.error("[LoginForm] Failed to log tenant sign-in:", error);
+  }
+}
+
 export const LoginForm = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -201,6 +229,12 @@ export const LoginForm = () => {
           return;
         }
 
+        await logTenantLoginActivity(
+          supabase,
+          signInData.session.access_token,
+          jwtTenantId,
+        );
+
         if (role === "admin") {
           router.replace(`/${jwtTenantId}/dashboard`);
           return;
@@ -259,6 +293,11 @@ export const LoginForm = () => {
       if (profile.role === "super_admin") {
         router.replace("/admin/dashboard");
       } else if (profile.role === "admin" && profile.tenant_id) {
+        await logTenantLoginActivity(
+          supabase,
+          signInData.session.access_token,
+          profile.tenant_id,
+        );
         router.replace(`/${profile.tenant_id}/dashboard`);
       } else if (profile.role === "employee") {
         const employeeTenantId = await resolveEmployeeTenantId(
@@ -270,6 +309,11 @@ export const LoginForm = () => {
         );
 
         if (employeeTenantId) {
+          await logTenantLoginActivity(
+            supabase,
+            signInData.session.access_token,
+            employeeTenantId,
+          );
           router.replace(`/${employeeTenantId}/employee/dashboard`);
         } else {
           setError("Account configuration is incomplete.");
