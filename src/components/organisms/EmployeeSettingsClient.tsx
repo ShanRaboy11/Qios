@@ -26,12 +26,12 @@ import {
   saveEmployeeOperationalSettings,
   saveEmployeeProfileSettings,
   updateEmployeePassword,
-} from "./actions";
+} from "../../app/(employee)/[id]/employee/settings/actions";
 import {
   emptySettingsActionState,
   type EmployeeSettingsPageData,
   type SettingsActionState,
-} from "./types";
+} from "../../app/(employee)/[id]/employee/settings/types";
 
 type SettingsTab = "profile" | "shift" | "security" | "notifications";
 
