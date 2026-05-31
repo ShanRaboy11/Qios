@@ -63,18 +63,16 @@ export const StaffProfileModal = ({
       />
 
       <div className="bg-white rounded-[32px] w-full max-w-lg shadow-2xl relative z-10 animate-in fade-in zoom-in-95 duration-200 overflow-hidden flex flex-col max-h-[90vh]">
-        <div className="h-24 bg-gradient-to-r from-[#FFD77A] to-[#FF5269] relative flex-shrink-0">
+        <div className="h-24 bg-gradient-to-r from-[#FFD77A] to-[#FF5269] relative flex-shrink-0 pb-14 overflow-visible">
           <button
             onClick={onClose}
             className="absolute top-4 right-4 p-2 rounded-full bg-black/10 hover:bg-black/20 text-white transition-colors z-50"
           >
             <X size={20} />
           </button>
-        </div>
 
-        <div className="px-8 pt-0 pb-8 overflow-y-auto custom-scrollbar">
-          <div className="flex flex-col items-center -mt-12 mb-6 relative z-20">
-            <div className="p-1.5 bg-white rounded-full shadow-sm mb-3">
+          <div className="absolute left-1/2 bottom-0 -translate-x-1/2 translate-y-1/2 z-20">
+            <div className="p-1.5 bg-white rounded-full shadow-sm">
               <Avatar
                 initials={staff.name}
                 src={staff.avatar}
@@ -88,6 +86,11 @@ export const StaffProfileModal = ({
                 }
               />
             </div>
+          </div>
+        </div>
+
+        <div className="px-8 pt-16 pb-8 overflow-y-auto custom-scrollbar">
+          <div className="flex flex-col items-center mb-6 relative z-10">
             <h2 className="text-2xl font-bold text-text-primary text-center">
               {staff.name}
             </h2>

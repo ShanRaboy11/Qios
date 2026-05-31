@@ -311,41 +311,34 @@ export async function saveEmployeeOperationalSettings(
       ? crypto.createHash("sha256").update(quickPin).digest("hex")
       : null;
 
-    const payload: Record<string, unknown> = {
-      profile_id: user.id,
-      terminal,
-      default_view: defaultView,
-      auto_logoff_minutes: autoLogoffMinutes,
-      sound_queue: toBoolean(
+    const { error } = await admin.rpc("save_employee_operational_settings", {
+      p_profile_id: user.id,
+      p_terminal: terminal,
+      p_default_view: defaultView,
+      p_auto_logoff_minutes: autoLogoffMinutes,
+      p_quick_pin_hash: pinHash,
+      p_sound_queue: toBoolean(
         formData.get("soundQueue"),
         DEFAULT_OPERATIONAL_SETTINGS.soundQueue,
       ),
-      sound_scan: toBoolean(
+      p_sound_scan: toBoolean(
         formData.get("soundScan"),
         DEFAULT_OPERATIONAL_SETTINGS.soundScan,
       ),
-      sound_stock: toBoolean(
+      p_sound_stock: toBoolean(
         formData.get("soundStock"),
         DEFAULT_OPERATIONAL_SETTINGS.soundStock,
       ),
-      notify_email: toBoolean(
+      p_notify_email: toBoolean(
         formData.get("notifyEmail"),
         DEFAULT_OPERATIONAL_SETTINGS.notifyEmail,
       ),
-      notify_push: toBoolean(
+      p_notify_push: toBoolean(
         formData.get("notifyPush"),
         DEFAULT_OPERATIONAL_SETTINGS.notifyPush,
       ),
-      weekly_schedule: parseWeeklySchedule(formData.get("weeklySchedule")),
-    };
-
-    if (pinHash) {
-      payload.quick_pin_hash = pinHash;
-    }
-
-    const { error } = await admin
-      .from("employee_settings")
-      .upsert(payload, { onConflict: "profile_id" });
+      p_weekly_schedule: parseWeeklySchedule(formData.get("weeklySchedule")),
+    });
 
     if (error) {
       throw new Error(error.message);

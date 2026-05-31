@@ -1,8 +1,6 @@
 import nodemailer from "nodemailer";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
-const isDevelopment = process.env.NODE_ENV !== "production";
-
 type SmtpConfig = {
   host: string;
   port: number;
@@ -271,13 +269,6 @@ export async function sendContactSubmissionEmails(input: {
 }) {
   const smtp = await resolveSmtpConfig();
   if (!smtp) {
-    if (isDevelopment) {
-      console.warn(
-        "[contactEmail] SMTP is not configured. Returning success in development mode.",
-      );
-      return { success: true as const };
-    }
-
     return {
       success: false as const,
       reason: "SMTP_NOT_CONFIGURED" as const,
@@ -306,14 +297,6 @@ export async function sendContactSubmissionEmails(input: {
 
     return { success: true as const };
   } catch (error) {
-    if (isDevelopment) {
-      console.warn(
-        "[contactEmail] SMTP send failed in development. Returning success.",
-        error,
-      );
-      return { success: true as const };
-    }
-
     return {
       success: false as const,
       reason: "SMTP_SEND_FAILED" as const,
