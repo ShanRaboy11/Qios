@@ -1,31 +1,61 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
 import { Dropdown } from "@/components/molecules/Dropdown";
+import { StaffEntry } from "./StaffTable";
 
 interface AddStaffModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (staffData: any) => void;
+  roles: { id: string; name: string }[];
+  editingStaff?: StaffEntry | null;
 }
 
-export const AddStaffModal = ({ isOpen, onClose, onSave }: AddStaffModalProps) => {
+export const AddStaffModal = ({ isOpen, onClose, onSave, roles, editingStaff }: AddStaffModalProps) => {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    role: "",
+    appRoleId: "",
     department: "",
+    password: "",
+    status: "Active" as "Active" | "On Leave" | "Suspended",
   });
+
+  useEffect(() => {
+    if (isOpen) {
+      if (editingStaff) {
+        setFormData({
+          name: editingStaff.name,
+          email: editingStaff.email,
+          appRoleId: (editingStaff as any).appRoleId || "",
+          department: editingStaff.department,
+          password: "",
+          status: editingStaff.status,
+        });
+      } else {
+        setFormData({
+          name: "",
+          email: "",
+          appRoleId: "",
+          department: "",
+          password: "",
+          status: "Active",
+        });
+      }
+    }
+  }, [editingStaff, isOpen]);
 
   if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave({ ...formData, id: `staff-${Date.now()}`, status: "Active", lastActive: "Just now" });
-    setFormData({ name: "", email: "", role: "", department: "" });
+    onSave(formData);
     onClose();
   };
+
+  const selectedRoleName = roles.find((r) => r.id === formData.appRoleId)?.name || "";
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
@@ -38,7 +68,9 @@ export const AddStaffModal = ({ isOpen, onClose, onSave }: AddStaffModalProps) =
       {/* modal Content */}
       <div className="bg-white rounded-[24px] w-full max-w-md shadow-2xl relative z-10 animate-in fade-in zoom-in-95 duration-200">
         <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-text-primary">Add New Staff</h2>
+          <h2 className="text-xl font-bold text-text-primary">
+            {editingStaff ? "Edit Staff Profile" : "Add New Staff"}
+          </h2>
           <button 
             onClick={onClose}
             className="p-1 rounded-full hover:bg-gray-100 text-gray-400 hover:text-text-primary transition-colors"
@@ -69,24 +101,50 @@ export const AddStaffModal = ({ isOpen, onClose, onSave }: AddStaffModalProps) =
               placeholder="e.g. jane@qios.com" 
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              required
+              disabled={!!editingStaff}
+              required={!editingStaff}
             />
           </div>
+
+          {!editingStaff && (
+            <div>
+              <label className="block text-sm font-bold text-text-secondary mb-1.5 uppercase tracking-wider">
+                Temporary Password
+              </label>
+              <Input 
+                type="password"
+                placeholder="e.g. Temp123!@#" 
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                required
+              />
+            </div>
+          )}
+
+          {editingStaff && (
+            <div>
+              <Dropdown
+                label="Status"
+                placeholder="Select Status"
+                options={[
+                  { label: "Active", value: "Active" },
+                  { label: "On Leave", value: "On Leave" },
+                  { label: "Suspended", value: "Suspended" },
+                ]}
+                value={formData.status}
+                onSelect={(opt) => setFormData({ ...formData, status: opt.value as any })}
+              />
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-4 mt-2">
             <div>
               <Dropdown
                 label="Role"
                 placeholder="Select Role"
-                options={[
-                  { label: "Manager", value: "Manager" },
-                  { label: "Head Chef", value: "Head Chef" },
-                  { label: "Line Cook", value: "Line Cook" },
-                  { label: "Cashier", value: "Cashier" },
-                  { label: "Server", value: "Server" },
-                ]}
-                value={formData.role}
-                onSelect={(opt) => setFormData({ ...formData, role: opt.value })}
+                options={roles.map((r) => ({ label: r.name, value: r.id }))}
+                value={selectedRoleName}
+                onSelect={(opt) => setFormData({ ...formData, appRoleId: opt.value })}
               />
             </div>
             <div>
@@ -109,7 +167,7 @@ export const AddStaffModal = ({ isOpen, onClose, onSave }: AddStaffModalProps) =
               Cancel
             </Button>
             <Button variant="primary" type="submit">
-              Add Staff
+              {editingStaff ? "Save Changes" : "Add Staff"}
             </Button>
           </div>
         </form>
