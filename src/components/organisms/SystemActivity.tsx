@@ -54,6 +54,14 @@ function roleColor(role: string): BadgeColor {
   return "secondary";
 }
 
+function formatRoleLabel(role: string): string {
+  return role
+    .replace(/[_-]+/g, " ")
+    .trim()
+    .toLowerCase()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
 function actionColor(actionType: string): BadgeColor {
   switch (actionType) {
     case "CREATE":
@@ -97,7 +105,7 @@ function mapRow(row: ActivityLogRow): ActivityData {
       variant: "accent" as AvatarVariant,
     },
     role: {
-      label: row.actor_role,
+      label: formatRoleLabel(row.actor_role),
       color: roleColor(row.actor_role),
       variant: "solid",
     },
@@ -301,7 +309,9 @@ export const SystemActivity = () => {
   const [selectedRole, setSelectedRole] = useState("All Roles");
   const [selectedDate, setSelectedDate] = useState<number | null>(null);
   const [activities, setActivities] = useState<ActivityData[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  const PAGE_SIZE = 15;
 
   const fetchActivities = useCallback(async () => {
     setLoading(true);
@@ -345,6 +355,20 @@ export const SystemActivity = () => {
     fetchActivities();
   }, [fetchActivities]);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedRole, selectedDate]);
+
+  const totalPages = Math.max(1, Math.ceil(activities.length / PAGE_SIZE));
+  const paginatedActivities = activities.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE,
+  );
+
+  useEffect(() => {
+    setCurrentPage((page) => Math.min(page, totalPages));
+  }, [totalPages]);
+
   return (
     <div className="w-full flex flex-col gap-8">
       {/* 1. Top Search and Controls */}
@@ -362,8 +386,10 @@ export const SystemActivity = () => {
           Array.from({ length: 4 }).map((_, idx) => (
             <ActivityCardSkeleton key={`activity-mobile-skeleton-${idx}`} />
           ))
-        ) : activities.length > 0 ? (
-          activities.map((act) => <ActivityCard key={act.id} act={act} />)
+        ) : paginatedActivities.length > 0 ? (
+          paginatedActivities.map((act) => (
+            <ActivityCard key={act.id} act={act} />
+          ))
         ) : (
           <div
             className="rounded-2xl border-2 border-[#E5E5E5] py-10 text-center b4"
@@ -433,8 +459,8 @@ export const SystemActivity = () => {
                     </td>
                   </tr>
                 ))
-              ) : activities.length > 0 ? (
-                activities.map((act) => (
+              ) : paginatedActivities.length > 0 ? (
+                paginatedActivities.map((act) => (
                   <tr
                     key={act.id}
                     className="hover:bg-slate-50 transition-colors"
@@ -497,6 +523,34 @@ export const SystemActivity = () => {
             </tbody>
           </table>
         </div>
+        {!loading && activities.length > 0 && (
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-6 py-4 border-t border-[#E5E5E5] bg-[#FAF7F2]">
+            <p className="text-sm text-text-secondary text-center sm:text-left">
+              Showing {(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, activities.length)} of {activities.length} logs
+            </p>
+            <div className="flex items-center justify-center gap-2">
+              <button
+                type="button"
+                onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-text-primary disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Previous
+              </button>
+              <span className="text-sm font-medium text-text-secondary">
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                type="button"
+                onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+                disabled={currentPage >= totalPages}
+                className="px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-text-primary disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

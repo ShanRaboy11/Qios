@@ -35,6 +35,19 @@ interface TenantProfileBentoGridProps {
   className?: string;
 }
 
+function getRequirementLabel(title: string) {
+  const normalized = title.toLowerCase();
+  if (normalized.includes("bir")) return "BIR Registration";
+  if (normalized.includes("dti")) return "DTI Registration";
+  if (normalized.includes("sec")) return "SEC Registration";
+  if (normalized.includes("mayor")) return "Mayor's Permit";
+  return title;
+}
+
+function isPreviewImage(url: string) {
+  return /\.(png|jpe?g|gif|webp|bmp|svg)(\?|#|$)/i.test(url);
+}
+
 export const TenantProfileBentoGrid = ({
   tenant,
   onUpdateDocumentStatus,
@@ -44,6 +57,8 @@ export const TenantProfileBentoGrid = ({
   const [previewDocument, setPreviewDocument] = useState<{
     url: string;
     title: string;
+    requirement: string;
+    fileName: string;
   } | null>(null);
 
   useEffect(() => {
@@ -260,7 +275,9 @@ export const TenantProfileBentoGrid = ({
                             onClick={() =>
                               setPreviewDocument({
                                 url: doc.url || "",
-                                title: doc.fileName || doc.title,
+                                title: doc.title,
+                                requirement: getRequirementLabel(doc.title),
+                                fileName: doc.fileName || doc.title,
                               })
                             }
                             className="text-[12px] text-text-secondary hover:text-brand-primary font-bold flex items-center gap-1 shrink-0 transition-colors bg-white border border-gray-200 px-2.5 py-1.5 rounded-lg shadow-sm hover:shadow"
@@ -318,17 +335,35 @@ export const TenantProfileBentoGrid = ({
         isOpen={Boolean(previewDocument)}
         onClose={() => setPreviewDocument(null)}
         title={
-          previewDocument ? `Preview: ${previewDocument.title}` : "Preview"
+          previewDocument ? previewDocument.requirement : "Preview"
         }
         className="max-w-5xl md:translate-y-9"
       >
         {previewDocument && (
           <div className="rounded-[24px] border border-gray-200 bg-white overflow-hidden shadow-sm">
-            <iframe
-              src={previewDocument.url}
-              title={previewDocument.title}
-              className="w-full h-[65vh] bg-gray-50"
-            />
+            <div className="border-b border-gray-100 px-5 py-4 text-center">
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-text-secondary">
+                {previewDocument.requirement}
+              </p>
+              <p className="mt-1 text-base font-semibold text-text-primary break-all">
+                {previewDocument.fileName}
+              </p>
+            </div>
+            <div className="bg-gray-50 p-4 md:p-6 overflow-hidden">
+              {isPreviewImage(previewDocument.url) ? (
+                <img
+                  src={previewDocument.url}
+                  alt={previewDocument.fileName}
+                  className="w-full h-[72vh] object-contain bg-white rounded-[18px]"
+                />
+              ) : (
+                <iframe
+                  src={previewDocument.url}
+                  title={previewDocument.fileName}
+                  className="w-full h-[72vh] bg-white rounded-[18px]"
+                />
+              )}
+            </div>
           </div>
         )}
       </Modal>

@@ -3,11 +3,13 @@ import { cn } from "@/lib/utils";
 
 interface AdminDashboardHeaderProps {
   onCompaniesClick?: () => void;
+  onPackagesClick?: () => void;
   isCompaniesActive?: boolean;
 }
 
 export const AdminDashboardHeader = ({
   onCompaniesClick,
+  onPackagesClick,
   isCompaniesActive,
 }: AdminDashboardHeaderProps) => {
   return (
@@ -43,7 +45,10 @@ export const AdminDashboardHeader = ({
           >
             {isCompaniesActive ? "Back to Dashboard" : "Companies"}
           </button>
-          <button className="px-6 py-2.5 rounded-[12px] bg-white text-[#2D2D2D] font-semibold text-[15px] hover:bg-gray-50 transition-colors shadow-sm">
+          <button
+            onClick={onPackagesClick}
+            className="px-6 py-2.5 rounded-[12px] bg-white text-[#2D2D2D] font-semibold text-[15px] hover:bg-gray-50 transition-colors shadow-sm"
+          >
             All Packages
           </button>
         </div>

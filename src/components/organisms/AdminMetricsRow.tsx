@@ -1,6 +1,6 @@
 import React from "react";
 import { AdminKPICard } from "@/components/molecules/AdminKPICard";
-import { Users, Building2, Activity, DollarSign } from "lucide-react";
+import { Users, Building2, Activity } from "lucide-react";
 import type { AdminDashboardMetric } from "@/lib/adminDashboard";
 
 interface AdminMetricsRowProps {
@@ -11,7 +11,9 @@ const metricIcons = [
   <Users size={20} key="companies" />,
   <Building2 size={20} key="active" />,
   <Activity size={20} key="latency" />,
-  <DollarSign size={20} key="earnings" />,
+  <span key="earnings" className="text-[20px] font-black leading-none">
+    ₱
+  </span>,
 ];
 
 export const AdminMetricsRow = ({ metrics }: AdminMetricsRowProps) => {
