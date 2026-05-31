@@ -59,6 +59,8 @@ export async function GET(req: NextRequest) {
   const search = searchParams.get("search")?.trim() ?? "";
   const role = searchParams.get("role")?.trim() ?? "";
   const date = searchParams.get("date")?.trim() ?? "";
+  const hasExplicitPaging =
+    searchParams.has("page") || searchParams.has("limit");
   const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10));
   const limit = Math.min(
     100,
@@ -66,31 +68,77 @@ export async function GET(req: NextRequest) {
   );
   const offset = (page - 1) * limit;
 
-  let query = admin
-    .from("system_activity_logs")
-    .select(
-      `id, actor_id, actor_name, actor_role, action_type, description,
-       target_tenant_id, target_tenant_name, metadata, created_at`,
-      { count: "exact" },
-    )
-    .order("created_at", { ascending: false })
-    .range(offset, offset + limit - 1);
+  const selectClause =
+    "id, actor_id, actor_name, actor_role, action_type, description, target_tenant_id, target_tenant_name, metadata, created_at";
 
-  if (search) {
-    query = query.or(
-      `actor_name.ilike.%${search}%,description.ilike.%${search}%,target_tenant_name.ilike.%${search}%`,
-    );
+  const applyFilters = (
+    query: ReturnType<typeof admin.from<typeof admin.from>>,
+  ) => {
+    let filtered = query;
+
+    if (search) {
+      filtered = filtered.or(
+        `actor_name.ilike.%${search}%,description.ilike.%${search}%,target_tenant_name.ilike.%${search}%`,
+      );
+    }
+
+    if (role && role !== "All Roles") {
+      filtered = filtered.ilike("actor_role", role);
+    }
+
+    if (date) {
+      filtered = filtered
+        .gte("created_at", `${date}T00:00:00.000Z`)
+        .lte("created_at", `${date}T23:59:59.999Z`);
+    }
+
+    return filtered;
+  };
+
+  if (!hasExplicitPaging) {
+    const batchSize = 1000;
+    const allRows: Array<Record<string, unknown>> = [];
+    let start = 0;
+
+    while (true) {
+      let query = applyFilters(
+        admin
+          .from("system_activity_logs")
+          .select(selectClause)
+          .order("created_at", { ascending: false })
+          .range(start, start + batchSize - 1),
+      );
+
+      const { data, error } = await query;
+      if (error) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
+
+      const rows = data ?? [];
+      allRows.push(...rows);
+
+      if (rows.length < batchSize) {
+        break;
+      }
+
+      start += batchSize;
+    }
+
+    return NextResponse.json({
+      data: allRows,
+      total: allRows.length,
+      page: 1,
+      limit: allRows.length,
+    });
   }
 
-  if (role && role !== "All Roles") {
-    query = query.ilike("actor_role", role);
-  }
-
-  if (date) {
-    query = query
-      .gte("created_at", `${date}T00:00:00.000Z`)
-      .lte("created_at", `${date}T23:59:59.999Z`);
-  }
+  let query = applyFilters(
+    admin
+      .from("system_activity_logs")
+      .select(selectClause, { count: "exact" })
+      .order("created_at", { ascending: false })
+      .range(offset, offset + limit - 1),
+  );
 
   const { data, error, count } = await query;
 

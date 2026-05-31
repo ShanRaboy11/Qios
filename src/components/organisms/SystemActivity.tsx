@@ -526,7 +526,9 @@ export const SystemActivity = () => {
         {!loading && activities.length > 0 && (
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-6 py-4 border-t border-[#E5E5E5] bg-[#FAF7F2]">
             <p className="text-sm text-text-secondary text-center sm:text-left">
-              Showing {(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, activities.length)} of {activities.length} logs
+              Showing {(currentPage - 1) * PAGE_SIZE + 1}–
+              {Math.min(currentPage * PAGE_SIZE, activities.length)} of{" "}
+              {activities.length} logs
             </p>
             <div className="flex items-center justify-center gap-2">
               <button
@@ -542,7 +544,9 @@ export const SystemActivity = () => {
               </span>
               <button
                 type="button"
-                onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+                onClick={() =>
+                  setCurrentPage((page) => Math.min(totalPages, page + 1))
+                }
                 disabled={currentPage >= totalPages}
                 className="px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-text-primary disabled:opacity-50 disabled:cursor-not-allowed"
               >

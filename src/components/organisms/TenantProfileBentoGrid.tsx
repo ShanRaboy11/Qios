@@ -60,9 +60,11 @@ export const TenantProfileBentoGrid = ({
     requirement: string;
     fileName: string;
   } | null>(null);
+  const [previewZoom, setPreviewZoom] = useState(1);
 
   useEffect(() => {
     setPreviewDocument(null);
+    setPreviewZoom(1);
   }, [tenant.id]);
 
   const subscriptionStatusColor =
@@ -334,35 +336,73 @@ export const TenantProfileBentoGrid = ({
       <Modal
         isOpen={Boolean(previewDocument)}
         onClose={() => setPreviewDocument(null)}
-        title={
-          previewDocument ? previewDocument.requirement : "Preview"
-        }
-        className="max-w-5xl md:translate-y-9"
+        title={previewDocument ? previewDocument.requirement : "Preview"}
+        className="max-w-4xl w-[min(90vw,52rem)] max-h-[calc(100dvh-2rem)] md:-translate-y-4"
       >
         {previewDocument && (
-          <div className="rounded-[24px] border border-gray-200 bg-white overflow-hidden shadow-sm">
-            <div className="border-b border-gray-100 px-5 py-4 text-center">
-              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-text-secondary">
-                {previewDocument.requirement}
-              </p>
-              <p className="mt-1 text-base font-semibold text-text-primary break-all">
-                {previewDocument.fileName}
-              </p>
+          <div className="flex flex-col overflow-hidden rounded-[24px] border border-gray-200 bg-white shadow-sm">
+            <div className="flex items-center justify-between gap-3 border-b border-gray-100 px-5 py-3">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-text-primary truncate">
+                  {previewDocument.fileName}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setPreviewZoom((zoom) =>
+                      Math.max(0.5, Number((zoom - 0.1).toFixed(1))),
+                    )
+                  }
+                  className="h-9 w-9 rounded-lg border border-gray-200 bg-white text-text-primary font-bold hover:bg-gray-50 transition-colors"
+                  aria-label="Zoom out"
+                >
+                  -
+                </button>
+                <span className="min-w-14 text-center text-sm font-semibold text-text-secondary">
+                  {Math.round(previewZoom * 100)}%
+                </span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setPreviewZoom((zoom) =>
+                      Math.min(2, Number((zoom + 0.1).toFixed(1))),
+                    )
+                  }
+                  className="h-9 w-9 rounded-lg border border-gray-200 bg-white text-text-primary font-bold hover:bg-gray-50 transition-colors"
+                  aria-label="Zoom in"
+                >
+                  +
+                </button>
+              </div>
             </div>
-            <div className="bg-gray-50 p-4 md:p-6 overflow-hidden">
-              {isPreviewImage(previewDocument.url) ? (
-                <img
-                  src={previewDocument.url}
-                  alt={previewDocument.fileName}
-                  className="w-full h-[72vh] object-contain bg-white rounded-[18px]"
-                />
-              ) : (
-                <iframe
-                  src={previewDocument.url}
-                  title={previewDocument.fileName}
-                  className="w-full h-[72vh] bg-white rounded-[18px]"
-                />
-              )}
+            <div className="bg-gray-50 p-3 md:p-4 overflow-hidden flex-1 min-h-0">
+              <div className="flex h-full justify-center overflow-hidden rounded-[18px] bg-white">
+                <div
+                  className="origin-top transition-transform duration-150 ease-out"
+                  style={{
+                    transform: `scale(${previewZoom})`,
+                    width: `${100 / previewZoom}%`,
+                  }}
+                >
+                  {isPreviewImage(previewDocument.url) ? (
+                    <img
+                      src={previewDocument.url}
+                      alt={previewDocument.fileName}
+                      className="block w-full object-contain bg-white"
+                      style={{ height: "min(72vh, calc(100dvh - 16rem))" }}
+                    />
+                  ) : (
+                    <iframe
+                      src={previewDocument.url}
+                      title={previewDocument.fileName}
+                      className="block w-full bg-white border-0"
+                      style={{ height: "min(72vh, calc(100dvh - 16rem))" }}
+                    />
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         )}
