@@ -77,6 +77,7 @@ const DEFAULT_FEATURES: Features = {
   admin_controls: {
     "Admin Authentication": false,
     "Role & Permissions Management": false,
+    "Multi-Branch Management": false,
   },
 };
 
@@ -124,6 +125,8 @@ const FEATURE_DESCRIPTIONS: Record<string, string> = {
   "Admin Authentication": "Secure login for store owners or managers.",
   "Role & Permissions Management":
     "Create accounts, assign roles, and toggle feature access for staff.",
+  "Multi-Branch Management":
+    "Manage multiple store locations and menus from a single profile context.",
 };
 
 const PRESET_COLORS = [

@@ -28,6 +28,7 @@ interface NavbarProps {
   onNavigate?: (view: string) => void;
   className?: string;
   initialEmployeePermissions?: RolePermissions | null;
+  tenantFeatures?: any | null;
 }
 
 export const Navbar = ({
@@ -37,6 +38,7 @@ export const Navbar = ({
   onNavigate,
   className,
   initialEmployeePermissions = null,
+  tenantFeatures = null,
 }: NavbarProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -302,8 +304,14 @@ export const Navbar = ({
       id: "inventory",
     },
     { label: "Staff Management", href: `/${tenantId}/staff`, id: "staff" },
-    { label: "Sales", href: `/${tenantId}/sales`, id: "sales" },
+    ...(tenantFeatures?.analytics?.["Live Revenue Dashboard"] ||
+    tenantFeatures?.analytics?.["Sales Reports Generation"]
+      ? [{ label: "Sales", href: `/${tenantId}/sales`, id: "sales" }]
+      : []),
     { label: "Audit Logs", href: `/${tenantId}/audit_logs`, id: "audit_logs" },
+    ...(tenantFeatures?.admin_controls?.["Multi-Branch Management"]
+      ? [{ label: "Branches", href: `/${tenantId}/branches`, id: "branches" }]
+      : []),
   ];
 
   const employeeLinks = [

@@ -402,7 +402,7 @@ export default function Services() {
         {/* what makes us different */}
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-32 items-center mt-16 md:mt-32">
           <div className="order-2 lg:order-1 relative">
-            <div className="relative rounded-[3rem] overflow-hidden bg-gradient-to-tr from-brand-secondary/40 to-brand-primary/60 aspect-square flex items-center justify-center border border-black/10 p-8 shadow-inner">
+            <div className="relative rounded-[3rem] overflow-hidden bg-bg-primary bg-gradient-to-tr from-brand-secondary/40 to-brand-primary/60 aspect-square flex items-center justify-center border border-black/10 p-8 shadow-inner">
               <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.15] mix-blend-overlay" />
               <div className="relative z-10 bg-white rounded-[2rem] shadow-[0_20px_40px_-12px_rgba(0,0,0,0.15)] p-8 w-full max-w-sm flex flex-col gap-6 transform rotate-[-3deg] hover:rotate-0 transition-all duration-700">
                 <div className="flex items-center justify-between border-b border-gray-100 pb-4">
@@ -506,7 +506,7 @@ export default function Services() {
 
           <div className="relative w-full max-w-4xl mx-auto px-4 [perspective:1200px]">
             {/* decorative quote icon background */}
-            <Quote className="absolute -top-12 -left-6 md:-left-12 w-20 h-20 md:w-24 md:h-24 text-brand-primary/10 -z-10" />
+            <Quote className="absolute -top-12 -left-6 md:-left-12 w-20 h-20 md:w-24 md:h-24 text-brand-primary opacity-20 -z-10" />
 
             {/* tilt card implementation */}
             <div
@@ -547,7 +547,7 @@ export default function Services() {
                     <Avatar
                       initials={testimonials[activeTestimonial].initials}
                       size="lg"
-                      className="rounded-full ring-4 ring-brand-primary/5 border-none"
+                      className="rounded-full ring-4 ring-brand-primary border-none"
                     />
                     <div className="flex flex-col">
                       <span className="b3 text-text-primary">

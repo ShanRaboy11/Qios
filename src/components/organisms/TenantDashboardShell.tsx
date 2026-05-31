@@ -9,9 +9,11 @@ import { usePathname, useRouter, useParams } from "next/navigation";
 export function TenantDashboardShell({
   children,
   storeName,
+  tenantFeatures,
 }: {
   children: React.ReactNode;
   storeName: string;
+  tenantFeatures?: any | null;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -60,6 +62,7 @@ export function TenantDashboardShell({
           type="tenant"
           activeView={currentView}
           onNavigate={handleNavigation}
+          tenantFeatures={tenantFeatures}
         />
       </div>
 
