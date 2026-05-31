@@ -76,6 +76,7 @@ const createTransporter = (config: SmtpConfig) =>
     port: config.port,
     secure: config.secure,
     auth: { user: config.user, pass: config.pass },
+    requireTLS: !config.secure,
     tls: { rejectUnauthorized: false },
   });
 
@@ -279,21 +280,34 @@ export async function sendContactSubmissionEmails(input: {
   const transporter = createTransporter(smtp);
 
   try {
-    await transporter.sendMail({
-      from: smtp.from,
-      to: input.email,
-      replyTo: smtp.from.address,
-      subject: `We received your message — ${input.subject}`,
-      html: buildReceiptHtml(input),
-    });
+    const [receiptResult, notificationResult] = await Promise.allSettled([
+      transporter.sendMail({
+        from: smtp.from,
+        to: input.email,
+        replyTo: smtp.from.address,
+        subject: `We received your message — ${input.subject}`,
+        html: buildReceiptHtml(input),
+      }),
+      transporter.sendMail({
+        from: smtp.from,
+        to: "exceptionhandlers4@gmail.com",
+        replyTo: input.email,
+        subject: `New contact message — ${input.name}`,
+        html: buildNotificationHtml(input),
+      }),
+    ]);
 
-    await transporter.sendMail({
-      from: smtp.from,
-      to: "exceptionhandlers4@gmail.com",
-      replyTo: input.email,
-      subject: `New contact message — ${input.name}`,
-      html: buildNotificationHtml(input),
-    });
+    const failed = [receiptResult, notificationResult].find(
+      (result) => result.status === "rejected",
+    );
+
+    if (failed?.status === "rejected") {
+      return {
+        success: false as const,
+        reason: "SMTP_SEND_FAILED" as const,
+        error: failed.reason,
+      };
+    }
 
     return { success: true as const };
   } catch (error) {

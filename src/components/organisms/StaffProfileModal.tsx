@@ -22,6 +22,28 @@ const defaultWeeklySchedule = [
   { day: "Sunday", enabled: false, start: "09:00", end: "17:00" },
 ];
 
+function formatPhilippineMobileNumber(value?: string) {
+  const digits = (value || "").replace(/\D/g, "");
+
+  if (!digits) {
+    return "";
+  }
+
+  if (digits.startsWith("63") && digits.length >= 12) {
+    return `+${digits.slice(0, 12)}`;
+  }
+
+  if (digits.startsWith("0") && digits.length >= 11) {
+    return `+63${digits.slice(1, 11)}`;
+  }
+
+  if (digits.length === 10) {
+    return `+63${digits}`;
+  }
+
+  return value || "";
+}
+
 interface StaffProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -166,7 +188,7 @@ export const StaffProfileModal = ({
                         Phone Number
                       </div>
                       <div className="text-sm font-medium text-text-primary">
-                        {staff.phoneNumber || "—"}
+                        {formatPhilippineMobileNumber(staff.phoneNumber) || "—"}
                       </div>
                     </div>
                   </div>

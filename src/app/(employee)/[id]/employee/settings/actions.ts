@@ -312,10 +312,17 @@ export async function saveEmployeeOperationalSettings(
       : null;
 
     const { error } = await admin.rpc("save_employee_operational_settings", {
-      p_profile_id: user.id,
-      p_terminal: terminal,
-      p_default_view: defaultView,
       p_auto_logoff_minutes: autoLogoffMinutes,
+      p_default_view: defaultView,
+      p_notify_email: toBoolean(
+        formData.get("notifyEmail"),
+        DEFAULT_OPERATIONAL_SETTINGS.notifyEmail,
+      ),
+      p_notify_push: toBoolean(
+        formData.get("notifyPush"),
+        DEFAULT_OPERATIONAL_SETTINGS.notifyPush,
+      ),
+      p_profile_id: user.id,
       p_quick_pin_hash: pinHash,
       p_sound_queue: toBoolean(
         formData.get("soundQueue"),
@@ -329,14 +336,7 @@ export async function saveEmployeeOperationalSettings(
         formData.get("soundStock"),
         DEFAULT_OPERATIONAL_SETTINGS.soundStock,
       ),
-      p_notify_email: toBoolean(
-        formData.get("notifyEmail"),
-        DEFAULT_OPERATIONAL_SETTINGS.notifyEmail,
-      ),
-      p_notify_push: toBoolean(
-        formData.get("notifyPush"),
-        DEFAULT_OPERATIONAL_SETTINGS.notifyPush,
-      ),
+      p_terminal: terminal,
       p_weekly_schedule: parseWeeklySchedule(formData.get("weeklySchedule")),
     });
 

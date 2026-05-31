@@ -2,17 +2,31 @@
 -- EMPLOYEE SETTINGS UPSERT FUNCTION
 -- =============================================================================
 
+DROP FUNCTION IF EXISTS public.save_employee_operational_settings(
+    INTEGER,
+    TEXT,
+    BOOLEAN,
+    BOOLEAN,
+    UUID,
+    TEXT,
+    BOOLEAN,
+    BOOLEAN,
+    BOOLEAN,
+    TEXT,
+    JSONB
+);
+
 CREATE OR REPLACE FUNCTION public.save_employee_operational_settings(
-    p_profile_id UUID,
-    p_terminal TEXT,
-    p_default_view TEXT,
     p_auto_logoff_minutes INTEGER,
+    p_default_view TEXT,
+    p_notify_email BOOLEAN,
+    p_notify_push BOOLEAN,
+    p_profile_id UUID,
     p_quick_pin_hash TEXT,
     p_sound_queue BOOLEAN,
     p_sound_scan BOOLEAN,
     p_sound_stock BOOLEAN,
-    p_notify_email BOOLEAN,
-    p_notify_push BOOLEAN,
+    p_terminal TEXT,
     p_weekly_schedule JSONB
 )
 RETURNS VOID
@@ -69,15 +83,15 @@ END;
 $$;
 
 GRANT EXECUTE ON FUNCTION public.save_employee_operational_settings(
-    UUID,
-    TEXT,
-    TEXT,
     INTEGER,
     TEXT,
     BOOLEAN,
     BOOLEAN,
+    UUID,
+    TEXT,
     BOOLEAN,
     BOOLEAN,
     BOOLEAN,
+    TEXT,
     JSONB
 ) TO authenticated;
