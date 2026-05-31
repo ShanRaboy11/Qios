@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useContext } from "react";
+import React, { useState, useEffect, useRef, useContext, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/atoms/Button";
 import { ArrowRight, Menu, X, User, LogOut, Settings } from "lucide-react";
@@ -357,6 +357,54 @@ export const Navbar = ({
           ? visibleLinks
           : defaultLinks;
 
+  // ---------------------------------------------------------------------------
+  // Derive the active nav item from the current pathname so that sub-pages
+  // (e.g. /admin/tenants/TEN-001) correctly highlight their parent nav item
+  // instead of falling back to whatever `activeView` prop was last set to.
+  // ---------------------------------------------------------------------------
+  const derivedActiveView = useMemo(() => {
+    if (!pathname) return activeView;
+
+    // Admin route prefix → nav item id mapping.
+    // Add entries here whenever a new admin sub-route is introduced.
+    const adminRouteMap: Record<string, string> = {
+      "/admin/tenants": "tenant_directory",
+      "/admin/tenant_directory": "tenant_directory",
+      "/admin/dashboard": "dashboard",
+      "/admin/subscription": "subscription",
+      "/admin/system_activity": "system_activity",
+    };
+
+    if (type === "admin") {
+      for (const [prefix, id] of Object.entries(adminRouteMap)) {
+        if (pathname === prefix || pathname.startsWith(prefix + "/")) {
+          return id;
+        }
+      }
+    }
+
+    // For tenant / employee types, match against the links list directly.
+    if (type === "tenant" || type === "employee") {
+      // Exact match first
+      const exact = links.find((l) => l.href === pathname);
+      if (exact) return exact.id;
+
+      // Prefix match (handles sub-pages)
+      const prefix = links.find(
+        (l) => l.href !== "/" && pathname.startsWith(l.href + "/"),
+      );
+      if (prefix) return prefix.id;
+    }
+
+    // Default: honour the prop
+    return activeView;
+  }, [pathname, activeView, type, links]);
+
+  const isLinkActive = (link: { id: string; href: string }) => {
+    if (type === "default") return pathname === link.href;
+    return derivedActiveView === link.id;
+  };
+
   return (
     <nav
       ref={navRef}
@@ -418,6 +466,7 @@ export const Navbar = ({
         )}
       </Link>
 
+      {/* Desktop nav */}
       <div
         id="tutorial-nav"
         className={cn(
@@ -441,9 +490,7 @@ export const Navbar = ({
             }}
             className={cn(
               "transition-colors font-inter font-medium text-[18px] shrink-0",
-              ((type === "admin" || type === "tenant" || type === "employee") &&
-                activeView === link.id) ||
-                (type === "default" && pathname === link.href)
+              isLinkActive(link)
                 ? "text-brand-accent"
                 : "text-text-primary hover:text-brand-accent",
             )}
@@ -569,6 +616,7 @@ export const Navbar = ({
         )}
       </div>
 
+      {/* Mobile hamburger */}
       <div className="md:hidden flex items-center relative">
         <button
           type="button"
@@ -590,6 +638,7 @@ export const Navbar = ({
         </button>
       </div>
 
+      {/* Mobile menu */}
       <div
         className={cn(
           "absolute top-full left-0 w-full bg-bg-primary border-t border-white/10 flex flex-col p-6 gap-6 md:hidden z-50 shadow-xl transition-all duration-300 ease-in-out origin-top",
@@ -616,9 +665,7 @@ export const Navbar = ({
             }}
             className={cn(
               "transition-colors font-inter font-medium text-[18px] active:opacity-70",
-              ((type === "admin" || type === "tenant" || type === "employee") &&
-                activeView === link.id) ||
-                (type === "default" && pathname === link.href)
+              isLinkActive(link)
                 ? "text-brand-accent"
                 : "text-text-primary hover:text-brand-accent active:text-brand-accent",
             )}
