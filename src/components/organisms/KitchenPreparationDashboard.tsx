@@ -499,7 +499,7 @@ export default function KitchenPreparationDashboard({
                   </svg>
                 </div>
                 <p className="text-sm font-semibold text-[#633806]">
-                  Kithcen's idle
+                  Kitchen's idle
                 </p>
                 <p className="text-xs text-[#854F0B] leading-relaxed max-w-[180px]">
                   Start a pending order to move it here.
