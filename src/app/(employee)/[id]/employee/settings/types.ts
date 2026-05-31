@@ -17,6 +17,12 @@ export interface EmployeeOperationalSettingsData {
   soundStock: boolean;
   notifyEmail: boolean;
   notifyPush: boolean;
+  weeklySchedule: Array<{
+    day: string;
+    enabled: boolean;
+    start: string;
+    end: string;
+  }>;
 }
 
 export interface EmployeeSettingsPageData {

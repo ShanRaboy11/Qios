@@ -8,11 +8,18 @@ export interface StaffEntry {
   id: string;
   name: string;
   email: string;
+  phoneNumber?: string;
   avatar?: string;
   role: string;
   department: string;
   status: "Active" | "On Leave" | "Suspended";
   lastActive: string;
+  weeklySchedule?: Array<{
+    day: string;
+    enabled: boolean;
+    start: string;
+    end: string;
+  }>;
 }
 
 interface StaffTableProps {
@@ -38,7 +45,9 @@ export const StaffTable = ({
 
   if (data.length === 0) {
     return (
-      <div className={`bg-white rounded-[24px] shadow-sm border border-gray-100 overflow-hidden min-h-[400px] flex items-center justify-center ${className ?? ""}`}>
+      <div
+        className={`bg-white rounded-[24px] shadow-sm border border-gray-100 overflow-hidden min-h-[400px] flex items-center justify-center ${className ?? ""}`}
+      >
         <EmptyState onAction={onClearFilters} />
       </div>
     );
@@ -49,7 +58,9 @@ export const StaffTable = ({
   };
 
   return (
-    <div className={`bg-white rounded-[24px] shadow-sm border border-gray-100 overflow-hidden flex flex-col h-full ${className ?? ""}`}>
+    <div
+      className={`bg-white rounded-[24px] shadow-sm border border-gray-100 overflow-hidden flex flex-col h-full ${className ?? ""}`}
+    >
       <div className="overflow-auto flex-1">
         <table className="w-full text-left border-collapse">
           <thead>

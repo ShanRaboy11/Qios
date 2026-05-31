@@ -519,10 +519,10 @@ export const Navbar = ({
                 <button
                   onClick={() => setIsQrOpen(!isQrOpen)}
                   className={cn(
-                    "p-2 rounded-full border transition-all duration-300 focus:outline-none ring-2 ring-transparent focus:ring-brand-accent/50 hover:bg-brand-accent/10 hover:text-brand-accent",
+                    "p-2 rounded-full border transition-all duration-300 focus:outline-none ring-2 ring-transparent focus:ring-brand-accent/50",
                     isQrOpen
-                      ? "bg-brand-accent text-white border-brand-accent shadow-sm"
-                      : "border-brand-accent/20 text-text-secondary bg-white",
+                      ? "bg-brand-accent text-white border-brand-accent shadow-sm hover:bg-brand-accent hover:text-white"
+                      : "border-brand-accent/20 text-text-secondary bg-white hover:bg-brand-accent/10 hover:text-brand-accent",
                   )}
                   title="Show Store QR"
                 >

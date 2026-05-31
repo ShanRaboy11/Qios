@@ -237,6 +237,7 @@ export default function ContactForm() {
   const [errors, setErrors] = useState<Errors>({});
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   const gradientHeaderStyle = {
     background: "linear-gradient(250deg, #FFD77A 15.53%, #FF5269 84.47%)",
@@ -278,10 +279,28 @@ export default function ContactForm() {
     e.preventDefault();
     if (!validate()) return;
     setLoading(true);
-    // simulate network request
-    await new Promise((r) => setTimeout(r, 1400));
-    setLoading(false);
-    setShowModal(true);
+    setSubmitError("");
+
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Unable to send your message.");
+      }
+
+      setShowModal(true);
+    } catch (error) {
+      setSubmitError(
+        error instanceof Error ? error.message : "Unable to send your message.",
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleReset = () => {
@@ -424,6 +443,11 @@ export default function ContactForm() {
             <div>
               <h2 className="text-[22px] leading-[125%] font-bold font-figtree text-text-primary">
                 Contact Us
+                {submitError && (
+                  <div className="rounded-2xl border border-warning-primary/20 bg-warning-secondary/30 px-4 py-3 text-sm text-warning-primary">
+                    {submitError}
+                  </div>
+                )}
               </h2>
               <p className="b4 text-text-secondary hidden md:block">
                 Fill out the form below and we&apos;ll get back to you shortly.

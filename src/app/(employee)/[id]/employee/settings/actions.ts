@@ -18,6 +18,16 @@ const DEFAULT_OPERATIONAL_SETTINGS = {
   notifyPush: true,
 };
 
+const DEFAULT_WEEKLY_SCHEDULE = [
+  { day: "Monday", enabled: true, start: "09:00", end: "17:00" },
+  { day: "Tuesday", enabled: true, start: "09:00", end: "17:00" },
+  { day: "Wednesday", enabled: true, start: "09:00", end: "17:00" },
+  { day: "Thursday", enabled: true, start: "09:00", end: "17:00" },
+  { day: "Friday", enabled: true, start: "09:00", end: "17:00" },
+  { day: "Saturday", enabled: true, start: "09:00", end: "15:00" },
+  { day: "Sunday", enabled: false, start: "09:00", end: "17:00" },
+];
+
 function emptyActionState(error = "", success = ""): SettingsActionState {
   return {
     error,
@@ -51,6 +61,36 @@ function normalizeAutoLogoff(value: FormDataEntryValue | null) {
 
   const parsed = Number.parseInt(text, 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 10;
+}
+
+function parseWeeklySchedule(value: FormDataEntryValue | null) {
+  if (typeof value !== "string" || !value.trim()) {
+    return DEFAULT_WEEKLY_SCHEDULE;
+  }
+
+  try {
+    const parsed = JSON.parse(value) as Array<{
+      day: string;
+      enabled: boolean;
+      start: string;
+      end: string;
+    }>;
+
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      return DEFAULT_WEEKLY_SCHEDULE;
+    }
+
+    return parsed
+      .map((item) => ({
+        day: String(item.day || "").trim(),
+        enabled: Boolean(item.enabled),
+        start: typeof item.start === "string" ? item.start : "09:00",
+        end: typeof item.end === "string" ? item.end : "17:00",
+      }))
+      .filter((item) => Boolean(item.day));
+  } catch {
+    return DEFAULT_WEEKLY_SCHEDULE;
+  }
 }
 
 async function getEmployeeSettingsContext(tenantId: string) {
@@ -102,10 +142,21 @@ async function getEmployeeSettingsContext(tenantId: string) {
   const { data: employeeSettings } = await admin
     .from("employee_settings")
     .select(
-      "terminal, default_view, auto_logoff_minutes, quick_pin_hash, sound_queue, sound_scan, sound_stock, notify_email, notify_push",
+      "terminal, default_view, auto_logoff_minutes, quick_pin_hash, sound_queue, sound_scan, sound_stock, notify_email, notify_push, weekly_schedule",
     )
     .eq("profile_id", user.id)
     .maybeSingle();
+
+  const weeklySchedule = Array.isArray(employeeSettings?.weekly_schedule)
+    ? employeeSettings.weekly_schedule
+        .map((item: any) => ({
+          day: String(item?.day || "").trim(),
+          enabled: Boolean(item?.enabled),
+          start: typeof item?.start === "string" ? item.start : "09:00",
+          end: typeof item?.end === "string" ? item.end : "17:00",
+        }))
+        .filter((item: { day: string }) => Boolean(item.day))
+    : DEFAULT_WEEKLY_SCHEDULE;
 
   return { supabase, admin, user, profile, roleLabel, employeeSettings };
 }
@@ -154,6 +205,7 @@ export async function getEmployeeSettingsPageData(
       notifyPush:
         employeeSettings?.notify_push ??
         DEFAULT_OPERATIONAL_SETTINGS.notifyPush,
+      weeklySchedule,
     },
   };
 }
@@ -257,6 +309,7 @@ export async function saveEmployeeOperationalSettings(
         formData.get("notifyPush"),
         DEFAULT_OPERATIONAL_SETTINGS.notifyPush,
       ),
+      weekly_schedule: parseWeeklySchedule(formData.get("weeklySchedule")),
     };
 
     if (pinHash) {
