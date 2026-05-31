@@ -16,10 +16,22 @@ export interface StaffMember {
   lastActive: string;
 }
 
+export interface AnalyticsDataPoint {
+  time: string;
+  prepTime: number;
+  orderVolume: number;
+}
+
 export interface StaffDataResult {
   success: boolean;
   staff: StaffMember[];
   roles: { id: string; name: string }[];
+  avgPrepTime?: number;
+  totalCompletedOrders?: number;
+  analytics?: AnalyticsDataPoint[];
+  activeStaffChange?: number;
+  prepTimeChange?: number;
+  completedOrdersChangePercent?: number;
   error?: string;
 }
 
@@ -97,10 +109,207 @@ export async function getStaffData(tenantId: string): Promise<StaffDataResult> {
       };
     });
 
+    // 5. Fetch avg prep time and completed orders
+    const { count: completedOrdersCount } = await admin
+      .from("orders")
+      .select("id", { count: "exact", head: true })
+      .eq("tenant_id", tenantId)
+      .eq("status", "served")
+      .eq("payment_status", "paid");
+
+    const { data: orders } = await admin
+      .from("orders")
+      .select("id, created_at, status")
+      .eq("tenant_id", tenantId);
+
+    const { data: statusLogs } = await admin
+      .from("order_status_logs")
+      .select("order_id, status_change, created_at")
+      .eq("tenant_id", tenantId)
+      .in("status_change", ["preparing", "ready", "served"]);
+
+    // Calculate Average Prep Time
+    const logsMap: Record<string, any[]> = {};
+    if (statusLogs) {
+      for (const log of statusLogs) {
+        if (!logsMap[log.order_id]) {
+          logsMap[log.order_id] = [];
+        }
+        logsMap[log.order_id].push(log);
+      }
+    }
+
+    let totalPrepTimeMs = 0;
+    let prepTimeCount = 0;
+
+    if (orders) {
+      for (const order of orders) {
+        const oLogs = logsMap[order.id];
+        if (!oLogs) continue;
+
+        const preparingLog = oLogs.find((l) => l.status_change === "preparing");
+        const readyLog =
+          oLogs.find((l) => l.status_change === "ready") ||
+          oLogs.find((l) => l.status_change === "served");
+
+        if (readyLog) {
+          const startTime = preparingLog
+            ? new Date(preparingLog.created_at)
+            : new Date(order.created_at);
+          const endTime = new Date(readyLog.created_at);
+          const diffMs = endTime.getTime() - startTime.getTime();
+          if (diffMs > 0 && diffMs < 120 * 60 * 1000) {
+            totalPrepTimeMs += diffMs;
+            prepTimeCount++;
+          }
+        }
+      }
+    }
+
+    const avgPrepTime =
+      prepTimeCount > 0 ? totalPrepTimeMs / prepTimeCount / (60 * 1000) : 0;
+
+    // 6. Generate real analytics data points bucketed by Manila hours (8:00 to 20:00)
+    const analyticsMap: Record<string, { totalTimeMs: number; count: number; volume: number }> = {};
+    for (let h = 8; h <= 20; h++) {
+      const timeLabel = `${h}:00`;
+      analyticsMap[timeLabel] = { totalTimeMs: 0, count: 0, volume: 0 };
+    }
+
+    if (orders) {
+      for (const order of orders) {
+        const orderDate = new Date(order.created_at);
+        const manilaHour = new Intl.DateTimeFormat("en-US", {
+          timeZone: "Asia/Manila",
+          hour: "numeric",
+          hour12: false
+        }).format(orderDate);
+
+        const hourNum = parseInt(manilaHour, 10);
+        if (hourNum >= 8 && hourNum <= 20) {
+          const timeLabel = `${hourNum}:00`;
+          const bucket = analyticsMap[timeLabel];
+          if (bucket) {
+            bucket.volume++;
+
+            const oLogs = logsMap[order.id];
+            if (oLogs) {
+              const preparingLog = oLogs.find((l) => l.status_change === "preparing");
+              const readyLog =
+                oLogs.find((l) => l.status_change === "ready") ||
+                oLogs.find((l) => l.status_change === "served");
+
+              if (readyLog) {
+                const startTime = preparingLog
+                  ? new Date(preparingLog.created_at)
+                  : new Date(order.created_at);
+                const endTime = new Date(readyLog.created_at);
+                const diffMs = endTime.getTime() - startTime.getTime();
+                if (diffMs > 0 && diffMs < 120 * 60 * 1000) {
+                  bucket.totalTimeMs += diffMs;
+                  bucket.count++;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    const analytics: AnalyticsDataPoint[] = Object.keys(analyticsMap).map((time) => {
+      const bucket = analyticsMap[time];
+      const avgPrep = bucket.count > 0 ? (bucket.totalTimeMs / bucket.count) / (60 * 1000) : avgPrepTime;
+      return {
+        time,
+        prepTime: Math.round(avgPrep * 10) / 10,
+        orderVolume: bucket.volume,
+      };
+    });
+
+    // Calculate KPI Trend Values:
+    // 1. activeStaffChange (Active staff created in the last 30 days)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const activeStaffChange = profiles?.filter(
+      (p) => p.status === "Active" && new Date(p.created_at) >= thirtyDaysAgo
+    ).length || 0;
+
+    // Helper to calculate avg prep time for a list of orders
+    const getAvgPrepTimeForOrders = (filteredOrders: any[]) => {
+      let totalTime = 0;
+      let count = 0;
+      for (const order of filteredOrders) {
+        const oLogs = logsMap[order.id];
+        if (!oLogs) continue;
+        const preparingLog = oLogs.find((l) => l.status_change === "preparing");
+        const readyLog =
+          oLogs.find((l) => l.status_change === "ready") ||
+          oLogs.find((l) => l.status_change === "served");
+
+        if (readyLog) {
+          const startTime = preparingLog
+            ? new Date(preparingLog.created_at)
+            : new Date(order.created_at);
+          const endTime = new Date(readyLog.created_at);
+          const diffMs = endTime.getTime() - startTime.getTime();
+          if (diffMs > 0 && diffMs < 120 * 60 * 1000) {
+            totalTime += diffMs;
+            count++;
+          }
+        }
+      }
+      return count > 0 ? (totalTime / count) / (60 * 1000) : 0;
+    };
+
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const fourteenDaysAgo = new Date();
+    fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+
+    const thisWeekOrders = (orders || []).filter(
+      (o) => new Date(o.created_at) >= sevenDaysAgo
+    );
+    const lastWeekOrders = (orders || []).filter((o) => {
+      const d = new Date(o.created_at);
+      return d >= fourteenDaysAgo && d < sevenDaysAgo;
+    });
+
+    const thisWeekAvg = getAvgPrepTimeForOrders(thisWeekOrders);
+    const lastWeekAvg = getAvgPrepTimeForOrders(lastWeekOrders);
+
+    let prepTimeChange = 0;
+    if (thisWeekAvg > 0 && lastWeekAvg > 0) {
+      prepTimeChange = thisWeekAvg - lastWeekAvg;
+    }
+
+    // 3. completedOrdersChangePercent
+    const completedOrdersList = (orders || []).filter((o) => o.status === "served");
+    const thisWeekCompleted = completedOrdersList.filter(
+      (o) => new Date(o.created_at) >= sevenDaysAgo
+    ).length;
+    const lastWeekCompleted = completedOrdersList.filter((o) => {
+      const d = new Date(o.created_at);
+      return d >= fourteenDaysAgo && d < sevenDaysAgo;
+    }).length;
+
+    let completedOrdersChangePercent = 0;
+    if (lastWeekCompleted > 0) {
+      completedOrdersChangePercent =
+        ((thisWeekCompleted - lastWeekCompleted) / lastWeekCompleted) * 100;
+    } else if (thisWeekCompleted > 0) {
+      completedOrdersChangePercent = 100;
+    }
+
     return {
       success: true,
       staff,
       roles: roles?.map((r) => ({ id: r.id, name: r.name })) ?? [],
+      avgPrepTime,
+      totalCompletedOrders: completedOrdersCount || 0,
+      analytics,
+      activeStaffChange,
+      prepTimeChange,
+      completedOrdersChangePercent,
     };
   } catch (error: any) {
     return {

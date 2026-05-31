@@ -576,13 +576,13 @@ export const TransactionTable = ({
             <Button
               variant="outline"
               shape="rounded"
-              className="px-4 py-2.5"
+              className="px-4 py-2.5 border-gray-200 bg-white text-text-primary hover:border-brand-accent hover:bg-brand-accent/10 hover:text-brand-accent focus-visible:border-brand-accent focus-visible:bg-brand-accent/10 focus-visible:text-brand-accent"
               title="Filter"
               onClick={() => setIsFilterOpen((prev) => !prev)}
             >
               <Filter size={16} />
               {filterSummary > 0 ? (
-                <span className="ml-2 rounded-full bg-brand-primary px-2 py-0.5 text-[11px] font-semibold text-brand-accent">
+                <span className="ml-2 rounded-full bg-brand-accent px-2 py-0.5 text-[11px] font-semibold text-white">
                   {filterSummary}
                 </span>
               ) : null}
@@ -689,7 +689,7 @@ export const TransactionTable = ({
           <Button
             variant="outline"
             shape="rounded"
-            className="px-3"
+            className="px-3 border-gray-200 bg-white text-text-primary hover:border-brand-accent hover:bg-brand-accent/10 hover:text-brand-accent focus-visible:border-brand-accent focus-visible:bg-brand-accent/10 focus-visible:text-brand-accent"
             title="Export"
             onClick={() => void exportTransactions()}
             disabled={isDownloading}
@@ -799,17 +799,17 @@ export const TransactionTable = ({
         </span>
         <div className="flex items-center gap-2">
           <button
-            className="px-3 py-1 rounded hover:bg-gray-100 disabled:opacity-50 inline-flex items-center gap-1"
+            className="px-3 py-1 rounded-lg border border-transparent bg-white text-text-secondary transition-colors hover:border-brand-accent hover:bg-brand-accent/10 hover:text-brand-accent disabled:opacity-50 inline-flex items-center gap-1"
             disabled={page <= 1 || isLoading}
             onClick={() => setPage((current) => Math.max(1, current - 1))}
           >
             <ChevronLeft size={14} /> Prev
           </button>
-          <span className="px-3 py-1 rounded bg-gray-50 text-text-primary font-medium">
+          <span className="px-3 py-1 rounded-lg bg-brand-accent/10 text-brand-accent font-medium border border-brand-accent/20">
             {page} / {totalPages}
           </span>
           <button
-            className="px-3 py-1 rounded hover:bg-gray-100 disabled:opacity-50 inline-flex items-center gap-1"
+            className="px-3 py-1 rounded-lg border border-transparent bg-white text-text-secondary transition-colors hover:border-brand-accent hover:bg-brand-accent/10 hover:text-brand-accent disabled:opacity-50 inline-flex items-center gap-1"
             disabled={page >= totalPages || isLoading}
             onClick={() =>
               setPage((current) => Math.min(totalPages, current + 1))

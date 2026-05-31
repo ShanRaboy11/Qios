@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { DollarSign, TrendingUp, ShoppingBag, CreditCard } from "lucide-react";
+import { TrendingUp, ShoppingBag, CreditCard } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatMoney, type SalesMetrics } from "@/lib/salesDashboard";
 
@@ -98,7 +98,7 @@ export const SalesMetricCards = ({
         title="Gross Sales"
         value={formatMoney(metrics.grossSales)}
         trend={metrics.grossTrend}
-        icon={<DollarSign size={24} />}
+        icon={<span className="text-lg font-bold leading-none">₱</span>}
         iconBgColor="bg-green-100"
         iconTextColor="text-green-600"
       />

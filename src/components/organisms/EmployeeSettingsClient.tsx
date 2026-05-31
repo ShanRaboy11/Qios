@@ -262,6 +262,12 @@ export function EmployeeSettingsClient({
     }
   };
 
+  const cancelProfileEdit = () => {
+    setProfileData(initialData.profile);
+    setProfileState(emptySettingsActionState);
+    setProfileEditMode(false);
+  };
+
   const submitPreferences = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!preferencesEditMode) {
@@ -477,29 +483,50 @@ export function EmployeeSettingsClient({
               </div>
 
               <div className="mt-8 pt-6 border-t border-brand-primary/10 flex justify-end gap-3">
-                <Button
-                  type={profileEditMode ? "submit" : "button"}
-                  onClick={
-                    profileEditMode ? undefined : () => setProfileEditMode(true)
-                  }
-                  disabled={profileSaving}
-                  variant="accent"
-                  shape="pill"
-                  className="w-full sm:w-auto h-[50px] px-8 text-base font-bold font-figtree"
-                  leftIcon={
-                    profileSaving ? (
-                      <Loader2 size={18} className="animate-spin opacity-90" />
-                    ) : (
-                      <Pen size={18} className="opacity-90" />
-                    )
-                  }
-                >
-                  {profileEditMode
-                    ? profileSaving
-                      ? "Saving..."
-                      : "Save Profile"
-                    : "Edit Profile"}
-                </Button>
+                {!profileEditMode ? (
+                  <Button
+                    type="button"
+                    onClick={() => setProfileEditMode(true)}
+                    variant="accent"
+                    shape="pill"
+                    className="w-full sm:w-auto h-[50px] px-8 text-base font-bold font-figtree"
+                    leftIcon={<Check size={18} className="opacity-90" />}
+                  >
+                    Edit Profile
+                  </Button>
+                ) : (
+                  <>
+                    <Button
+                      type="button"
+                      onClick={cancelProfileEdit}
+                      variant="outline"
+                      shape="pill"
+                      className="w-full sm:w-auto h-[50px] px-8 text-base font-bold font-figtree"
+                    >
+                      Cancel
+                    </Button>
+
+                    <Button
+                      type="submit"
+                      disabled={profileSaving}
+                      variant="accent"
+                      shape="pill"
+                      className="w-full sm:w-auto h-[50px] px-8 text-base font-bold font-figtree"
+                      leftIcon={
+                        profileSaving ? (
+                          <Loader2
+                            size={18}
+                            className="animate-spin opacity-90"
+                          />
+                        ) : (
+                          <Check size={18} className="opacity-90" />
+                        )
+                      }
+                    >
+                      {profileSaving ? "Saving..." : "Save Changes"}
+                    </Button>
+                  </>
+                )}
               </div>
             </form>
           )}

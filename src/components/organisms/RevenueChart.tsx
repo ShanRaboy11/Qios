@@ -18,11 +18,7 @@ type StackedBarShapeProps = React.ComponentProps<typeof Rectangle> & {
   dataKey?: string;
 };
 
-function StackedBarShape({
-  payload,
-  dataKey,
-  ...props
-}: StackedBarShapeProps) {
+function StackedBarShape({ payload, dataKey, ...props }: StackedBarShapeProps) {
   const isPurchase = dataKey === "purchase";
   const salesValue = payload?.sales ?? 0;
   const purchaseValue = payload?.purchase ?? 0;
@@ -38,7 +34,10 @@ function StackedBarShape({
     ? [4, 4, 0, 0]
     : [0, 0, 0, 0];
 
-  if ((isPurchase && purchaseValue === 0) || (!isPurchase && salesValue === 0)) {
+  if (
+    (isPurchase && purchaseValue === 0) ||
+    (!isPurchase && salesValue === 0)
+  ) {
     return null;
   }
 
@@ -67,6 +66,33 @@ export const RevenueChart = ({
     sales: point.sales,
     purchase: point.purchase ?? 0,
   }));
+
+  const maxSeriesValue = chartData.reduce(
+    (max, point) => Math.max(max, point.sales, point.purchase),
+    0,
+  );
+  const todayAxisMax =
+    period === "today"
+      ? Math.max(10, Math.ceil(maxSeriesValue * 1.25) || 10)
+      : 0;
+  const todayAxisTicks =
+    period === "today"
+      ? [0, Math.ceil(todayAxisMax / 2), todayAxisMax]
+      : undefined;
+
+  const formatAxisCurrency = (value: number) => {
+    const absoluteValue = Math.abs(value);
+
+    if (period === "today" || absoluteValue < 1000) {
+      return `₱${value.toLocaleString("en-PH")}`;
+    }
+
+    if (absoluteValue < 1_000_000) {
+      return `₱${(value / 1000).toFixed(value % 1000 === 0 ? 0 : 1)}k`;
+    }
+
+    return `₱${(value / 1_000_000).toFixed(1)}M`;
+  };
 
   return (
     <div className="bg-white rounded-[24px] shadow-sm border border-gray-100 p-6 flex flex-col h-full w-full font-brand-secondary">
@@ -130,12 +156,18 @@ export const RevenueChart = ({
                 axisLine={false}
                 tickLine={false}
                 tick={{
-                  fill: "#A1A1AA",
+                  fill: "#6B7280",
                   fontSize: 12,
                   fontFamily: "var(--font-brand-secondary, sans-serif)",
                 }}
-                tickFormatter={(value) => `₱${value / 1000}k`}
-                width={50}
+                tickMargin={10}
+                tickCount={5}
+                allowDecimals={false}
+                domain={period === "today" ? [0, todayAxisMax] : [0, "dataMax"]}
+                ticks={todayAxisTicks}
+                tickFormatter={formatAxisCurrency}
+                width={84}
+                interval={0}
               />
               <Tooltip
                 shared={false}
