@@ -430,6 +430,38 @@ export default function ContactForm() {
           </div>
         )}
 
+        {/* error modal */}
+        {submitError && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-text-primary/40 backdrop-blur-sm animate-in fade-in duration-200"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setSubmitError("");
+            }}
+          >
+            <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-md p-10 flex flex-col items-center text-center gap-6 animate-in zoom-in-95 fade-in duration-200">
+              <div className="relative w-16 h-16 rounded-full bg-warning-secondary/40 flex items-center justify-center shadow-lg shadow-warning-primary/15">
+                <AlertCircle className="w-8 h-8 text-warning-primary" />
+              </div>
+
+              <div className="space-y-2">
+                <h3 className="h4 text-text-primary font-figtree font-bold">
+                  Message not sent
+                </h3>
+                <p className="b1 text-text-secondary max-w-sm">{submitError}</p>
+              </div>
+
+              <Button
+                variant="accent"
+                shape="rounded"
+                onClick={() => setSubmitError("")}
+                className="w-full"
+              >
+                Try Again
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* card */}
         <div className="bg-white/80 backdrop-blur-sm rounded-[2rem] border border-brand-primary/20 shadow-xl shadow-brand-primary/5 overflow-hidden">
           {/* card header bar */}
@@ -443,11 +475,6 @@ export default function ContactForm() {
             <div>
               <h2 className="text-[22px] leading-[125%] font-bold font-figtree text-text-primary">
                 Contact Us
-                {submitError && (
-                  <div className="rounded-2xl border border-warning-primary/20 bg-warning-secondary/30 px-4 py-3 text-sm text-warning-primary">
-                    {submitError}
-                  </div>
-                )}
               </h2>
               <p className="b4 text-text-secondary hidden md:block">
                 Fill out the form below and we&apos;ll get back to you shortly.

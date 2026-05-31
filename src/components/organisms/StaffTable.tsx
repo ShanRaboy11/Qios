@@ -9,6 +9,7 @@ export interface StaffEntry {
   name: string;
   email: string;
   phoneNumber?: string;
+  dateJoined?: string;
   avatar?: string;
   role: string;
   department: string;

@@ -200,14 +200,6 @@ export default function BranchesClient({
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <Button
-            variant="outline"
-            shape="rounded"
-            className="border-brand-primary text-brand-primary hover:!bg-brand-primary hover:!border-brand-primary hover:!text-white"
-            onClick={() => router.push(`/${activeTenantId}/dashboard`)}
-          >
-            Back to Dashboard
-          </Button>
-          <Button
             onClick={openCreateModal}
             disabled={creating}
             className="shadow-sm flex items-center gap-2"

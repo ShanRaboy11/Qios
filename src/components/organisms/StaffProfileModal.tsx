@@ -8,7 +8,6 @@ import {
   Phone,
   X,
 } from "lucide-react";
-import { Button } from "@/components/atoms/Button";
 import { Badge } from "@/components/atoms/Badge";
 import { Avatar } from "@/components/atoms/Avatar";
 import { StaffEntry } from "./StaffTable";
@@ -48,6 +47,14 @@ export const StaffProfileModal = ({
     ? staff.weeklySchedule
     : defaultWeeklySchedule;
 
+  const formattedDateJoined = staff.dateJoined
+    ? new Intl.DateTimeFormat("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      }).format(new Date(staff.dateJoined))
+    : "—";
+
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:p-6">
       <div
@@ -65,8 +72,8 @@ export const StaffProfileModal = ({
           </button>
         </div>
 
-        <div className="px-8 pb-8 overflow-y-auto custom-scrollbar">
-          <div className="flex flex-col items-center -mt-12 mb-6 relative z-10">
+        <div className="px-8 pt-6 pb-8 overflow-y-auto custom-scrollbar">
+          <div className="flex flex-col items-center mb-6 relative z-10">
             <div className="p-1.5 bg-white rounded-full shadow-sm mb-3">
               <Avatar
                 initials={staff.name}
@@ -203,7 +210,7 @@ export const StaffProfileModal = ({
                         Date Joined
                       </div>
                       <div className="text-sm font-medium text-text-primary">
-                        Jan 12, 2024
+                        {formattedDateJoined}
                       </div>
                     </div>
                   </div>
@@ -275,29 +282,6 @@ export const StaffProfileModal = ({
                 ))}
               </div>
             </div>
-          )}
-        </div>
-
-        <div className="p-6 border-t border-gray-100 flex justify-end gap-3 bg-white">
-          {activeTab === "profile" ? (
-            <>
-              <Button
-                variant="ghost"
-                className="text-text-secondary"
-                onClick={() => setActiveTab("schedule")}
-              >
-                View Schedule
-              </Button>
-              <Button variant="primary">Edit Profile</Button>
-            </>
-          ) : (
-            <Button
-              variant="ghost"
-              className="text-text-secondary w-full justify-center"
-              onClick={() => setActiveTab("profile")}
-            >
-              Back to Profile
-            </Button>
           )}
         </div>
       </div>

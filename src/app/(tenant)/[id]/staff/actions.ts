@@ -10,6 +10,7 @@ export interface StaffMember {
   name: string;
   email: string;
   phoneNumber: string;
+  dateJoined: string;
   role: string;
   appRoleId?: string;
   department: string;
@@ -152,6 +153,7 @@ export async function getStaffData(tenantId: string): Promise<StaffDataResult> {
         name: p.full_name || "New User",
         email: emailsMap[p.id] || "",
         phoneNumber: p.phone_number || "",
+        dateJoined: p.created_at,
         role: roleDisplay,
         appRoleId: p.app_role_id ?? undefined,
         department: p.department || "Operations",

@@ -61,13 +61,12 @@ export async function POST(req: NextRequest) {
     });
 
     if (!result.success) {
-      return NextResponse.json(
-        {
-          error:
-            "We could not send your message right now. Please try again later.",
-        },
-        { status: 500 },
-      );
+      const message =
+        result.reason === "SMTP_NOT_CONFIGURED"
+          ? "Our contact email service is not configured yet. Please notify support."
+          : "We hit an email delivery issue. Please try again in a few minutes.";
+
+      return NextResponse.json({ error: message }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });

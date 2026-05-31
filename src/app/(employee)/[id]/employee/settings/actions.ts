@@ -158,13 +158,21 @@ async function getEmployeeSettingsContext(tenantId: string) {
         .filter((item: { day: string }) => Boolean(item.day))
     : DEFAULT_WEEKLY_SCHEDULE;
 
-  return { supabase, admin, user, profile, roleLabel, employeeSettings };
+  return {
+    supabase,
+    admin,
+    user,
+    profile,
+    roleLabel,
+    employeeSettings,
+    weeklySchedule,
+  };
 }
 
 export async function getEmployeeSettingsPageData(
   tenantId: string,
 ): Promise<EmployeeSettingsPageData> {
-  const { user, profile, roleLabel, employeeSettings } =
+  const { user, profile, roleLabel, employeeSettings, weeklySchedule } =
     await getEmployeeSettingsContext(tenantId);
 
   return {
