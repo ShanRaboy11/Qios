@@ -1,20 +1,48 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Button } from "@/components/atoms/Button";
+import { Input } from "@/components/atoms/Input";
 import { Badge } from "@/components/atoms/Badge";
-import { Building2, Plus, ArrowRight, Loader2, RefreshCw } from "lucide-react";
+import {
+  Building2,
+  Plus,
+  ArrowRight,
+  Loader2,
+  RefreshCw,
+  X,
+  AlertCircle,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 type Branch = {
   id: string;
-  name: string;
+  name?: string;
   business_name: string;
   status: string;
   created_at: string;
   subscription_plan: string;
 };
+
+function ModalOverlay({
+  onClose,
+  children,
+}: {
+  onClose: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+    >
+      <div onClick={(e) => e.stopPropagation()} className="w-full max-w-lg">
+        {children}
+      </div>
+    </div>
+  );
+}
 
 export default function BranchesClient({
   branches,
@@ -25,8 +53,50 @@ export default function BranchesClient({
 }) {
   const router = useRouter();
   const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [branchName, setBranchName] = useState("");
+  const [branchNameError, setBranchNameError] = useState("");
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState("");
+
+  const normalizedExistingBranchNames = useMemo(
+    () =>
+      branches
+        .map((branch) => branch.business_name || branch.name || "")
+        .filter(Boolean)
+        .map((name) => name.trim().toLowerCase()),
+    [branches],
+  );
+
+  const validateBranchName = (value: string) => {
+    const trimmed = value.trim();
+
+    if (!trimmed) return "Branch name is required.";
+    if (trimmed.length < 2) return "Branch name must be at least 2 characters.";
+    if (trimmed.length > 80)
+      return "Branch name must be 80 characters or less.";
+
+    if (normalizedExistingBranchNames.includes(trimmed.toLowerCase())) {
+      return "A branch with this name already exists.";
+    }
+
+    return "";
+  };
+
+  const openCreateModal = () => {
+    setBranchName("");
+    setBranchNameError("");
+    setError("");
+    setCreateModalOpen(true);
+  };
+
+  const closeCreateModal = () => {
+    if (creating) return;
+
+    setCreateModalOpen(false);
+    setBranchName("");
+    setBranchNameError("");
+  };
 
   const handleSwitch = async (tenantId: string) => {
     if (tenantId === activeTenantId) return;
@@ -50,23 +120,31 @@ export default function BranchesClient({
     }
   };
 
-  const handleCreateBranch = async () => {
-    const branchName = prompt("Enter the name for the new branch:");
-    if (!branchName?.trim()) return;
+  const handleCreateBranch = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const validationMessage = validateBranchName(branchName);
+    if (validationMessage) {
+      setBranchNameError(validationMessage);
+      return;
+    }
 
     setCreating(true);
     setError("");
+    setBranchNameError("");
 
     try {
       const res = await fetch("/api/tenants/create-branch", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ branchName }),
+        body: JSON.stringify({ branchName: branchName.trim() }),
       });
       const data = await res.json();
 
       if (!res.ok) throw new Error(data.error || "Failed to create branch");
 
+      setCreateModalOpen(false);
+      setBranchName("");
       router.push(`/${data.tenantId}/dashboard`);
     } catch (err: any) {
       setError(err.message);
@@ -86,7 +164,7 @@ export default function BranchesClient({
           </p>
         </div>
         <Button
-          onClick={handleCreateBranch}
+          onClick={openCreateModal}
           disabled={creating}
           className="shadow-sm flex items-center gap-2"
         >
@@ -105,6 +183,88 @@ export default function BranchesClient({
         </div>
       )}
 
+      {createModalOpen && (
+        <ModalOverlay onClose={closeCreateModal}>
+          <div className="bg-white rounded-[24px] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between p-5 border-b border-black/5 bg-black/[0.02]">
+              <div>
+                <h3 className="text-xl font-bold text-text-primary">
+                  Add New Branch
+                </h3>
+                <p className="text-sm text-text-secondary mt-1">
+                  Enter a name for the new location.
+                </p>
+              </div>
+              <button
+                onClick={closeCreateModal}
+                className="w-8 h-8 flex items-center justify-center rounded-full bg-black/5 hover:bg-black/10 text-text-secondary transition-colors"
+                type="button"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <form
+              onSubmit={handleCreateBranch}
+              className="p-5 flex flex-col gap-5"
+            >
+              {error && (
+                <div className="bg-red-50 text-red-600 p-3 rounded-xl border border-red-100 flex items-start gap-2">
+                  <AlertCircle size={16} className="mt-0.5 flex-shrink-0" />
+                  <span className="text-sm">{error}</span>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs font-bold text-text-secondary uppercase tracking-widest mb-1.5">
+                  Branch Name
+                </label>
+                <Input
+                  value={branchName}
+                  onChange={(e) => {
+                    setBranchName(e.target.value);
+                    if (branchNameError) {
+                      setBranchNameError(validateBranchName(e.target.value));
+                    }
+                  }}
+                  placeholder="e.g. Main Branch"
+                  isError={Boolean(branchNameError)}
+                  autoFocus
+                />
+                {branchNameError ? (
+                  <p className="mt-1.5 text-xs text-warning-primary">
+                    {branchNameError}
+                  </p>
+                ) : (
+                  <p className="mt-1.5 text-xs text-text-secondary">
+                    This will be used as the business name for the branch.
+                  </p>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-3 pt-1 border-t border-black/5">
+                <Button
+                  variant="outline"
+                  type="button"
+                  onClick={closeCreateModal}
+                  className="border-brand-primary text-brand-primary hover:!bg-brand-primary hover:!border-brand-primary hover:!text-white"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="primary"
+                  type="submit"
+                  disabled={creating}
+                  className="bg-brand-accent hover:bg-brand-accent/90 border-brand-accent text-white"
+                >
+                  {creating ? "Creating..." : "Create Branch"}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </ModalOverlay>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {branches.map((branch) => {
           const isActive = branch.id === activeTenantId;
@@ -117,7 +277,7 @@ export default function BranchesClient({
                 "p-6 rounded-3xl border transition-all duration-300 flex flex-col gap-4",
                 isActive
                   ? "border-brand-primary bg-orange-50/50 shadow-md ring-1 ring-brand-primary/20"
-                  : "border-gray-100 bg-white hover:border-gray-200 hover:shadow-sm"
+                  : "border-gray-100 bg-white hover:border-gray-200 hover:shadow-sm",
               )}
             >
               <div className="flex items-start justify-between gap-4">
@@ -127,7 +287,7 @@ export default function BranchesClient({
                       "w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-inner",
                       isActive
                         ? "bg-brand-primary text-white"
-                        : "bg-gray-100 text-gray-500"
+                        : "bg-gray-100 text-gray-500",
                     )}
                   >
                     <Building2 className="w-6 h-6" />
