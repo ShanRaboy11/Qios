@@ -20,6 +20,33 @@ export interface LogActivityParams {
   metadata?: Record<string, unknown>;
 }
 
+function normalizeActorRole(role: string) {
+  const normalized = role.trim().toLowerCase();
+  if (normalized === "guest") return "Customer";
+  if (normalized === "super admin" || normalized === "super_admin") {
+    return "Super Admin";
+  }
+  return role;
+}
+
+async function resolveTargetTenantName(
+  admin: ReturnType<typeof createSupabaseAdminClient>,
+  targetTenantId?: string,
+  targetTenantName?: string,
+) {
+  const providedName = targetTenantName?.trim();
+  if (providedName) return providedName;
+  if (!targetTenantId) return "Global System";
+
+  const { data } = await admin
+    .from("tenants")
+    .select("business_name")
+    .eq("id", targetTenantId)
+    .maybeSingle();
+
+  return data?.business_name?.trim() || "Unknown Tenant";
+}
+
 /**
  * Writes a system-level activity log entry using the service-role admin client.
  * Call this from API route handlers and server actions after significant mutations.
@@ -41,15 +68,20 @@ export interface LogActivityParams {
 export async function logActivity(params: LogActivityParams): Promise<void> {
   try {
     const admin = createSupabaseAdminClient();
+    const targetTenantName = await resolveTargetTenantName(
+      admin,
+      params.targetTenantId,
+      params.targetTenantName,
+    );
 
     const { error } = await admin.from("system_activity_logs").insert({
       actor_id: params.actorId ?? null,
       actor_name: params.actorName,
-      actor_role: params.actorRole,
+      actor_role: normalizeActorRole(params.actorRole),
       action_type: params.actionType,
       description: params.description,
       target_tenant_id: params.targetTenantId ?? null,
-      target_tenant_name: params.targetTenantName ?? null,
+      target_tenant_name: targetTenantName,
       metadata: params.metadata ?? null,
     });
 

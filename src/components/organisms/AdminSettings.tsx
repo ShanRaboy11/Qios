@@ -752,13 +752,13 @@ const TeamSettings = () => {
 
       <div className="space-y-4">
         <div className="overflow-x-auto rounded-xl border border-gray-100">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-center border-collapse">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-100 text-sm font-medium text-text-secondary">
-                <th className="py-3 px-4 font-medium">User</th>
-                <th className="py-3 px-4 font-medium">Role</th>
-                <th className="py-3 px-4 font-medium">Status</th>
-                <th className="py-3 px-4 font-medium text-right">Actions</th>
+                <th className="py-3 px-4 font-medium text-center">User</th>
+                <th className="py-3 px-4 font-medium text-center">Role</th>
+                <th className="py-3 px-4 font-medium text-center">Status</th>
+                <th className="py-3 px-4 font-medium text-center">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -767,27 +767,27 @@ const TeamSettings = () => {
                   key={admin.id}
                   className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors group"
                 >
-                  <td className="py-4 px-4">
+                  <td className="py-4 px-4 text-left align-middle">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-brand-primary/20 flex items-center justify-center text-brand-accent font-bold uppercase">
+                      <div className="w-10 h-10 rounded-full bg-brand-primary/20 flex items-center justify-center text-brand-accent font-bold uppercase flex-shrink-0">
                         {admin.name.charAt(0)}
                       </div>
-                      <div>
+                      <div className="flex flex-col">
                         <div className="font-medium text-text-primary">
                           {admin.name}
                         </div>
-                        <div className="text-xs text-text-secondary">
+                        <div className="text-xs text-text-secondary text-left">
                           {admin.email}
                         </div>
                       </div>
                     </div>
                   </td>
-                  <td className="py-4 px-4">
+                  <td className="py-4 px-4 text-center">
                     <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-text-secondary">
                       {admin.role}
                     </span>
                   </td>
-                  <td className="py-4 px-4">
+                  <td className="py-4 px-4 text-center">
                     <span
                       className={cn(
                         "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium",
@@ -799,7 +799,7 @@ const TeamSettings = () => {
                       {admin.status}
                     </span>
                   </td>
-                  <td className="py-4 px-4 text-right">
+                  <td className="py-4 px-4 text-center">
                     <button className="text-sm font-medium text-brand-accent hover:text-brand-accent/80 transition-colors">
                       Edit
                     </button>
