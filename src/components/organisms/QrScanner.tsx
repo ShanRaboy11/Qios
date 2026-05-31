@@ -21,6 +21,11 @@ import { triggerScanSound } from "@/lib/sounds";
 
 type ScanState = "idle" | "requesting" | "scanning" | "success" | "error";
 
+const TENANT_MISMATCH_ERROR =
+  "This QR code belongs to another business and cannot be processed here.";
+const PAID_ORDER_ERROR =
+  "This order has already been paid and cannot be processed here.";
+
 interface OrderData {
   id: string;
   tenant_id?: string;
@@ -480,6 +485,9 @@ export const QrScanner = (): JSX.Element => {
   };
 
   const isScanning = scanState === "scanning" || scanState === "requesting";
+  const showTenantMismatchModal = searchError === TENANT_MISMATCH_ERROR;
+  const showPaidOrderModal = searchError === PAID_ORDER_ERROR;
+  const showBlockingErrorModal = showTenantMismatchModal || showPaidOrderModal;
 
   return (
     <>
@@ -1049,6 +1057,7 @@ export const QrScanner = (): JSX.Element => {
 
           {/* search Error Message */}
           {searchError &&
+            !showBlockingErrorModal &&
             (() => {
               const isInfo = searchError.startsWith("ℹ️");
               const isWarning = searchError.startsWith("⚠️");
@@ -1095,6 +1104,61 @@ export const QrScanner = (): JSX.Element => {
             })()}
         </div>
       </div>
+
+      {showBlockingErrorModal && (
+        <div className="fixed inset-0 z-[90] bg-black/55 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-white rounded-[28px] overflow-hidden shadow-2xl border border-black/5">
+            <div className="p-5 border-b border-black/5 flex items-start justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-[0.24em] text-text-secondary font-bold">
+                  {showTenantMismatchModal ? "Scan blocked" : "Payment blocked"}
+                </p>
+                <h3 className="text-xl font-bold text-text-primary mt-1">
+                  {showTenantMismatchModal
+                    ? "Cross-business order"
+                    : "Order already paid"}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSearchError("")}
+                className="w-9 h-9 rounded-full bg-gray-100 text-text-secondary flex items-center justify-center"
+                aria-label="Close error dialog"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-4">
+              <div className="rounded-[20px] bg-red-50 border border-red-100 p-4 flex items-start gap-3">
+                <AlertCircle
+                  size={20}
+                  className="text-red-600 flex-shrink-0 mt-0.5"
+                />
+                <p className="text-sm text-red-700 font-medium leading-6">
+                  {searchError}
+                </p>
+              </div>
+
+              <p className="text-sm text-text-secondary">
+                {showTenantMismatchModal
+                  ? "Ask the customer to present an order from this tenant before continuing."
+                  : "Paid orders cannot be validated again. Ask the customer to provide an unpaid order."}
+              </p>
+
+              <Button
+                type="button"
+                onClick={() => setSearchError("")}
+                variant="primary"
+                shape="pill"
+                className="w-full h-[52px] font-semibold"
+              >
+                Understood
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* order Details Modal */}
       {foundOrder && (
