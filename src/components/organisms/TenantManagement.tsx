@@ -7,14 +7,7 @@ import {
   updateTenantStatus,
 } from "@/app/(admin)/admin/tenants/actions";
 import { useRouter } from "next/navigation";
-import {
-  Search,
-  Building2,
-  Check,
-  Loader2,
-  X,
-  SlidersHorizontal,
-} from "lucide-react";
+import { Search, Building2, Loader2, SlidersHorizontal } from "lucide-react";
 import { FormField } from "@/components/molecules/FormField";
 import { Dropdown } from "@/components/molecules/Dropdown";
 import { Badge } from "@/components/atoms/Badge";
@@ -122,14 +115,17 @@ export default function TenantManagement({
     initialStatusFilter || "All",
   );
   const [typeFilter, setTypeFilter] = useState("All");
+  const [currentPage, setCurrentPage] = useState(1);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const filterRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (initialStatusFilter) {
-      setStatusFilter(initialStatusFilter);
-    }
+    if (initialStatusFilter) setStatusFilter(initialStatusFilter);
   }, [initialStatusFilter]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, typeFilter]);
 
   useEffect(() => {
     if (initialTenants.length > 0) {
@@ -169,19 +165,16 @@ export default function TenantManagement({
       try {
         const fetchedTenants = await getTenants();
         if (!isMounted) return;
-
         setTenants(fetchedTenants);
         updateTenantCache(fetchedTenants);
       } catch (error) {
         console.error("Failed to load tenants", error);
         if (!isMounted) return;
-
         if (hasCachedTenants) {
           setTenantListError(
             "Unable to refresh tenant data right now. Showing last loaded data.",
           );
         } else {
-          // keep the UI usable in local dev even if Supabase is unavailable.
           setTenants(INITIAL_DATA);
           setTenantListError(
             "Live tenant data is unavailable. Showing fallback data.",
@@ -196,7 +189,6 @@ export default function TenantManagement({
     };
 
     loadTenants();
-
     return () => {
       isMounted = false;
     };
@@ -215,7 +207,6 @@ export default function TenantManagement({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // modal State
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
   const [actionType, setActionType] = useState<ActionType | null>(null);
@@ -286,10 +277,28 @@ export default function TenantManagement({
         t.owner.toLowerCase().includes(query);
       const matchesStatus = statusFilter === "All" || t.status === statusFilter;
       const matchesType = typeFilter === "All" || t.type === typeFilter;
-
       return matchesSearch && matchesStatus && matchesType;
     });
   }, [searchTerm, statusFilter, typeFilter, tenants]);
+
+  const itemsPerPage = 10;
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredTenants.length / itemsPerPage),
+  );
+
+  useEffect(() => {
+    setCurrentPage((page) => Math.min(page, totalPages));
+  }, [totalPages]);
+
+  const paginatedTenants = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredTenants.slice(startIndex, startIndex + itemsPerPage);
+  }, [currentPage, filteredTenants]);
+
+  const startItem =
+    filteredTenants.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
+  const endItem = Math.min(currentPage * itemsPerPage, filteredTenants.length);
 
   const stats = useMemo(
     () => ({
@@ -298,48 +307,40 @@ export default function TenantManagement({
       pending: tenants.filter((t) => t.status === "Pending").length,
       suspended: tenants.filter((t) => t.status === "Suspended").length,
       rejected: tenants.filter((t) => t.status === "Rejected").length,
-      onboarding: tenants.filter((t) => t.status === "Onboarding").length,
     }),
     [tenants],
   );
 
   return (
     <div className="w-full mx-auto space-y-4 px-1 pb-10">
-      <div className="flex flex-wrap justify-center items-center gap-x-6 gap-y-4 py-2">
-        <div className="flex items-center gap-2">
-          <span className="b1 text-gray-500">Total:</span>
-          <span className="b1 text-gray-900">{stats.total}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-2.5 h-2.5 bg-green-500 rounded-full" />
-          <span className="b1 text-gray-500">Active:</span>
-          <span className="b1 text-green-900">{stats.active}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-2.5 h-2.5 bg-gray-400 rounded-full" />
-          <span className="b1 text-gray-500">Suspended:</span>
-          <span className="b1 text-gray-900">{stats.suspended}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-2.5 h-2.5 bg-yellow-400 rounded-full" />
-          <span className="b1 text-gray-500">Pending:</span>
-          <span className="b1 text-gray-900">{stats.pending}</span>
+      {/* ── Stats Grid ── */}
+      <div className="grid grid-cols-6 gap-3">
+        {/* Total — spans 2 cols × 2 rows */}
+        <div className="col-span-2 row-span-2 rounded-2xl border border-orange-100 bg-gradient-to-br from-orange-50 via-white to-amber-50 p-5 shadow-sm flex flex-col justify-between">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white ring-1 ring-orange-100 shadow-sm">
+            <Building2 className="h-5 w-5 text-orange-500" />
+          </div>
+          <div>
+            <p className="text-[11px] font-medium uppercase tracking-widest text-orange-400">
+              Total tenants
+            </p>
+            <p className="mt-1 text-4xl font-semibold tracking-tight text-gray-900">
+              {stats.total}
+            </p>
+            <p className="mt-1 text-xs text-gray-500">
+              All registered businesses
+            </p>
+          </div>
         </div>
 
-        <div className="w-2.5 h-2.5 bg-[#ffc670] rounded-full" />
-        <span className="b1 text-gray-500">Onboarding:</span>
-        <span className="b1 text-gray-900">{stats.onboarding}</span>
-
-        <div className="w-2.5 h-2.5 bg-warning-primary rounded-full" />
-        <span className="b1 text-gray-500">Rejected:</span>
-        <span className="b1 text-gray-900">{stats.rejected}</span>
+        {/* Status cards — each spans 2 cols, 2 rows of 2 */}
+        <MetricCard label="Active" value={stats.active} color="emerald" />
+        <MetricCard label="Pending" value={stats.pending} color="amber" />
+        <MetricCard label="Suspended" value={stats.suspended} color="slate" />
+        <MetricCard label="Rejected" value={stats.rejected} color="red" />
       </div>
 
-      <div className="flex items-center gap-2">
-        <div className="flex items-center gap-2"></div>
-      </div>
-
-      {/* search and Filters */}
+      {/* ── Search & Filters ── */}
       <div className="mt-5 flex flex-col md:flex-row items-stretch md:items-end gap-3 w-full">
         <div className="flex-1">
           <FormField
@@ -401,7 +402,6 @@ export default function TenantManagement({
                   className="w-full"
                 />
               </div>
-
               <div>
                 <Dropdown
                   label="Plan"
@@ -421,7 +421,7 @@ export default function TenantManagement({
         </div>
       </div>
 
-      {/* tenant List */}
+      {/* ── Tenant List ── */}
       <div className="flex flex-col gap-3 mt-3">
         {tenantListError && (
           <div className="rounded-2xl border border-warning-primary/20 bg-warning-primary/5 px-4 py-3 text-sm text-warning-primary">
@@ -445,7 +445,7 @@ export default function TenantManagement({
         )}
 
         {!isLoadingTenants &&
-          filteredTenants.map((tenant) => (
+          paginatedTenants.map((tenant) => (
             <TenantCard
               key={tenant.id}
               tenant={tenant}
@@ -453,14 +453,48 @@ export default function TenantManagement({
               onPrefetch={prefetchTenantDetails}
             />
           ))}
+
         {!isLoadingTenants && filteredTenants.length === 0 && (
           <div className="text-center py-12 text-gray-400 bg-white rounded-2xl border border-dashed">
             No tenants found matching your search and filters.
           </div>
         )}
+
+        {!isLoadingTenants && filteredTenants.length > 0 && (
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-2xl border border-gray-100 bg-white px-4 py-3 shadow-sm">
+            <p className="text-sm text-gray-500">
+              Showing {startItem}–{endItem} of {filteredTenants.length} tenants
+            </p>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </Button>
+              <span className="min-w-[84px] text-center text-sm font-medium text-gray-700">
+                Page {currentPage} of {totalPages}
+              </span>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setCurrentPage((p) => Math.min(totalPages, p + 1))
+                }
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* confirmation Modal */}
+      {/* ── Confirmation Modal ── */}
       {modalOpen && selectedTenant && actionType && (
         <ConfirmationModal
           tenant={selectedTenant}
@@ -474,6 +508,64 @@ export default function TenantManagement({
     </div>
   );
 }
+
+// ─── MetricCard ────────────────────────────────────────────────────────────────
+
+const colorMap = {
+  emerald: {
+    dot: "bg-emerald-500",
+    card: "border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-white",
+    title: "text-emerald-600",
+  },
+  amber: {
+    dot: "bg-amber-500",
+    card: "border-amber-100 bg-gradient-to-br from-amber-50 via-white to-white",
+    title: "text-amber-600",
+  },
+  slate: {
+    dot: "bg-slate-400",
+    card: "border-slate-200 bg-gradient-to-br from-slate-50 via-white to-white",
+    title: "text-slate-600",
+  },
+  red: {
+    dot: "bg-red-500",
+    card: "border-red-100 bg-gradient-to-br from-red-50 via-white to-white",
+    title: "text-red-600",
+  },
+};
+
+function MetricCard({
+  label,
+  value,
+  color,
+}: {
+  label: string;
+  value: number;
+  color: keyof typeof colorMap;
+}) {
+  const { dot, card, title } = colorMap[color];
+
+  return (
+    <div className={cn("col-span-2 rounded-2xl border p-4 shadow-sm", card)}>
+      <div className="flex items-center justify-between mb-2">
+        <p
+          className={cn(
+            "text-[11px] font-medium uppercase tracking-widest",
+            title,
+          )}
+        >
+          {label}
+        </p>
+        <span className={cn("h-2 w-2 rounded-full flex-shrink-0", dot)} />
+      </div>
+      <p className="text-3xl font-semibold tracking-tight text-gray-900">
+        {value}
+      </p>
+    </div>
+  );
+}
+
+// ─── TenantCardSkeleton ────────────────────────────────────────────────────────
 
 function TenantCardSkeleton() {
   return (
@@ -489,6 +581,8 @@ function TenantCardSkeleton() {
     </div>
   );
 }
+
+// ─── TenantCard ───────────────────────────────────────────────────────────────
 
 function TenantCard({
   tenant,
@@ -507,12 +601,10 @@ function TenantCard({
       onFocus={() => onPrefetch(tenant.id)}
       className="group w-full text-left bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4 transition-all duration-200 hover:shadow-md hover:border-orange-200 hover:-translate-y-px"
     >
-      {/* logo */}
       <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-orange-300 via-orange-300 to-amber-200 rounded-2xl flex items-center justify-center border-[1.5px] border-white shadow-sm flex-shrink-0">
         <Building2 className="w-5 h-5 sm:w-6 sm:h-6 text-white opacity-90" />
       </div>
 
-      {/* left info: name + plan badge + owner */}
       <div className="flex flex-col gap-0.5 min-w-0 flex-1">
         <div className="flex items-center gap-2 flex-wrap">
           <h3 className="text-gray-900 text-base sm:text-lg font-semibold tracking-tight truncate group-hover:text-brand-accent transition-colors">
@@ -536,7 +628,6 @@ function TenantCard({
         </span>
       </div>
 
-      {/* right: status on top, joined date below */}
       <div className="flex flex-col items-end gap-1 flex-shrink-0 text-right">
         <div className="flex items-center gap-1.5">
           <div
@@ -569,6 +660,8 @@ function TenantCard({
     </button>
   );
 }
+
+// ─── ConfirmationModal ────────────────────────────────────────────────────────
 
 function ConfirmationModal({
   tenant,
