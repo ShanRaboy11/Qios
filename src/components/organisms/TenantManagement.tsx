@@ -548,7 +548,12 @@ function MetricCard({
   return (
     <div className={cn("col-span-2 rounded-2xl border p-4 shadow-sm", card)}>
       <div className="flex items-center justify-between mb-2">
-        <p className={cn("text-[11px] font-medium uppercase tracking-widest", title)}>
+        <p
+          className={cn(
+            "text-[11px] font-medium uppercase tracking-widest",
+            title,
+          )}
+        >
           {label}
         </p>
         <span className={cn("h-2 w-2 rounded-full flex-shrink-0", dot)} />

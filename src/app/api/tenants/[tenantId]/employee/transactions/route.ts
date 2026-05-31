@@ -55,6 +55,32 @@ function buildTransactions(orders: OrderRow[]) {
   });
 }
 
+function buildTransactionSearchText(
+  order: OrderRow,
+  transaction: ReturnType<typeof buildTransactions>[number],
+) {
+  return [
+    order.id,
+    order.qr_hash ?? "",
+    order.status,
+    order.payment_status,
+    order.payment_method ?? "",
+    String(order.total_price ?? ""),
+    order.created_at,
+    order.table_number ?? "",
+    transaction.orderNumber,
+    transaction.date,
+    transaction.time,
+    transaction.items,
+    transaction.method,
+    transaction.status,
+    transaction.paymentStatus,
+    String(transaction.total),
+  ]
+    .join(" ")
+    .toLowerCase();
+}
+
 // ---------------------------------------------------------------------------
 // GET /api/tenants/[tenantId]/employee/transactions
 // ---------------------------------------------------------------------------
@@ -120,12 +146,6 @@ export async function GET(
       .eq("tenant_id", tenantId)
       .order("created_at", { ascending: false });
 
-    if (search) {
-      query = query.or(
-        `qr_hash.ilike.%${search}%,table_number.ilike.%${search}%`,
-      );
-    }
-
     if (status && status !== "all") {
       query = query.eq("status", status);
     }
@@ -134,7 +154,7 @@ export async function GET(
       query = query.eq("payment_status", paymentStatus);
     }
 
-    if (includeAll) {
+    if (includeAll || search) {
       query = query.range(0, 9999);
     } else {
       const offset = (page - 1) * limit;
@@ -170,7 +190,22 @@ export async function GET(
     );
 
     const transactions = buildTransactions(normalised);
-    const total = count ?? 0;
+    const searchTerm = search.toLowerCase();
+    const filteredTransactions = search
+      ? transactions.filter((transaction, index) =>
+          buildTransactionSearchText(normalised[index], transaction).includes(
+            searchTerm,
+          ),
+        )
+      : transactions;
+
+    const offset = (page - 1) * limit;
+    const paginatedTransactions = includeAll
+      ? filteredTransactions
+      : search
+        ? filteredTransactions.slice(offset, offset + limit)
+        : transactions;
+    const total = search ? filteredTransactions.length : (count ?? 0);
 
     // fetch tenant business name so employees can export proper header
     const { data: tenant } = await admin
@@ -182,10 +217,10 @@ export async function GET(
     return NextResponse.json({
       businessName:
         typeof tenant?.business_name === "string" ? tenant.business_name : "",
-      data: transactions,
+      data: paginatedTransactions,
       total,
       page: includeAll ? 1 : page,
-      limit: includeAll ? Math.max(transactions.length, 1) : limit,
+      limit: includeAll ? Math.max(paginatedTransactions.length, 1) : limit,
     });
   } catch (err) {
     const message =

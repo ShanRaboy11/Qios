@@ -115,8 +115,8 @@ function buildSeries(
       key,
       label: new Intl.DateTimeFormat("en-US", {
         timeZone: "Asia/Manila",
-        month: "short",
-        day: "numeric",
+        month: "2-digit",
+        day: "2-digit",
       }).format(cursor),
       sales: 0,
       purchase: 0,
@@ -139,9 +139,15 @@ function buildSeries(
 }
 
 function mergePurchasesIntoSeries(
-  series: Array<{ key?: string; label: string; sales: number; orders: number; purchase?: number; }>,
+  series: Array<{
+    key?: string;
+    label: string;
+    sales: number;
+    orders: number;
+    purchase?: number;
+  }>,
   purchases: Array<{ created_at: string; total_cost: number | string }>,
-  period: SalesPeriod
+  period: SalesPeriod,
 ) {
   if (period === "today") {
     for (const p of purchases) {
@@ -157,19 +163,30 @@ function mergePurchasesIntoSeries(
         slot.purchase = (slot.purchase ?? 0) + toNumber(p.total_cost);
       }
     }
-    return series.map(({ label, sales, purchase, orders }) => ({ label, sales, purchase, orders }));
+    return series.map(({ label, sales, purchase, orders }) => ({
+      label,
+      sales,
+      purchase,
+      orders,
+    }));
   }
 
   const lookup = new Map(series.map((s, i) => [s.key, i]));
-  
+
   for (const p of purchases) {
     const key = getManilaDateKey(p.created_at);
     const index = lookup.get(key);
     if (index !== undefined) {
-      series[index].purchase = (series[index].purchase ?? 0) + toNumber(p.total_cost);
+      series[index].purchase =
+        (series[index].purchase ?? 0) + toNumber(p.total_cost);
     }
   }
-  return series.map(({ label, sales, purchase, orders }) => ({ label, sales, purchase, orders }));
+  return series.map(({ label, sales, purchase, orders }) => ({
+    label,
+    sales,
+    purchase,
+    orders,
+  }));
 }
 
 function buildTopItems(
@@ -273,6 +290,32 @@ function buildTransactions(orders: OrderRow[]) {
   });
 }
 
+function buildTransactionSearchText(
+  order: OrderRow,
+  transaction: ReturnType<typeof buildTransactions>[number],
+) {
+  return [
+    order.id,
+    order.qr_hash ?? "",
+    order.status,
+    order.payment_status,
+    order.payment_method ?? "",
+    String(order.total_price ?? ""),
+    order.created_at,
+    order.table_number ?? "",
+    transaction.orderNumber,
+    transaction.date,
+    transaction.time,
+    transaction.items,
+    transaction.method,
+    transaction.status,
+    transaction.paymentStatus,
+    String(transaction.total),
+  ]
+    .join(" ")
+    .toLowerCase();
+}
+
 async function getOverview(
   admin: ReturnType<typeof createSupabaseAdminClient>,
   tenantId: string,
@@ -281,17 +324,22 @@ async function getOverview(
   const { currentStartIso, currentEndIso, previousStartIso, previousEndIso } =
     getPeriodRange(period);
 
-  const [tenantResult, currentResult, previousResult, categoriesResult, purchaseLogsResult] =
-    await Promise.all([
-      admin
-        .from("tenants")
-        .select("business_name")
-        .eq("id", tenantId)
-        .maybeSingle(),
-      admin
-        .from("orders")
-        .select(
-          `
+  const [
+    tenantResult,
+    currentResult,
+    previousResult,
+    categoriesResult,
+    purchaseLogsResult,
+  ] = await Promise.all([
+    admin
+      .from("tenants")
+      .select("business_name")
+      .eq("id", tenantId)
+      .maybeSingle(),
+    admin
+      .from("orders")
+      .select(
+        `
         id,
         qr_hash,
         status,
@@ -311,15 +359,15 @@ async function getOverview(
           )
         )
       `,
-        )
-        .eq("tenant_id", tenantId)
-        .gte("created_at", currentStartIso)
-        .lte("created_at", currentEndIso)
-        .order("created_at", { ascending: false }),
-      admin
-        .from("orders")
-        .select(
-          `
+      )
+      .eq("tenant_id", tenantId)
+      .gte("created_at", currentStartIso)
+      .lte("created_at", currentEndIso)
+      .order("created_at", { ascending: false }),
+    admin
+      .from("orders")
+      .select(
+        `
         id,
         qr_hash,
         status,
@@ -339,19 +387,19 @@ async function getOverview(
           )
         )
       `,
-        )
-        .eq("tenant_id", tenantId)
-        .gte("created_at", previousStartIso)
-        .lte("created_at", previousEndIso)
-        .order("created_at", { ascending: false }),
-      admin.from("categories").select("id, name").eq("tenant_id", tenantId),
-      admin
-        .from("inventory_purchase_logs")
-        .select("total_cost, created_at")
-        .eq("tenant_id", tenantId)
-        .gte("created_at", currentStartIso)
-        .lte("created_at", currentEndIso),
-    ]);
+      )
+      .eq("tenant_id", tenantId)
+      .gte("created_at", previousStartIso)
+      .lte("created_at", previousEndIso)
+      .order("created_at", { ascending: false }),
+    admin.from("categories").select("id, name").eq("tenant_id", tenantId),
+    admin
+      .from("inventory_purchase_logs")
+      .select("total_cost, created_at")
+      .eq("tenant_id", tenantId)
+      .gte("created_at", currentStartIso)
+      .lte("created_at", currentEndIso),
+  ]);
 
   // Supabase returns nested relation arrays for joined rows. Normalize the shape
   // so `order_items.menu_items` is a single object (or null) to match `OrderRow`.
@@ -371,20 +419,27 @@ async function getOverview(
       // `menu_items` may be returned as an array; take the first item if present.
       menu_items: Array.isArray(it.menu_items)
         ? it.menu_items[0]
-        : it.menu_items ?? null,
+        : (it.menu_items ?? null),
     })),
   });
 
-  const currentOrders = (currentResult.data ?? []).map((row: any) => normalizeOrder(row)) as OrderRow[];
-  const previousOrders = (previousResult.data ?? []).map((row: any) => normalizeOrder(row)) as OrderRow[];
+  const currentOrders = (currentResult.data ?? []).map((row: any) =>
+    normalizeOrder(row),
+  ) as OrderRow[];
+  const previousOrders = (previousResult.data ?? []).map((row: any) =>
+    normalizeOrder(row),
+  ) as OrderRow[];
   const categoryMap = new Map<string, string>(
     (categoriesResult.data ?? []).map((row: { id: string; name: string }) => [
       row.id,
       row.name,
     ]),
   );
-  
-  const purchases = (purchaseLogsResult.data ?? []) as { created_at: string; total_cost: number | string }[];
+
+  const purchases = (purchaseLogsResult.data ?? []) as {
+    created_at: string;
+    total_cost: number | string;
+  }[];
 
   const currentPaidOrders = currentOrders.filter(
     (order) => order.payment_status === "paid",
@@ -449,7 +504,7 @@ async function getOverview(
         currentEndIso,
       ) as any,
       purchases,
-      period
+      period,
     ),
     topItems: buildTopItems(currentOrders, previousOrders, categoryMap),
   };
@@ -491,12 +546,6 @@ async function getTransactions(
     .eq("tenant_id", tenantId)
     .order("created_at", { ascending: false });
 
-  if (search) {
-    query = query.or(
-      `qr_hash.ilike.%${search}%,table_number.ilike.%${search}%`,
-    );
-  }
-
   if (status && status !== "all") {
     query = query.eq("status", status);
   }
@@ -509,7 +558,7 @@ async function getTransactions(
     query = query.eq("payment_status", paymentStatus);
   }
 
-  if (includeAll) {
+  if (includeAll || search) {
     query = query.range(0, 9999);
   } else {
     const offset = (page - 1) * limit;
@@ -536,16 +585,35 @@ async function getTransactions(
       id: String(it.id),
       quantity: Number(it.quantity ?? 0),
       unit_price: it.unit_price ?? null,
-      menu_items: Array.isArray(it.menu_items) ? it.menu_items[0] : it.menu_items ?? null,
+      menu_items: Array.isArray(it.menu_items)
+        ? it.menu_items[0]
+        : (it.menu_items ?? null),
     })),
   });
 
-  const normalized = (data ?? []).map((row: any) => normalizeOrderForList(row)) as OrderRow[];
+  const normalized = (data ?? []).map((row: any) =>
+    normalizeOrderForList(row),
+  ) as OrderRow[];
   const transactions = buildTransactions(normalized);
+  const searchTerm = search.toLowerCase();
+  const filteredTransactions = search
+    ? transactions.filter((transaction, index) =>
+        buildTransactionSearchText(normalized[index], transaction).includes(
+          searchTerm,
+        ),
+      )
+    : transactions;
+
+  const offset = (page - 1) * limit;
+  const paginatedTransactions = includeAll
+    ? filteredTransactions
+    : search
+      ? filteredTransactions.slice(offset, offset + limit)
+      : transactions;
 
   return {
-    data: transactions,
-    total: count ?? 0,
+    data: paginatedTransactions,
+    total: search ? filteredTransactions.length : (count ?? 0),
   };
 }
 
