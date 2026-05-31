@@ -89,6 +89,7 @@ function actionColor(actionType: string): BadgeColor {
       return "info";
     case "DELETE":
     case "REFUND":
+    case "REJECT":
       return "error";
     case "LOGIN":
     case "LOGOUT":
@@ -116,6 +117,12 @@ function formatTimestamp(iso: string): string {
 }
 
 function mapRow(row: ActivityLogRow): ActivityData {
+  const actionType =
+    row.action_type === "DELETE" &&
+    row.description?.toLowerCase().includes("reject")
+      ? "REJECT"
+      : row.action_type;
+
   return {
     id: row.id,
     user: {
@@ -129,8 +136,8 @@ function mapRow(row: ActivityLogRow): ActivityData {
       variant: "solid",
     },
     action: {
-      label: row.action_type,
-      color: actionColor(row.action_type),
+      label: actionType,
+      color: actionColor(actionType),
     },
     description: row.description,
     targetEstablishment: formatTargetEstablishment(row),

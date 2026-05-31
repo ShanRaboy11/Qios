@@ -9,6 +9,7 @@ import {
   Loader2,
   Lock,
   Mail,
+  Pen,
   Shield,
   Sliders,
   Smartphone,
@@ -25,12 +26,12 @@ import {
   saveEmployeeOperationalSettings,
   saveEmployeeProfileSettings,
   updateEmployeePassword,
-} from "./actions";
+} from "../../app/(employee)/[id]/employee/settings/actions";
 import {
   emptySettingsActionState,
   type EmployeeSettingsPageData,
   type SettingsActionState,
-} from "./types";
+} from "../../app/(employee)/[id]/employee/settings/types";
 
 type SettingsTab = "profile" | "shift" | "security" | "notifications";
 
@@ -371,8 +372,8 @@ export function EmployeeSettingsClient({
               type="button"
               className={`flex items-center gap-3 px-4 py-3.5 rounded-[16px] b2 font-semibold transition-all duration-300 whitespace-nowrap ${
                 activeTab === tab.id
-                  ? "bg-brand-accent/10 text-brand-accent shadow-sm border border-brand-accent/20"
-                  : "text-text-secondary hover:text-brand-accent hover:bg-brand-primary/5 border border-transparent"
+                  ? "bg-brand-accent text-white shadow-sm border border-brand-accent/20"
+                  : "bg-white text-text-secondary hover:text-brand-accent hover:bg-brand-primary/5 border border-transparent"
               }`}
             >
               {tab.icon}
@@ -678,7 +679,7 @@ export function EmployeeSettingsClient({
                     preferencesSaving ? (
                       <Loader2 size={18} className="animate-spin opacity-90" />
                     ) : (
-                      <Check size={18} className="opacity-90" />
+                      <Pen size={18} className="opacity-90" />
                     )
                   }
                 >
@@ -901,7 +902,7 @@ export function EmployeeSettingsClient({
                     securitySaving ? (
                       <Loader2 size={18} className="animate-spin opacity-90" />
                     ) : (
-                      <Check size={18} className="opacity-90" />
+                      <Pen size={18} className="opacity-90" />
                     )
                   }
                 >
@@ -1075,7 +1076,7 @@ export function EmployeeSettingsClient({
                     preferencesSaving ? (
                       <Loader2 size={18} className="animate-spin opacity-90" />
                     ) : (
-                      <Check size={18} className="opacity-90" />
+                      <Pen size={18} className="opacity-90" />
                     )
                   }
                 >
