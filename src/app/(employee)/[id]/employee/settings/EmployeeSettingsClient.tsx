@@ -4,6 +4,8 @@ import React, { useEffect, useState } from "react";
 import {
   Bell,
   Check,
+  Eye,
+  EyeOff,
   Loader2,
   Lock,
   Mail,
@@ -78,15 +80,6 @@ function SettingsMessage({ state }: { state: SettingsActionState }) {
     );
   }
 
-  if (state.success) {
-    return (
-      <div className="flex items-center gap-2 w-full text-green-700 bg-green-50 border border-green-100 rounded-xl px-4 py-3">
-        <Check className="h-4 w-4 shrink-0" />
-        <p className="text-sm font-medium">{state.success}</p>
-      </div>
-    );
-  }
-
   return null;
 }
 
@@ -117,9 +110,13 @@ export function EmployeeSettingsClient({
   const [profileSaving, setProfileSaving] = useState(false);
   const [securitySaving, setSecuritySaving] = useState(false);
   const [preferencesSaving, setPreferencesSaving] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [saveFlash, setSaveFlash] = useState<string>("");
   const passwordStrength = validatePassword(newPassword);
 
   useEffect(() => {
@@ -132,6 +129,16 @@ export function EmployeeSettingsClient({
     setSecurityState(emptySettingsActionState);
     setPreferencesState(emptySettingsActionState);
   }, [initialData]);
+
+  useEffect(() => {
+    if (!saveFlash) return;
+
+    const timeout = window.setTimeout(() => {
+      setSaveFlash("");
+    }, 3500);
+
+    return () => window.clearTimeout(timeout);
+  }, [saveFlash]);
 
   // Sound playback: synthesize tones via WebAudio and listen for global events.
   useEffect(() => {
@@ -247,6 +254,7 @@ export function EmployeeSettingsClient({
 
       if (result.success) {
         setProfileEditMode(false);
+        setSaveFlash(result.success);
       }
     } finally {
       setProfileSaving(false);
@@ -289,6 +297,7 @@ export function EmployeeSettingsClient({
       if (result.success) {
         setPreferencesEditMode(false);
         setOperationalData((previous) => ({ ...previous, quickPin: "" }));
+        setSaveFlash(result.success);
       }
     } finally {
       setPreferencesSaving(false);
@@ -323,6 +332,7 @@ export function EmployeeSettingsClient({
         setCurrentPassword("");
         setNewPassword("");
         setConfirmPassword("");
+        setSaveFlash(result.success);
       }
     } finally {
       setSecuritySaving(false);
@@ -339,6 +349,12 @@ export function EmployeeSettingsClient({
       </header>
 
       <div className="flex flex-col lg:flex-row gap-8 items-start">
+        {saveFlash && (
+          <div className="fixed bottom-6 right-6 z-50 max-w-sm rounded-2xl border border-green-200 bg-green-50 px-4 py-3 shadow-lg text-green-800 flex items-start gap-3">
+            <Check className="mt-0.5 h-4 w-4 shrink-0" />
+            <p className="text-sm font-medium leading-6">{saveFlash}</p>
+          </div>
+        )}
         <div className="w-full lg:w-64 flex flex-row lg:flex-col gap-1.5 overflow-x-auto lg:overflow-visible pb-3 lg:pb-0 border-b lg:border-b-0 lg:border-r border-brand-primary/10 pr-0 lg:pr-6 shrink-0 scrollbar-none">
           {tabs.map((tab) => (
             <button
@@ -675,43 +691,106 @@ export function EmployeeSettingsClient({
                     <label className="b4 text-text-secondary font-bold uppercase tracking-wider font-inter ml-1">
                       Current Password
                     </label>
-                    <Input
-                      type="password"
-                      placeholder="••••••••"
-                      value={currentPassword}
-                      onChange={(event) =>
-                        setCurrentPassword(event.target.value)
-                      }
-                      required
-                    />
+                    <div className="relative">
+                      <Input
+                        type={showCurrentPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        value={currentPassword}
+                        onChange={(event) =>
+                          setCurrentPassword(event.target.value)
+                        }
+                        className="pr-11"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setShowCurrentPassword((previous) => !previous)
+                        }
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-brand-accent transition-colors"
+                        aria-label={
+                          showCurrentPassword
+                            ? "Hide current password"
+                            : "Show current password"
+                        }
+                      >
+                        {showCurrentPassword ? (
+                          <EyeOff size={18} />
+                        ) : (
+                          <Eye size={18} />
+                        )}
+                      </button>
+                    </div>
                   </div>
 
                   <div className="space-y-2">
                     <label className="b4 text-text-secondary font-bold uppercase tracking-wider font-inter ml-1">
                       New Password
                     </label>
-                    <Input
-                      type="password"
-                      placeholder="••••••••"
-                      value={newPassword}
-                      onChange={(event) => setNewPassword(event.target.value)}
-                      required
-                    />
+                    <div className="relative">
+                      <Input
+                        type={showNewPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        value={newPassword}
+                        onChange={(event) => setNewPassword(event.target.value)}
+                        className="pr-11"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setShowNewPassword((previous) => !previous)
+                        }
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-brand-accent transition-colors"
+                        aria-label={
+                          showNewPassword
+                            ? "Hide new password"
+                            : "Show new password"
+                        }
+                      >
+                        {showNewPassword ? (
+                          <EyeOff size={18} />
+                        ) : (
+                          <Eye size={18} />
+                        )}
+                      </button>
+                    </div>
                   </div>
 
                   <div className="space-y-2">
                     <label className="b4 text-text-secondary font-bold uppercase tracking-wider font-inter ml-1">
                       Confirm New Password
                     </label>
-                    <Input
-                      type="password"
-                      placeholder="••••••••"
-                      value={confirmPassword}
-                      onChange={(event) =>
-                        setConfirmPassword(event.target.value)
-                      }
-                      required
-                    />
+                    <div className="relative">
+                      <Input
+                        type={showConfirmPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        value={confirmPassword}
+                        onChange={(event) =>
+                          setConfirmPassword(event.target.value)
+                        }
+                        className="pr-11"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setShowConfirmPassword((previous) => !previous)
+                        }
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-brand-accent transition-colors"
+                        aria-label={
+                          showConfirmPassword
+                            ? "Hide confirm password"
+                            : "Show confirm password"
+                        }
+                      >
+                        {showConfirmPassword ? (
+                          <EyeOff size={18} />
+                        ) : (
+                          <Eye size={18} />
+                        )}
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
