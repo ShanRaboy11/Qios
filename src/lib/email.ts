@@ -18,7 +18,7 @@ type SmtpConfig = {
 // ─── Brand Tokens ─────────────────────────────────────────────────────────────
 // sourced from globals.css / kds design tokens
 
-const B = {
+export const B = {
   gold: "#ffd77a", // --kds-gold / --color-brand-secondary
   goldSoft: "#fff3da", // --kds-gold-soft
   goldMid: "#c07a00", // --kds-gold-mid
@@ -78,7 +78,7 @@ const readSmtpConfig = (): SmtpConfig | null => {
   };
 };
 
-const createTransporter = (config: SmtpConfig) =>
+export const createTransporter = (config: SmtpConfig) =>
   nodemailer.createTransport({
     host: config.host,
     port: config.port,
@@ -92,7 +92,7 @@ const createTransporter = (config: SmtpConfig) =>
 /**
  * Resolve SMTP config from DB (platform_settings) with field-by-field and complete fallbacks to environment variables.
  */
-const resolveSmtpConfig = async (): Promise<SmtpConfig | null> => {
+export const resolveSmtpConfig = async (): Promise<SmtpConfig | null> => {
   const envConfig = readSmtpConfig();
 
   try {
@@ -199,7 +199,7 @@ const brandFontFace = brandFontSrc
 /**
  * Outer page shell. Warm parchment background, centred card, global footer.
  */
-const emailWrapper = (body: string) =>
+export const emailWrapper = (body: string) =>
   `
 <!DOCTYPE html>
 <html lang="en">
@@ -304,7 +304,7 @@ const headerBlobs = `
 // ─── Header ───────────────────────────────────────────────────────────────────
 // pill* params are explicit so callers never guess at colours.
 
-const brandHeader = ({
+export const brandHeader = ({
   title,
   subtitle,
   pillLabel,
@@ -336,7 +336,7 @@ ${headerBlobs}
 
 // ─── Footer row ───────────────────────────────────────────────────────────────
 
-const emailFooter = (note: string) => `
+export const emailFooter = (note: string) => `
 <tr>
   <td style="background:linear-gradient(160deg,${B.cream} 0%,${B.creamDark} 100%);
              border-top:1px solid ${B.border};padding:20px 40px;">
@@ -346,7 +346,7 @@ const emailFooter = (note: string) => `
 
 // ─── Divider ──────────────────────────────────────────────────────────────────
 
-const divider = `
+export const divider = `
 <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin:20px 0;">
   <tr><td style="border-top:1px solid ${B.border};"></td></tr>
 </table>`;

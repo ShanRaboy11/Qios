@@ -29,6 +29,7 @@ export function TenantDashboardShell({
   if (pathname.includes("/roles")) currentView = "roles";
   if (pathname.includes("/sales")) currentView = "sales";
   if (pathname.includes("/audit_logs")) currentView = "audit_logs";
+  if (pathname.includes("/branches")) currentView = "branches";
 
   const handleNavigation = (view: string) => {
     if (view === currentView) return;

@@ -100,6 +100,16 @@ export default function IngredientsInventory() {
     );
   }, [items, activeTab, searchQuery]);
 
+  const measurementCount = useMemo(
+    () => items.filter((item) => item.inventory_mode === "measurement").length,
+    [items],
+  );
+
+  const unitCount = useMemo(
+    () => items.filter((item) => item.inventory_mode === "unit").length,
+    [items],
+  );
+
   const handleOpenAddModal = () => {
     setDraftItem({
       name: "",
@@ -249,7 +259,7 @@ export default function IngredientsInventory() {
           )}
         >
           <Scale size={18} />
-          Measurement Based
+          Measurement Based ({measurementCount})
         </button>
         <button
           onClick={() => setActiveTab("unit")}
@@ -261,7 +271,7 @@ export default function IngredientsInventory() {
           )}
         >
           <Package size={18} />
-          Unit Based
+          Unit Based ({unitCount})
         </button>
       </div>
 

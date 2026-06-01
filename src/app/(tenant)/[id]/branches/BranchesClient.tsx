@@ -198,18 +198,20 @@ export default function BranchesClient({
             Manage and switch between your enterprise locations seamlessly.
           </p>
         </div>
-        <Button
-          onClick={openCreateModal}
-          disabled={creating}
-          className="shadow-sm flex items-center gap-2"
-        >
-          {creating ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <Plus className="w-4 h-4" />
-          )}
-          Add New Branch
-        </Button>
+        <div className="flex flex-wrap items-center gap-3">
+          <Button
+            onClick={openCreateModal}
+            disabled={creating}
+            className="shadow-sm flex items-center gap-2"
+          >
+            {creating ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Plus className="w-4 h-4" />
+            )}
+            Add New Branch
+          </Button>
+        </div>
       </div>
 
       {error && (

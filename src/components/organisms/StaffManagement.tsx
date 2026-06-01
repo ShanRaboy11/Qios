@@ -44,7 +44,8 @@ export default function StaffManagement() {
   const [analyticsData, setAnalyticsData] = useState<AnalyticsDataPoint[]>([]);
   const [activeStaffChange, setActiveStaffChange] = useState<number>(0);
   const [prepTimeChange, setPrepTimeChange] = useState<number>(0);
-  const [completedOrdersChangePercent, setCompletedOrdersChangePercent] = useState<number>(0);
+  const [completedOrdersChangePercent, setCompletedOrdersChangePercent] =
+    useState<number>(0);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedStaffProfile, setSelectedStaffProfile] =
     useState<StaffEntry | null>(null);
@@ -121,7 +122,7 @@ export default function StaffManagement() {
           formData.name,
           formData.appRoleId,
           formData.department,
-          formData.status
+          formData.status,
         );
         if (res.success) {
           await loadData();
@@ -135,7 +136,7 @@ export default function StaffManagement() {
           formData.email,
           formData.appRoleId,
           formData.department,
-          formData.password
+          formData.password,
         );
         if (res.success) {
           await loadData();
@@ -160,7 +161,9 @@ export default function StaffManagement() {
   };
 
   const handleDeactivate = async (id: string) => {
-    if (confirm("Are you sure you want to suspend/deactivate this staff member?")) {
+    if (
+      confirm("Are you sure you want to suspend/deactivate this staff member?")
+    ) {
       setIsLoading(true);
       try {
         const res = await deactivateStaffMember(tenantId, id);
@@ -178,7 +181,10 @@ export default function StaffManagement() {
   };
 
   const handleResetPassword = async (id: string) => {
-    const newPassword = prompt("Enter a new temporary password for this staff member:", "Temp123!@#");
+    const newPassword = prompt(
+      "Enter a new temporary password for this staff member:",
+      "Temp123!@#",
+    );
     if (newPassword === null) return; // user cancelled
 
     if (newPassword.trim().length < 8) {
@@ -218,10 +224,13 @@ export default function StaffManagement() {
           </div>
           <div
             className={`text-xs mt-2 font-medium ${
-              activeStaffChange >= 0 ? "text-success-primary" : "text-error-primary"
+              activeStaffChange >= 0
+                ? "text-success-primary"
+                : "text-error-primary"
             }`}
           >
-            {activeStaffChange >= 0 ? "↑" : "↓"} {Math.abs(activeStaffChange)} from last month
+            {activeStaffChange >= 0 ? "↑" : "↓"} {Math.abs(activeStaffChange)}{" "}
+            from last month
           </div>
         </div>
         <div className="bg-white p-5 rounded-[24px] shadow-sm border border-gray-100">
@@ -233,10 +242,13 @@ export default function StaffManagement() {
           </div>
           <div
             className={`text-xs mt-2 font-medium ${
-              prepTimeChange <= 0 ? "text-success-primary" : "text-error-primary"
+              prepTimeChange >= 0
+                ? "text-success-primary"
+                : "text-error-primary"
             }`}
           >
-            {prepTimeChange <= 0 ? "↓" : "↑"} {Math.abs(prepTimeChange).toFixed(1)}m from last week
+            {prepTimeChange >= 0 ? "↑" : "↓"}{" "}
+            {Math.abs(prepTimeChange).toFixed(1)}m from last week
           </div>
         </div>
         <div className="bg-white p-5 rounded-[24px] shadow-sm border border-gray-100">
@@ -248,10 +260,13 @@ export default function StaffManagement() {
           </div>
           <div
             className={`text-xs mt-2 font-medium ${
-              completedOrdersChangePercent >= 0 ? "text-success-primary" : "text-error-primary"
+              completedOrdersChangePercent >= 0
+                ? "text-success-primary"
+                : "text-error-primary"
             }`}
           >
-            {completedOrdersChangePercent >= 0 ? "↑" : "↓"} {Math.round(Math.abs(completedOrdersChangePercent))}% from last week
+            {completedOrdersChangePercent >= 0 ? "↑" : "↓"}{" "}
+            {Math.round(Math.abs(completedOrdersChangePercent))}% from last week
           </div>
         </div>
         <div className="bg-white p-5 rounded-[24px] shadow-sm border border-gray-100">
@@ -259,7 +274,8 @@ export default function StaffManagement() {
             Labor Cost
           </div>
           <div className="text-2xl font-bold text-text-primary">
-            ₱{staffData
+            ₱
+            {staffData
               .filter((s) => s.status === "Active")
               .reduce((total, s) => {
                 const role = s.role.toLowerCase();

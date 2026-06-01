@@ -18,6 +18,16 @@ const DEFAULT_OPERATIONAL_SETTINGS = {
   notifyPush: true,
 };
 
+const DEFAULT_WEEKLY_SCHEDULE = [
+  { day: "Monday", enabled: true, start: "09:00", end: "17:00" },
+  { day: "Tuesday", enabled: true, start: "09:00", end: "17:00" },
+  { day: "Wednesday", enabled: true, start: "09:00", end: "17:00" },
+  { day: "Thursday", enabled: true, start: "09:00", end: "17:00" },
+  { day: "Friday", enabled: true, start: "09:00", end: "17:00" },
+  { day: "Saturday", enabled: true, start: "09:00", end: "15:00" },
+  { day: "Sunday", enabled: false, start: "09:00", end: "17:00" },
+];
+
 function emptyActionState(error = "", success = ""): SettingsActionState {
   return {
     error,
@@ -51,6 +61,36 @@ function normalizeAutoLogoff(value: FormDataEntryValue | null) {
 
   const parsed = Number.parseInt(text, 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 10;
+}
+
+function parseWeeklySchedule(value: FormDataEntryValue | null) {
+  if (typeof value !== "string" || !value.trim()) {
+    return DEFAULT_WEEKLY_SCHEDULE;
+  }
+
+  try {
+    const parsed = JSON.parse(value) as Array<{
+      day: string;
+      enabled: boolean;
+      start: string;
+      end: string;
+    }>;
+
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      return DEFAULT_WEEKLY_SCHEDULE;
+    }
+
+    return parsed
+      .map((item) => ({
+        day: String(item.day || "").trim(),
+        enabled: Boolean(item.enabled),
+        start: typeof item.start === "string" ? item.start : "09:00",
+        end: typeof item.end === "string" ? item.end : "17:00",
+      }))
+      .filter((item) => Boolean(item.day));
+  } catch {
+    return DEFAULT_WEEKLY_SCHEDULE;
+  }
 }
 
 async function getEmployeeSettingsContext(tenantId: string) {
@@ -99,21 +139,64 @@ async function getEmployeeSettingsContext(tenantId: string) {
     }
   }
 
-  const { data: employeeSettings } = await admin
+  let { data: employeeSettings, error: employeeSettingsError } = await admin
     .from("employee_settings")
     .select(
-      "terminal, default_view, auto_logoff_minutes, quick_pin_hash, sound_queue, sound_scan, sound_stock, notify_email, notify_push",
+      "terminal, default_view, auto_logoff_minutes, quick_pin_hash, sound_queue, sound_scan, sound_stock, notify_email, notify_push, weekly_schedule",
     )
     .eq("profile_id", user.id)
     .maybeSingle();
 
-  return { supabase, admin, user, profile, roleLabel, employeeSettings };
+  if (
+    employeeSettingsError?.message?.includes("weekly_schedule") ||
+    employeeSettingsError?.message?.includes("schema cache")
+  ) {
+    const fallback = await admin
+      .from("employee_settings")
+      .select(
+        "terminal, default_view, auto_logoff_minutes, quick_pin_hash, sound_queue, sound_scan, sound_stock, notify_email, notify_push",
+      )
+      .eq("profile_id", user.id)
+      .maybeSingle();
+    employeeSettings = fallback.data
+      ? {
+          ...fallback.data,
+          weekly_schedule: null,
+        }
+      : null;
+    employeeSettingsError = fallback.error;
+  }
+
+  if (employeeSettingsError) {
+    throw new Error(employeeSettingsError.message);
+  }
+
+  const weeklySchedule = Array.isArray(employeeSettings?.weekly_schedule)
+    ? employeeSettings.weekly_schedule
+        .map((item: any) => ({
+          day: String(item?.day || "").trim(),
+          enabled: Boolean(item?.enabled),
+          start: typeof item?.start === "string" ? item.start : "09:00",
+          end: typeof item?.end === "string" ? item.end : "17:00",
+        }))
+        .filter((item: { day: string }) => Boolean(item.day))
+    : DEFAULT_WEEKLY_SCHEDULE;
+
+  return {
+    supabase,
+    admin,
+    user,
+    profile,
+    roleLabel,
+    employeeSettings,
+    weeklySchedule,
+  };
 }
 
 export async function getEmployeeSettingsPageData(
   tenantId: string,
 ): Promise<EmployeeSettingsPageData> {
-  const { user, profile, roleLabel, employeeSettings } =
+  const { user, profile, roleLabel, employeeSettings, weeklySchedule } =
     await getEmployeeSettingsContext(tenantId);
 
   return {
@@ -154,6 +237,7 @@ export async function getEmployeeSettingsPageData(
       notifyPush:
         employeeSettings?.notify_push ??
         DEFAULT_OPERATIONAL_SETTINGS.notifyPush,
+      weeklySchedule,
     },
   };
 }
@@ -232,40 +316,34 @@ export async function saveEmployeeOperationalSettings(
       ? crypto.createHash("sha256").update(quickPin).digest("hex")
       : null;
 
-    const payload: Record<string, unknown> = {
-      profile_id: user.id,
-      terminal,
-      default_view: defaultView,
-      auto_logoff_minutes: autoLogoffMinutes,
-      sound_queue: toBoolean(
-        formData.get("soundQueue"),
-        DEFAULT_OPERATIONAL_SETTINGS.soundQueue,
-      ),
-      sound_scan: toBoolean(
-        formData.get("soundScan"),
-        DEFAULT_OPERATIONAL_SETTINGS.soundScan,
-      ),
-      sound_stock: toBoolean(
-        formData.get("soundStock"),
-        DEFAULT_OPERATIONAL_SETTINGS.soundStock,
-      ),
-      notify_email: toBoolean(
+    const { error } = await admin.rpc("save_employee_operational_settings", {
+      p_auto_logoff_minutes: autoLogoffMinutes,
+      p_default_view: defaultView,
+      p_notify_email: toBoolean(
         formData.get("notifyEmail"),
         DEFAULT_OPERATIONAL_SETTINGS.notifyEmail,
       ),
-      notify_push: toBoolean(
+      p_notify_push: toBoolean(
         formData.get("notifyPush"),
         DEFAULT_OPERATIONAL_SETTINGS.notifyPush,
       ),
-    };
-
-    if (pinHash) {
-      payload.quick_pin_hash = pinHash;
-    }
-
-    const { error } = await admin
-      .from("employee_settings")
-      .upsert(payload, { onConflict: "profile_id" });
+      p_profile_id: user.id,
+      p_quick_pin_hash: pinHash,
+      p_sound_queue: toBoolean(
+        formData.get("soundQueue"),
+        DEFAULT_OPERATIONAL_SETTINGS.soundQueue,
+      ),
+      p_sound_scan: toBoolean(
+        formData.get("soundScan"),
+        DEFAULT_OPERATIONAL_SETTINGS.soundScan,
+      ),
+      p_sound_stock: toBoolean(
+        formData.get("soundStock"),
+        DEFAULT_OPERATIONAL_SETTINGS.soundStock,
+      ),
+      p_terminal: terminal,
+      p_weekly_schedule: parseWeeklySchedule(formData.get("weeklySchedule")),
+    });
 
     if (error) {
       throw new Error(error.message);

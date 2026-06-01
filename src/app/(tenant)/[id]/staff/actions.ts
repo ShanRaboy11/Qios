@@ -9,11 +9,19 @@ export interface StaffMember {
   id: string;
   name: string;
   email: string;
+  phoneNumber: string;
+  dateJoined: string;
   role: string;
   appRoleId?: string;
   department: string;
   status: "Active" | "On Leave" | "Suspended";
   lastActive: string;
+  weeklySchedule: Array<{
+    day: string;
+    enabled: boolean;
+    start: string;
+    end: string;
+  }>;
 }
 
 export interface AnalyticsDataPoint {
@@ -47,12 +55,19 @@ export async function getStaffData(tenantId: string): Promise<StaffDataResult> {
     // 1. Fetch profiles for this tenant
     const { data: profiles, error: profilesError } = await admin
       .from("profiles")
-      .select("id, full_name, role, app_role_id, department, status, created_at")
+      .select(
+        "id, full_name, role, app_role_id, department, status, created_at, phone_number",
+      )
       .eq("tenant_id", tenantId)
       .order("created_at", { ascending: false });
 
     if (profilesError) {
-      return { success: false, staff: [], roles: [], error: profilesError.message };
+      return {
+        success: false,
+        staff: [],
+        roles: [],
+        error: profilesError.message,
+      };
     }
 
     // 2. Fetch roles for this tenant
@@ -62,14 +77,32 @@ export async function getStaffData(tenantId: string): Promise<StaffDataResult> {
       .eq("tenant_id", tenantId);
 
     if (rolesError) {
-      return { success: false, staff: [], roles: [], error: rolesError.message };
+      return {
+        success: false,
+        staff: [],
+        roles: [],
+        error: rolesError.message,
+      };
     }
 
-    const rolesMap = new Map<string, string>(roles?.map((r) => [r.id, r.name]) ?? []);
+    const rolesMap = new Map<string, string>(
+      roles?.map((r) => [r.id, r.name]) ?? [],
+    );
 
     // 3. Fetch emails for these profiles
     const uniqueProfileIds = Array.from(new Set(profiles.map((p) => p.id)));
     const emailsMap: Record<string, string> = {};
+    const weeklyScheduleMap: Record<string, StaffMember["weeklySchedule"]> = {};
+
+    const defaultWeeklySchedule = [
+      { day: "Monday", enabled: true, start: "09:00", end: "17:00" },
+      { day: "Tuesday", enabled: true, start: "09:00", end: "17:00" },
+      { day: "Wednesday", enabled: true, start: "09:00", end: "17:00" },
+      { day: "Thursday", enabled: true, start: "09:00", end: "17:00" },
+      { day: "Friday", enabled: true, start: "09:00", end: "17:00" },
+      { day: "Saturday", enabled: true, start: "09:00", end: "15:00" },
+      { day: "Sunday", enabled: false, start: "09:00", end: "17:00" },
+    ];
 
     if (uniqueProfileIds.length > 0) {
       const userFetches = await Promise.all(
@@ -77,12 +110,46 @@ export async function getStaffData(tenantId: string): Promise<StaffDataResult> {
           admin.auth.admin
             .getUserById(id)
             .then((res) => res.data?.user?.email ?? "")
-            .catch(() => "")
-        )
+            .catch(() => ""),
+        ),
       );
 
       uniqueProfileIds.forEach((id, idx) => {
         emailsMap[id] = userFetches[idx];
+      });
+
+      let { data: employeeSettings, error: employeeSettingsError } = await admin
+        .from("employee_settings")
+        .select("profile_id, weekly_schedule")
+        .in("profile_id", uniqueProfileIds);
+
+      if (
+        employeeSettingsError?.message?.includes("weekly_schedule") ||
+        employeeSettingsError?.message?.includes("schema cache")
+      ) {
+        const fallback = await admin
+          .from("employee_settings")
+          .select("profile_id")
+          .in("profile_id", uniqueProfileIds);
+        employeeSettings = fallback.data
+          ? fallback.data.map((row) => ({
+              profile_id: row.profile_id,
+              weekly_schedule: null,
+            }))
+          : null;
+      }
+
+      (employeeSettings ?? []).forEach((row) => {
+        weeklyScheduleMap[row.profile_id] = Array.isArray(row.weekly_schedule)
+          ? row.weekly_schedule
+              .map((item: any) => ({
+                day: String(item?.day || "").trim(),
+                enabled: Boolean(item?.enabled),
+                start: typeof item?.start === "string" ? item.start : "09:00",
+                end: typeof item?.end === "string" ? item.end : "17:00",
+              }))
+              .filter((item: { day: string }) => Boolean(item.day))
+          : defaultWeeklySchedule;
       });
     }
 
@@ -101,11 +168,14 @@ export async function getStaffData(tenantId: string): Promise<StaffDataResult> {
         id: p.id,
         name: p.full_name || "New User",
         email: emailsMap[p.id] || "",
+        phoneNumber: p.phone_number || "",
+        dateJoined: p.created_at,
         role: roleDisplay,
         appRoleId: p.app_role_id ?? undefined,
         department: p.department || "Operations",
         status: (p.status || "Active") as "Active" | "On Leave" | "Suspended",
         lastActive: "Just now", // In a real system, you'd fetch this from activity logs or session data
+        weeklySchedule: weeklyScheduleMap[p.id] || defaultWeeklySchedule,
       };
     });
 
@@ -170,7 +240,10 @@ export async function getStaffData(tenantId: string): Promise<StaffDataResult> {
       prepTimeCount > 0 ? totalPrepTimeMs / prepTimeCount / (60 * 1000) : 0;
 
     // 6. Generate real analytics data points bucketed by Manila hours (8:00 to 20:00)
-    const analyticsMap: Record<string, { totalTimeMs: number; count: number; volume: number }> = {};
+    const analyticsMap: Record<
+      string,
+      { totalTimeMs: number; count: number; volume: number }
+    > = {};
     for (let h = 8; h <= 20; h++) {
       const timeLabel = `${h}:00`;
       analyticsMap[timeLabel] = { totalTimeMs: 0, count: 0, volume: 0 };
@@ -182,7 +255,7 @@ export async function getStaffData(tenantId: string): Promise<StaffDataResult> {
         const manilaHour = new Intl.DateTimeFormat("en-US", {
           timeZone: "Asia/Manila",
           hour: "numeric",
-          hour12: false
+          hour12: false,
         }).format(orderDate);
 
         const hourNum = parseInt(manilaHour, 10);
@@ -194,7 +267,9 @@ export async function getStaffData(tenantId: string): Promise<StaffDataResult> {
 
             const oLogs = logsMap[order.id];
             if (oLogs) {
-              const preparingLog = oLogs.find((l) => l.status_change === "preparing");
+              const preparingLog = oLogs.find(
+                (l) => l.status_change === "preparing",
+              );
               const readyLog =
                 oLogs.find((l) => l.status_change === "ready") ||
                 oLogs.find((l) => l.status_change === "served");
@@ -216,23 +291,29 @@ export async function getStaffData(tenantId: string): Promise<StaffDataResult> {
       }
     }
 
-    const analytics: AnalyticsDataPoint[] = Object.keys(analyticsMap).map((time) => {
-      const bucket = analyticsMap[time];
-      const avgPrep = bucket.count > 0 ? (bucket.totalTimeMs / bucket.count) / (60 * 1000) : avgPrepTime;
-      return {
-        time,
-        prepTime: Math.round(avgPrep * 10) / 10,
-        orderVolume: bucket.volume,
-      };
-    });
+    const analytics: AnalyticsDataPoint[] = Object.keys(analyticsMap).map(
+      (time) => {
+        const bucket = analyticsMap[time];
+        const avgPrep =
+          bucket.count > 0
+            ? bucket.totalTimeMs / bucket.count / (60 * 1000)
+            : avgPrepTime;
+        return {
+          time,
+          prepTime: Math.round(avgPrep * 10) / 10,
+          orderVolume: bucket.volume,
+        };
+      },
+    );
 
     // Calculate KPI Trend Values:
     // 1. activeStaffChange (Active staff created in the last 30 days)
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const activeStaffChange = profiles?.filter(
-      (p) => p.status === "Active" && new Date(p.created_at) >= thirtyDaysAgo
-    ).length || 0;
+    const activeStaffChange =
+      profiles?.filter(
+        (p) => p.status === "Active" && new Date(p.created_at) >= thirtyDaysAgo,
+      ).length || 0;
 
     // Helper to calculate avg prep time for a list of orders
     const getAvgPrepTimeForOrders = (filteredOrders: any[]) => {
@@ -258,7 +339,7 @@ export async function getStaffData(tenantId: string): Promise<StaffDataResult> {
           }
         }
       }
-      return count > 0 ? (totalTime / count) / (60 * 1000) : 0;
+      return count > 0 ? totalTime / count / (60 * 1000) : 0;
     };
 
     const sevenDaysAgo = new Date();
@@ -267,7 +348,7 @@ export async function getStaffData(tenantId: string): Promise<StaffDataResult> {
     fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
 
     const thisWeekOrders = (orders || []).filter(
-      (o) => new Date(o.created_at) >= sevenDaysAgo
+      (o) => new Date(o.created_at) >= sevenDaysAgo,
     );
     const lastWeekOrders = (orders || []).filter((o) => {
       const d = new Date(o.created_at);
@@ -283,9 +364,11 @@ export async function getStaffData(tenantId: string): Promise<StaffDataResult> {
     }
 
     // 3. completedOrdersChangePercent
-    const completedOrdersList = (orders || []).filter((o) => o.status === "served");
+    const completedOrdersList = (orders || []).filter(
+      (o) => o.status === "served",
+    );
     const thisWeekCompleted = completedOrdersList.filter(
-      (o) => new Date(o.created_at) >= sevenDaysAgo
+      (o) => new Date(o.created_at) >= sevenDaysAgo,
     ).length;
     const lastWeekCompleted = completedOrdersList.filter((o) => {
       const d = new Date(o.created_at);
@@ -327,10 +410,13 @@ export async function addStaffMember(
   email: string,
   appRoleId: string,
   department: string,
-  password?: string
+  password?: string,
 ) {
   try {
-    const auth = await requireEmployeePermission(tenantId, "Employee Account Management");
+    const auth = await requireEmployeePermission(
+      tenantId,
+      "Employee Account Management",
+    );
     if (!auth.ok) {
       return { success: false, error: auth.message };
     }
@@ -341,19 +427,20 @@ export async function addStaffMember(
     // Check if password meets criteria
     const resolvedPassword = password || "Temp123!@#";
 
-    const { data: authData, error: authError } = await admin.auth.admin.createUser({
-      email: normalizedEmail,
-      password: resolvedPassword,
-      email_confirm: true,
-      user_metadata: {
-        full_name: name.trim(),
-        tenant_id: tenantId,
-        app_role_id: appRoleId || null,
-        username: normalizedEmail.split("@")[0],
-        department: department || "Operations",
-        status: "Active",
-      },
-    });
+    const { data: authData, error: authError } =
+      await admin.auth.admin.createUser({
+        email: normalizedEmail,
+        password: resolvedPassword,
+        email_confirm: true,
+        user_metadata: {
+          full_name: name.trim(),
+          tenant_id: tenantId,
+          app_role_id: appRoleId || null,
+          username: normalizedEmail.split("@")[0],
+          department: department || "Operations",
+          status: "Active",
+        },
+      });
 
     if (authError) {
       return { success: false, error: authError.message };
@@ -370,7 +457,7 @@ export async function addStaffMember(
         department: department || "Operations",
         status: "Active",
       },
-      { onConflict: "id" }
+      { onConflict: "id" },
     );
 
     if (profileError) {
@@ -395,7 +482,10 @@ export async function addStaffMember(
     revalidatePath(`/${tenantId}/staff`);
     return { success: true };
   } catch (error: any) {
-    return { success: false, error: error?.message || "Failed to add staff member" };
+    return {
+      success: false,
+      error: error?.message || "Failed to add staff member",
+    };
   }
 }
 
@@ -405,10 +495,13 @@ export async function editStaffMember(
   name: string,
   appRoleId: string,
   department: string,
-  status: "Active" | "On Leave" | "Suspended"
+  status: "Active" | "On Leave" | "Suspended",
 ) {
   try {
-    const auth = await requireEmployeePermission(tenantId, "Employee Account Management");
+    const auth = await requireEmployeePermission(
+      tenantId,
+      "Employee Account Management",
+    );
     if (!auth.ok) {
       return { success: false, error: auth.message };
     }
@@ -476,13 +569,23 @@ export async function editStaffMember(
     revalidatePath(`/${tenantId}/staff`);
     return { success: true };
   } catch (error: any) {
-    return { success: false, error: error?.message || "Failed to update staff member" };
+    return {
+      success: false,
+      error: error?.message || "Failed to update staff member",
+    };
   }
 }
 
-export async function resetStaffPassword(tenantId: string, staffId: string, newPassword?: string) {
+export async function resetStaffPassword(
+  tenantId: string,
+  staffId: string,
+  newPassword?: string,
+) {
   try {
-    const auth = await requireEmployeePermission(tenantId, "Employee Account Management");
+    const auth = await requireEmployeePermission(
+      tenantId,
+      "Employee Account Management",
+    );
     if (!auth.ok) {
       return { success: false, error: auth.message };
     }
@@ -496,9 +599,12 @@ export async function resetStaffPassword(tenantId: string, staffId: string, newP
       .eq("id", staffId)
       .maybeSingle();
 
-    const { error: resetError } = await admin.auth.admin.updateUserById(staffId, {
-      password: resolvedPassword,
-    });
+    const { error: resetError } = await admin.auth.admin.updateUserById(
+      staffId,
+      {
+        password: resolvedPassword,
+      },
+    );
 
     if (resetError) {
       return { success: false, error: resetError.message };
@@ -520,13 +626,19 @@ export async function resetStaffPassword(tenantId: string, staffId: string, newP
 
     return { success: true };
   } catch (error: any) {
-    return { success: false, error: error?.message || "Failed to reset password" };
+    return {
+      success: false,
+      error: error?.message || "Failed to reset password",
+    };
   }
 }
 
 export async function deactivateStaffMember(tenantId: string, staffId: string) {
   try {
-    const auth = await requireEmployeePermission(tenantId, "Employee Account Management");
+    const auth = await requireEmployeePermission(
+      tenantId,
+      "Employee Account Management",
+    );
     if (!auth.ok) {
       return { success: false, error: auth.message };
     }
@@ -581,7 +693,10 @@ export async function deactivateStaffMember(tenantId: string, staffId: string) {
     revalidatePath(`/${tenantId}/staff`);
     return { success: true };
   } catch (error: any) {
-    return { success: false, error: error?.message || "Failed to deactivate staff member" };
+    return {
+      success: false,
+      error: error?.message || "Failed to deactivate staff member",
+    };
   }
 }
 
@@ -602,7 +717,7 @@ export interface ActivityEntry {
 }
 
 export async function getStaffLeaderboard(
-  tenantId: string
+  tenantId: string,
 ): Promise<{ success: boolean; data: LeaderboardEntry[]; error?: string }> {
   try {
     const auth = await requireEmployeePermission(tenantId);
@@ -683,7 +798,7 @@ export async function getStaffLeaderboard(
 }
 
 export async function getLiveActivities(
-  tenantId: string
+  tenantId: string,
 ): Promise<{ success: boolean; data: ActivityEntry[]; error?: string }> {
   try {
     const auth = await requireEmployeePermission(tenantId);
@@ -738,7 +853,7 @@ export async function getLiveActivities(
     // Helper function to map activity status
     const getActivityStatus = (
       actionType: string,
-      description: string
+      description: string,
     ): "success" | "warning" | "error" => {
       const desc = description.toLowerCase();
       if (
@@ -766,7 +881,8 @@ export async function getLiveActivities(
     ];
 
     allLogs.sort(
-      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      (a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
     );
 
     // Limit to top 20 and map to ActivityEntry
@@ -787,4 +903,3 @@ export async function getLiveActivities(
     };
   }
 }
-
