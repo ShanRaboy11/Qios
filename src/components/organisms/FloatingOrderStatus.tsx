@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  useRef,
+} from "react";
 import { StepperBar } from "@/components/molecules/StepperBar";
 import {
   Receipt,
@@ -216,6 +222,18 @@ export const FloatingOrderStatus = ({ tenantId }: { tenantId: string }) => {
   const progress = (currentStep / (STEPS.length - 1)) * 100;
   const isCancelled = activeOrder?.status === "cancelled";
   const isDone = activeOrder?.status === "served";
+  const orderDetails = activeOrder
+    ? `Order #${activeOrder.qrHash} · ${currency} ${Number(activeOrder.totalPrice || 0).toFixed(2)}`
+    : "";
+  const statusSummary = isCancelled
+    ? "This order was cancelled. Please check with the counter for help."
+    : currentStep === 3
+      ? "Your order is ready for pickup."
+      : currentStep === 2
+        ? "Your order is being prepared."
+        : currentStep === 1
+          ? "Your order has been placed and is awaiting prep."
+          : "Your order is waiting for payment at the counter.";
 
   useEffect(() => {
     if (currentStep === 3) {
@@ -280,6 +298,9 @@ export const FloatingOrderStatus = ({ tenantId }: { tenantId: string }) => {
               <span className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">
                 Active Order
               </span>
+              <span className="text-[11px] font-semibold text-gray-500 truncate">
+                {orderDetails}
+              </span>
               <span className="text-sm font-black text-text-primary truncate">
                 {isCancelled
                   ? "Order Cancelled"
@@ -333,12 +354,15 @@ export const FloatingOrderStatus = ({ tenantId }: { tenantId: string }) => {
             <div className="p-6 bg-white relative">
               <AnimatePresence mode="wait">
                 {isCancelled ? (
-                  <div className="bg-gray-100 rounded-3xl p-6 text-center text-gray-700">
+                  <div className="bg-red-100 rounded-3xl p-6 text-center text-red-900">
                     <h3 className="text-2xl font-brand font-black mb-1">
                       Order Cancelled
                     </h3>
+                    <p className="text-xs font-brand-secondary font-semibold uppercase tracking-[0.2em] text-gray-500 mb-3">
+                      {orderDetails}
+                    </p>
                     <p className="text-sm font-brand-secondary">
-                      Please approach the counter if you need assistance.
+                      {statusSummary}
                     </p>
                   </div>
                 ) : isDone ? (
@@ -399,6 +423,18 @@ export const FloatingOrderStatus = ({ tenantId }: { tenantId: string }) => {
                     exit={{ opacity: 0 }}
                     className="py-2 font-brand-secondary"
                   >
+                    <div className="mb-4 rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3">
+                      <p className="text-xs font-bold uppercase tracking-widest text-gray-400">
+                        Current Order
+                      </p>
+                      <p className="mt-1 text-sm font-bold text-text-primary">
+                        {orderDetails}
+                      </p>
+                      <p className="mt-1 text-sm text-gray-600">
+                        {statusSummary}
+                      </p>
+                    </div>
+
                     <div className="flex items-center gap-2 mb-6 text-brand-accent bg-brand-accent/10 w-fit px-3 py-1 rounded-full text-xs font-brand-secondary font-bold">
                       <Clock size={14} />
                       Est. Time: 12 min
