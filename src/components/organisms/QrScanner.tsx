@@ -430,11 +430,15 @@ export const QrScanner = (): JSX.Element => {
         return;
       }
 
-      const order = await processScannedQr(tenantId, queryValue);
-      setFoundOrder(normalizeScannedOrder(order));
-      triggerScanSound();
+      const result = await processScannedQr(tenantId, queryValue);
+      if (result.error) {
+        setSearchError(result.error);
+      } else if (result.order) {
+        setFoundOrder(normalizeScannedOrder(result.order));
+        triggerScanSound();
+        setSearchError("");
+      }
       setScanState("idle");
-      setSearchError("");
     } catch (err) {
       setSearchError(
         err instanceof Error ? err.message : "Unable to find this order.",
