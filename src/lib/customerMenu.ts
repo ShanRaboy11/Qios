@@ -1,8 +1,38 @@
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import type { MenuItemData, MenuItemModifierGroup } from "@/components/organisms/MenuCatalog";
+import type {
+  MenuItemData,
+  MenuItemModifierGroup,
+} from "@/components/organisms/MenuCatalog";
 import type { TenantBrandingSettingsData } from "@/app/(tenant)/[id]/settings/types";
 
-function readStr(settings: Record<string, unknown> | null, keys: string[]): string {
+type LegacyAddon = {
+  id?: string;
+  name?: string;
+  price?: string | number;
+  description?: string;
+};
+
+function parseLegacyAddons(value: unknown): LegacyAddon[] {
+  if (Array.isArray(value)) {
+    return value as LegacyAddon[];
+  }
+
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? (parsed as LegacyAddon[]) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  return [];
+}
+
+function readStr(
+  settings: Record<string, unknown> | null,
+  keys: string[],
+): string {
   if (!settings) return "";
   for (const key of keys) {
     const v = settings[key];
@@ -22,7 +52,9 @@ export async function fetchTenantCustomerMenu(tenantId: string) {
       .order("display_order", { ascending: true }),
     supabase
       .from("menu_items")
-      .select("id, category_id, name, price, is_available, image_url")
+      .select(
+        "id, category_id, name, price, is_available, image_url, addons_enabled, addons",
+      )
       .eq("tenant_id", tenantId)
       .eq("is_available", true)
       .order("created_at", { ascending: true }),
@@ -56,7 +88,9 @@ export async function fetchTenantCustomerMenu(tenantId: string) {
   if (menuItemIds.length > 0) {
     const { data: groups, error: groupsError } = await supabase
       .from("modifier_groups")
-      .select("id, menu_item_id, name, is_required, min_selections, max_selections, display_order")
+      .select(
+        "id, menu_item_id, name, is_required, min_selections, max_selections, display_order",
+      )
       .eq("tenant_id", tenantId)
       .in("menu_item_id", menuItemIds)
       .order("display_order", { ascending: true });
@@ -70,7 +104,9 @@ export async function fetchTenantCustomerMenu(tenantId: string) {
     if (groupIds.length > 0) {
       const { data: options, error: optionsError } = await supabase
         .from("modifier_options")
-        .select("id, modifier_group_id, name, additional_price, is_available, display_order")
+        .select(
+          "id, modifier_group_id, name, additional_price, is_available, display_order",
+        )
         .eq("tenant_id", tenantId)
         .in("modifier_group_id", groupIds)
         .eq("is_available", true)
@@ -106,6 +142,38 @@ export async function fetchTenantCustomerMenu(tenantId: string) {
       }
       modifierGroupsByItemId.get(group.menu_item_id)!.push(mappedGroup);
     }
+  }
+
+  for (const item of dbItems) {
+    const legacyAddons = item.addons_enabled
+      ? parseLegacyAddons(item.addons)
+      : [];
+    if (legacyAddons.length === 0) {
+      continue;
+    }
+
+    const legacyGroup: MenuItemModifierGroup = {
+      id: `${item.id}-legacy-addons`,
+      name: "Add-ons",
+      isRequired: false,
+      minSelections: 0,
+      maxSelections: Math.max(legacyAddons.length, 2),
+      options: legacyAddons
+        .filter((addon) => typeof addon.name === "string" && addon.name.trim())
+        .map((addon, index) => ({
+          id: addon.id || `${item.id}-legacy-addon-${index}`,
+          name: addon.name!.trim(),
+          additionalPrice: Number(addon.price) || 0,
+          isAvailable: true,
+        })),
+    };
+
+    if (legacyGroup.options.length === 0) {
+      continue;
+    }
+
+    const groupsForItem = modifierGroupsByItemId.get(item.id) ?? [];
+    modifierGroupsByItemId.set(item.id, [...groupsForItem, legacyGroup]);
   }
 
   const items = dbItems.map((item: any) => ({
@@ -148,21 +216,41 @@ export async function fetchTenantCustomerMenu(tenantId: string) {
 
   const branding: Partial<TenantBrandingSettingsData> = {
     primaryColor:
-      readStr(tenantSettings, ["branding_primary_color", "primary_color", "primaryColor"]) ||
-      "#FFC670",
+      readStr(tenantSettings, [
+        "branding_primary_color",
+        "primary_color",
+        "primaryColor",
+      ]) || "#FFC670",
     secondaryColor:
-      readStr(tenantSettings, ["branding_secondary_color", "secondary_color", "secondaryColor"]) ||
-      "#FFF9F0",
+      readStr(tenantSettings, [
+        "branding_secondary_color",
+        "secondary_color",
+        "secondaryColor",
+      ]) || "#FFF9F0",
     accentColor:
-      readStr(tenantSettings, ["branding_accent_color", "accent_color", "accentColor"]) ||
-      "#1E3932",
+      readStr(tenantSettings, [
+        "branding_accent_color",
+        "accent_color",
+        "accentColor",
+      ]) || "#1E3932",
     fontFamily:
-      readStr(tenantSettings, ["branding_font_family", "font_family", "fontFamily"]) || "inter",
+      readStr(tenantSettings, [
+        "branding_font_family",
+        "font_family",
+        "fontFamily",
+      ]) || "inter",
     secondaryFont:
-      readStr(tenantSettings, ["branding_secondary_font", "secondary_font", "secondaryFont"]) ||
-      "inter",
+      readStr(tenantSettings, [
+        "branding_secondary_font",
+        "secondary_font",
+        "secondaryFont",
+      ]) || "inter",
     menuLayout:
-      readStr(tenantSettings, ["branding_menu_layout", "menu_layout", "menuLayout"]) || "grid",
+      readStr(tenantSettings, [
+        "branding_menu_layout",
+        "menu_layout",
+        "menuLayout",
+      ]) || "grid",
     dashboardLogoUrl:
       readStr(tenantSettings, ["branding_logo_dashboard"]) || undefined,
   };

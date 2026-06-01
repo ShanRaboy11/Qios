@@ -13,13 +13,13 @@ import {
   AlertCircle,
   Loader2,
 } from "lucide-react";
-import jsQR from "jsqr";
 import { Button } from "@/components/atoms/Button";
 import { Badge, BadgeColor } from "@/components/atoms/Badge";
 import { Radio } from "@/components/atoms/Radio";
 import { QuantityStepper } from "@/components/molecules/QuantityStepper";
 import { updateOrderFromScanner } from "@/app/(employee)/[id]/employee/scanner/actions";
 import { updateOrderPaymentStatus } from "@/app/(employee)/[id]/employee/queue/actions";
+import { decodeQrFromVideoFrame } from "../../lib/qrScanner";
 
 interface OrderItemModifier {
   id: string;
@@ -75,10 +75,10 @@ const statusConfig: Record<string, { label: string; badgeColor: BadgeColor }> =
     served: { label: "Served", badgeColor: "success" },
   };
 
-  const completionMessages: Record<string, string> = {
-    served: "This order has already been served to the customer",
-    cancelled: "This order was cancelled",
-  };
+const completionMessages: Record<string, string> = {
+  served: "This order has already been served to the customer",
+  cancelled: "This order was cancelled",
+};
 
 export default function OrderDetails({
   order,
@@ -309,21 +309,11 @@ export default function OrderDetails({
             return;
           }
 
-          const width = video.videoWidth;
-          const height = video.videoHeight;
-          const context = canvas.getContext("2d");
-          if (!context || !width || !height) {
+          const code = decodeQrFromVideoFrame(video, canvas);
+          if (!code) {
             authFrameRef.current = requestAnimationFrame(scan);
             return;
           }
-
-          canvas.width = width;
-          canvas.height = height;
-          context.drawImage(video, 0, 0, width, height);
-          const imageData = context.getImageData(0, 0, width, height);
-          const code = jsQR(imageData.data, imageData.width, imageData.height, {
-            inversionAttempts: "dontInvert",
-          });
 
           if (authScanLockedRef.current) {
             return;
