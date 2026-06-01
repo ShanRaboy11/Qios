@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { Badge } from "@/components/atoms/Badge";
 import { Input } from "@/components/atoms/Input";
 import { Button } from "@/components/atoms/Button";
+import { Dropdown } from "@/components/molecules/Dropdown";
 import {
   ChevronDown,
   ChevronLeft,
@@ -639,29 +640,19 @@ export const TransactionTable = ({
                   </div>
 
                   <div>
-                    <span className="text-text-secondary text-[11px] font-bold uppercase tracking-[0.16em]">
-                      Order Status
-                    </span>
-                    <div className="relative mt-1.5">
-                      <select
-                        value={statusFilter}
-                        onChange={(event) => {
-                          setStatusFilter(
-                            event.target
-                              .value as (typeof STATUS_OPTIONS)[number],
-                          );
-                          setPage(1);
-                        }}
-                        className="w-full rounded-2xl border-2 border-[#E5E5E5] bg-white px-6 py-3.5 text-sm text-text-primary outline-none focus:border-brand-primary appearance-none cursor-pointer transition-colors"
-                      >
-                        {STATUS_OPTIONS.map((option) => (
-                          <option key={option} value={option}>
-                            {capitalize(option)}
-                          </option>
-                        ))}
-                      </select>
-                      <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                    </div>
+                    <Dropdown
+                      label="Order Status"
+                      placeholder="Select Status"
+                      options={STATUS_OPTIONS.map((option) => ({
+                        label: capitalize(option),
+                        value: option,
+                      }))}
+                      value={statusFilter}
+                      onSelect={(opt) => {
+                        setStatusFilter(opt.value as (typeof STATUS_OPTIONS)[number]);
+                        setPage(1);
+                      }}
+                    />
                   </div>
 
                   <div className="flex justify-end gap-2 pt-4 border-t border-gray-100">
