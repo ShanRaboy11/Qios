@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { Badge } from "@/components/atoms/Badge";
 import { Input } from "@/components/atoms/Input";
 import { Button } from "@/components/atoms/Button";
+import { Dropdown } from "@/components/molecules/Dropdown";
 import {
   ChevronDown,
   ChevronLeft,
@@ -18,6 +19,7 @@ import { jsPDF } from "jspdf";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   formatMoney,
+  getManilaDateKey,
   type SalesTransactionRecord,
   type SalesTransactionResponse,
 } from "@/lib/salesDashboard";
@@ -44,6 +46,7 @@ function capitalize(value: string) {
 }
 
 function buildFilterSummary(
+  searchQuery: string,
   status: (typeof STATUS_OPTIONS)[number],
   paymentStatus: (typeof PAYMENT_STATUS_OPTIONS)[number],
   startDate: string,
@@ -53,7 +56,8 @@ function buildFilterSummary(
     (value) => value !== "all",
   ).length;
   const dateCount = startDate || endDate ? 1 : 0;
-  return count + dateCount;
+  const searchCount = searchQuery ? 1 : 0;
+  return count + dateCount + searchCount;
 }
 
 function formatDateTime(value: string) {
@@ -74,6 +78,24 @@ function parseItems(items: string) {
     .split(/\n|\|/)
     .map((item) => item.trim())
     .filter(Boolean);
+}
+
+function isWithinDateRange(
+  createdAt: string,
+  startDate: string,
+  endDate: string,
+) {
+  const transactionDate = getManilaDateKey(createdAt);
+
+  if (startDate && transactionDate < startDate) {
+    return false;
+  }
+
+  if (endDate && transactionDate > endDate) {
+    return false;
+  }
+
+  return true;
 }
 
 type TransactionDetailsModalProps = {
@@ -320,6 +342,10 @@ export const TransactionTable = ({
       try {
         setIsLoading(true);
 
+        const shouldLoadAll = Boolean(
+          searchQuery || startDate || endDate,
+        );
+
         const params = new URLSearchParams({
           view: "transactions",
           page: String(page),
@@ -329,6 +355,7 @@ export const TransactionTable = ({
           paymentStatus: paymentStatusFilter,
           startDate,
           endDate,
+          all: shouldLoadAll ? "true" : "false",
         });
 
         const response = await fetch(
@@ -345,8 +372,23 @@ export const TransactionTable = ({
           throw new Error(payload.error || "Failed to load transactions");
         }
 
-        setTransactions(payload.data ?? []);
-        setTotal(payload.total ?? 0);
+        const allTransactions = payload.data ?? [];
+        const filteredTransactions =
+          startDate || endDate
+            ? allTransactions.filter((transaction) =>
+                isWithinDateRange(transaction.createdAt, startDate, endDate),
+              )
+            : allTransactions;
+
+        const offset = (page - 1) * limit;
+        const paginatedTransactions = shouldLoadAll
+          ? filteredTransactions.slice(offset, offset + limit)
+          : filteredTransactions;
+
+        setTransactions(paginatedTransactions);
+        setTotal(
+          shouldLoadAll ? filteredTransactions.length : payload.total ?? 0,
+        );
       } catch (fetchError) {
         if (controller.signal.aborted) {
           return;
@@ -382,8 +424,14 @@ export const TransactionTable = ({
 
   const filterSummary = useMemo(
     () =>
-      buildFilterSummary(statusFilter, paymentStatusFilter, startDate, endDate),
-    [paymentStatusFilter, statusFilter, startDate, endDate],
+      buildFilterSummary(
+        searchQuery,
+        statusFilter,
+        paymentStatusFilter,
+        startDate,
+        endDate,
+      ),
+    [paymentStatusFilter, searchQuery, statusFilter, startDate, endDate],
   );
 
   const exportTransactions = async () => {
@@ -412,6 +460,13 @@ export const TransactionTable = ({
       if (!response.ok) {
         throw new Error(payload.error || "Failed to export transactions");
       }
+
+      const dateFilteredData = (payload.data ?? []).filter((transaction) =>
+        isWithinDateRange(transaction.createdAt, startDate, endDate),
+      );
+
+      const exportData =
+        startDate || endDate ? dateFilteredData : payload.data ?? [];
 
       const doc = new jsPDF({
         orientation: "landscape",
@@ -472,7 +527,7 @@ export const TransactionTable = ({
       doc.setFontSize(9);
       let y = startY + 24;
 
-      payload.data.forEach((row: SalesTransactionRecord, rowIndex: number) => {
+      exportData.forEach((row: SalesTransactionRecord, rowIndex: number) => {
         const itemsText = (row.items || "No items").replace(/\u00A0/g, " ");
         const wrappedItems = doc.splitTextToSize(itemsText, 244);
         const rowBlockHeight = Math.max(20, wrappedItems.length * 12 + 8);
@@ -639,29 +694,19 @@ export const TransactionTable = ({
                   </div>
 
                   <div>
-                    <span className="text-text-secondary text-[11px] font-bold uppercase tracking-[0.16em]">
-                      Order Status
-                    </span>
-                    <div className="relative mt-1.5">
-                      <select
-                        value={statusFilter}
-                        onChange={(event) => {
-                          setStatusFilter(
-                            event.target
-                              .value as (typeof STATUS_OPTIONS)[number],
-                          );
-                          setPage(1);
-                        }}
-                        className="w-full rounded-2xl border-2 border-[#E5E5E5] bg-white px-6 py-3.5 text-sm text-text-primary outline-none focus:border-brand-primary appearance-none cursor-pointer transition-colors"
-                      >
-                        {STATUS_OPTIONS.map((option) => (
-                          <option key={option} value={option}>
-                            {capitalize(option)}
-                          </option>
-                        ))}
-                      </select>
-                      <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                    </div>
+                    <Dropdown
+                      label="Order Status"
+                      placeholder="Select Status"
+                      options={STATUS_OPTIONS.map((option) => ({
+                        label: capitalize(option),
+                        value: option,
+                      }))}
+                      value={statusFilter}
+                      onSelect={(opt) => {
+                        setStatusFilter(opt.value as (typeof STATUS_OPTIONS)[number]);
+                        setPage(1);
+                      }}
+                    />
                   </div>
 
                   <div className="flex justify-end gap-2 pt-4 border-t border-gray-100">
