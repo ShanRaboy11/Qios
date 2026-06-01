@@ -674,9 +674,28 @@ export default function OrderDetails({
           {/* finalized Status Alert */}
           {isOrderCompleted && (
             <div className="p-6 border-t border-brand-primary/10 bg-white/40">
-              <div className="bg-brand-primary/10 border border-brand-primary/20 rounded-[20px] p-5 flex items-start gap-4">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-brand-accent/15 flex-shrink-0">
-                  <AlertCircle size={20} className="text-brand-accent" />
+              <div
+                className={
+                  localOrder.status === "cancelled"
+                    ? "bg-red-50/75 border border-red-200/50 rounded-[20px] p-5 flex items-start gap-4"
+                    : "bg-brand-primary/10 border border-brand-primary/20 rounded-[20px] p-5 flex items-start gap-4"
+                }
+              >
+                <div
+                  className={
+                    localOrder.status === "cancelled"
+                      ? "w-10 h-10 rounded-full flex items-center justify-center bg-red-100/70 flex-shrink-0"
+                      : "w-10 h-10 rounded-full flex items-center justify-center bg-brand-accent/15 flex-shrink-0"
+                  }
+                >
+                  <AlertCircle
+                    size={20}
+                    className={
+                      localOrder.status === "cancelled"
+                        ? "text-red-500/90"
+                        : "text-brand-accent"
+                    }
+                  />
                 </div>
                 <div>
                   <p className="font-figtree font-bold text-text-primary text-[17px] capitalize">
@@ -753,7 +772,7 @@ export default function OrderDetails({
                   onClick={() => setPendingCancelOpen(true)}
                   variant="outline"
                   shape="pill"
-                  className="h-[48px] font-bold border-red-200 text-red-600 hover:bg-red-50"
+                  className="h-[48px] font-bold border-red-200 text-red-600 hover:bg-red-50 hover:!text-brand-accent"
                   disabled={!localOrder.tenant_id}
                 >
                   Cancel Order
