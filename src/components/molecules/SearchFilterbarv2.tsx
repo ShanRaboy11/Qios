@@ -14,11 +14,21 @@ import { FormField } from "@/components/molecules/FormField";
 export interface SearchFilterbarv2Props {
   onSearch?: (value: string) => void;
   onRoleFilter?: (role: string) => void;
-  onDateFilter?: (date: number | null) => void;
+  onDateFilter?: (date: string | null) => void;
   onCalendarClick?: () => void;
   onUsersClick?: () => void;
   className?: string;
 }
+
+const ROLES = ["All Roles", "Super Admin", "Admin", "Employee", "Customer"];
+
+const getDaysInMonth = (date: Date) => {
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const firstDay = new Date(year, month, 1).getDay(); // 0 = Sunday
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  return { firstDay, daysInMonth, year, month };
+};
 
 export const SearchFilterbarv2 = ({
   onSearch,
@@ -32,9 +42,15 @@ export const SearchFilterbarv2 = ({
     "calendar" | "users" | null
   >(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [selectedDate, setSelectedDate] = useState<number | null>(null);
 
-  // close dropdown when clicking outside
+  // Calendar state
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [calendarMonth, setCalendarMonth] = useState(new Date());
+
+  // Role state
+  const [selectedRole, setSelectedRole] = useState(ROLES[0]);
+
+  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -58,14 +74,125 @@ export const SearchFilterbarv2 = ({
     onUsersClick?.();
   };
 
-  const ROLES = [
-    "All Roles",
-    "Super Admin",
-    "Tenant Admin",
-    "Employee",
-    "Customer",
-  ];
-  const [selectedRole, setSelectedRole] = useState(ROLES[0]);
+  const handlePrevMonth = () => {
+    const { year, month } = getDaysInMonth(calendarMonth);
+    setCalendarMonth(new Date(year, month - 1, 1));
+  };
+
+  const handleNextMonth = () => {
+    const { year, month } = getDaysInMonth(calendarMonth);
+    setCalendarMonth(new Date(year, month + 1, 1));
+  };
+
+  const handleDayClick = (day: number, year: number, month: number) => {
+    const clicked = new Date(year, month, day);
+    const isAlreadySelected =
+      selectedDate?.toDateString() === clicked.toDateString();
+
+    if (isAlreadySelected) {
+      setSelectedDate(null);
+      onDateFilter?.(null);
+    } else {
+      setSelectedDate(clicked);
+      // Pass ISO date string "YYYY-MM-DD"
+      const iso = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+      onDateFilter?.(iso);
+    }
+  };
+
+  const handleClearDate = () => {
+    setSelectedDate(null);
+    onDateFilter?.(null);
+  };
+
+  // Build calendar grid
+  const renderCalendar = () => {
+    const { firstDay, daysInMonth, year, month } =
+      getDaysInMonth(calendarMonth);
+    const today = new Date();
+    const monthLabel = calendarMonth.toLocaleDateString("en-US", {
+      month: "long",
+      year: "numeric",
+    });
+
+    return (
+      <div className="absolute top-[110%] left-0 w-[300px] z-50 bg-white border-2 border-[#E5E5E5] rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 p-4">
+        {/* Month Navigation */}
+        <div className="flex items-center justify-between mb-4">
+          <button
+            onClick={handlePrevMonth}
+            className="p-1 hover:bg-slate-100 rounded-lg text-text-secondary transition-colors"
+            aria-label="Previous month"
+          >
+            <ChevronLeft size={20} />
+          </button>
+          <span className="b3 font-bold text-text-primary">{monthLabel}</span>
+          <button
+            onClick={handleNextMonth}
+            className="p-1 hover:bg-slate-100 rounded-lg text-text-secondary transition-colors"
+            aria-label="Next month"
+          >
+            <ChevronRight size={20} />
+          </button>
+        </div>
+
+        {/* Day-of-week Headers */}
+        <div className="grid grid-cols-7 gap-1 text-center mb-2">
+          {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d) => (
+            <div key={d} className="b5 font-semibold text-text-secondary">
+              {d}
+            </div>
+          ))}
+        </div>
+
+        {/* Day Grid */}
+        <div className="grid grid-cols-7 gap-1 text-center">
+          {/* Leading blank slots for correct weekday alignment */}
+          {Array.from({ length: firstDay }).map((_, i) => (
+            <div key={`blank-${i}`} />
+          ))}
+
+          {/* Day buttons */}
+          {Array.from({ length: daysInMonth }).map((_, i) => {
+            const day = i + 1;
+            const thisDate = new Date(year, month, day);
+            const isSelected =
+              selectedDate?.toDateString() === thisDate.toDateString();
+            const isToday = today.toDateString() === thisDate.toDateString();
+
+            return (
+              <button
+                key={day}
+                onClick={() => handleDayClick(day, year, month)}
+                className={cn(
+                  "h-8 w-8 mx-auto rounded-full flex items-center justify-center b4 transition-all",
+                  isSelected
+                    ? "bg-brand-accent text-white font-bold"
+                    : isToday
+                      ? "bg-brand-primary/20 text-brand-primary font-bold hover:bg-brand-primary/30"
+                      : "text-text-primary hover:bg-slate-100",
+                )}
+                aria-label={thisDate.toDateString()}
+                aria-pressed={isSelected}
+              >
+                {day}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Clear Selection */}
+        {selectedDate && (
+          <button
+            onClick={handleClearDate}
+            className="mt-3 w-full text-center b5 text-brand-accent hover:underline transition-opacity"
+          >
+            Clear date
+          </button>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div
@@ -75,7 +202,7 @@ export const SearchFilterbarv2 = ({
         className,
       )}
     >
-      {/* 1. Action Buttons */}
+      {/* Calendar Button + Dropdown */}
       <div className="relative h-[52px]">
         <button
           onClick={handleCalendarClick}
@@ -85,71 +212,29 @@ export const SearchFilterbarv2 = ({
             activeDropdown === "calendar" &&
               "border-brand-accent shadow-[0_0_0_2px_rgba(255,82,105,0.15)]",
           )}
+          aria-label="Toggle calendar filter"
+          aria-expanded={activeDropdown === "calendar"}
         >
           <Calendar
             size={20}
             className={cn(
               "text-text-secondary group-hover:text-brand-accent transition-colors",
               activeDropdown === "calendar" && "text-brand-accent",
+              // Show accent dot indicator when a date is selected
+              selectedDate && "text-brand-accent",
             )}
           />
         </button>
 
-        {/* calendar Dropdown UI */}
-        {activeDropdown === "calendar" && (
-          <div className="absolute top-[110%] left-0 w-[300px] z-50 bg-white border-2 border-[#E5E5E5] rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 p-4">
-            <div className="flex items-center justify-between mb-4">
-              <button className="p-1 hover:bg-slate-100 rounded-lg text-text-secondary transition-colors">
-                <ChevronLeft size={20} />
-              </button>
-              <span className="b3 font-bold text-text-primary">
-                October 2024
-              </span>
-              <button className="p-1 hover:bg-slate-100 rounded-lg text-text-secondary transition-colors">
-                <ChevronRight size={20} />
-              </button>
-            </div>
-
-            {/* minimal Calendar mock grid */}
-            <div className="grid grid-cols-7 gap-1 text-center mb-2">
-              {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((day) => (
-                <div key={day} className="b5 font-semibold text-text-secondary">
-                  {day}
-                </div>
-              ))}
-            </div>
-            <div className="grid grid-cols-7 gap-1 text-center">
-              {/* dummy month days to visualize a calendar structure */}
-              {Array.from({ length: 31 }).map((_, i) => {
-                const day = i + 1;
-                const isSelected = selectedDate === day;
-                const isToday = day === 31;
-                return (
-                  <button
-                    key={i}
-                    onClick={() => {
-                      const newDate = isSelected ? null : day;
-                      setSelectedDate(newDate);
-                      onDateFilter?.(newDate);
-                    }}
-                    className={cn(
-                      "h-8 w-8 mx-auto rounded-full flex items-center justify-center b4 transition-all",
-                      isSelected
-                        ? "bg-brand-accent text-white font-bold"
-                        : isToday
-                          ? "bg-brand-primary/20 text-brand-primary font-bold hover:bg-brand-primary/30"
-                          : "text-text-primary hover:bg-slate-100",
-                    )}
-                  >
-                    {day}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+        {/* Selected date indicator dot */}
+        {selectedDate && (
+          <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-brand-accent pointer-events-none" />
         )}
+
+        {activeDropdown === "calendar" && renderCalendar()}
       </div>
 
+      {/* Users / Roles Button + Dropdown */}
       <div className="relative h-[52px]">
         <button
           onClick={handleUsersClick}
@@ -159,17 +244,24 @@ export const SearchFilterbarv2 = ({
             activeDropdown === "users" &&
               "border-brand-accent shadow-[0_0_0_2px_rgba(255,82,105,0.15)]",
           )}
+          aria-label="Toggle role filter"
+          aria-expanded={activeDropdown === "users"}
         >
           <Users
             size={20}
             className={cn(
               "text-text-secondary group-hover:text-brand-accent transition-colors",
               activeDropdown === "users" && "text-brand-accent",
+              selectedRole !== ROLES[0] && "text-brand-accent",
             )}
           />
         </button>
 
-        {/* users / Roles Dropdown UI */}
+        {/* Selected role indicator dot */}
+        {selectedRole !== ROLES[0] && (
+          <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-brand-accent pointer-events-none" />
+        )}
+
         {activeDropdown === "users" && (
           <div className="absolute top-[110%] left-0 w-[240px] z-50 bg-white border-2 border-[#E5E5E5] rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             <div className="px-5 py-3 border-b border-[#E5E5E5] bg-slate-50">
@@ -201,7 +293,7 @@ export const SearchFilterbarv2 = ({
         )}
       </div>
 
-      {/* 2. Search Field identical to SearchFilterBar style */}
+      {/* Search Field */}
       <div className="flex-grow w-full h-[52px]">
         <FormField
           label=""

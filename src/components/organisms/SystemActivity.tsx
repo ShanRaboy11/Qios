@@ -28,6 +28,8 @@ type ActivityData = {
   description: string;
   targetEstablishment: string;
   timestamp: string;
+  // Raw ISO date string "YYYY-MM-DD" kept for client-side date filtering
+  rawDate: string;
 };
 
 interface ActivityLogRow {
@@ -61,7 +63,6 @@ function formatRoleLabel(role: string): string {
   if (normalized === "super admin" || normalized === "super_admin") {
     return "Super Admin";
   }
-
   return role
     .replace(/[_-]+/g, " ")
     .trim()
@@ -77,7 +78,6 @@ function formatTargetEstablishment(row: ActivityLogRow): string {
   if (isSuperAdminRole(row.actor_role)) {
     return row.target_tenant_name?.trim() || "Global System";
   }
-
   return row.target_tenant_name?.trim() || "Unknown Tenant";
 }
 
@@ -116,6 +116,15 @@ function formatTimestamp(iso: string): string {
   return `${date} • ${time}`;
 }
 
+// Returns "YYYY-MM-DD" from any ISO string, using local date
+function toLocalDateString(iso: string): string {
+  const d = new Date(iso);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 function mapRow(row: ActivityLogRow): ActivityData {
   const actionType =
     row.action_type === "DELETE" &&
@@ -142,6 +151,7 @@ function mapRow(row: ActivityLogRow): ActivityData {
     description: row.description,
     targetEstablishment: formatTargetEstablishment(row),
     timestamp: formatTimestamp(row.created_at),
+    rawDate: toLocalDateString(row.created_at), // "YYYY-MM-DD" for client filtering
   };
 }
 
@@ -160,7 +170,7 @@ const ActivityCard = ({ act }: { act: ActivityData }) => {
       )}
       style={{ backgroundColor: "white" }}
     >
-      {/* card Header — always visible, tap to toggle */}
+      {/* Card Header */}
       <button
         onClick={() => setIsOpen((prev) => !prev)}
         className="w-full flex items-center justify-between px-4 py-3 text-left gap-3 transition-colors"
@@ -190,7 +200,6 @@ const ActivityCard = ({ act }: { act: ActivityData }) => {
             {act.action.label}
           </Badge>
 
-          {/* chevron */}
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="16"
@@ -216,7 +225,7 @@ const ActivityCard = ({ act }: { act: ActivityData }) => {
         </div>
       </button>
 
-      {/* collapsible Body */}
+      {/* Collapsible Body */}
       <div
         className={cn(
           "grid transition-all duration-300 ease-in-out",
@@ -225,7 +234,7 @@ const ActivityCard = ({ act }: { act: ActivityData }) => {
       >
         <div className="overflow-hidden">
           <div className="px-4 py-4 flex flex-col gap-3 border-t-2 border-[#E5E5E5]">
-            {/* row: Role */}
+            {/* Role */}
             <div className="flex items-center justify-between gap-2">
               <span
                 className="b5 font-bold uppercase tracking-wider"
@@ -243,7 +252,7 @@ const ActivityCard = ({ act }: { act: ActivityData }) => {
               </Badge>
             </div>
 
-            {/* row: Target Establishment */}
+            {/* Target Establishment */}
             <div className="flex items-center justify-between gap-2">
               <span
                 className="b5 font-bold uppercase tracking-wider"
@@ -259,7 +268,7 @@ const ActivityCard = ({ act }: { act: ActivityData }) => {
               </span>
             </div>
 
-            {/* row: Description */}
+            {/* Description */}
             <div
               className="rounded-xl px-3 py-2 b4"
               style={{
@@ -276,7 +285,7 @@ const ActivityCard = ({ act }: { act: ActivityData }) => {
               {act.description}
             </div>
 
-            {/* row: Timestamp */}
+            {/* Timestamp */}
             <div className="flex items-center justify-end gap-1">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -333,12 +342,13 @@ const ActivityCardSkeleton = () => (
 export const SystemActivity = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRole, setSelectedRole] = useState("All Roles");
-  const [selectedDate, setSelectedDate] = useState<number | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null); // "YYYY-MM-DD"
   const [activities, setActivities] = useState<ActivityData[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const PAGE_SIZE = 15;
 
+  // Fetch all data from API — pass filters as hints but don't rely on them
   const fetchActivities = useCallback(async () => {
     setLoading(true);
     try {
@@ -351,10 +361,7 @@ export const SystemActivity = () => {
       if (searchTerm) params.set("search", searchTerm);
       if (selectedRole && selectedRole !== "All Roles")
         params.set("role", selectedRole);
-      if (selectedDate !== null) {
-        const day = selectedDate.toString().padStart(2, "0");
-        params.set("date", `2024-10-${day}`);
-      }
+      if (selectedDate) params.set("date", selectedDate);
 
       const res = await fetch(
         `/api/admin/system-activity?${params.toString()}`,
@@ -381,12 +388,45 @@ export const SystemActivity = () => {
     fetchActivities();
   }, [fetchActivities]);
 
+  // Reset to page 1 whenever filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, selectedRole, selectedDate]);
 
-  const totalPages = Math.max(1, Math.ceil(activities.length / PAGE_SIZE));
-  const paginatedActivities = activities.slice(
+  // -----------------------------------------------------------------
+  // Client-side filtering — guarantees filters always work even if the
+  // API route ignores or partially handles the query params.
+  // -----------------------------------------------------------------
+  const filteredActivities = activities.filter((act) => {
+    // 1. Search: name, id, establishment description
+    if (searchTerm) {
+      const q = searchTerm.toLowerCase();
+      const hit =
+        act.user.name.toLowerCase().includes(q) ||
+        act.user.id.toLowerCase().includes(q) ||
+        act.targetEstablishment.toLowerCase().includes(q) ||
+        act.description.toLowerCase().includes(q);
+      if (!hit) return false;
+    }
+
+    // 2. Role filter
+    if (selectedRole && selectedRole !== "All Roles") {
+      if (act.role.label.toLowerCase() !== selectedRole.toLowerCase())
+        return false;
+    }
+
+    // 3. Date filter — compare stored "YYYY-MM-DD" rawDate
+    if (selectedDate && act.rawDate !== selectedDate) return false;
+
+    return true;
+  });
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredActivities.length / PAGE_SIZE),
+  );
+
+  const paginatedActivities = filteredActivities.slice(
     (currentPage - 1) * PAGE_SIZE,
     currentPage * PAGE_SIZE,
   );
@@ -397,7 +437,7 @@ export const SystemActivity = () => {
 
   return (
     <div className="w-full flex flex-col gap-8">
-      {/* 1. Top Search and Controls */}
+      {/* Search + Filter Bar */}
       <SearchFilterbarv2
         onSearch={setSearchTerm}
         onRoleFilter={setSelectedRole}
@@ -406,7 +446,7 @@ export const SystemActivity = () => {
         onUsersClick={() => console.log("Users dropdown toggled")}
       />
 
-      {/* 2a. Mobile: Collapsible Cards */}
+      {/* Mobile: Collapsible Cards */}
       <div className="flex md:hidden flex-col gap-3">
         {loading ? (
           Array.from({ length: 4 }).map((_, idx) => (
@@ -429,7 +469,7 @@ export const SystemActivity = () => {
         )}
       </div>
 
-      {/* 2b. Desktop: Table */}
+      {/* Desktop: Table */}
       <div className="hidden md:block w-full bg-white rounded-2xl max-w-full overflow-hidden border-2 border-[#E5E5E5]">
         <div className="overflow-x-auto w-full">
           <table className="w-full text-left border-collapse min-w-[950px]">
@@ -549,12 +589,14 @@ export const SystemActivity = () => {
             </tbody>
           </table>
         </div>
-        {!loading && activities.length > 0 && (
+
+        {/* Pagination */}
+        {!loading && filteredActivities.length > 0 && (
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-6 py-4 border-t border-[#E5E5E5] bg-[#FAF7F2]">
             <p className="text-sm text-text-secondary text-center sm:text-left">
               Showing {(currentPage - 1) * PAGE_SIZE + 1}–
-              {Math.min(currentPage * PAGE_SIZE, activities.length)} of{" "}
-              {activities.length} logs
+              {Math.min(currentPage * PAGE_SIZE, filteredActivities.length)} of{" "}
+              {filteredActivities.length} logs
             </p>
             <div className="flex items-center justify-center gap-2">
               <button
