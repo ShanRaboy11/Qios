@@ -683,6 +683,29 @@ export async function saveOnboardingProgress(
 
 export async function saveDocumentUploads(data: DocumentUploadInput) {
   const supabase = createSupabaseAdminClient();
+
+  // Ensure the 'verification-docs' bucket exists; create it if missing
+  try {
+    const { data: bucketList, error: listError } = await supabase.storage.listBuckets();
+    if (listError) {
+      console.error('Failed to list storage buckets:', listError.message);
+      throw new Error('Unable to verify storage buckets.');
+    }
+    const bucketExists = bucketList?.some((b) => b.id === 'verification-docs');
+    if (!bucketExists) {
+      const { error: createError } = await supabase.storage.createBucket('verification-docs', {
+        public: true,
+        // Optionally set other options like allowed mime types
+      });
+      if (createError) {
+        console.error('Failed to create verification-docs bucket:', createError.message);
+        throw new Error('Failed to create storage bucket for document uploads.');
+      }
+    }
+  } catch (e) {
+    // Re-throw to be caught by outer error handling
+    throw e;
+  }
   if (!data.tenantId) {
     throw new Error(
       "Tenant record is missing. Please complete business information first.",
