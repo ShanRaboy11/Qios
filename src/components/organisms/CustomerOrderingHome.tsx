@@ -41,7 +41,7 @@ function CustomerOrderingHomeInner({
   tenantId: string;
   storeName?: string;
 }) {
-  const { setIsCartOpen } = useCart();
+  const { addToCart, setIsCartOpen } = useCart();
   const { branding } = useTenantBranding();
   const accentColor = branding?.accentColor || "#FF5269";
   const primaryColor = branding?.primaryColor || "#FFC670";
@@ -49,6 +49,10 @@ function CustomerOrderingHomeInner({
   const [selectedItem, setSelectedItem] = useState<MenuItemData | null>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const menuItemById = useMemo(
+    () => new Map(initialItems.map((item) => [item.id, item])),
+    [initialItems],
+  );
 
   const categories = initialCategories;
   const isCategoryView = selectedCategory !== null;
@@ -84,6 +88,35 @@ function CustomerOrderingHomeInner({
     () => initialItems.slice(5, 7),
     [initialItems],
   );
+
+  const handleCartActions = (
+    actions: {
+      menuItemId: string;
+      menuItemName: string;
+      quantity: number;
+    }[],
+  ) => {
+    let addedAnyItem = false;
+
+    for (const action of actions) {
+      const menuItem = menuItemById.get(action.menuItemId);
+      if (!menuItem) continue;
+
+      const quantity = Math.max(1, action.quantity || 1);
+      addToCart({
+        menuItem,
+        quantity,
+        selectedOptions: [],
+        specialInstructions: "",
+        totalPrice: Number((menuItem.price * quantity).toFixed(2)),
+      });
+      addedAnyItem = true;
+    }
+
+    if (addedAnyItem) {
+      setIsCartOpen(true);
+    }
+  };
 
   return (
     <motion.main
@@ -338,6 +371,7 @@ function CustomerOrderingHomeInner({
         mode="floating"
         tenantId={tenantId}
         storeName={storeName}
+        onCartActions={handleCartActions}
         triggerContent={
           <div className="flex h-full w-full items-center justify-center overflow-visible scale-[0.56] origin-center translate-y-[2px]">
             <ChatbotLogo size={44} />

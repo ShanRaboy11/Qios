@@ -31,6 +31,13 @@ interface AiResponse {
   output?: string;
   error?: string;
   details?: string;
+  cartActions?: CartAction[];
+}
+
+interface CartAction {
+  menuItemId: string;
+  menuItemName: string;
+  quantity: number;
 }
 
 export interface ChatbotUIProps {
@@ -59,6 +66,10 @@ export interface ChatbotUIProps {
    */
   storeName?: string;
   /**
+   * Called when the AI resolves one or more cart additions.
+   */
+  onCartActions?: (actions: CartAction[]) => void;
+  /**
    * Custom trigger content for the floating button when closed.
    */
   triggerContent?: React.ReactNode;
@@ -77,12 +88,12 @@ const QUICK_TAGS = [
 // ---------------------------------------------------------------------------
 // helpers
 // ---------------------------------------------------------------------------
-async function getGeminiReply(
+async function getAiReply(
   messages: Message[],
   menuContext?: string,
   storeName?: string,
   tenantId?: string,
-): Promise<string> {
+): Promise<AiResponse> {
   const latestMessage = messages.at(-1)?.message ?? "";
   const response = await fetch("/api/ai", {
     method: "POST",
@@ -92,7 +103,7 @@ async function getGeminiReply(
       messages: messages.map(({ role, message }) => ({ role, message })),
       context: menuContext,
       storeName,
-        tenantId,
+      tenantId,
     }),
   });
 
@@ -102,10 +113,7 @@ async function getGeminiReply(
     throw new Error(payload.details || payload.error || "AI request failed");
   }
 
-  return (
-    payload.output?.trim() ||
-    "I couldn't generate a response right now. Please try again."
-  );
+  return payload;
 }
 
 function getTimestamp(): string {
@@ -131,6 +139,7 @@ interface ChatPanelProps {
   storeName?: string;
   menuContext?: string;
   tenantId?: string;
+  onCartActions?: (actions: CartAction[]) => void;
   /** Callback fired when the ✕ button is pressed (floating mode only) */
   onClose?: () => void;
   /** Show the close (✕) button in the header */
@@ -142,6 +151,7 @@ function ChatPanel({
   storeName,
   menuContext,
   tenantId,
+  onCartActions,
   onClose,
   showClose,
   className,
@@ -156,7 +166,7 @@ function ChatPanel({
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   // populate initial greeting client-side to avoid SSR/hydration mismatch
   useEffect(() => {
@@ -176,6 +186,14 @@ function ChatPanel({
     const t = setTimeout(() => inputRef.current?.focus(), 300);
     return () => clearTimeout(t);
   }, []);
+
+  useEffect(() => {
+    const input = inputRef.current;
+    if (!input) return;
+
+    input.style.height = "auto";
+    input.style.height = `${Math.min(input.scrollHeight, 160)}px`;
+  }, [input]);
 
   const updateScrollButtonVisibility = () => {
     const el = scrollAreaRef.current;
@@ -208,12 +226,19 @@ function ChatPanel({
     setIsTyping(true);
 
     try {
-      const reply = await getGeminiReply(
+      const payload = await getAiReply(
         nextMessages,
         menuContext,
         storeName,
         tenantId,
       );
+      if (payload.cartActions?.length) {
+        onCartActions?.(payload.cartActions);
+      }
+
+      const reply =
+        payload.output?.trim() ||
+        "I couldn't generate a response right now. Please try again.";
       setMessages((prev) => [
         ...prev,
         {
@@ -242,11 +267,12 @@ function ChatPanel({
   };
 
   const sendMessage = () => {
+    if (!input.trim() || isTyping) return;
     dispatchMessage(input);
     setInput("");
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       sendMessage();
@@ -457,16 +483,16 @@ function ChatPanel({
         )}
 
         {/* input row */}
-        <div className="bg-[#E8EBF0] rounded-[14px] px-4 py-3 flex items-center gap-3">
-          <input
+        <div className="bg-[#E8EBF0] rounded-[14px] px-4 py-3 flex items-end gap-3">
+          <textarea
             ref={inputRef}
-            type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Ask me anything…"
             disabled={isTyping}
-            className="flex-1 bg-transparent text-sm text-[#2D2D2D] outline-none placeholder:text-[#9CA3AF] disabled:opacity-50 disabled:cursor-not-allowed"
+            rows={1}
+            className="flex-1 resize-none overflow-y-auto bg-transparent text-sm leading-6 text-[#2D2D2D] outline-none placeholder:text-[#9CA3AF] disabled:opacity-50 disabled:cursor-not-allowed max-h-40"
           />
           <button
             onClick={sendMessage}
@@ -492,8 +518,12 @@ function FloatingChatbot({
   menuContext,
   storeName,
   tenantId,
+  onCartActions,
   triggerContent,
-}: Pick<ChatbotUIProps, "menuContext" | "storeName" | "tenantId" | "triggerContent">) {
+}: Pick<
+  ChatbotUIProps,
+  "menuContext" | "storeName" | "tenantId" | "triggerContent" | "onCartActions"
+>) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -532,6 +562,7 @@ function FloatingChatbot({
                 storeName={storeName}
                 menuContext={menuContext}
                 tenantId={tenantId}
+                onCartActions={onCartActions}
                 onClose={() => setIsOpen(false)}
                 showClose
                 className="h-full max-h-[620px]"
@@ -570,7 +601,9 @@ function FloatingChatbot({
               exit={{ rotate: -90, opacity: 0 }}
               transition={{ duration: 0.18 }}
             >
-              {triggerContent ?? <MessageCircle size={24} className="text-white" />}
+              {triggerContent ?? (
+                <MessageCircle size={24} className="text-white" />
+              )}
             </motion.div>
           )}
         </AnimatePresence>
@@ -587,6 +620,7 @@ export function ChatbotUI({
   menuContext,
   storeName,
   tenantId,
+  onCartActions,
   triggerContent,
   onClose,
 }: ChatbotUIProps) {
@@ -596,6 +630,7 @@ export function ChatbotUI({
         menuContext={menuContext}
         storeName={storeName}
         tenantId={tenantId}
+        onCartActions={onCartActions}
         triggerContent={triggerContent}
       />
     );
@@ -608,6 +643,7 @@ export function ChatbotUI({
         storeName={storeName}
         menuContext={menuContext}
         tenantId={tenantId}
+        onCartActions={onCartActions}
         onClose={onClose}
         showClose={!!onClose}
         className="w-full max-w-[400px] h-[750px]"
