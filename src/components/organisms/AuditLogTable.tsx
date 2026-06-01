@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Badge } from "@/components/atoms/Badge";
 import { Input } from "@/components/atoms/Input";
 import { Search, Download, Eye, ChevronLeft, ChevronRight } from "lucide-react";
+import { jsPDF } from "jspdf";
 import { Button } from "@/components/atoms/Button";
 import { Dropdown } from "@/components/molecules/Dropdown";
 import { AuditLogDetailsModal, AuditLogEntry } from "./AuditLogDetailsModal";
@@ -78,8 +79,27 @@ function mapToEntry(raw: RawAuditLog): AuditLogEntry {
       : "CREATE"
   ) as AuditLogEntry["actionType"];
 
-  const actor = (raw.actor_name ?? "").trim() || "System";
-  const role = (raw.actor_role ?? "").trim() || "system";
+  // Remove trailing " (guest)" from actor display and normalize role strings
+  const rawActor = (raw.actor_name ?? "").trim() || "System";
+  const actor = rawActor.replace(/\s*\(guest\)$/i, "");
+
+  const rawRole = (raw.actor_role ?? "").trim() || "system";
+  const roleLower = rawRole.toLowerCase();
+  const role =
+    roleLower === "guest"
+      ? "Customer"
+      : roleLower.charAt(0).toUpperCase() + roleLower.slice(1);
+
+  // normalize description and target text: collapse spaces, remove zero-width, replace peso symbol
+  const normalizeText = (s: unknown) => {
+    if (s === null || s === undefined) return "";
+    let str = String(s);
+    str = str.replace(/\u00A0/g, " ");
+    str = str.replace(/\u200B/g, "");
+    str = str.replace(/₱/g, "PHP ");
+    str = str.replace(/\s+/g, " ");
+    return str.trim();
+  };
 
   return {
     id: raw.id.slice(0, 8).toUpperCase(),
@@ -94,10 +114,10 @@ function mapToEntry(raw: RawAuditLog): AuditLogEntry {
     }),
     actor,
     role,
-    action: raw.description,
+    action: normalizeText(raw.description),
     actionType,
     target: raw.target_name
-      ? `${raw.target_type ? raw.target_type.charAt(0).toUpperCase() + raw.target_type.slice(1) + ": " : ""}${raw.target_name}`
+      ? `${raw.target_type ? raw.target_type.charAt(0).toUpperCase() + raw.target_type.slice(1) + ": " : ""}${normalizeText(raw.target_name)}`
       : (raw.target_type ?? "—"),
     ip: (meta.ip as string) ?? "—",
     details: {
@@ -106,6 +126,17 @@ function mapToEntry(raw: RawAuditLog): AuditLogEntry {
       message: (meta.message as string) ?? undefined,
     },
   };
+}
+
+// Role color mapping reused from SystemActivity for consistency
+function roleColor(role: string) {
+  const r = role.toLowerCase().replace(/[\s_]/g, "");
+  if (r.includes("superadmin")) return "accent" as const;
+  if (r.includes("admin")) return "secondary" as const;
+  if (r.includes("employee")) return "info" as const;
+  if (r.includes("customer")) return "success" as const;
+  if (r.includes("guest")) return "success" as const;
+  return "secondary" as const;
 }
 
 const PAGE_SIZE = 20;
@@ -117,6 +148,7 @@ export const AuditLogTable = ({
   const tenantId = params?.id as string | undefined;
 
   const [logs, setLogs] = useState<AuditLogEntry[]>([]);
+  const [businessName, setBusinessName] = useState<string>("");
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
@@ -180,7 +212,11 @@ export const AuditLogTable = ({
         return;
       }
 
-      const json: AuditLogsResponse = await res.json();
+      const json = await res.json();
+      // API now returns { businessName, data, total, page, limit }
+      setBusinessName(
+        typeof json.businessName === "string" ? json.businessName : "",
+      );
       setLogs((json.data ?? []).map(mapToEntry));
       setTotal(json.total ?? 0);
     } catch (err: unknown) {
@@ -197,42 +233,155 @@ export const AuditLogTable = ({
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   // ---------------------------------------------------------------------------
-  // Export CSV
+  // Export PDF
   // ---------------------------------------------------------------------------
-  const handleExportCSV = () => {
+  const handleExportPDF = () => {
     if (logs.length === 0) return;
-    const headers = [
-      "ID",
-      "Timestamp",
-      "Actor",
-      "Role",
-      "Action",
-      "Target",
-      "Type",
-      "IP",
-    ];
-    const rows = logs.map((l) => [
-      l.id,
-      l.timestamp,
-      l.actor,
-      l.role,
-      l.action,
-      l.target,
-      l.actionType,
-      l.ip,
-    ]);
-    const csv = [headers, ...rows]
-      .map((row) =>
-        row.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","),
-      )
-      .join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `audit-logs-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+
+    const doc = new jsPDF({
+      orientation: "landscape",
+      unit: "pt",
+      format: "a4",
+    });
+    const width = doc.internal.pageSize.getWidth();
+    const height = doc.internal.pageSize.getHeight();
+    const margin = 20; // tighter margin
+    const startY = 100;
+    // column widths must sum to <= width - margin*2
+    const columnWidths = [58, 100, 110, 260, 210, 70];
+
+    const drawHeader = () => {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(14);
+      const titleText = businessName || "Activity Log";
+      doc.text(titleText, margin, 42);
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.text(
+        `Activity Log • Generated: ${new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date())}`,
+        margin,
+        56,
+      );
+
+      doc.setFillColor(247, 247, 247);
+      doc.rect(margin, startY - 12, width - margin * 2, 20, "F");
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8);
+      const headers = ["ID", "Timestamp", "Actor", "Action", "Target", "Type"];
+      let x = margin + 4; // small left padding inside column
+      headers.forEach((h, i) => {
+        const centerX = x + columnWidths[i] / 2;
+        doc.text(h, centerX, startY, { align: "center" });
+        x += columnWidths[i];
+      });
+      doc.setDrawColor(220);
+      doc.line(margin, startY + 8, width - margin, startY + 8);
+    };
+
+    drawHeader();
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(6.5); // very small table font to fit content
+    const lineHeight = 7; // pt
+    let y = startY + 22;
+
+    logs.forEach((l, rowIndex) => {
+      const actionLines = doc.splitTextToSize(
+        String(l.action || "-"),
+        columnWidths[3] - 8,
+      );
+      const targetLines = doc.splitTextToSize(
+        String(l.target || "-"),
+        columnWidths[4] - 8,
+      );
+
+      // also wrap other columns to ensure nothing overflows
+      const idLines = doc.splitTextToSize(
+        String(l.id || ""),
+        columnWidths[0] - 6,
+      );
+      const tsLines = doc.splitTextToSize(
+        String(l.timestamp || ""),
+        columnWidths[1] - 6,
+      );
+      const actorLines = doc.splitTextToSize(
+        String(l.actor || ""),
+        columnWidths[2] - 6,
+      );
+
+      const maxLines = Math.max(
+        actionLines.length,
+        targetLines.length,
+        idLines.length,
+        tsLines.length,
+        actorLines.length,
+        1,
+      );
+
+      const rowHeight = Math.max(12, maxLines * lineHeight + 6);
+
+      if (y + rowHeight > height - margin - 24) {
+        doc.addPage();
+        drawHeader();
+        y = startY + 24;
+      }
+
+      if (rowIndex % 2 === 0) {
+        doc.setFillColor(250, 250, 250);
+        doc.rect(margin, y - 6, width - margin * 2, rowHeight, "F");
+      }
+
+      let x = margin + 4; // inner padding
+
+      // ID
+      doc.setTextColor(40, 40, 40);
+      let centerX = x + columnWidths[0] / 2;
+      doc.text(idLines, centerX, y, { align: "center" });
+      x += columnWidths[0];
+
+      // Timestamp
+      centerX = x + columnWidths[1] / 2;
+      doc.text(tsLines, centerX, y, { align: "center" });
+      x += columnWidths[1];
+
+      // Actor
+      centerX = x + columnWidths[2] / 2;
+      doc.text(actorLines, centerX, y, { align: "center" });
+      x += columnWidths[2];
+
+      // Action
+      centerX = x + columnWidths[3] / 2;
+      doc.text(actionLines, centerX, y, { align: "center" });
+      x += columnWidths[3];
+
+      // Target
+      centerX = x + columnWidths[4] / 2;
+      doc.text(targetLines, centerX, y, { align: "center" });
+      x += columnWidths[4];
+
+      // Type (single line)
+      const typeLines = doc.splitTextToSize(
+        String(l.actionType || ""),
+        columnWidths[5] - 6,
+      );
+      centerX = x + columnWidths[5] / 2;
+      doc.text(typeLines, centerX, y, { align: "center" });
+      x += columnWidths[5];
+
+      y += rowHeight;
+    });
+
+    doc.setDrawColor(220);
+    doc.line(margin, height - 36, width - margin, height - 36);
+    doc.setFontSize(8);
+    doc.setTextColor(110, 110, 110);
+    doc.text("Powered by Qios", width / 2, height - 18, { align: "center" });
+    doc.setTextColor(0, 0, 0);
+
+    const fileName = `audit-logs-${new Date().toISOString().slice(0, 10)}.pdf`;
+    doc.save(fileName);
   };
 
   return (
@@ -296,8 +445,8 @@ export const AuditLogTable = ({
               variant="outline"
               shape="rounded"
               className="px-3 border-brand-primary text-brand-primary hover:!bg-brand-primary hover:!border-brand-primary hover:!text-white"
-              title="Export CSV"
-              onClick={handleExportCSV}
+              title="Export PDF"
+              onClick={handleExportPDF}
             >
               <Download size={16} />
             </Button>
@@ -311,6 +460,9 @@ export const AuditLogTable = ({
                 <tr className="bg-gray-50 text-text-secondary text-[11px] font-bold uppercase tracking-wider">
                   <th className="py-3 px-6 text-center">
                     <div className="h-3 w-20 rounded skeleton-shimmer mx-auto" />
+                  </th>
+                  <th className="py-3 px-6 text-center">
+                    <div className="h-3 w-12 rounded skeleton-shimmer mx-auto" />
                   </th>
                   <th className="py-3 px-6 text-center">
                     <div className="h-3 w-16 rounded skeleton-shimmer mx-auto" />
@@ -345,6 +497,9 @@ export const AuditLogTable = ({
                       <div className="h-4 w-32 rounded skeleton-shimmer mx-auto" />
                     </td>
                     <td className="py-4 px-6 text-center">
+                      <div className="h-4 w-24 rounded skeleton-shimmer mx-auto" />
+                    </td>
+                    <td className="py-4 px-6 text-center">
                       <div className="h-4 w-44 max-w-full rounded skeleton-shimmer mx-auto" />
                     </td>
                     <td className="py-4 px-6 text-center">
@@ -365,6 +520,7 @@ export const AuditLogTable = ({
                 <tr className="bg-gray-50 text-text-secondary text-[11px] font-bold uppercase tracking-wider">
                   <th className="py-3 px-6 text-center">Timestamp</th>
                   <th className="py-3 px-6 text-center">Actor</th>
+                  <th className="py-3 px-6 text-center">Role</th>
                   <th className="py-3 px-6 text-center">Action</th>
                   <th className="py-3 px-6 text-center">Target</th>
                   <th className="py-3 px-6 text-center">Type</th>
@@ -375,7 +531,7 @@ export const AuditLogTable = ({
                 {error ? (
                   <tr>
                     <td
-                      colSpan={6}
+                      colSpan={7}
                       className="py-8 text-center text-sm text-error-primary"
                     >
                       {error}
@@ -394,9 +550,11 @@ export const AuditLogTable = ({
                         <p className="font-bold text-text-primary text-sm">
                           {log.actor}
                         </p>
-                        <div className="mt-1 flex justify-center">
+                      </td>
+                      <td className="py-4 px-6 text-center">
+                        <div className="mt-0 flex justify-center">
                           <Badge
-                            color="info"
+                            color={roleColor(log.role)}
                             variant="subtle"
                             shape="pill"
                             className="text-[10px] py-0.5"
@@ -444,7 +602,7 @@ export const AuditLogTable = ({
                 ) : (
                   <tr>
                     <td
-                      colSpan={6}
+                      colSpan={7}
                       className="py-8 text-center text-sm text-text-secondary"
                     >
                       No audit logs found matching your filters.

@@ -12,12 +12,12 @@ import {
   Info,
   AlertCircle,
 } from "lucide-react";
-import jsQR from "jsqr";
 import { useParams } from "next/navigation";
 import { Button } from "@/components/atoms/Button";
 import OrderDetails from "@/components/molecules/OrderDetails";
 import { processScannedQr } from "@/app/(employee)/[id]/employee/scanner/actions";
 import { triggerScanSound } from "@/lib/sounds";
+import { decodeQrFromVideoFrame } from "../../lib/qrScanner";
 
 type ScanState = "idle" | "requesting" | "scanning" | "success" | "error";
 
@@ -322,35 +322,15 @@ export const QrScanner = (): JSX.Element => {
       animFrameRef.current = requestAnimationFrame(scanFrame);
       return;
     }
-    const vw = video.videoWidth;
-    const vh = video.videoHeight;
-    if (!vw || !vh) {
-      animFrameRef.current = requestAnimationFrame(scanFrame);
-      return;
-    }
-    const ctx = canvas.getContext("2d");
-    if (!ctx) {
-      stopCamera();
-      setErrorMessage("Unable to access camera preview.");
-      setScanState("error");
-      return;
-    }
-    if (canvas.width !== vw || canvas.height !== vh) {
-      canvas.width = vw;
-      canvas.height = vh;
-    }
-    ctx.drawImage(video, 0, 0, vw, vh);
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const code = jsQR(imageData.data, imageData.width, imageData.height, {
-      inversionAttempts: "dontInvert",
-    });
+    const code = decodeQrFromVideoFrame(video, canvas);
     if (code) {
       stopCamera();
       setOrderId(code.data);
       setScanState("success");
-    } else {
-      animFrameRef.current = requestAnimationFrame(scanFrame);
+      return;
     }
+
+    animFrameRef.current = requestAnimationFrame(scanFrame);
   }, [stopCamera]);
 
   const handleScanQR = async () => {
