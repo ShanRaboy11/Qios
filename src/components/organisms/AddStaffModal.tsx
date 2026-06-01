@@ -55,7 +55,7 @@ export const AddStaffModal = ({ isOpen, onClose, onSave, roles, editingStaff }: 
     onClose();
   };
 
-  const selectedRoleName = roles.find((r) => r.id === formData.appRoleId)?.name || "";
+
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
@@ -143,7 +143,7 @@ export const AddStaffModal = ({ isOpen, onClose, onSave, roles, editingStaff }: 
                 label="Role"
                 placeholder="Select Role"
                 options={roles.map((r) => ({ label: r.name, value: r.id }))}
-                value={selectedRoleName}
+                value={formData.appRoleId}
                 onSelect={(opt) => setFormData({ ...formData, appRoleId: opt.value })}
               />
             </div>
