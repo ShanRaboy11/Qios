@@ -17,8 +17,7 @@ async function requireAdminForTenant(
     return { ok: false, status: 401, message: "missing access token" };
   }
 
-  const { data: userData, error: userErr } =
-    await admin.auth.getUser(token);
+  const { data: userData, error: userErr } = await admin.auth.getUser(token);
   if (userErr || !userData?.user) {
     return { ok: false, status: 401, message: "invalid access token" };
   }
@@ -135,7 +134,20 @@ export async function GET(
     return Response.json({ error: error.message }, { status: 500 });
   }
 
+  // also fetch tenant business name for exported reports
+  const { data: tenantData, error: tenantErr } = await admin
+    .from("tenants")
+    .select("business_name")
+    .eq("id", tenantId)
+    .maybeSingle();
+
+  const businessName =
+    tenantErr || !tenantData || typeof tenantData.business_name !== "string"
+      ? ""
+      : tenantData.business_name;
+
   return Response.json({
+    businessName,
     data: data ?? [],
     total: count ?? 0,
     page,
