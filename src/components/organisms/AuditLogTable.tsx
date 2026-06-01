@@ -78,6 +78,9 @@ function mapToEntry(raw: RawAuditLog): AuditLogEntry {
       : "CREATE"
   ) as AuditLogEntry["actionType"];
 
+  const actor = (raw.actor_name ?? "").trim() || "System";
+  const role = (raw.actor_role ?? "").trim() || "system";
+
   return {
     id: raw.id.slice(0, 8).toUpperCase(),
     timestamp: new Date(raw.created_at).toLocaleString("en-PH", {
@@ -89,8 +92,8 @@ function mapToEntry(raw: RawAuditLog): AuditLogEntry {
       second: "2-digit",
       hour12: false,
     }),
-    actor: raw.actor_name,
-    role: raw.actor_role,
+    actor,
+    role,
     action: raw.description,
     actionType,
     target: raw.target_name
@@ -292,7 +295,7 @@ export const AuditLogTable = ({
             <Button
               variant="outline"
               shape="rounded"
-              className="px-3"
+              className="px-3 border-brand-primary text-brand-primary hover:!bg-brand-primary hover:!border-brand-primary hover:!text-white"
               title="Export CSV"
               onClick={handleExportCSV}
             >
@@ -391,9 +394,16 @@ export const AuditLogTable = ({
                         <p className="font-bold text-text-primary text-sm">
                           {log.actor}
                         </p>
-                        <p className="text-[11px] text-text-tertiary">
-                          {log.role}
-                        </p>
+                        <div className="mt-1 flex justify-center">
+                          <Badge
+                            color="info"
+                            variant="subtle"
+                            shape="pill"
+                            className="text-[10px] py-0.5"
+                          >
+                            {log.role}
+                          </Badge>
+                        </div>
                       </td>
                       <td className="py-4 px-6 font-medium text-text-primary text-sm text-center">
                         {log.action}

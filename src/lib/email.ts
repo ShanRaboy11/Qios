@@ -18,7 +18,7 @@ type SmtpConfig = {
 // ─── Brand Tokens ─────────────────────────────────────────────────────────────
 // sourced from globals.css / kds design tokens
 
-const B = {
+export const B = {
   gold: "#ffd77a", // --kds-gold / --color-brand-secondary
   goldSoft: "#fff3da", // --kds-gold-soft
   goldMid: "#c07a00", // --kds-gold-mid
@@ -78,7 +78,7 @@ const readSmtpConfig = (): SmtpConfig | null => {
   };
 };
 
-const createTransporter = (config: SmtpConfig) =>
+export const createTransporter = (config: SmtpConfig) =>
   nodemailer.createTransport({
     host: config.host,
     port: config.port,
@@ -92,7 +92,7 @@ const createTransporter = (config: SmtpConfig) =>
 /**
  * Resolve SMTP config from DB (platform_settings) with field-by-field and complete fallbacks to environment variables.
  */
-const resolveSmtpConfig = async (): Promise<SmtpConfig | null> => {
+export const resolveSmtpConfig = async (): Promise<SmtpConfig | null> => {
   const envConfig = readSmtpConfig();
 
   try {
@@ -168,9 +168,9 @@ const normalizePublicBaseUrl = (value?: string) => {
 
 const publicBaseUrl = normalizePublicBaseUrl(
   process.env.NEXT_PUBLIC_SITE_URL ||
-    process.env.NEXT_PUBLIC_APP_URL ||
-    process.env.SITE_URL ||
-    process.env.VERCEL_PROJECT_PRODUCTION_URL,
+  process.env.NEXT_PUBLIC_APP_URL ||
+  process.env.SITE_URL ||
+  process.env.VERCEL_PROJECT_PRODUCTION_URL,
 );
 
 const brandFontOtfUrl =
@@ -199,7 +199,7 @@ const brandFontFace = brandFontSrc
 /**
  * Outer page shell. Warm parchment background, centred card, global footer.
  */
-const emailWrapper = (body: string) =>
+export const emailWrapper = (body: string) =>
   `
 <!DOCTYPE html>
 <html lang="en">
@@ -304,7 +304,7 @@ const headerBlobs = `
 // ─── Header ───────────────────────────────────────────────────────────────────
 // pill* params are explicit so callers never guess at colours.
 
-const brandHeader = ({
+export const brandHeader = ({
   title,
   subtitle,
   pillLabel,
@@ -336,7 +336,7 @@ ${headerBlobs}
 
 // ─── Footer row ───────────────────────────────────────────────────────────────
 
-const emailFooter = (note: string) => `
+export const emailFooter = (note: string) => `
 <tr>
   <td style="background:linear-gradient(160deg,${B.cream} 0%,${B.creamDark} 100%);
              border-top:1px solid ${B.border};padding:20px 40px;">
@@ -346,7 +346,7 @@ const emailFooter = (note: string) => `
 
 // ─── Divider ──────────────────────────────────────────────────────────────────
 
-const divider = `
+export const divider = `
 <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin:20px 0;">
   <tr><td style="border-top:1px solid ${B.border};"></td></tr>
 </table>`;
@@ -426,13 +426,13 @@ export const sendContactVerificationEmail = async ({
 
   const html = emailWrapper(`
     ${brandHeader({
-      title: "One step away from your dashboard",
-      subtitle: "Enter the code below to verify your business email address",
-      pillLabel: "Secure Action",
-      pillBg: B.coralSoft,
-      pillBorder: "#ffb3bd",
-      pillColor: B.coral,
-    })}
+    title: "One step away from your dashboard",
+    subtitle: "Enter the code below to verify your business email address",
+    pillLabel: "Secure Action",
+    pillBg: B.coralSoft,
+    pillBorder: "#ffb3bd",
+    pillColor: B.coral,
+  })}
 
     <tr>
       <td style="padding:32px 40px 28px;background:#fffdf8;">
@@ -551,13 +551,13 @@ export const sendSecurityVerificationEmail = async ({
 
   const html = emailWrapper(`
     ${brandHeader({
-      title: "Security Verification Code",
-      subtitle: "Enter the code below to verify your identity",
-      pillLabel: "Secure Action",
-      pillBg: B.coralSoft,
-      pillBorder: "#ffb3bd",
-      pillColor: B.coral,
-    })}
+    title: "Security Verification Code",
+    subtitle: "Enter the code below to verify your identity",
+    pillLabel: "Secure Action",
+    pillBg: B.coralSoft,
+    pillBorder: "#ffb3bd",
+    pillColor: B.coral,
+  })}
 
     <tr>
       <td style="padding:32px 40px 28px;background:#fffdf8;">
@@ -638,7 +638,7 @@ export const sendBusinessVerificationEmail = async ({
   tenantId,
 }: {
   to: string;
-  status: "approved" | "rejected";
+  status: "approved" | "rejected" | "suspended";
   comments?: string | null;
   tenantId?: string;
 }) => {
@@ -654,10 +654,13 @@ export const sendBusinessVerificationEmail = async ({
   }
 
   const isApproved = status === "approved";
+  const isSuspended = status === "suspended";
 
   const subject = isApproved
     ? "Your Business has been Approved — Qios"
-    : "Update on Your Business Onboarding — Qios";
+    : isSuspended
+      ? "Your Business Account has been Suspended — Qios"
+      : "Your Business Application has been Rejected — Qios";
 
   // ── Status banner ──
   const statusBanner = isApproved
@@ -684,7 +687,8 @@ export const sendBusinessVerificationEmail = async ({
           </td>
         </tr>
       </table>`
-    : `<table width="100%" cellpadding="0" cellspacing="0" role="presentation"
+    : isSuspended
+      ? `<table width="100%" cellpadding="0" cellspacing="0" role="presentation"
              style="background-color:${B.coralSoft};border:1px solid #ffb3bd;
                     border-radius:10px;margin-bottom:20px;">
         <tr>
@@ -697,9 +701,32 @@ export const sendBusinessVerificationEmail = async ({
                               line-height:32px;font-size:16px;font-weight:700;color:#ffffff;">!</div>
                 </td>
                 <td style="vertical-align:top;">
-                  <p style="margin:0 0 3px;font-size:14px;font-weight:600;color:#9b1c33;">Verification requires further action</p>
+                  <p style="margin:0 0 3px;font-size:14px;font-weight:600;color:#9b1c33;">Account suspended</p>
                   <p style="margin:0;font-size:13px;color:${B.muted};line-height:1.5;">
-                    Please review the feedback below and resubmit your application with the requested changes.
+                    Your business account has been suspended. Access to your merchant dashboard is temporarily disabled.
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>`
+      : `<table width="100%" cellpadding="0" cellspacing="0" role="presentation"
+             style="background-color:${B.coralSoft};border:1px solid #ffb3bd;
+                    border-radius:10px;margin-bottom:20px;">
+        <tr>
+          <td style="padding:16px 20px;">
+            <table cellpadding="0" cellspacing="0" role="presentation">
+              <tr>
+                <td style="vertical-align:top;padding-right:12px;">
+                  <div style="width:32px;height:32px;border-radius:50%;
+                              background-color:${B.coral};text-align:center;
+                              line-height:32px;font-size:16px;font-weight:700;color:#ffffff;">!</div>
+                </td>
+                <td style="vertical-align:top;">
+                  <p style="margin:0 0 3px;font-size:14px;font-weight:600;color:#9b1c33;">Business verification rejected</p>
+                  <p style="margin:0;font-size:13px;color:${B.muted};line-height:1.5;">
+                    Your business registration has been rejected. Please review the feedback below. You may resubmit your application once the issues are resolved.
                   </p>
                 </td>
               </tr>
@@ -708,7 +735,7 @@ export const sendBusinessVerificationEmail = async ({
         </tr>
       </table>`;
 
-  // ── Reviewer comments (rejection only) ──
+  // ── Reviewer comments (rejection/suspension only) ──
   const commentsBlock =
     !isApproved && comments
       ? `<table width="100%" cellpadding="0" cellspacing="0" role="presentation"
@@ -743,7 +770,21 @@ export const sendBusinessVerificationEmail = async ({
           </td>
         </tr>
       </table>`
-    : `<table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom:24px;">
+    : isSuspended
+      ? `<table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom:24px;">
+        <tr>
+          <td align="center">
+            <a href="mailto:support@qios.app" style="display:inline-block;padding:14px 32px;
+                               background:linear-gradient(135deg,${B.coral} 0%,#ff3355 100%);
+                               color:#ffffff;font-size:14px;font-weight:700;
+                               border-radius:10px;text-decoration:none;
+                               box-shadow:0 4px 14px rgba(255,82,105,0.35);">
+              Contact Support &rarr;
+            </a>
+          </td>
+        </tr>
+      </table>`
+      : `<table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom:24px;">
         <tr>
           <td align="center">
             <a href="${publicBaseUrl}/onboarding?resubmit=${encodeURIComponent(to)}" style="display:inline-block;padding:14px 32px;
@@ -767,17 +808,25 @@ export const sendBusinessVerificationEmail = async ({
 
   const html = emailWrapper(`
     ${brandHeader({
-      title: isApproved
-        ? "Your business is officially verified"
-        : "Action required on your application",
-      subtitle: isApproved
-        ? "Welcome to the Qios merchant network"
-        : "Your verification requires attention before proceeding",
-      pillLabel: isApproved ? "Verification Complete" : "Action Required",
-      pillBg: isApproved ? B.greenSoft : B.coralSoft,
-      pillBorder: isApproved ? "#a3e8c6" : "#ffb3bd",
-      pillColor: isApproved ? "#0a5c34" : "#9b1c33",
-    })}
+    title: isApproved
+      ? "Your business is officially verified"
+      : isSuspended
+        ? "Your business account has been suspended"
+        : "Your business application has been rejected",
+    subtitle: isApproved
+      ? "Welcome to the Qios merchant network"
+      : isSuspended
+        ? "Access to the Qios platform is temporarily disabled"
+        : "We were unable to approve your business registration",
+    pillLabel: isApproved
+      ? "Verification Complete"
+      : isSuspended
+        ? "Account Suspended"
+        : "Application Rejected",
+    pillBg: isApproved ? B.greenSoft : B.coralSoft,
+    pillBorder: isApproved ? "#a3e8c6" : "#ffb3bd",
+    pillColor: isApproved ? "#0a5c34" : "#9b1c33",
+  })}
 
     <tr>
       <td style="padding:32px 40px 28px;background:#fffdf8;">
@@ -785,11 +834,10 @@ export const sendBusinessVerificationEmail = async ({
           ${isApproved ? "<strong>Congratulations!</strong>" : "Hi there,"}
         </p>
         <p style="margin:0 0 20px;font-size:14px;color:${B.textSecondary};line-height:1.7;">
-          ${
-            isApproved
-              ? "You now have full access to your merchant dashboard &mdash; manage your queue, serve customers, and track your performance in real time."
-              : "Thank you for submitting your business verification documents. After reviewing your application, we were unable to approve it at this time."
-          }
+          ${isApproved
+      ? "You now have full access to your merchant dashboard &mdash; manage your queue, serve customers, and track your performance in real time."
+      : "Thank you for submitting your business verification documents. After reviewing your application, we were unable to approve it at this time."
+    }
         </p>
 
         ${statusBanner}
@@ -797,14 +845,13 @@ export const sendBusinessVerificationEmail = async ({
         ${ctaButton}
         ${nextSteps}
 
-        ${
-          !isApproved
-            ? `<p style="margin:0;font-size:13px;color:#b8a898;line-height:1.6;">
+        ${!isApproved
+      ? `<p style="margin:0;font-size:13px;color:#b8a898;line-height:1.6;">
           If you believe this decision is incorrect or need clarification, our support team is here to help at
           <a href="mailto:support@qios.app" style="color:${B.coral};text-decoration:none;font-weight:600;">support@qios.app</a>.
         </p>`
-            : ""
-        }
+      : ""
+    }
       </td>
     </tr>
 
@@ -852,13 +899,13 @@ export const sendRegistrationSuccessEmail = async ({
 
   const html = emailWrapper(`
     ${brandHeader({
-      title: `Thanks for joining Qios!`,
-      subtitle: "Your registration has been received and is under review",
-      pillLabel: "Registration Submitted",
-      pillBg: B.goldSoft,
-      pillBorder: B.border,
-      pillColor: B.goldDark,
-    })}
+    title: `Thanks for joining Qios!`,
+    subtitle: "Your registration has been received and is under review",
+    pillLabel: "Registration Submitted",
+    pillBg: B.goldSoft,
+    pillBorder: B.border,
+    pillColor: B.goldDark,
+  })}
 
     <tr>
       <td style="padding:32px 40px 28px;background:#fffdf8;">
@@ -952,13 +999,13 @@ export const sendAdminNotificationEmail = async ({
 
   const html = emailWrapper(`
     ${brandHeader({
-      title: "Account settings updated",
-      subtitle: "Your admin notification preference was saved",
-      pillLabel: notificationsEnabled ? "Notifications On" : "Notifications Off",
-      pillBg: notificationsEnabled ? B.greenSoft : B.coralSoft,
-      pillBorder: notificationsEnabled ? "#a3e8c6" : "#ffb3bd",
-      pillColor: notificationsEnabled ? "#0a5c34" : B.coral,
-    })}
+    title: "Account settings updated",
+    subtitle: "Your admin notification preference was saved",
+    pillLabel: notificationsEnabled ? "Notifications On" : "Notifications Off",
+    pillBg: notificationsEnabled ? B.greenSoft : B.coralSoft,
+    pillBorder: notificationsEnabled ? "#a3e8c6" : "#ffb3bd",
+    pillColor: notificationsEnabled ? "#0a5c34" : B.coral,
+  })}
 
     <tr>
       <td style="padding:32px 40px 28px;background:#fffdf8;">
@@ -974,8 +1021,8 @@ export const sendAdminNotificationEmail = async ({
             <td style="padding:16px 18px;">
               <p style="margin:0;font-size:13px;color:${notificationsEnabled ? "#0a5c34" : "#9b1c33"};line-height:1.6;">
                 ${notificationsEnabled
-                  ? "Email notifications are now enabled. You will receive future admin notifications at the configured mailbox."
-                  : "Email notifications are currently disabled. You will not receive future admin notification emails until this setting is turned back on."}
+      ? "Email notifications are now enabled. You will receive future admin notifications at the configured mailbox."
+      : "Email notifications are currently disabled. You will not receive future admin notification emails until this setting is turned back on."}
               </p>
             </td>
           </tr>

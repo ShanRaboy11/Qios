@@ -237,6 +237,7 @@ export default function ContactForm() {
   const [errors, setErrors] = useState<Errors>({});
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   const gradientHeaderStyle = {
     background: "linear-gradient(250deg, #FFD77A 15.53%, #FF5269 84.47%)",
@@ -278,10 +279,28 @@ export default function ContactForm() {
     e.preventDefault();
     if (!validate()) return;
     setLoading(true);
-    // simulate network request
-    await new Promise((r) => setTimeout(r, 1400));
-    setLoading(false);
-    setShowModal(true);
+    setSubmitError("");
+
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Unable to send your message.");
+      }
+
+      setShowModal(true);
+    } catch (error) {
+      setSubmitError(
+        error instanceof Error ? error.message : "Unable to send your message.",
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleReset = () => {
@@ -407,6 +426,38 @@ export default function ContactForm() {
                   Done
                 </Button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* error modal */}
+        {submitError && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-text-primary/40 backdrop-blur-sm animate-in fade-in duration-200"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setSubmitError("");
+            }}
+          >
+            <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-md p-10 flex flex-col items-center text-center gap-6 animate-in zoom-in-95 fade-in duration-200">
+              <div className="relative w-16 h-16 rounded-full bg-warning-secondary/40 flex items-center justify-center shadow-lg shadow-warning-primary/15">
+                <AlertCircle className="w-8 h-8 text-warning-primary" />
+              </div>
+
+              <div className="space-y-2">
+                <h3 className="h4 text-text-primary font-figtree font-bold">
+                  Message not sent
+                </h3>
+                <p className="b1 text-text-secondary max-w-sm">{submitError}</p>
+              </div>
+
+              <Button
+                variant="accent"
+                shape="rounded"
+                onClick={() => setSubmitError("")}
+                className="w-full"
+              >
+                Try Again
+              </Button>
             </div>
           </div>
         )}

@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS public.employee_settings (
     sound_stock BOOLEAN NOT NULL DEFAULT false,
     notify_email BOOLEAN NOT NULL DEFAULT true,
     notify_push BOOLEAN NOT NULL DEFAULT true,
+    weekly_schedule JSONB NOT NULL DEFAULT '[]'::jsonb,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -61,7 +62,8 @@ INSERT INTO public.employee_settings (
     sound_scan,
     sound_stock,
     notify_email,
-    notify_push
+    notify_push,
+    weekly_schedule
 )
 SELECT
     p.id,
@@ -72,7 +74,16 @@ SELECT
     true,
     false,
     true,
-    true
+        true,
+        '[
+            {"day":"Monday","enabled":true,"start":"09:00","end":"17:00"},
+            {"day":"Tuesday","enabled":true,"start":"09:00","end":"17:00"},
+            {"day":"Wednesday","enabled":true,"start":"09:00","end":"17:00"},
+            {"day":"Thursday","enabled":true,"start":"09:00","end":"17:00"},
+            {"day":"Friday","enabled":true,"start":"09:00","end":"17:00"},
+            {"day":"Saturday","enabled":true,"start":"09:00","end":"15:00"},
+            {"day":"Sunday","enabled":false,"start":"09:00","end":"17:00"}
+        ]'::jsonb
 FROM public.profiles p
 ON CONFLICT (profile_id) DO NOTHING;
 

@@ -123,7 +123,7 @@ export const KPICard = ({
                 className={cn(
                   "px-2 py-0.5 sm:py-1 rounded-md sm:rounded-lg text-[10px] sm:text-[12px] font-bold flex items-center gap-1 shrink-0 mt-1 sm:mt-0",
                   "bg-text-tertiary w-fit",
-                  isPositive ? "text-success-primary" : "text-warning-primary",
+                  isPositive ? "text-success-primary" : "text-error-primary",
                 )}
               >
                 {isPositive ? (
@@ -147,7 +147,7 @@ export const KPICard = ({
               <span
                 className={cn(
                   "text-[12px] sm:text-[14px] font-black",
-                  isPositive ? "text-success-primary" : "text-warning-primary",
+                  isPositive ? "text-success-primary" : "text-error-primary",
                 )}
               >
                 {isPositive ? "+" : ""}

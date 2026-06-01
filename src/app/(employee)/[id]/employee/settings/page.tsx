@@ -1,4 +1,4 @@
-import { EmployeeSettingsClient } from "./EmployeeSettingsClient";
+import { EmployeeSettingsClient } from "../../../../../components/organisms/EmployeeSettingsClient";
 import { getEmployeeSettingsPageData } from "./actions";
 
 export default async function EmployeeSettingsPage({

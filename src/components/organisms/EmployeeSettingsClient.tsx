@@ -4,11 +4,13 @@ import React, { useEffect, useState } from "react";
 import {
   Bell,
   Check,
+  Edit2,
   Eye,
   EyeOff,
   Loader2,
   Lock,
   Mail,
+  Pen,
   Shield,
   Sliders,
   Smartphone,
@@ -25,14 +27,21 @@ import {
   saveEmployeeOperationalSettings,
   saveEmployeeProfileSettings,
   updateEmployeePassword,
-} from "./actions";
+} from "../../app/(employee)/[id]/employee/settings/actions";
 import {
   emptySettingsActionState,
   type EmployeeSettingsPageData,
   type SettingsActionState,
-} from "./types";
+} from "../../app/(employee)/[id]/employee/settings/types";
 
 type SettingsTab = "profile" | "shift" | "security" | "notifications";
+
+type WeeklyScheduleDay = {
+  day: string;
+  enabled: boolean;
+  start: string;
+  end: string;
+};
 
 interface EmployeeSettingsClientProps {
   tenantId: string;
@@ -60,6 +69,16 @@ const logoffOptions = [
   { label: "Never Automatically Lock Till", value: "never" },
 ];
 
+const defaultWeeklySchedule: WeeklyScheduleDay[] = [
+  { day: "Monday", enabled: true, start: "09:00", end: "17:00" },
+  { day: "Tuesday", enabled: true, start: "09:00", end: "17:00" },
+  { day: "Wednesday", enabled: true, start: "09:00", end: "17:00" },
+  { day: "Thursday", enabled: true, start: "09:00", end: "17:00" },
+  { day: "Friday", enabled: true, start: "09:00", end: "17:00" },
+  { day: "Saturday", enabled: true, start: "09:00", end: "15:00" },
+  { day: "Sunday", enabled: false, start: "09:00", end: "17:00" },
+];
+
 function validatePassword(password: string) {
   return {
     hasMinLength: password.length >= 8,
@@ -83,6 +102,12 @@ function SettingsMessage({ state }: { state: SettingsActionState }) {
   return null;
 }
 
+function cloneWeeklySchedule(schedule?: WeeklyScheduleDay[]) {
+  return (schedule?.length ? schedule : defaultWeeklySchedule).map((day) => ({
+    ...day,
+  }));
+}
+
 export function EmployeeSettingsClient({
   tenantId,
   initialData,
@@ -95,6 +120,13 @@ export function EmployeeSettingsClient({
   const [profileData, setProfileData] = useState(initialData.profile);
   const [operationalData, setOperationalData] = useState(
     initialData.operational,
+  );
+  const [savedProfileData, setSavedProfileData] = useState(initialData.profile);
+  const [savedOperationalData, setSavedOperationalData] = useState(
+    initialData.operational,
+  );
+  const [weeklySchedule, setWeeklySchedule] = useState<WeeklyScheduleDay[]>(
+    cloneWeeklySchedule(initialData.operational.weeklySchedule),
   );
 
   const [profileState, setProfileState] = useState<SettingsActionState>(
@@ -122,6 +154,11 @@ export function EmployeeSettingsClient({
   useEffect(() => {
     setProfileData(initialData.profile);
     setOperationalData(initialData.operational);
+    setSavedProfileData(initialData.profile);
+    setSavedOperationalData(initialData.operational);
+    setWeeklySchedule(
+      cloneWeeklySchedule(initialData.operational.weeklySchedule),
+    );
     setProfileEditMode(false);
     setSecurityEditMode(false);
     setPreferencesEditMode(false);
@@ -129,6 +166,21 @@ export function EmployeeSettingsClient({
     setSecurityState(emptySettingsActionState);
     setPreferencesState(emptySettingsActionState);
   }, [initialData]);
+
+  const resetEditModes = () => {
+    setProfileEditMode(false);
+    setSecurityEditMode(false);
+    setPreferencesEditMode(false);
+    setProfileData(savedProfileData);
+    setOperationalData(savedOperationalData);
+    setWeeklySchedule(cloneWeeklySchedule(savedOperationalData.weeklySchedule));
+    setCurrentPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
+    setProfileState(emptySettingsActionState);
+    setSecurityState(emptySettingsActionState);
+    setPreferencesState(emptySettingsActionState);
+  };
 
   useEffect(() => {
     if (!saveFlash) return;
@@ -229,6 +281,13 @@ export function EmployeeSettingsClient({
     { id: "notifications", label: "Sounds & Alerts", icon: <Bell size={18} /> },
   ] as const;
 
+  const handleTabChange = (tab: SettingsTab) => {
+    if (tab !== activeTab) {
+      resetEditModes();
+    }
+    setActiveTab(tab);
+  };
+
   const submitProfile = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!profileEditMode) {
@@ -254,6 +313,9 @@ export function EmployeeSettingsClient({
 
       if (result.success) {
         setProfileEditMode(false);
+        setSavedProfileData({
+          ...profileData,
+        });
         setSaveFlash(result.success);
       }
     } finally {
@@ -262,7 +324,7 @@ export function EmployeeSettingsClient({
   };
 
   const cancelProfileEdit = () => {
-    setProfileData(initialData.profile);
+    setProfileData(savedProfileData);
     setProfileState(emptySettingsActionState);
     setProfileEditMode(false);
   };
@@ -292,6 +354,7 @@ export function EmployeeSettingsClient({
       formData.set("soundStock", String(operationalData.soundStock));
       formData.set("notifyEmail", String(operationalData.notifyEmail));
       formData.set("notifyPush", String(operationalData.notifyPush));
+      formData.set("weeklySchedule", JSON.stringify(weeklySchedule));
 
       const result = await saveEmployeeOperationalSettings(
         tenantId,
@@ -302,12 +365,28 @@ export function EmployeeSettingsClient({
 
       if (result.success) {
         setPreferencesEditMode(false);
-        setOperationalData((previous) => ({ ...previous, quickPin: "" }));
+        setSavedOperationalData({
+          ...operationalData,
+          quickPin: "",
+          weeklySchedule,
+        });
+        setOperationalData((previous) => ({
+          ...previous,
+          quickPin: "",
+          weeklySchedule,
+        }));
         setSaveFlash(result.success);
       }
     } finally {
       setPreferencesSaving(false);
     }
+  };
+
+  const cancelPreferencesEdit = () => {
+    setPreferencesEditMode(false);
+    setOperationalData(savedOperationalData);
+    setWeeklySchedule(cloneWeeklySchedule(savedOperationalData.weeklySchedule));
+    setPreferencesState(emptySettingsActionState);
   };
 
   const submitPassword = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -365,14 +444,12 @@ export function EmployeeSettingsClient({
           {tabs.map((tab) => (
             <button
               key={tab.id}
-              onClick={() => {
-                setActiveTab(tab.id);
-              }}
+              onClick={() => handleTabChange(tab.id)}
               type="button"
               className={`flex items-center gap-3 px-4 py-3.5 rounded-[16px] b2 font-semibold transition-all duration-300 whitespace-nowrap ${
                 activeTab === tab.id
-                  ? "bg-brand-accent/10 text-brand-accent shadow-sm border border-brand-accent/20"
-                  : "text-text-secondary hover:text-brand-accent hover:bg-brand-primary/5 border border-transparent"
+                  ? "bg-brand-accent text-white shadow-sm border border-brand-accent/20"
+                  : "bg-white text-text-secondary hover:text-brand-accent hover:bg-brand-primary/5 border border-transparent"
               }`}
             >
               {tab.icon}
@@ -489,7 +566,7 @@ export function EmployeeSettingsClient({
                     variant="accent"
                     shape="pill"
                     className="w-full sm:w-auto h-[50px] px-8 text-base font-bold font-figtree"
-                    leftIcon={<Check size={18} className="opacity-90" />}
+                    leftIcon={<Edit2 size={18} className="opacity-90" />}
                   >
                     Edit Profile
                   </Button>
@@ -602,6 +679,101 @@ export function EmployeeSettingsClient({
                     hardware hub.
                   </p>
                 </div>
+
+                <div className="space-y-4 pt-2">
+                  <div className="flex items-center justify-between gap-3 flex-wrap">
+                    <div>
+                      <h4 className="b2 font-bold text-text-primary font-figtree">
+                        Weekly Schedule
+                      </h4>
+                      <p className="text-xs text-text-secondary mt-0.5">
+                        Set the default working window for each day.
+                      </p>
+                    </div>
+                    <Badge color="primary" variant="subtle" shape="pill">
+                      {preferencesEditMode ? "Editing enabled" : "View only"}
+                    </Badge>
+                  </div>
+
+                  <div className="space-y-3">
+                    {weeklySchedule.map((daySchedule, index) => (
+                      <div
+                        key={daySchedule.day}
+                        className="rounded-[20px] border border-brand-primary/10 bg-white/70 p-4 flex flex-col gap-4"
+                      >
+                        <div className="flex items-center justify-between gap-3 flex-wrap">
+                          <div>
+                            <p className="b2 font-bold text-text-primary font-figtree">
+                              {daySchedule.day}
+                            </p>
+                            <p className="text-xs text-text-secondary mt-0.5">
+                              Define when this shift is active.
+                            </p>
+                          </div>
+                          <Toggle
+                            variant="accent"
+                            isOn={daySchedule.enabled}
+                            onChange={(next) =>
+                              setWeeklySchedule((previous) =>
+                                previous.map((item, itemIndex) =>
+                                  itemIndex === index
+                                    ? { ...item, enabled: next }
+                                    : item,
+                                ),
+                              )
+                            }
+                            disabled={!preferencesEditMode}
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <label className="b4 text-text-secondary font-bold uppercase tracking-wider font-inter ml-1">
+                              Start Time
+                            </label>
+                            <Input
+                              type="time"
+                              value={daySchedule.start}
+                              onChange={(event) =>
+                                setWeeklySchedule((previous) =>
+                                  previous.map((item, itemIndex) =>
+                                    itemIndex === index
+                                      ? { ...item, start: event.target.value }
+                                      : item,
+                                  ),
+                                )
+                              }
+                              disabled={
+                                !preferencesEditMode || !daySchedule.enabled
+                              }
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="b4 text-text-secondary font-bold uppercase tracking-wider font-inter ml-1">
+                              End Time
+                            </label>
+                            <Input
+                              type="time"
+                              value={daySchedule.end}
+                              onChange={(event) =>
+                                setWeeklySchedule((previous) =>
+                                  previous.map((item, itemIndex) =>
+                                    itemIndex === index
+                                      ? { ...item, end: event.target.value }
+                                      : item,
+                                  ),
+                                )
+                              }
+                              disabled={
+                                !preferencesEditMode || !daySchedule.enabled
+                              }
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
 
               <div className="h-px bg-brand-primary/10 my-4" />
@@ -663,31 +835,51 @@ export function EmployeeSettingsClient({
               </div>
 
               <div className="mt-8 pt-6 border-t border-brand-primary/10 flex justify-end gap-3">
-                <Button
-                  type={preferencesEditMode ? "submit" : "button"}
-                  onClick={
-                    preferencesEditMode
-                      ? undefined
-                      : () => setPreferencesEditMode(true)
-                  }
-                  disabled={preferencesSaving}
-                  variant="accent"
-                  shape="pill"
-                  className="w-full sm:w-auto h-[50px] px-8 text-base font-bold font-figtree"
-                  leftIcon={
-                    preferencesSaving ? (
-                      <Loader2 size={18} className="animate-spin opacity-90" />
-                    ) : (
-                      <Check size={18} className="opacity-90" />
-                    )
-                  }
-                >
-                  {preferencesEditMode
-                    ? preferencesSaving
-                      ? "Saving..."
-                      : "Save Preferences"
-                    : "Edit Preferences"}
-                </Button>
+                {!preferencesEditMode ? (
+                  <Button
+                    type="button"
+                    onClick={() => setPreferencesEditMode(true)}
+                    disabled={preferencesSaving}
+                    variant="accent"
+                    shape="pill"
+                    className="w-full sm:w-auto h-[50px] px-8 text-base font-bold font-figtree"
+                    leftIcon={<Edit2 size={18} className="opacity-90" />}
+                  >
+                    Edit Preferences
+                  </Button>
+                ) : (
+                  <>
+                    <Button
+                      type="button"
+                      onClick={cancelPreferencesEdit}
+                      disabled={preferencesSaving}
+                      variant="outline"
+                      shape="pill"
+                      className="w-full sm:w-auto h-[50px] px-8 text-base font-bold font-figtree"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={preferencesSaving}
+                      variant="accent"
+                      shape="pill"
+                      className="w-full sm:w-auto h-[50px] px-8 text-base font-bold font-figtree"
+                      leftIcon={
+                        preferencesSaving ? (
+                          <Loader2
+                            size={18}
+                            className="animate-spin opacity-90"
+                          />
+                        ) : (
+                          <Check size={18} className="opacity-90" />
+                        )
+                      }
+                    >
+                      {preferencesSaving ? "Saving..." : "Save Changes"}
+                    </Button>
+                  </>
+                )}
               </div>
             </form>
           )}
@@ -901,7 +1093,7 @@ export function EmployeeSettingsClient({
                     securitySaving ? (
                       <Loader2 size={18} className="animate-spin opacity-90" />
                     ) : (
-                      <Check size={18} className="opacity-90" />
+                      <Pen size={18} className="opacity-90" />
                     )
                   }
                 >
@@ -1075,7 +1267,7 @@ export function EmployeeSettingsClient({
                     preferencesSaving ? (
                       <Loader2 size={18} className="animate-spin opacity-90" />
                     ) : (
-                      <Check size={18} className="opacity-90" />
+                      <Pen size={18} className="opacity-90" />
                     )
                   }
                 >

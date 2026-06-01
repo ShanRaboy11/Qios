@@ -1497,7 +1497,10 @@ export async function updateTenantStatus(
     recipientEmail ?? "(none — email will not be sent)",
   );
 
-  if (recipientEmail && (status === "approved" || status === "rejected")) {
+  if (
+    recipientEmail &&
+    (status === "approved" || status === "rejected" || status === "suspended")
+  ) {
     const { sendBusinessVerificationEmail } = await import("@/lib/email");
     console.log(
       "[updateTenantStatus] Sending",

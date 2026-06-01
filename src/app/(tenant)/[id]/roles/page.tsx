@@ -26,6 +26,7 @@ export default function RolesPage() {
             shape="rounded"
             leftIcon={<ArrowLeft size={18} />}
             onClick={() => router.push(`/${tenantId}/staff`)}
+            className="border-brand-primary text-brand-primary hover:!bg-brand-primary hover:!border-brand-primary hover:!text-white"
           >
             Back to Staff
           </Button>

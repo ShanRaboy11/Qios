@@ -8,15 +8,24 @@ export interface StaffEntry {
   id: string;
   name: string;
   email: string;
+  phoneNumber?: string;
+  dateJoined?: string;
   avatar?: string;
   role: string;
   department: string;
   status: "Active" | "On Leave" | "Suspended";
   lastActive: string;
+  weeklySchedule?: Array<{
+    day: string;
+    enabled: boolean;
+    start: string;
+    end: string;
+  }>;
 }
 
 interface StaffTableProps {
   data: StaffEntry[];
+  className?: string;
   onEdit?: (id: string) => void;
   onResetPassword?: (id: string) => void;
   onDeactivate?: (id: string) => void;
@@ -26,6 +35,7 @@ interface StaffTableProps {
 
 export const StaffTable = ({
   data,
+  className,
   onEdit,
   onResetPassword,
   onDeactivate,
@@ -36,7 +46,9 @@ export const StaffTable = ({
 
   if (data.length === 0) {
     return (
-      <div className="bg-white rounded-[24px] shadow-sm border border-gray-100 overflow-hidden min-h-[400px] flex items-center justify-center">
+      <div
+        className={`bg-white rounded-[24px] shadow-sm border border-gray-100 overflow-hidden min-h-[400px] flex items-center justify-center ${className ?? ""}`}
+      >
         <EmptyState onAction={onClearFilters} />
       </div>
     );
@@ -47,8 +59,10 @@ export const StaffTable = ({
   };
 
   return (
-    <div className="bg-white rounded-[24px] shadow-sm border border-gray-100 overflow-hidden">
-      <div className="overflow-x-auto min-h-[400px] pb-32">
+    <div
+      className={`bg-white rounded-[24px] shadow-sm border border-gray-100 overflow-hidden flex flex-col h-full ${className ?? ""}`}
+    >
+      <div className="overflow-auto flex-1">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-gray-50 border-b border-gray-100 text-[12px] font-bold text-text-secondary uppercase tracking-wider">
