@@ -547,10 +547,17 @@ export default function OnboardingPage() {
     setError("");
     setSuccess("");
 
-    // ensure tenantId is available (wait for background business save if needed)
+    // ensure tenantId is available — wait for the background business save if it is still pending.
     if (!tenantId) {
       if (pendingSaveBusiness.current) {
-        await pendingSaveBusiness.current;
+        setLoading(true);
+        try {
+          await pendingSaveBusiness.current;
+        } catch {
+          // error already handled inside the promise chain
+        } finally {
+          setLoading(false);
+        }
       }
       if (!tenantId) {
         return setError("Please save business information first.");
@@ -561,60 +568,63 @@ export default function OnboardingPage() {
       return setError("Please verify your account before uploading documents.");
     }
 
+    // Check at least one new file is selected or existing urls already cover requirements
+    const hasNewFiles = Object.keys(documentData).length > 0;
+    const hasExistingUrls = Object.keys(existingDocumentUrls).length > 0;
+    if (!hasNewFiles && !hasExistingUrls) {
+      return setError("Please upload the required documents before continuing.");
+    }
+
+    setLoading(true);
     try {
+      // Convert File objects to base64 for the server action
       const filesData: Record<
         string,
         { name: string; base64: string; type: string }
       > = {};
       for (const [key, file] of Object.entries(documentData)) {
         const reader = new FileReader();
-        const base64 = await new Promise<string>((resolve) => {
+        const base64 = await new Promise<string>((resolve, reject) => {
           reader.onload = () => {
             const result = reader.result as string;
             resolve(result.split(",")[1]);
           };
+          reader.onerror = () => reject(new Error(`Failed to read file: ${file.name}`));
           reader.readAsDataURL(file);
         });
         filesData[key] = { name: file.name, base64, type: file.type };
       }
 
-      // start upload in background and continue immediately
-      const promise = saveDocumentUploads({
+      // Await the upload before advancing — this ensures storage errors surface to the user.
+      const res = await saveDocumentUploads({
         tenantId,
         userId,
         filesData,
         existingDocumentUrls,
-      })
-        .then(async (res) => {
-          if (res.success && res.uploadedUrls) {
-            // map urls back to requirement ids
-            const next: Record<string, string> = {};
-            res.uploadedUrls.forEach((url: string, idx: number) => {
-              const id = DOCUMENT_REQUIREMENTS[idx]?.id;
-              if (id) next[id] = url;
-            });
-            setExistingDocumentUrls((prev) => ({ ...prev, ...next }));
-            setSuccess("Documents saved in background.");
-          }
-          // during resubmission, flip status to pending so the admin can re-review.
-          if (isResubmission && tenantId) {
-            await markTenantResubmission(tenantId);
-          }
-        })
-        .catch((err: any) => {
-          setError(err?.message || "Unable to upload documents in background.");
-        })
-        .finally(() => {
-          pendingSaveDocuments.current = null;
+      });
+
+      if (res.success && res.uploadedUrls) {
+        // Map returned URLs back to their requirement IDs
+        const next: Record<string, string> = {};
+        res.uploadedUrls.forEach((url: string, idx: number) => {
+          const id = DOCUMENT_REQUIREMENTS[idx]?.id;
+          if (id) next[id] = url;
         });
+        setExistingDocumentUrls((prev) => ({ ...prev, ...next }));
+      }
 
-      pendingSaveDocuments.current = promise;
+      // During resubmission, flip the status back to pending so the admin can re-review.
+      if (isResubmission && tenantId) {
+        await markTenantResubmission(tenantId);
+      }
 
-      setSuccess("Progress saved locally. Uploading documents in background.");
+      setSuccess("Documents uploaded successfully.");
       setCurrentStep(5);
       scrollToTop();
     } catch (err: any) {
-      setError(err.message || "Unable to start document upload.");
+      setError(err?.message || "Failed to upload documents. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
