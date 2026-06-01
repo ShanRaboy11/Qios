@@ -131,10 +131,12 @@ export async function getStaffData(tenantId: string): Promise<StaffDataResult> {
           .from("employee_settings")
           .select("profile_id")
           .in("profile_id", uniqueProfileIds);
-        employeeSettings = fallback.data?.map((row) => ({
-          profile_id: row.profile_id,
-          weekly_schedule: null,
-        }));
+        employeeSettings = fallback.data
+          ? fallback.data.map((row) => ({
+              profile_id: row.profile_id,
+              weekly_schedule: null,
+            }))
+          : null;
       }
 
       (employeeSettings ?? []).forEach((row) => {

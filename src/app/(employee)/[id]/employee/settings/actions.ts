@@ -158,7 +158,12 @@ async function getEmployeeSettingsContext(tenantId: string) {
       )
       .eq("profile_id", user.id)
       .maybeSingle();
-    employeeSettings = fallback.data;
+    employeeSettings = fallback.data
+      ? {
+          ...fallback.data,
+          weekly_schedule: null,
+        }
+      : null;
     employeeSettingsError = fallback.error;
   }
 
