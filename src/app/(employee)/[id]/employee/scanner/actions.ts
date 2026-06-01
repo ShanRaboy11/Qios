@@ -5,10 +5,10 @@ import { logActivity } from "@/lib/activityLogger";
 import { revalidatePath } from "next/cache";
 import { requireEmployeePermission } from "@/lib/serverPermissions";
 
-export async function processScannedQr(tenantId: string, qrData: string) {
+export async function processScannedQr(tenantId: string, qrData: string): Promise<{ order?: any; error?: string }> {
   const auth = await requireEmployeePermission(tenantId, "QR Code Scanning");
   if (!auth.ok) {
-    throw new Error(auth.message);
+    return { error: auth.message };
   }
 
   const supabase = await createSupabaseServerClient();
@@ -62,26 +62,22 @@ export async function processScannedQr(tenantId: string, qrData: string) {
   const { data, error } = await query.maybeSingle();
 
   if (error) {
-    throw new Error(error.message);
+    return { error: error.message };
   }
 
   if (!data) {
-    throw new Error("Invalid QR Code: Order not found.");
+    return { error: "Invalid QR Code: Order not found." };
   }
 
   if (data.tenant_id !== currentTenantId) {
-    throw new Error(
-      "This QR code belongs to another business and cannot be processed here.",
-    );
+    return { error: "This QR code belongs to another business and cannot be processed here." };
   }
 
   if (data.payment_status === "paid") {
-    throw new Error(
-      "This order has already been paid and cannot be processed here.",
-    );
+    return { error: "This order has already been paid and cannot be processed here." };
   }
 
-  return data;
+  return { order: data };
 }
 
 export async function updateOrderFromScanner(
