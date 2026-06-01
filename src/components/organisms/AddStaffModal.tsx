@@ -143,7 +143,7 @@ export const AddStaffModal = ({ isOpen, onClose, onSave, roles, editingStaff }: 
                 label="Role"
                 placeholder="Select Role"
                 options={roles.map((r) => ({ label: r.name, value: r.id }))}
-                value={selectedRoleName}
+                value={formData.appRoleId}
                 onSelect={(opt) => setFormData({ ...formData, appRoleId: opt.value })}
               />
             </div>
