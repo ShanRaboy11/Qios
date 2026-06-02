@@ -66,7 +66,8 @@ export const Toggle = ({
       disabled={disabled}
       onClick={handleToggle}
       className={cn(
-        "relative inline-flex h-8 w-16 items-center rounded-full outline-none ring-0 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 cursor-pointer hover:shadow-sm",
+        // Fixed size at all breakpoints: w-12 track, h-6 height
+        "relative inline-flex h-6 w-12 flex-shrink-0 items-center rounded-full outline-none ring-0 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 cursor-pointer hover:shadow-sm",
         isOn ? trackColors[variant].on : trackColors[variant].off,
         ringColors[variant],
         disabled && "opacity-50 cursor-not-allowed",
@@ -75,7 +76,7 @@ export const Toggle = ({
     >
       <span className="sr-only">Toggle switch</span>
 
-      {/* background Text */}
+      {/* Background text */}
       {showText && (
         <span
           className={cn(
@@ -102,18 +103,24 @@ export const Toggle = ({
         </span>
       )}
 
-      {/* thumb */}
+      {/* Thumb — w-12 track, h-6 thumb = translate 24px when on */}
       <span
         className={cn(
-          "absolute flex items-center justify-center h-6 w-6 rounded-full bg-white transition-transform duration-300 transform shadow-md",
-          isOn ? "translate-x-9" : "translate-x-1"
+          "absolute flex items-center justify-center h-5 w-5 rounded-full bg-white transition-transform duration-300 transform shadow-md",
+          isOn ? "translate-x-[26px]" : "translate-x-[2px]",
         )}
       >
         {icon && (
-          <span className={cn(
-            "flex items-center justify-center",
-            isOn ? (variant === "primary" ? "text-brand-primary" : "text-brand-accent") : "text-text-secondary"
-          )}>
+          <span
+            className={cn(
+              "flex items-center justify-center",
+              isOn
+                ? variant === "primary"
+                  ? "text-brand-primary"
+                  : "text-brand-accent"
+                : "text-text-secondary",
+            )}
+          >
             {icon}
           </span>
         )}

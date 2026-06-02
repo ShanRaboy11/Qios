@@ -622,6 +622,7 @@ export const Navbar = ({
           type="button"
           onClick={() => setIsOpen(!isOpen)}
           className="focus:outline-none transition-transform duration-300 active:scale-90"
+          suppressHydrationWarning
         >
           <div
             className={cn(

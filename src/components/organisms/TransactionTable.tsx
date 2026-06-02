@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { Badge } from "@/components/atoms/Badge";
 import { Input } from "@/components/atoms/Input";
+import { TransactionCard } from "@/components/organisms/TransactionCard";
 import { Button } from "@/components/atoms/Button";
 import { Dropdown } from "@/components/molecules/Dropdown";
 import {
@@ -744,98 +745,80 @@ export const TransactionTable = ({
         </div>
       </div>
 
-      <div className="overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-        <table className="w-full text-left border-collapse whitespace-nowrap">
-          <thead>
-            <tr className="bg-gray-50 text-text-secondary text-[11px] font-bold uppercase tracking-wider text-center">
-              <th className="py-3 px-6 text-center">Order ID</th>
-              <th className="py-3 px-6 text-center">Date</th>
-              <th className="py-3 px-6 text-center">Time</th>
-              <th className="py-3 px-6 text-center">Items Summary</th>
-              <th className="py-3 px-6 text-center">Status</th>
-              <th className="py-3 px-6 text-center">Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            {isLoading ? (
-              Array.from({ length: limit }).map((_, index) => (
-                <tr
-                  key={`transaction-skeleton-${index}`}
-                  className="border-b border-gray-50"
-                >
-                  <td className="py-4 px-6 text-center">
-                    <div className="h-4 rounded skeleton-shimmer w-24 mx-auto" />
-                  </td>
-                  <td className="py-4 px-6 text-center">
-                    <div className="h-4 rounded skeleton-shimmer w-20 mx-auto" />
-                  </td>
-                  <td className="py-4 px-6 text-center">
-                    <div className="h-4 rounded skeleton-shimmer w-20 mx-auto" />
-                  </td>
-                  <td className="py-4 px-6 text-center">
-                    <div className="h-4 rounded skeleton-shimmer w-44 mx-auto" />
-                  </td>
-                  <td className="py-4 px-6 text-center">
-                    <div className="h-4 rounded skeleton-shimmer w-20 mx-auto" />
-                  </td>
-                  <td className="py-4 px-6 text-right">
-                    <div className="h-4 rounded skeleton-shimmer w-24 ml-auto" />
-                  </td>
-                </tr>
-              ))
-            ) : transactions.length > 0 ? (
-              transactions.map((tx) => (
-                <tr
-                  key={tx.id}
-                  className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors cursor-pointer"
-                  onClick={() => setSelectedTransaction(tx)}
-                >
-                  <td className="py-4 px-6 font-bold text-text-primary text-sm text-center">
-                    {tx.orderNumber}
-                  </td>
-                  <td className="py-4 px-6 text-sm text-text-secondary text-center">
-                    {tx.date}
-                  </td>
-                  <td className="py-4 px-6 text-sm text-text-secondary text-center">
-                    {tx.time}
-                  </td>
-                  <td className="py-4 px-6 text-[13px] text-text-primary truncate max-w-[220px] text-center">
-                    {tx.items || "No items"}
-                  </td>
-                  <td className="py-4 px-6 text-center">
-                    <Badge
-                      color={
-                        tx.status === "cancelled"
-                          ? "error"
-                          : tx.status === "ready" || tx.status === "served"
-                            ? "success"
-                            : "warning"
-                      }
-                      variant="subtle"
-                      shape="pill"
-                      className="justify-center text-[11px] py-0.5"
-                    >
-                      {capitalize(tx.status)}
-                    </Badge>
-                  </td>
-                  <td className="py-4 px-6 text-right font-bold text-text-primary text-sm">
-                    {formatMoney(tx.total)}
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td
-                  colSpan={6}
-                  className="py-16 text-center text-sm text-text-secondary"
-                >
-                  No transactions found for the selected filters.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+<div className="hidden md:block overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+  <table className="w-full text-left border-collapse whitespace-nowrap">
+    <thead>
+      <tr className="bg-gray-50 text-text-secondary text-[11px] font-bold uppercase tracking-wider text-center">
+        <th className="py-3 px-6 text-center">Order ID</th>
+        <th className="py-3 px-6 text-center">Date</th>
+        <th className="py-3 px-6 text-center">Time</th>
+        <th className="py-3 px-6 text-center">Items Summary</th>
+        <th className="py-3 px-6 text-center">Status</th>
+        <th className="py-3 px-6 text-center">Total</th>
+      </tr>
+    </thead>
+    <tbody>{isLoading ? (
+      Array.from({ length: limit }).map((_, index) => (
+        <tr key={`transaction-skeleton-${index}`} className="border-b border-gray-50">
+          <td className="py-4 px-6 text-center"><div className="h-4 rounded skeleton-shimmer w-24 mx-auto" /></td>
+          <td className="py-4 px-6 text-center"><div className="h-4 rounded skeleton-shimmer w-20 mx-auto" /></td>
+          <td className="py-4 px-6 text-center"><div className="h-4 rounded skeleton-shimmer w-20 mx-auto" /></td>
+          <td className="py-4 px-6 text-center"><div className="h-4 rounded skeleton-shimmer w-44 mx-auto" /></td>
+          <td className="py-4 px-6 text-center"><div className="h-4 rounded skeleton-shimmer w-20 mx-auto" /></td>
+          <td className="py-4 px-6 text-right"><div className="h-4 rounded skeleton-shimmer w-24 ml-auto" /></td>
+        </tr>
+      ))
+    ) : transactions.length > 0 ? (
+      transactions.map((tx) => (
+        <tr key={tx.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors cursor-pointer" onClick={() => setSelectedTransaction(tx)}>
+          <td className="py-4 px-6 font-bold text-text-primary text-sm text-center">{tx.orderNumber}</td>
+          <td className="py-4 px-6 text-sm text-text-secondary text-center">{tx.date}</td>
+          <td className="py-4 px-6 text-sm text-text-secondary text-center">{tx.time}</td>
+          <td className="py-4 px-6 text-[13px] text-text-primary truncate max-w-[220px] text-center">{tx.items || "No items"}</td>
+          <td className="py-4 px-6 text-center">
+            <Badge
+              color={tx.status === "cancelled" ? "error" : tx.status === "ready" || tx.status === "served" ? "success" : "warning"}
+              variant="subtle"
+              shape="pill"
+              className="justify-center text-[11px] py-0.5"
+            >
+              {capitalize(tx.status)}
+            </Badge>
+          </td>
+          <td className="py-4 px-6 text-right font-bold text-text-primary text-sm">{formatMoney(tx.total)}</td>
+        </tr>
+      ))
+    ) : (
+      <tr>
+        <td colSpan={6} className="py-16 text-center text-sm text-text-secondary">No transactions found for the selected filters.</td>
+      </tr>
+    )}</tbody>
+  </table>
+</div>
+
+{/* Mobile view – collapsible cards */}
+<div className="flex flex-col gap-3 md:hidden">
+  {isLoading ? (
+    Array.from({ length: limit }).map((_, idx) => (
+      <div key={`tx-card-skeleton-${idx}`} className="rounded-2xl border-2 border-[#E5E5E5] overflow-hidden bg-white">
+        <div className="w-full flex items-center justify-between px-4 py-3 gap-3 bg-[var(--color-bg-primary)]">
+          <div className="h-4 w-24 rounded skeleton-shimmer" />
+          <div className="h-4 w-20 rounded skeleton-shimmer" />
+        </div>
+        <div className="px-4 py-4 space-y-3 border-t-2 border-[#E5E5E5]">
+          <div className="h-4 w-32 rounded skeleton-shimmer" />
+          <div className="h-4 w-48 rounded skeleton-shimmer" />
+        </div>
       </div>
+    ))
+  ) : transactions.length > 0 ? (
+    transactions.map((tx) => (
+      <TransactionCard key={tx.id} tx={tx} />
+    ))
+  ) : (
+    <div className="py-16 text-center text-sm text-text-secondary">No transactions found for the selected filters.</div>
+  )}
+</div>
       <div className="border-t border-gray-50 flex justify-between items-center px-4 py-4 text-sm text-text-secondary">
         <span>
           {total <= limit
