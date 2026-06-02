@@ -54,6 +54,7 @@ import {
   CupSoda,
   Candy,
   ChefHat,
+  MoreVertical,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -838,62 +839,127 @@ const MenuCategoryManagement = () => {
 
           {/* ── Main content ─────────────────────────────────────────────── */}
           <div className="flex-1 flex flex-col min-w-0 bg-white/50 backdrop-blur-sm rounded-[24px] overflow-hidden border border-white/60 shadow-sm">
-            {/* header bar */}
+            {/* ── Header bar ───────────────────────────────────────────── */}
+            {/*
+              FIX: On mobile the old layout was a single flex row:
+                [icon + name (flex-1 min-w-0)]  [divider]  [edit + delete + add-item buttons]
+              The buttons are flex-shrink-0, so on narrow screens they held their
+              width and the name column was squeezed to near-zero, showing only "S…".
+
+              New layout:
+              • Wrap the whole bar in flex-col on mobile, flex-row on sm+.
+              • Row 1 (always): icon + name  (full width, no competition from buttons)
+              • Row 2 (mobile only): action buttons pushed to the right
+              • On sm+ we restore the original single-row design via hidden/block classes.
+            */}
             <div className="relative overflow-hidden flex-shrink-0 border-b border-brand-secondary/30">
+              {/* decorative blobs */}
               <div className="pointer-events-none absolute -top-16 -right-10 w-52 h-52 rounded-full bg-brand-accent/[0.06]" />
               <div className="pointer-events-none absolute -bottom-10 right-28 w-40 h-40 rounded-full bg-brand-primary/[0.10]" />
-              <div className="relative z-10 flex items-center gap-0 px-6 md:px-8 py-5 bg-gradient-to-br from-brand-secondary/30 to-brand-accent/10">
+
+              <div className="relative z-10 px-4 sm:px-6 md:px-8 py-4 sm:py-5 bg-gradient-to-br from-brand-secondary/30 to-brand-accent/10">
                 {activeCat && (
-                  <div className="flex items-center gap-4 flex-1 min-w-0">
-                    <div className="w-[54px] h-[54px] rounded-[18px] bg-brand-secondary/70 border border-brand-primary/30 flex items-center justify-center flex-shrink-0 text-brand-accent shadow-sm">
-                      {renderCategoryIcon(activeCat.icon, 24)}
+                  <>
+                    {/* ── Mobile layout: two-row stack ── */}
+                    <div className="flex sm:hidden flex-col gap-3">
+                      {/* Row 1: icon + full-width name */}
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-[46px] h-[46px] rounded-[16px] bg-brand-secondary/70 border border-brand-primary/30 flex items-center justify-center flex-shrink-0 text-brand-accent shadow-sm">
+                          {renderCategoryIcon(activeCat.icon, 20)}
+                        </div>
+                        {/* No truncate here — let it wrap naturally on very long names */}
+                        <p className="text-[22px] font-bold text-text-primary leading-tight tracking-tight break-words min-w-0 flex-1">
+                          {activeCat.name}
+                        </p>
+                      </div>
+
+                      {/* Row 2: action buttons */}
+                      <div className="flex items-center gap-2 justify-end">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => openEditCatModal(activeCat)}
+                          title="Edit category"
+                          className="w-9 h-9 rounded-[11px] border border-black/[0.09] bg-white/80 hover:bg-white text-text-secondary hover:text-text-primary"
+                        >
+                          <Edit2 size={15} />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() =>
+                            setDeleteConfirm({
+                              isOpen: true,
+                              type: "category",
+                              categoryId: activeCat.id,
+                            })
+                          }
+                          title="Delete category"
+                          className="w-9 h-9 rounded-[11px] border border-black/[0.09] bg-white/80 hover:bg-red-50 hover:text-warning-primary hover:border-warning-primary/20 text-text-secondary"
+                        >
+                          <Trash2 size={15} />
+                        </Button>
+                        <Button
+                          variant="primary"
+                          onClick={handleCreateNewItem}
+                          className="h-9 px-4 rounded-[11px] bg-brand-accent hover:bg-brand-accent/90 border-brand-accent text-white"
+                          leftIcon={<Plus size={15} />}
+                        >
+                          Add Item
+                        </Button>
+                      </div>
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-[28px] font-bold text-text-primary leading-tight truncate tracking-tight">
-                        {activeCat.name}
-                      </p>
+
+                    {/* ── Desktop layout: single row (sm+) ── */}
+                    <div className="hidden sm:flex items-center gap-0">
+                      <div className="flex items-center gap-4 flex-1 min-w-0">
+                        <div className="w-[54px] h-[54px] rounded-[18px] bg-brand-secondary/70 border border-brand-primary/30 flex items-center justify-center flex-shrink-0 text-brand-accent shadow-sm">
+                          {renderCategoryIcon(activeCat.icon, 24)}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-[28px] font-bold text-text-primary leading-tight tracking-tight truncate">
+                            {activeCat.name}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="w-px h-10 bg-black/[0.08] mx-5 flex-shrink-0" />
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => openEditCatModal(activeCat)}
+                          title="Edit category"
+                          className="w-9 h-9 rounded-[11px] border border-black/[0.09] bg-white/80 hover:bg-white text-text-secondary hover:text-text-primary"
+                        >
+                          <Edit2 size={15} />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() =>
+                            setDeleteConfirm({
+                              isOpen: true,
+                              type: "category",
+                              categoryId: activeCat.id,
+                            })
+                          }
+                          title="Delete category"
+                          className="w-9 h-9 rounded-[11px] border border-black/[0.09] bg-white/80 hover:bg-red-50 hover:text-warning-primary hover:border-warning-primary/20 text-text-secondary"
+                        >
+                          <Trash2 size={15} />
+                        </Button>
+                        <Button
+                          variant="primary"
+                          onClick={handleCreateNewItem}
+                          className="h-9 px-4 rounded-[11px] bg-brand-accent hover:bg-brand-accent/90 border-brand-accent text-white flex-shrink-0"
+                          leftIcon={<Plus size={15} />}
+                        >
+                          Add Item
+                        </Button>
+                      </div>
                     </div>
-                  </div>
+                  </>
                 )}
-                <div className="w-px h-10 bg-black/[0.08] mx-5 flex-shrink-0 hidden sm:block" />
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  {activeCat && (
-                    <>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => openEditCatModal(activeCat)}
-                        title="Edit category"
-                        className="w-9 h-9 rounded-[11px] border border-black/[0.09] bg-white/80 hover:bg-white text-text-secondary hover:text-text-primary"
-                      >
-                        <Edit2 size={15} />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() =>
-                          setDeleteConfirm({
-                            isOpen: true,
-                            type: "category",
-                            categoryId: activeCat.id,
-                          })
-                        }
-                        title="Delete category"
-                        className="w-9 h-9 rounded-[11px] border border-black/[0.09] bg-white/80 hover:bg-red-50 hover:text-warning-primary hover:border-warning-primary/20 text-text-secondary"
-                      >
-                        <Trash2 size={15} />
-                      </Button>
-                    </>
-                  )}
-                  <Button
-                    variant="primary"
-                    onClick={handleCreateNewItem}
-                    className="h-9 px-4 rounded-[11px] bg-brand-accent hover:bg-brand-accent/90 border-brand-accent text-white flex-shrink-0"
-                    leftIcon={<Plus size={15} />}
-                  >
-                    Add Item
-                  </Button>
-                </div>
               </div>
             </div>
 
@@ -1852,13 +1918,11 @@ const MenuCategoryManagement = () => {
           .custom-scrollbar::-webkit-scrollbar-thumb{background-color:rgba(0,0,0,.08);border-radius:10px}
           .custom-scrollbar:hover::-webkit-scrollbar-thumb{background-color:rgba(0,0,0,.18)}
 
-          /* ── Modal overlay: soft fade ──────────────────────────────── */
           @keyframes modal-overlay-in {
             from { opacity: 0; }
             to   { opacity: 1; }
           }
 
-          /* ── Modal panel: rise + scale from slightly below center ──── */
           @keyframes modal-panel-in {
             from {
               opacity: 0;

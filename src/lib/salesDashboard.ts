@@ -134,6 +134,11 @@ export function formatManilaTime(date: Date | string): string {
   }).format(value);
 }
 
+export function capitalize(value: string) {
+  if (!value) return value;
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
 export function formatMoney(value: number): string {
   return new Intl.NumberFormat("en-PH", {
     style: "currency",

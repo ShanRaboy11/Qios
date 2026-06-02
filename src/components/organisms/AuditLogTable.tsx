@@ -8,6 +8,7 @@ import { jsPDF } from "jspdf";
 import { Button } from "@/components/atoms/Button";
 import { Dropdown } from "@/components/molecules/Dropdown";
 import { AuditLogDetailsModal, AuditLogEntry } from "./AuditLogDetailsModal";
+import { AuditLogCard } from "./AuditLogCard";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useParams } from "next/navigation";
 
@@ -40,15 +41,8 @@ interface RawAuditLog {
   created_at: string;
 }
 
-interface AuditLogsResponse {
-  data: RawAuditLog[];
-  total: number;
-  page: number;
-  limit: number;
-}
-
 // ---------------------------------------------------------------------------
-// Map raw DB row → AuditLogEntry (used by details modal)
+// Map raw DB row to AuditLogEntry (used by details modal)
 // ---------------------------------------------------------------------------
 function mapToEntry(raw: RawAuditLog): AuditLogEntry {
   const meta = raw.metadata ?? {};
@@ -72,14 +66,12 @@ function mapToEntry(raw: RawAuditLog): AuditLogEntry {
     if (Object.keys(after).length === 0) after = undefined;
   }
 
-  // action_type mapping — LOGOUT / SYSTEM not in the modal union; coerce to closest
   const actionType = (
     ["CREATE", "UPDATE", "DELETE", "LOGIN", "REFUND"].includes(raw.action_type)
       ? raw.action_type
       : "CREATE"
   ) as AuditLogEntry["actionType"];
 
-  // Remove trailing " (guest)" from actor display and normalize role strings
   const rawActor = (raw.actor_name ?? "").trim() || "System";
   const actor = rawActor.replace(/\s*\(guest\)$/i, "");
 
@@ -90,13 +82,12 @@ function mapToEntry(raw: RawAuditLog): AuditLogEntry {
       ? "Customer"
       : roleLower.charAt(0).toUpperCase() + roleLower.slice(1);
 
-  // normalize description and target text: collapse spaces, remove zero-width, replace peso symbol
   const normalizeText = (s: unknown) => {
     if (s === null || s === undefined) return "";
     let str = String(s);
     str = str.replace(/\u00A0/g, " ");
     str = str.replace(/\u200B/g, "");
-    str = str.replace(/₱/g, "PHP ");
+    str = str.replace(/\u20B1/g, "PHP ");
     str = str.replace(/\s+/g, " ");
     return str.trim();
   };
@@ -118,8 +109,8 @@ function mapToEntry(raw: RawAuditLog): AuditLogEntry {
     actionType,
     target: raw.target_name
       ? `${raw.target_type ? raw.target_type.charAt(0).toUpperCase() + raw.target_type.slice(1) + ": " : ""}${normalizeText(raw.target_name)}`
-      : (raw.target_type ?? "—"),
-    ip: (meta.ip as string) ?? "—",
+      : (raw.target_type ?? "\u2014"),
+    ip: (meta.ip as string) ?? "\u2014",
     details: {
       before,
       after,
@@ -128,7 +119,6 @@ function mapToEntry(raw: RawAuditLog): AuditLogEntry {
   };
 }
 
-// Role color mapping reused from SystemActivity for consistency
 function roleColor(role: string) {
   const r = role.toLowerCase().replace(/[\s_]/g, "");
   if (r.includes("superadmin")) return "accent" as const;
@@ -213,7 +203,6 @@ export const AuditLogTable = ({
       }
 
       const json = await res.json();
-      // API now returns { businessName, data, total, page, limit }
       setBusinessName(
         typeof json.businessName === "string" ? json.businessName : "",
       );
@@ -245,9 +234,8 @@ export const AuditLogTable = ({
     });
     const width = doc.internal.pageSize.getWidth();
     const height = doc.internal.pageSize.getHeight();
-    const margin = 20; // tighter margin
+    const margin = 20;
     const startY = 100;
-    // column widths must sum to <= width - margin*2
     const columnWidths = [58, 100, 110, 260, 210, 70];
 
     const drawHeader = () => {
@@ -259,7 +247,7 @@ export const AuditLogTable = ({
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8);
       doc.text(
-        `Activity Log • Generated: ${new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date())}`,
+        `Activity Log - Generated: ${new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date())}`,
         margin,
         56,
       );
@@ -270,7 +258,7 @@ export const AuditLogTable = ({
       doc.setFont("helvetica", "bold");
       doc.setFontSize(8);
       const headers = ["ID", "Timestamp", "Actor", "Action", "Target", "Type"];
-      let x = margin + 4; // small left padding inside column
+      let x = margin + 4;
       headers.forEach((h, i) => {
         const centerX = x + columnWidths[i] / 2;
         doc.text(h, centerX, startY, { align: "center" });
@@ -283,8 +271,8 @@ export const AuditLogTable = ({
     drawHeader();
 
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(6.5); // very small table font to fit content
-    const lineHeight = 7; // pt
+    doc.setFontSize(6.5);
+    const lineHeight = 7;
     let y = startY + 22;
 
     logs.forEach((l, rowIndex) => {
@@ -296,8 +284,6 @@ export const AuditLogTable = ({
         String(l.target || "-"),
         columnWidths[4] - 8,
       );
-
-      // also wrap other columns to ensure nothing overflows
       const idLines = doc.splitTextToSize(
         String(l.id || ""),
         columnWidths[0] - 6,
@@ -333,42 +319,29 @@ export const AuditLogTable = ({
         doc.rect(margin, y - 6, width - margin * 2, rowHeight, "F");
       }
 
-      let x = margin + 4; // inner padding
+      let x = margin + 4;
 
-      // ID
       doc.setTextColor(40, 40, 40);
-      let centerX = x + columnWidths[0] / 2;
-      doc.text(idLines, centerX, y, { align: "center" });
+      doc.text(idLines, x + columnWidths[0] / 2, y, { align: "center" });
       x += columnWidths[0];
 
-      // Timestamp
-      centerX = x + columnWidths[1] / 2;
-      doc.text(tsLines, centerX, y, { align: "center" });
+      doc.text(tsLines, x + columnWidths[1] / 2, y, { align: "center" });
       x += columnWidths[1];
 
-      // Actor
-      centerX = x + columnWidths[2] / 2;
-      doc.text(actorLines, centerX, y, { align: "center" });
+      doc.text(actorLines, x + columnWidths[2] / 2, y, { align: "center" });
       x += columnWidths[2];
 
-      // Action
-      centerX = x + columnWidths[3] / 2;
-      doc.text(actionLines, centerX, y, { align: "center" });
+      doc.text(actionLines, x + columnWidths[3] / 2, y, { align: "center" });
       x += columnWidths[3];
 
-      // Target
-      centerX = x + columnWidths[4] / 2;
-      doc.text(targetLines, centerX, y, { align: "center" });
+      doc.text(targetLines, x + columnWidths[4] / 2, y, { align: "center" });
       x += columnWidths[4];
 
-      // Type (single line)
       const typeLines = doc.splitTextToSize(
         String(l.actionType || ""),
         columnWidths[5] - 6,
       );
-      centerX = x + columnWidths[5] / 2;
-      doc.text(typeLines, centerX, y, { align: "center" });
-      x += columnWidths[5];
+      doc.text(typeLines, x + columnWidths[5] / 2, y, { align: "center" });
 
       y += rowHeight;
     });
@@ -384,6 +357,84 @@ export const AuditLogTable = ({
     doc.save(fileName);
   };
 
+  // ---------------------------------------------------------------------------
+  // Skeletons
+  // ---------------------------------------------------------------------------
+  const SkeletonDesktop = () => (
+    <div className="hidden md:block overflow-x-auto bg-white [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+      <table className="w-full text-center border-collapse whitespace-nowrap">
+        <thead>
+          <tr className="bg-gray-50 text-text-secondary text-[11px] font-bold uppercase tracking-wider">
+            {["w-20", "w-12", "w-16", "w-16", "w-16", "w-12", "w-14"].map(
+              (w, i) => (
+                <th key={i} className="py-3 px-6 text-center">
+                  <div
+                    className={`h-3 ${w} rounded skeleton-shimmer mx-auto`}
+                  />
+                </th>
+              ),
+            )}
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: 7 }).map((_, rowIndex) => (
+            <tr
+              key={`skeleton-${rowIndex}`}
+              className="border-b border-gray-50 last:border-0"
+            >
+              <td className="py-4 px-6 text-center">
+                <div className="h-4 w-28 rounded skeleton-shimmer mx-auto" />
+              </td>
+              <td className="py-4 px-6 text-center">
+                <div className="h-4 w-28 rounded skeleton-shimmer mx-auto" />
+              </td>
+              <td className="py-4 px-6 text-center">
+                <div className="h-4 w-32 rounded skeleton-shimmer mx-auto" />
+              </td>
+              <td className="py-4 px-6 text-center">
+                <div className="h-4 w-24 rounded skeleton-shimmer mx-auto" />
+              </td>
+              <td className="py-4 px-6 text-center">
+                <div className="h-4 w-44 max-w-full rounded skeleton-shimmer mx-auto" />
+              </td>
+              <td className="py-4 px-6 text-center">
+                <div className="h-6 w-20 rounded-full skeleton-shimmer mx-auto" />
+              </td>
+              <td className="py-4 px-6 text-center">
+                <div className="h-9 w-9 rounded-lg skeleton-shimmer mx-auto" />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+
+  const SkeletonMobile = () => (
+    <div className="md:hidden flex flex-col gap-3 p-4">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <div
+          key={`card-skeleton-${i}`}
+          className="rounded-2xl border-2 border-[#E5E5E5] overflow-hidden"
+        >
+          <div className="flex items-center justify-between px-4 py-3 gap-3 bg-gray-50">
+            <div className="flex items-center gap-3">
+              <div className="h-9 w-9 rounded-full skeleton-shimmer shrink-0" />
+              <div className="flex flex-col gap-1.5">
+                <div className="h-3.5 w-28 rounded skeleton-shimmer" />
+                <div className="h-3 w-16 rounded skeleton-shimmer" />
+              </div>
+            </div>
+            <div className="h-6 w-16 rounded-full skeleton-shimmer shrink-0" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
+  // ---------------------------------------------------------------------------
+  // Render
+  // ---------------------------------------------------------------------------
   return (
     <>
       <div className="bg-white rounded-[24px] shadow-sm border border-gray-100 overflow-hidden flex flex-col h-full w-full">
@@ -398,7 +449,8 @@ export const AuditLogTable = ({
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
-            <div className="relative w-full sm:w-64">
+            {/* Search — always visible */}
+            <div className="relative flex-1 sm:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
               <Input
                 placeholder="Search actor, action..."
@@ -407,7 +459,8 @@ export const AuditLogTable = ({
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-            <div className="hidden sm:block w-36 z-30">
+            {/* Module filter */}
+            <div className="w-36 z-30">
               <Dropdown
                 label=""
                 size="sm"
@@ -424,7 +477,8 @@ export const AuditLogTable = ({
                 ]}
               />
             </div>
-            <div className="hidden sm:block w-36 z-20">
+            {/* Action type filter */}
+            <div className="w-36 z-20">
               <Dropdown
                 label=""
                 size="sm"
@@ -437,10 +491,10 @@ export const AuditLogTable = ({
                   { label: "Delete", value: "DELETE" },
                   { label: "Refund", value: "REFUND" },
                   { label: "Login", value: "LOGIN" },
-                  { label: "Logout", value: "LOGOUT" },
                 ]}
               />
             </div>
+            {/* Export — rightmost */}
             <Button
               variant="outline"
               shape="rounded"
@@ -453,171 +507,149 @@ export const AuditLogTable = ({
           </div>
         </div>
 
+        {/* Content */}
         {showLoading ? (
-          <div className="overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-            <table className="w-full text-center border-collapse whitespace-nowrap">
-              <thead>
-                <tr className="bg-gray-50 text-text-secondary text-[11px] font-bold uppercase tracking-wider">
-                  <th className="py-3 px-6 text-center">
-                    <div className="h-3 w-20 rounded skeleton-shimmer mx-auto" />
-                  </th>
-                  <th className="py-3 px-6 text-center">
-                    <div className="h-3 w-12 rounded skeleton-shimmer mx-auto" />
-                  </th>
-                  <th className="py-3 px-6 text-center">
-                    <div className="h-3 w-16 rounded skeleton-shimmer mx-auto" />
-                  </th>
-                  <th className="py-3 px-6 text-center">
-                    <div className="h-3 w-16 rounded skeleton-shimmer mx-auto" />
-                  </th>
-                  <th className="py-3 px-6 text-center">
-                    <div className="h-3 w-16 rounded skeleton-shimmer mx-auto" />
-                  </th>
-                  <th className="py-3 px-6 text-center">
-                    <div className="h-3 w-12 rounded skeleton-shimmer mx-auto" />
-                  </th>
-                  <th className="py-3 px-6 text-center">
-                    <div className="h-3 w-14 rounded skeleton-shimmer mx-auto" />
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {Array.from({ length: 7 }).map((_, rowIndex) => (
-                  <tr
-                    key={`audit-log-skeleton-${rowIndex}`}
-                    className="border-b border-gray-50 last:border-0"
-                  >
-                    <td className="py-4 px-6 text-center">
-                      <div className="h-4 w-28 rounded skeleton-shimmer mx-auto" />
-                    </td>
-                    <td className="py-4 px-6 text-center">
-                      <div className="h-4 w-28 rounded skeleton-shimmer mx-auto" />
-                    </td>
-                    <td className="py-4 px-6 text-center">
-                      <div className="h-4 w-32 rounded skeleton-shimmer mx-auto" />
-                    </td>
-                    <td className="py-4 px-6 text-center">
-                      <div className="h-4 w-24 rounded skeleton-shimmer mx-auto" />
-                    </td>
-                    <td className="py-4 px-6 text-center">
-                      <div className="h-4 w-44 max-w-full rounded skeleton-shimmer mx-auto" />
-                    </td>
-                    <td className="py-4 px-6 text-center">
-                      <div className="h-6 w-20 rounded-full skeleton-shimmer mx-auto" />
-                    </td>
-                    <td className="py-4 px-6 text-center">
-                      <div className="h-9 w-9 rounded-lg skeleton-shimmer mx-auto" />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <>
+            <SkeletonDesktop />
+            <SkeletonMobile />
+          </>
         ) : (
-          <div className="overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-            <table className="w-full text-center border-collapse whitespace-nowrap">
-              <thead>
-                <tr className="bg-gray-50 text-text-secondary text-[11px] font-bold uppercase tracking-wider">
-                  <th className="py-3 px-6 text-center">Timestamp</th>
-                  <th className="py-3 px-6 text-center">Actor</th>
-                  <th className="py-3 px-6 text-center">Role</th>
-                  <th className="py-3 px-6 text-center">Action</th>
-                  <th className="py-3 px-6 text-center">Target</th>
-                  <th className="py-3 px-6 text-center">Type</th>
-                  <th className="py-3 px-6 text-center">Details</th>
-                </tr>
-              </thead>
-              <tbody>
-                {error ? (
-                  <tr>
-                    <td
-                      colSpan={7}
-                      className="py-8 text-center text-sm text-error-primary"
-                    >
-                      {error}
-                    </td>
+          <>
+            {/* Desktop table */}
+            <div className="hidden md:block overflow-x-auto bg-white [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              <table className="w-full text-center border-collapse whitespace-nowrap">
+                <thead>
+                  <tr className="bg-gray-50 text-text-secondary text-[11px] font-bold uppercase tracking-wider">
+                    <th className="py-3 px-6 text-center">Timestamp</th>
+                    <th className="py-3 px-6 text-center">Actor</th>
+                    <th className="py-3 px-6 text-center">Role</th>
+                    <th className="py-3 px-6 text-center">Action</th>
+                    <th className="py-3 px-6 text-center">Target</th>
+                    <th className="py-3 px-6 text-center">Type</th>
+                    <th className="py-3 px-6 text-center">Details</th>
                   </tr>
-                ) : logs.length > 0 ? (
-                  logs.map((log) => (
-                    <tr
-                      key={log.id}
-                      className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors"
-                    >
-                      <td className="py-4 px-6 text-[13px] font-medium text-text-secondary text-center">
-                        {log.timestamp}
-                      </td>
-                      <td className="py-4 px-6 text-center">
-                        <p className="font-bold text-text-primary text-sm">
-                          {log.actor}
-                        </p>
-                      </td>
-                      <td className="py-4 px-6 text-center">
-                        <div className="mt-0 flex justify-center">
-                          <Badge
-                            color={roleColor(log.role)}
-                            variant="subtle"
-                            shape="pill"
-                            className="text-[10px] py-0.5"
-                          >
-                            {log.role}
-                          </Badge>
-                        </div>
-                      </td>
-                      <td className="py-4 px-6 font-medium text-text-primary text-sm text-center">
-                        {log.action}
-                      </td>
-                      <td className="py-4 px-6 text-sm text-text-secondary truncate max-w-[200px] text-center">
-                        {log.target}
-                      </td>
-                      <td className="py-4 px-6 text-center">
-                        <Badge
-                          color={
-                            log.actionType === "DELETE" ||
-                            log.actionType === "REFUND"
-                              ? "error"
-                              : log.actionType === "UPDATE"
-                                ? "warning"
-                                : log.actionType === "CREATE"
-                                  ? "success"
-                                  : "info"
-                          }
-                          variant="subtle"
-                          shape="pill"
-                          className="justify-center text-[10px] py-0.5"
-                        >
-                          {log.actionType}
-                        </Badge>
-                      </td>
-                      <td className="py-4 px-6 text-center">
-                        <button
-                          onClick={() => setSelectedLog(log)}
-                          className="p-2 rounded-lg bg-gray-50 hover:bg-brand-primary/10 hover:text-brand-accent text-gray-500 transition-colors inline-flex mx-auto"
-                          title="View Details"
-                        >
-                          <Eye size={16} />
-                        </button>
+                </thead>
+                <tbody>
+                  {error ? (
+                    <tr>
+                      <td
+                        colSpan={7}
+                        className="py-8 text-center text-sm text-error-primary"
+                      >
+                        {error}
                       </td>
                     </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td
-                      colSpan={7}
-                      className="py-8 text-center text-sm text-text-secondary"
-                    >
-                      No audit logs found matching your filters.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                  ) : logs.length > 0 ? (
+                    logs.map((log) => (
+                      <tr
+                        key={log.id}
+                        className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors"
+                      >
+                        <td className="py-4 px-6 text-[13px] font-medium text-text-secondary text-center">
+                          {log.timestamp}
+                        </td>
+                        <td className="py-4 px-6 text-center">
+                          <p className="font-bold text-text-primary text-sm">
+                            {log.actor}
+                          </p>
+                        </td>
+                        <td className="py-4 px-6 text-center">
+                          <div className="flex justify-center">
+                            <Badge
+                              color={roleColor(log.role)}
+                              variant="subtle"
+                              shape="pill"
+                              className="text-[10px] py-0.5"
+                            >
+                              {log.role}
+                            </Badge>
+                          </div>
+                        </td>
+                        <td className="py-4 px-6 font-medium text-text-primary text-sm text-center">
+                          {log.action}
+                        </td>
+                        <td className="py-4 px-6 text-sm text-text-secondary truncate max-w-[200px] text-center">
+                          {log.target}
+                        </td>
+                        <td className="py-4 px-6 text-center">
+                          <Badge
+                            color={
+                              log.actionType === "DELETE" ||
+                              log.actionType === "REFUND"
+                                ? "error"
+                                : log.actionType === "UPDATE"
+                                  ? "warning"
+                                  : log.actionType === "CREATE"
+                                    ? "success"
+                                    : "info"
+                            }
+                            variant="subtle"
+                            shape="pill"
+                            className="justify-center text-[10px] py-0.5"
+                          >
+                            {log.actionType}
+                          </Badge>
+                        </td>
+                        <td className="py-4 px-6 text-center">
+                          <button
+                            onClick={() => setSelectedLog(log)}
+                            className="p-2 rounded-lg bg-gray-50 hover:bg-brand-primary/10 hover:text-brand-accent text-gray-500 transition-colors inline-flex mx-auto"
+                            title="View Details"
+                          >
+                            <Eye size={16} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td
+                        colSpan={7}
+                        className="py-8 text-center text-sm text-text-secondary"
+                      >
+                        No audit logs found matching your filters.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile cards */}
+            <div className="md:hidden flex flex-col gap-3 p-4">
+              {error ? (
+                <div className="py-8 text-center text-sm text-error-primary">
+                  {error}
+                </div>
+              ) : logs.length > 0 ? (
+                logs.map((log) => (
+                  <AuditLogCard
+                    key={log.id}
+                    log={log}
+                    onViewDetails={() => setSelectedLog(log)}
+                  />
+                ))
+              ) : (
+                <div
+                  className="rounded-2xl border-2 border-[#E5E5E5] py-10 text-center text-sm"
+                  style={{
+                    backgroundColor: "white",
+                    color: "var(--color-text-secondary)",
+                  }}
+                >
+                  No audit logs found matching your filters.
+                </div>
+              )}
+            </div>
+          </>
         )}
+
+        {/* Pagination */}
         <div className="p-4 border-t border-gray-50 flex justify-between items-center text-sm text-text-secondary">
           <span>
             {showLoading
-              ? "Loading…"
-              : `Showing ${logs.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1}–${Math.min(page * PAGE_SIZE, total)} of ${total} logs`}
+              ? "Loading..."
+              : `Showing ${logs.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1}-${Math.min(page * PAGE_SIZE, total)} of ${total} logs`}
           </span>
           <div className="flex items-center gap-1">
             <button
