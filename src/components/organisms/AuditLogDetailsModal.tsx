@@ -69,12 +69,6 @@ export const AuditLogDetailsModal = ({
                     Log ID: {log.id}
                   </p>
                 </div>
-                <button
-                  onClick={onClose}
-                  className="w-10 h-10 rounded-full bg-white border border-gray-100 flex items-center justify-center text-gray-500 hover:text-text-primary hover:bg-gray-50 transition-colors shadow-sm"
-                >
-                  <X size={20} />
-                </button>
               </div>
 
               <div className="p-6 overflow-y-auto space-y-6">
