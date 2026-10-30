@@ -6,7 +6,7 @@ import { Button } from "@/components/atoms/Button";
 import { Checkbox } from "@/components/atoms/Checkbox";
 import { Badge } from "@/components/atoms/Badge";
 import { Mail, Lock, AlertCircle, X, Check, Shield } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, isNetworkOrServerDownError } from "@/lib/utils";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import {
@@ -220,6 +220,7 @@ export const LoginForm = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const onboardingStatus = searchParams?.get("onboarding");
+  const errorParam = searchParams?.get("error");
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -231,7 +232,11 @@ export const LoginForm = () => {
       ? "Registration successful! Your account is currently pending super admin approval."
       : null,
   );
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(
+    errorParam === "server_down"
+      ? "The backend service is currently unreachable or undergoing maintenance. Sign in is temporarily unavailable."
+      : null,
+  );
   const [emailError, setEmailError] = useState(false);
   const [passwordError, setPasswordError] = useState(false);
   const [requires2FA, setRequires2FA] = useState(false);
@@ -244,6 +249,14 @@ export const LoginForm = () => {
     businessName: string;
   } | null>(null);
   const [useRecoveryCode, setUseRecoveryCode] = useState(false);
+
+  useEffect(() => {
+    if (errorParam === "server_down") {
+      setError(
+        "The backend service is currently unreachable or undergoing maintenance. Sign in is temporarily unavailable."
+      );
+    }
+  }, [errorParam]);
 
   useEffect(() => {
     const storedEmail = localStorage.getItem("rememberedEmail");
@@ -334,7 +347,18 @@ export const LoginForm = () => {
       const { data: signInData, error: signInError } =
         await supabase.auth.signInWithPassword({ email, password });
 
-      if (signInError || !signInData.user || !signInData.session) {
+      if (signInError) {
+        if (isNetworkOrServerDownError(signInError)) {
+          setError(
+            "Unable to connect to the authentication server. The service might be temporarily offline or undergoing maintenance. Please try again later."
+          );
+        } else {
+          setError("Invalid email or password. Please try again.");
+        }
+        return;
+      }
+
+      if (!signInData?.user || !signInData?.session) {
         // Adhere to cybersecurity standards: Do not leak whether the email exists
         setError("Invalid email or password. Please try again.");
         return;
@@ -543,8 +567,14 @@ export const LoginForm = () => {
       } else {
         setError("Account configuration is incomplete.");
       }
-    } catch {
-      setError("An unexpected error occurred. Please try again.");
+    } catch (err: unknown) {
+      if (isNetworkOrServerDownError(err)) {
+        setError(
+          "Unable to connect to the server. The service might be temporarily offline or undergoing maintenance. Please try again later."
+        );
+      } else {
+        setError("An unexpected error occurred. Please try again.");
+      }
     } finally {
       setIsLoading(false);
     }

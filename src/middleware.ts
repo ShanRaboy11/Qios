@@ -1,10 +1,10 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { type RolePermissions } from "@/lib/employeePermissions";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { isNetworkOrServerDownError } from "@/lib/utils";
 
 async function resolveEmployeeTenantId(
-  admin: ReturnType<typeof createSupabaseAdminClient>,
+  admin: ReturnType<typeof createSupabaseAdminClient> | null,
   tenantId: string | null,
   appRoleId: string | null,
 ) {
@@ -12,49 +12,28 @@ async function resolveEmployeeTenantId(
     return tenantId;
   }
 
-  if (!appRoleId) {
+  if (!appRoleId || !admin) {
     return null;
   }
 
-  const { data: roleRow } = await admin
-    .from("roles")
-    .select("tenant_id")
-    .eq("id", appRoleId)
-    .maybeSingle();
+  try {
+    const { data: roleRow } = await admin
+      .from("roles")
+      .select("tenant_id")
+      .eq("id", appRoleId)
+      .maybeSingle();
 
-  return typeof roleRow?.tenant_id === "string" ? roleRow.tenant_id : null;
+    return typeof roleRow?.tenant_id === "string" ? roleRow.tenant_id : null;
+  } catch (error) {
+    console.warn("[Middleware] resolveEmployeeTenantId failed:", error);
+    return null;
+  }
 }
 
 export async function middleware(request: NextRequest) {
-  const admin = createSupabaseAdminClient();
   let supabaseResponse = NextResponse.next({
     request,
   });
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value),
-          );
-
-          supabaseResponse = NextResponse.next({
-            request,
-          });
-
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options),
-          );
-        },
-      },
-    },
-  );
 
   const pathParts = request.nextUrl.pathname.split("/").filter(Boolean);
   const firstPathSegment = pathParts[0] || "";
@@ -64,7 +43,7 @@ export async function middleware(request: NextRequest) {
   const isSuperAdminRoute = firstPathSegment === "admin";
   const secondPathSegment = pathParts[1] || "";
 
-  // known top-level static route segments in app
+  // Known top-level static/public route segments in app
   const knownStaticRoutes = [
     "admin",
     "api",
@@ -83,7 +62,7 @@ export async function middleware(request: NextRequest) {
     !knownStaticRoutes.includes(firstPathSegment) &&
     ["home", "order"].includes(secondPathSegment);
 
-  // detect tenant or employee routes
+  // Detect tenant or employee routes
   const isTenantOrEmployeeRoute =
     firstPathSegment !== "" && !knownStaticRoutes.includes(firstPathSegment);
 
@@ -92,33 +71,134 @@ export async function middleware(request: NextRequest) {
   const isProtectedRoute =
     (isSuperAdminRoute || isTenantOrEmployeeRoute) && !isPublicCustomerRoute;
 
-  // get user session for protected/auth routes
-  let user = null;
-  let accessToken = null;
-
-  if (isProtectedRoute || isAuthRoute || isRootRoute) {
-    const {
-      data: { user: authUser },
-    } = await supabase.auth.getUser();
-
-    user = authUser;
-
-    if (user) {
-      const { data: sessionData } = await supabase.auth.getSession();
-      accessToken = sessionData.session?.access_token;
-    }
-  }
-
   const isDev = process.env.NODE_ENV === "development";
 
-  // redirect unauthenticated users away from protected routes (disabled in dev)
-  if (!user && isProtectedRoute && !isDev) {
+  // Check if request carries any Supabase session cookies
+  const allCookies = request.cookies.getAll();
+  const hasAuthCookies = allCookies.some(
+    (c) => c.name.startsWith("sb-") || c.name.includes("auth-token")
+  );
+
+  // FAST PATH 1:
+  // For guest landing page (/) or login page (/login) without auth cookies,
+  // there is guaranteed no user session to redirect away from.
+  // Bypass Supabase network calls entirely so static pages load instantly even if Supabase is offline/paused!
+  if ((isRootRoute || isAuthRoute) && !hasAuthCookies) {
+    return supabaseResponse;
+  }
+
+  // FAST PATH 2:
+  // For protected routes with NO auth cookies, don't waste time calling Supabase.
+  // Immediately redirect to login.
+  if (isProtectedRoute && !hasAuthCookies && !isDev) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = "/login";
     return NextResponse.redirect(loginUrl);
   }
 
-  // tenant/employee authorization check (disabled in dev)
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    if (isProtectedRoute && !isDev) {
+      const loginUrl = request.nextUrl.clone();
+      loginUrl.pathname = "/login";
+      loginUrl.searchParams.set("error", "server_down");
+      return NextResponse.redirect(loginUrl);
+    }
+    return supabaseResponse;
+  }
+
+  const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+    cookies: {
+      getAll() {
+        return request.cookies.getAll();
+      },
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value }) =>
+          request.cookies.set(name, value),
+        );
+
+        supabaseResponse = NextResponse.next({
+          request,
+        });
+
+        cookiesToSet.forEach(({ name, value, options }) =>
+          supabaseResponse.cookies.set(name, value, options),
+        );
+      },
+    },
+  });
+
+  // Get user session for protected/auth routes with strict timeout protection
+  let user = null;
+  let accessToken = null;
+  let serverConnectionError = false;
+
+  if (isProtectedRoute || ((isAuthRoute || isRootRoute) && hasAuthCookies)) {
+    try {
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("Supabase auth timeout")), 2500)
+      );
+
+      const authResult = await Promise.race([
+        supabase.auth.getUser(),
+        timeoutPromise,
+      ]);
+
+      if (authResult.error) {
+        if (isNetworkOrServerDownError(authResult.error)) {
+          serverConnectionError = true;
+        }
+      } else {
+        user = authResult.data?.user ?? null;
+      }
+
+      if (user) {
+        try {
+          const sessionTimeout = new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error("Supabase session timeout")), 2000)
+          );
+          const { data: sessionData } = await Promise.race([
+            supabase.auth.getSession(),
+            sessionTimeout,
+          ]);
+          accessToken = sessionData.session?.access_token;
+        } catch {
+          // ignore session fetch failure
+        }
+      }
+    } catch (err) {
+      console.warn("[Middleware] Supabase unreachable or timed out:", err);
+      serverConnectionError = true;
+      user = null;
+    }
+  }
+
+  // Redirect unauthenticated users away from protected routes (disabled in dev)
+  if (!user && isProtectedRoute && !isDev) {
+    const loginUrl = request.nextUrl.clone();
+    loginUrl.pathname = "/login";
+    if (serverConnectionError) {
+      loginUrl.searchParams.set("error", "server_down");
+    }
+    return NextResponse.redirect(loginUrl);
+  }
+
+  // Lazy admin client initialization
+  let admin: ReturnType<typeof createSupabaseAdminClient> | null = null;
+  const getAdminClient = () => {
+    if (!admin) {
+      try {
+        admin = createSupabaseAdminClient();
+      } catch {
+        admin = null;
+      }
+    }
+    return admin;
+  };
+
+  // Tenant/employee authorization check (disabled in dev)
   if (user && isTenantOrEmployeeRoute && !isPublicCustomerRoute && !isDev) {
     let role = null;
     let userTenantId = null;
@@ -159,18 +239,22 @@ export async function middleware(request: NextRequest) {
           : undefined);
     }
 
-    // fallback to database if token does not contain claims
+    // Fallback to database if token does not contain claims
     if (!role) {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role, tenant_id, app_role_id")
-        .eq("id", user.id)
-        .single();
+      try {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role, tenant_id, app_role_id")
+          .eq("id", user.id)
+          .single();
 
-      if (profile) {
-        role = profile.role;
-        userTenantId = profile.tenant_id;
-        userAppRoleId = profile.app_role_id;
+        if (profile) {
+          role = profile.role;
+          userTenantId = profile.tenant_id;
+          userAppRoleId = profile.app_role_id;
+        }
+      } catch (err) {
+        console.warn("[Middleware] Failed to fetch profile role:", err);
       }
     }
 
@@ -179,31 +263,35 @@ export async function middleware(request: NextRequest) {
     }
 
     if (!userAppRoleId) {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("app_role_id, tenant_id")
-        .eq("id", user.id)
-        .single();
+      try {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("app_role_id, tenant_id")
+          .eq("id", user.id)
+          .single();
 
-      if (profile) {
-        userAppRoleId = profile.app_role_id;
-        userTenantId = userTenantId || profile.tenant_id;
+        if (profile) {
+          userAppRoleId = profile.app_role_id;
+          userTenantId = userTenantId || profile.tenant_id;
+        }
+      } catch (err) {
+        console.warn("[Middleware] Failed to fetch profile app_role_id:", err);
       }
     }
 
     userTenantId = await resolveEmployeeTenantId(
-      admin,
+      getAdminClient(),
       userTenantId,
       userAppRoleId,
     );
 
-    // detect employee routes
+    // Detect employee routes
     const isEmployeePath = request.nextUrl.pathname.startsWith(
       `/${pathTenantId}/employee`,
     );
 
     if (role === "super_admin") {
-      // allow all access for now
+      // Allow all access for now
     } else if (role === "admin") {
       if (userTenantId !== pathTenantId || isEmployeePath) {
         const redirectUrl = request.nextUrl.clone();
@@ -227,12 +315,20 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // redirect authenticated users away from login or guest landing page
+  // Redirect authenticated users away from login or guest landing page
   const isServerAction = request.headers.has("next-action");
 
   if (user && (isAuthRoute || isRootRoute) && !isServerAction) {
-    const { data: sessionData } = await supabase.auth.getSession();
-    const token = sessionData.session?.access_token;
+    let token = accessToken;
+    if (!token) {
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        token = sessionData.session?.access_token;
+      } catch {
+        // ignore
+      }
+    }
+
     const userMetadata = user.user_metadata as
       | Record<string, unknown>
       | undefined;
@@ -257,20 +353,24 @@ export async function middleware(request: NextRequest) {
     }
 
     if (!role) {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role, tenant_id, app_role_id")
-        .eq("id", user.id)
-        .single();
+      try {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role, tenant_id, app_role_id")
+          .eq("id", user.id)
+          .single();
 
-      if (profile) {
-        role = profile.role;
-        tenantId = profile.tenant_id;
-        userAppRoleId = profile.app_role_id ?? userAppRoleId;
+        if (profile) {
+          role = profile.role;
+          tenantId = profile.tenant_id;
+          userAppRoleId = profile.app_role_id ?? userAppRoleId;
 
-        if (!role && profile.app_role_id) {
-          role = "employee";
+          if (!role && profile.app_role_id) {
+            role = "employee";
+          }
         }
+      } catch (err) {
+        console.warn("[Middleware] Failed to fetch profile for redirect:", err);
       }
     }
 
@@ -295,15 +395,12 @@ export async function middleware(request: NextRequest) {
 
       if (metadataRoleHint) {
         userAppRoleId = metadataRoleHint;
-      }
-
-      if (metadataRoleHint) {
         role = "employee";
       }
     }
 
     tenantId = await resolveEmployeeTenantId(
-      admin,
+      getAdminClient(),
       tenantId,
       role === "employee"
         ? typeof userAppRoleId === "string"

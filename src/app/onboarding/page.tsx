@@ -14,7 +14,7 @@ import {
   ClipboardCheck,
 } from "lucide-react";
 import { Button } from "@/components/atoms/Button";
-import { cn } from "@/lib/utils";
+import { cn, isNetworkOrServerDownError } from "@/lib/utils";
 
 import { OnboardingSidebar } from "./components/Sidebar";
 import { BusinessInformation } from "./components/BusinessInformation";
@@ -184,6 +184,13 @@ export default function OnboardingPage() {
 
   const validateEmail = (email: string) => /\S+@\S+\.\S+/.test(email);
 
+  const formatOnboardingError = (err: any, fallback: string) => {
+    if (isNetworkOrServerDownError(err)) {
+      return "Unable to connect to the server. Registration is temporarily unavailable due to server maintenance. Please try again later.";
+    }
+    return err?.message || fallback;
+  };
+
   const mapOperationalSetup = (settings?: Record<string, unknown> | null) => {
     if (!settings) {
       return {};
@@ -318,7 +325,12 @@ export default function OnboardingPage() {
         scrollToTop();
       }
     } catch (err: any) {
-      setError(err.message || "Unable to restore your session automatically.");
+      setError(
+        formatOnboardingError(
+          err,
+          "Unable to restore your session automatically.",
+        ),
+      );
     }
   };
 
@@ -450,7 +462,10 @@ export default function OnboardingPage() {
       scrollToTop();
     } catch (err: any) {
       setError(
-        err.message || "An error occurred during signup. Please try again.",
+        formatOnboardingError(
+          err,
+          "An error occurred during signup. Please try again.",
+        ),
       );
     } finally {
       setLoading(false);
