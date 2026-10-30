@@ -5,7 +5,7 @@ import { FormField } from "@/components/molecules/FormField";
 import { Button } from "@/components/atoms/Button";
 import { Checkbox } from "@/components/atoms/Checkbox";
 import { Badge } from "@/components/atoms/Badge";
-import { Mail, Lock, AlertCircle, X, Check } from "lucide-react";
+import { Mail, Lock, AlertCircle, X, Check, Shield } from "lucide-react";
 import { cn, isNetworkOrServerDownError } from "@/lib/utils";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
